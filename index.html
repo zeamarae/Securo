@@ -6747,23 +6747,19 @@
             try {
                 let profile = await getUserProfile(user.uid);
                 const derivedId = user.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1] || "";
-                const derivedRole = user.email?.startsWith('staff.') ? 'staff' : 'student';
-                const derivedName = profile?.name || user.displayName || "Student";
-
-                if (!profile || !profile.studentId || !profile.name || !profile.email) {
-                    await saveUserProfile(user.uid, {
-                        studentId: profile?.studentId || derivedId,
-                        name: derivedName,
-                        email: profile?.email || user.email || "",
-                        role: profile?.role || derivedRole
-                    });
-                    profile = await getUserProfile(user.uid);
+                // (2026-07-13) Check if user account requires onboarding profile setup; was auto-filling Student
+                if (!profile || !profile.name || profile.name === 'Student' || !profile.section || !profile.onboardingCompleted) {
+                    window.location.replace('login.html');
+                    return;
                 }
 
+                const derivedRole = user.email?.startsWith('staff.') ? 'staff' : 'student';
                 appState.user.studentId = profile?.studentId || derivedId;
                 appState.user.name = profile?.name || user.displayName || "Student";
                 appState.user.role = profile?.role || derivedRole;
-                appState.user.initials = appState.user.name.split(" ").map(n => n[0]).join("").toUpperCase();
+                appState.user.section = profile?.section || "";
+                appState.user.photoURL = profile?.photoURL || profile?.avatar || "";
+                appState.user.initials = profile?.initials || appState.user.name.split(" ").map(n => n[0]).join("").toUpperCase();
 
                 if (profile?.role === 'guardian' && user.email !== ADMIN_EMAIL) {
                     window.location.replace("guardian-dashboard.html");
@@ -6788,8 +6784,29 @@
                 }
 
                 dropdownId.textContent = appState.user.studentId ? `ID: ${appState.user.studentId}` : "ID: Not linked";
-                document.getElementById("userInitials").textContent = appState.user.initials;
                 dropdownName.textContent = appState.user.name;
+
+                // Render avatar image if set, else display initials
+                const initialsEl = document.getElementById("userInitials");
+                if (appState.user.photoURL) {
+                    let chipImg = profileChip.querySelector('.profile-chip-avatar');
+                    if (!chipImg) {
+                        chipImg = document.createElement('img');
+                        chipImg.className = 'profile-chip-avatar';
+                        chipImg.style.cssText = 'width:100%; height:100%; border-radius:50%; object-fit:cover; position:absolute; inset:0;';
+                        profileChip.insertBefore(chipImg, profileChip.firstChild);
+                    }
+                    chipImg.src = appState.user.photoURL;
+                    chipImg.style.display = 'block';
+                    if (initialsEl) initialsEl.style.display = 'none';
+                } else {
+                    const chipImg = profileChip.querySelector('.profile-chip-avatar');
+                    if (chipImg) chipImg.style.display = 'none';
+                    if (initialsEl) {
+                        initialsEl.style.display = 'block';
+                        initialsEl.textContent = appState.user.initials;
+                    }
+                }
 
                 if (user.email === ADMIN_EMAIL) {
                     const adminLink = document.getElementById("adminLink");

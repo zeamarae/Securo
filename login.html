@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -340,7 +340,6 @@
             position: fixed;
             inset: 0;
             background: rgba(23, 20, 40, 0.6);
-            /* Perf: reduced blur from 8px to 6px */
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
             display: none;
@@ -368,6 +367,204 @@
             to { transform: scale(1); opacity: 1; }
         }
 
+        /* (2026-07-13) Required post-registration onboarding modal styles; was none */
+        .onboarding-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(18, 12, 34, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 16px;
+            overflow-y: auto;
+        }
+        .onboarding-modal-backdrop.active { display: flex; }
+        .onboarding-modal-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            width: 100%;
+            max-width: 430px;
+            border-radius: 28px;
+            padding: 28px 24px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+            animation: zoomIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+        .onboarding-header { text-align: center; margin-bottom: 16px; }
+        .onboarding-badge-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(90, 31, 224, 0.12), rgba(123, 66, 246, 0.18));
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            box-shadow: 0 8px 16px rgba(90, 31, 224, 0.12);
+        }
+        .onboarding-title {
+            font-family: 'Sora', sans-serif;
+            font-weight: 800;
+            font-size: 1.35rem;
+            color: var(--ink);
+            margin: 0 0 4px;
+        }
+        .onboarding-subtitle {
+            font-size: 0.82rem;
+            color: var(--muted);
+            line-height: 1.4;
+            margin: 0;
+        }
+        .onboarding-avatar-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .onboarding-avatar-wrapper { position: relative; margin-bottom: 10px; }
+        .onboarding-avatar-circle {
+            width: 92px;
+            height: 92px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #5a1fe0 0%, #7b42f6 50%, #4311c5 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Sora', sans-serif;
+            font-weight: 800;
+            font-size: 1.9rem;
+            box-shadow: 0 10px 24px rgba(90, 31, 224, 0.28), 0 0 0 4px white;
+            overflow: hidden;
+            position: relative;
+        }
+        .onboarding-avatar-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .onboarding-photo-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .photo-action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 13px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            border: 1px solid rgba(90, 31, 224, 0.2);
+            background: rgba(90, 31, 224, 0.06);
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .photo-action-btn:hover {
+            background: rgba(90, 31, 224, 0.12);
+            transform: translateY(-1px);
+        }
+        .photo-action-btn.secondary {
+            border-color: #e2e8f0;
+            background: #f8fafc;
+            color: var(--muted);
+        }
+        .photo-action-btn .material-symbols-outlined { font-size: 15px; }
+        .onboarding-photo-note {
+            font-size: 0.72rem;
+            color: var(--muted);
+            margin: 6px 0 0;
+            text-align: center;
+        }
+        .onboarding-camera-stage {
+            background: #0f0c1b;
+            border-radius: 20px;
+            padding: 14px;
+            margin-bottom: 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            animation: zoomIn 0.25s ease;
+        }
+        .camera-viewport-circle {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 0 3px #5a1fe0, 0 8px 24px rgba(0,0,0,0.5);
+            background: black;
+        }
+        .camera-viewport-circle video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .camera-circular-guide {
+            position: absolute;
+            inset: 0;
+            border: 2px dashed rgba(255,255,255,0.7);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .camera-controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            width: 100%;
+        }
+        .cam-control-btn {
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease;
+        }
+        .cam-control-btn:active { transform: scale(0.92); }
+        .cam-control-btn.cancel, .cam-control-btn.flip {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            color: white;
+        }
+        .cam-control-btn.snap {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            padding: 4px;
+            box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
+        }
+        .cam-control-btn.snap .snap-inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: #5a1fe0;
+            display: block;
+        }
+        .form-row-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        @media (max-width: 480px) {
+            .form-row-grid { grid-template-columns: 1fr; gap: 0; }
+        }
+
         /* Registration Fields Toggle */
         .signup-only { display: none; }
     </style>
@@ -383,9 +580,6 @@
             <h1 class="brand-name">Securo</h1>
             <p class="text-muted small" id="brandSubtitle">Secure campus access</p>
         </div>
-
-        <!-- [REMOVED] googleBtn (Date: 2026-05-02 - Simplified to Student ID only) -->
-
 
         <div class="divider">OR USE CREDENTIALS</div>
 
@@ -405,24 +599,13 @@
                 </div>
             </div>
 
-
             <!-- Student ID (Signup Only) -->
             <div class="form-group signup-only">
                 <label class="form-label" id="signupIdLabel">Student ID Number</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">badge</span>
+                    <!-- (2026-07-13) Direct ID signup without full name field; was full name + id -->
                     <input type="text" id="studentIdSignup" placeholder="1234567" maxlength="7" pattern="\d*" inputmode="numeric">
-
-
-                </div>
-            </div>
-
-            <!-- Full Name (Signup Only) -->
-            <div class="form-group signup-only">
-                <label class="form-label">Full Name</label>
-                <div class="input-wrapper">
-                    <span class="material-symbols-outlined input-icon">edit_square</span>
-                    <input type="text" id="fullNameSignup" placeholder="John Doe">
                 </div>
             </div>
 
@@ -431,7 +614,8 @@
                 <label class="form-label">Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">lock</span>
-                    <input type="password" id="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required>
+                    <!-- (2026-07-13) Fix password placeholder; was corrupted bytes -->
+                    <input type="password" id="password" placeholder="••••••••" required>
                     <button type="button" id="togglePassword" class="btn" style="background:none; border:none; color:var(--muted); padding:0;">
                         <span class="material-symbols-outlined">visibility</span>
                     </button>
@@ -450,7 +634,6 @@
                 <a href="#" id="forgotPassword" style="color: var(--primary); text-decoration: none; font-size: 0.85rem; font-weight: 600;">Forgot Password?</a>
             </div>
 
-
             <div id="errorMsg" class="error-msg"></div>
 
             <button type="submit" class="btn-action" id="submitBtn" style="margin-bottom: 20px;">
@@ -464,7 +647,103 @@
         </form>
     </div>
 
-    <!-- Student ID Completion Modal (profileModal) -->
+    <!-- (2026-07-13) Add required onboarding modal for name, section, and photo; was simple ID modal -->
+    <!-- Required Onboarding Screen Modal (onboardingModal) -->
+    <div id="onboardingModal" class="onboarding-modal-backdrop">
+        <div class="onboarding-modal-card">
+            <div class="onboarding-header">
+                <div class="onboarding-badge-icon">
+                    <img src="logo.png" alt="Securo" style="width: 28px; height: 28px; object-fit: contain;">
+                </div>
+                <h3 class="onboarding-title">Set Up Your Profile</h3>
+                <p class="onboarding-subtitle">Complete your student identity to access your campus dashboard and safety tools.</p>
+            </div>
+
+            <!-- Profile Avatar Section -->
+            <div class="onboarding-avatar-section">
+                <div class="onboarding-avatar-wrapper">
+                    <div class="onboarding-avatar-circle" id="onboardingAvatarPreview">
+                        <span id="onboardingAvatarInitials">ST</span>
+                        <img id="onboardingAvatarImg" src="" alt="Profile Preview" style="display:none;">
+                    </div>
+                </div>
+                
+                <div class="onboarding-photo-actions">
+                    <button type="button" class="photo-action-btn" id="onboardingTakeCamBtn">
+                        <span class="material-symbols-outlined">photo_camera</span>
+                        <span>Take Photo</span>
+                    </button>
+                    <button type="button" class="photo-action-btn" id="onboardingChooseGalleryBtn">
+                        <span class="material-symbols-outlined">image</span>
+                        <span>From Gallery</span>
+                    </button>
+                    <button type="button" class="photo-action-btn secondary" id="onboardingRemovePhotoBtn" style="display:none;">
+                        <span class="material-symbols-outlined">restart_alt</span>
+                        <span>Default Initials</span>
+                    </button>
+                </div>
+                <input type="file" id="onboardingGalleryInput" accept="image/*" style="display:none;">
+                <p class="onboarding-photo-note">Photo is optional. Defaults to your name initials if skipped.</p>
+            </div>
+
+            <!-- Camera Viewfinder Stage (Active when camera is open) -->
+            <div class="onboarding-camera-stage" id="onboardingCameraStage" style="display:none;">
+                <div class="camera-viewport-circle">
+                    <video id="onboardingCameraVideo" autoplay playsinline muted></video>
+                    <div class="camera-circular-guide"></div>
+                </div>
+                <div class="camera-controls-row">
+                    <button type="button" class="cam-control-btn cancel" id="onboardingCancelCamBtn">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                    <button type="button" class="cam-control-btn snap" id="onboardingSnapCamBtn" title="Take Photo">
+                        <span class="snap-inner"></span>
+                    </button>
+                    <button type="button" class="cam-control-btn flip" id="onboardingFlipCamBtn" title="Flip Camera">
+                        <span class="material-symbols-outlined">flip_camera_android</span>
+                    </button>
+                </div>
+                <canvas id="onboardingCanvas" style="display:none;"></canvas>
+            </div>
+
+            <!-- Form Fields -->
+            <form id="onboardingForm" class="onboarding-fields-form">
+                <div class="form-row-grid">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label">First Name</label>
+                        <div class="input-wrapper">
+                            <span class="material-symbols-outlined input-icon">person</span>
+                            <input type="text" id="onboardingFirstName" placeholder="e.g. Juan" required autocomplete="given-name">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label">Last Name</label>
+                        <div class="input-wrapper">
+                            <span class="material-symbols-outlined input-icon">badge</span>
+                            <input type="text" id="onboardingLastName" placeholder="e.g. Dela Cruz" required autocomplete="family-name">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label">Year & Section</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined input-icon">school</span>
+                        <input type="text" id="onboardingSection" placeholder="e.g. BSIT 3-A" required>
+                    </div>
+                </div>
+
+                <div id="onboardingErrorMsg" class="error-msg" style="margin-bottom: 10px;"></div>
+
+                <button type="submit" class="btn-action" id="onboardingSubmitBtn" style="margin-top: 4px;">
+                    <span id="onboardingSubmitText">Complete Profile</span>
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- (2026-07-13) Student ID fallback modal; was duplicate fragment -->
     <div id="profileModal">
         <div class="modal-card">
             <div style="text-align:center; margin-bottom:25px;">
@@ -478,8 +757,6 @@
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">badge</span>
                     <input type="text" id="modalStudentId" placeholder="1234567" maxlength="7" pattern="\d*" inputmode="numeric" required>
-
-
                 </div>
             </div>
 
@@ -499,7 +776,6 @@
         // Check if already logged in (Date: 2026-05-01)
         checkAuth(false);
 
-
         const mainAuthForm = document.getElementById('mainAuthForm');
         const loginTab = document.getElementById('loginTab');
         const signupTab = document.getElementById('signupTab');
@@ -514,6 +790,32 @@
         const LOCAL_USERS_KEY = 'securo_users_local';
         const preferredRole = getPreferredAuthRole();
         const isStaffRole = preferredRole === 'staff';
+
+        // Onboarding Screen Elements
+        const onboardingModal = document.getElementById('onboardingModal');
+        const onboardingForm = document.getElementById('onboardingForm');
+        const onboardingFirstName = document.getElementById('onboardingFirstName');
+        const onboardingLastName = document.getElementById('onboardingLastName');
+        const onboardingSection = document.getElementById('onboardingSection');
+        const onboardingAvatarInitials = document.getElementById('onboardingAvatarInitials');
+        const onboardingAvatarImg = document.getElementById('onboardingAvatarImg');
+        const onboardingTakeCamBtn = document.getElementById('onboardingTakeCamBtn');
+        const onboardingChooseGalleryBtn = document.getElementById('onboardingChooseGalleryBtn');
+        const onboardingRemovePhotoBtn = document.getElementById('onboardingRemovePhotoBtn');
+        const onboardingGalleryInput = document.getElementById('onboardingGalleryInput');
+        const onboardingCameraStage = document.getElementById('onboardingCameraStage');
+        const onboardingCameraVideo = document.getElementById('onboardingCameraVideo');
+        const onboardingCancelCamBtn = document.getElementById('onboardingCancelCamBtn');
+        const onboardingSnapCamBtn = document.getElementById('onboardingSnapCamBtn');
+        const onboardingFlipCamBtn = document.getElementById('onboardingFlipCamBtn');
+        const onboardingCanvas = document.getElementById('onboardingCanvas');
+        const onboardingErrorMsg = document.getElementById('onboardingErrorMsg');
+        const onboardingSubmitBtn = document.getElementById('onboardingSubmitBtn');
+
+        let onboardingUserContext = null;
+        let onboardingPhotoData = '';
+        let cameraStream = null;
+        let currentFacingMode = 'user';
 
         const saveLocalUserDirectoryEntry = (userId, profile) => {
             try {
@@ -573,6 +875,7 @@
         };
 
         const normalizeStudentIdInput = (input) => {
+            if (!input) return;
             input.addEventListener('input', () => {
                 input.value = input.value.replace(/\D/g, '').slice(0, 7);
             });
@@ -635,7 +938,6 @@
 
             try {
                 let email = identifier.includes('@') ? identifier : roleIdToEmail(identifier, preferredRole);
-                
                 await forgotPassword(email);
                 showToast("Reset email sent", `Password reset instructions were sent to ${email}.`, "success");
             } catch (error) {
@@ -652,8 +954,188 @@
             togglePasswordBtn.querySelector('span').textContent = type === 'password' ? 'visibility' : 'visibility_off';
         });
 
+        // Dynamic Onboarding Avatar Initials sync
+        function updateOnboardingInitials() {
+            const fn = onboardingFirstName.value.trim();
+            const ln = onboardingLastName.value.trim();
+            let initials = '';
+            if (fn && ln) {
+                initials = (fn[0] + ln[0]).toUpperCase();
+            } else if (fn) {
+                initials = fn.slice(0, 2).toUpperCase();
+            } else if (ln) {
+                initials = ln.slice(0, 2).toUpperCase();
+            } else {
+                initials = roleLabel === 'Staff' ? 'SF' : 'ST';
+            }
+            onboardingAvatarInitials.textContent = initials;
+        }
 
-        // Save Student ID from Modal (Date: 2026-05-01)
+        onboardingFirstName.addEventListener('input', updateOnboardingInitials);
+        onboardingLastName.addEventListener('input', updateOnboardingInitials);
+
+        function setOnboardingPhoto(dataUrl) {
+            onboardingPhotoData = dataUrl || '';
+            if (dataUrl) {
+                onboardingAvatarImg.src = dataUrl;
+                onboardingAvatarImg.style.display = 'block';
+                onboardingAvatarInitials.style.display = 'none';
+                onboardingRemovePhotoBtn.style.display = 'inline-flex';
+            } else {
+                onboardingAvatarImg.src = '';
+                onboardingAvatarImg.style.display = 'none';
+                onboardingAvatarInitials.style.display = 'block';
+                onboardingRemovePhotoBtn.style.display = 'none';
+            }
+        }
+
+        onboardingRemovePhotoBtn.addEventListener('click', () => {
+            setOnboardingPhoto('');
+            showToast("Photo cleared", "Your name initials will be used as your avatar.", "info");
+        });
+
+        // Gallery File Selection
+        onboardingChooseGalleryBtn.addEventListener('click', () => {
+            stopOnboardingCamera();
+            onboardingGalleryInput.click();
+        });
+
+        onboardingGalleryInput.addEventListener('change', () => {
+            const file = onboardingGalleryInput.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setOnboardingPhoto(e.target?.result);
+                showToast("Photo loaded", "Profile picture selected from gallery.", "success");
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // Live Camera Capture Logic
+        async function startOnboardingCamera() {
+            try {
+                stopOnboardingCamera();
+                cameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: currentFacingMode, width: { ideal: 640 }, height: { ideal: 640 } },
+                    audio: false
+                });
+                onboardingCameraVideo.srcObject = cameraStream;
+                onboardingCameraStage.style.display = 'flex';
+            } catch (err) {
+                console.warn("Camera access failed:", err);
+                showToast("Camera error", "Could not access device camera. You can upload from gallery instead.", "error");
+            }
+        }
+
+        function stopOnboardingCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            if (onboardingCameraVideo) onboardingCameraVideo.srcObject = null;
+            if (onboardingCameraStage) onboardingCameraStage.style.display = 'none';
+        }
+
+        onboardingTakeCamBtn.addEventListener('click', () => {
+            startOnboardingCamera();
+        });
+
+        onboardingCancelCamBtn.addEventListener('click', () => {
+            stopOnboardingCamera();
+        });
+
+        onboardingFlipCamBtn.addEventListener('click', () => {
+            currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+            startOnboardingCamera();
+        });
+
+        onboardingSnapCamBtn.addEventListener('click', () => {
+            if (!cameraStream || !onboardingCameraVideo.videoWidth) return;
+            const size = Math.min(onboardingCameraVideo.videoWidth, onboardingCameraVideo.videoHeight);
+            onboardingCanvas.width = 400;
+            onboardingCanvas.height = 400;
+            const ctx = onboardingCanvas.getContext('2d');
+            const sx = (onboardingCameraVideo.videoWidth - size) / 2;
+            const sy = (onboardingCameraVideo.videoHeight - size) / 2;
+            ctx.drawImage(onboardingCameraVideo, sx, sy, size, size, 0, 0, 400, 400);
+            const dataUrl = onboardingCanvas.toDataURL('image/jpeg', 0.88);
+            setOnboardingPhoto(dataUrl);
+            stopOnboardingCamera();
+            showToast("Photo captured", "Profile picture updated from camera.", "success");
+        });
+
+        // (2026-07-13) Open required onboarding modal flow; was redirecting directly
+        function openOnboardingModal(userContext) {
+            onboardingUserContext = userContext;
+            onboardingErrorMsg.textContent = '';
+            updateOnboardingInitials();
+            onboardingModal.classList.add('active');
+            onboardingFirstName.focus();
+        }
+
+        // Onboarding Form Submit
+        onboardingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            onboardingErrorMsg.textContent = '';
+            const firstName = onboardingFirstName.value.trim();
+            const lastName = onboardingLastName.value.trim();
+            const section = onboardingSection.value.trim();
+
+            if (firstName.length < 2) {
+                onboardingErrorMsg.textContent = "Please enter your valid first name.";
+                return;
+            }
+            if (lastName.length < 2) {
+                onboardingErrorMsg.textContent = "Please enter your valid last name.";
+                return;
+            }
+            if (section.length < 2) {
+                onboardingErrorMsg.textContent = "Please enter your year and section (e.g. BSIT 3-A).";
+                return;
+            }
+
+            const fullName = `${firstName} ${lastName}`;
+            const initials = (firstName[0] + lastName[0]).toUpperCase();
+            setButtonBusy(onboardingSubmitBtn, true);
+
+            try {
+                const uid = onboardingUserContext?.uid || auth.currentUser?.uid;
+                const studentId = onboardingUserContext?.studentId || '';
+                const email = onboardingUserContext?.email || auth.currentUser?.email || '';
+                const role = onboardingUserContext?.role || preferredRole;
+
+                const profilePayload = {
+                    studentId,
+                    firstName,
+                    lastName,
+                    name: fullName,
+                    initials,
+                    section,
+                    photoURL: onboardingPhotoData || '',
+                    avatar: onboardingPhotoData || '',
+                    email,
+                    role,
+                    onboardingCompleted: true,
+                    updatedAt: new Date().toISOString()
+                };
+
+                saveLocalUserDirectoryEntry(uid, profilePayload);
+                await saveUserProfile(uid, profilePayload);
+                await saveUserDirectoryMarker(uid, profilePayload);
+
+                showToast("Profile ready", `Welcome, ${firstName}! Entering your Securo Hub...`, "success");
+                stopOnboardingCamera();
+                window.setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 700);
+            } catch (err) {
+                console.warn("Onboarding save failed:", err);
+                onboardingErrorMsg.textContent = "Failed to save profile. Please try again.";
+                setButtonBusy(onboardingSubmitBtn, false);
+            }
+        });
+
+        // Save Student ID from Fallback Modal
         document.getElementById('saveModalBtn').addEventListener('click', async () => {
             const studentId = modalStudentIdInput.value.trim();
             if (!/^\d{7}$/.test(studentId)) {
@@ -663,29 +1145,17 @@
 
             const user = auth.currentUser; 
             if (user) {
-                saveLocalUserDirectoryEntry(user.uid, {
+                openOnboardingModal({
+                    uid: user.uid,
                     studentId: studentId,
                     email: user.email,
-                    name: user.displayName
-                });
-                await saveUserProfile(user.uid, {
-                    studentId: studentId,
-                    email: user.email,
-                    name: user.displayName,
                     role: preferredRole
                 });
-                await saveUserDirectoryMarker(user.uid, {
-                    studentId: studentId,
-                    email: user.email,
-                    name: user.displayName
-                });
-                showToast("Profile linked", `Your ${roleLabel.toLowerCase()} ID has been linked successfully.`, "success");
-                window.location.href = 'index.html';
+                profileModal.classList.remove('active');
             }
         });
 
-
-        // Main Form Submission (Date: 2026-05-01)
+        // Main Auth Form Submission
         mainAuthForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMsg.textContent = '';
@@ -702,18 +1172,29 @@
                     if (!password) {
                         throw new Error("Please enter your password.");
                     }
-                    await login(identifier, password, preferredRole);
+                    const userCredential = await login(identifier, password, preferredRole);
+                    const loggedInUser = userCredential.user;
+                    
+                    // Check if profile exists and has completed onboarding
+                    const profile = await getUserProfile(loggedInUser.uid);
+                    if (!profile || !profile.name || profile.name === 'Student' || !profile.firstName || !profile.section || !profile.onboardingCompleted) {
+                        setButtonBusy(submitBtn, false);
+                        openOnboardingModal({
+                            uid: loggedInUser.uid,
+                            studentId: profile?.studentId || identifier,
+                            email: loggedInUser.email,
+                            role: preferredRole
+                        });
+                        return;
+                    }
+
                     window.location.href = 'index.html';
                 } else {
                     const studentId = signupIdInput.value.trim();
-                    const name = document.getElementById('fullNameSignup').value.trim();
                     const confirmPassword = document.getElementById('confirmPasswordSignup').value;
 
                     if (!/^\d{7}$/.test(studentId)) {
                         throw new Error(`Please enter a valid 7-digit ${roleLabel} ID number.`);
-                    }
-                    if (name.length < 3) {
-                        throw new Error("Please enter your full name.");
                     }
                     if (password.length < 6) {
                         throw new Error("Password must be at least 6 characters.");
@@ -724,24 +1205,23 @@
 
                     const generatedEmail = roleIdToEmail(studentId, preferredRole);
                     const user = await signUp(generatedEmail, password);
+                    
                     saveLocalUserDirectoryEntry(user.uid, {
                         studentId,
-                        name,
-                        email: generatedEmail
-                    });
-                    await saveUserProfile(user.uid, {
-                        studentId,
-                        name,
                         email: generatedEmail,
                         role: preferredRole
                     });
-                    await saveUserDirectoryMarker(user.uid, {
+
+                    setButtonBusy(submitBtn, false);
+                    showToast("Account registered", "Please set up your name, section, and profile photo.", "success");
+                    
+                    // (2026-07-13) Prompt required onboarding immediately after registration
+                    openOnboardingModal({
+                        uid: user.uid,
                         studentId,
-                        name,
-                        email: generatedEmail
+                        email: generatedEmail,
+                        role: preferredRole
                     });
-                    showToast("Registration complete", "Your account was created successfully. You can now continue.", "success");
-                    window.location.href = 'index.html';
                 }
             } catch (error) {
                 const friendlyMessage = getFriendlyAuthMessage(error, isLoginMode ? "login" : "signup", roleLabel);
@@ -751,11 +1231,6 @@
             }
         });
     </script>
-
-    <!-- User Rule Compliance: Elements properly commented and labeled -->
-    <!-- loginHub: Main container for all authentication flows (Date: 2026-05-01) -->
-    <!-- googleBtn: Triggers the Firebase Google Popup (Date: 2026-05-01) -->
-    <!-- profileModal: Forced prompt for Google users missing a Student ID (Date: 2026-05-01) -->
 </body>
 </html>
 
