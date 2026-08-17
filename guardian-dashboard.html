@@ -1,0 +1,2650 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Securo - Guardian Dashboard</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <style>
+        :root {
+            --bg: #fff4f6;
+            --bg-strong: #ffd8e1;
+            --surface: rgba(255, 255, 255, 0.72);
+            --surface-strong: rgba(255, 255, 255, 0.9);
+            --surface-deep: rgba(255, 255, 255, 0.58);
+            --ink: #221520;
+            --muted: #7b5d6f;
+            --line: rgba(179, 43, 88, 0.15);
+            --line-strong: rgba(255, 255, 255, 0.45);
+            --primary: #f43f5e;
+            --primary-strong: #e11d48;
+            --primary-soft: #fff1f2;
+            --primary-wash: rgba(244, 63, 94, 0.12);
+            --cyan: #ffb1c2;
+            --red: #d11f34;
+            --red-soft: rgba(255, 121, 145, 0.16);
+            --green: #0f9b67;
+            --shadow: 0 35px 80px rgba(163, 33, 74, 0.18);
+            --shadow-soft: 0 18px 36px rgba(179, 43, 88, 0.12);
+            --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 18px 48px rgba(179, 43, 88, 0.14);
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+            --radius-md: 18px;
+            --radius-sm: 14px;
+            --nav-height: 80px;
+        }
+
+        /* (2026-07-13) Disable text highlighting across guardian; was default selectable */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        input, textarea, [contenteditable="true"] {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            width: 100vw;
+            overflow-x: hidden;
+        }
+
+        body {
+            font-family: "Outfit", system-ui, sans-serif;
+            background:
+                radial-gradient(circle at 12% 8%, rgba(244, 63, 94, 0.22), transparent 18%),
+                radial-gradient(circle at 85% 12%, rgba(255, 177, 194, 0.26), transparent 22%),
+                radial-gradient(circle at 78% 82%, rgba(255, 121, 145, 0.15), transparent 18%),
+                linear-gradient(180deg, #fff2f5 0%, #fff8fa 45%, #fffdfd 100%);
+            color: var(--ink);
+        }
+
+        .app-shell {
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* (2026-07-13) Set compact height and permanent sticky topbar for guardian; was tall padding */
+        .topbar {
+            padding: 8px 16px;
+            min-height: 52px;
+            max-height: 56px;
+            border-bottom: 1px solid rgba(34, 21, 32, 0.06);
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(20px) saturate(160%);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+            box-shadow: 0 4px 16px rgba(163, 33, 74, 0.06);
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 1000 !important;
+            transform: translateZ(0);
+            will-change: transform;
+            contain: style;
+        }
+
+        .topbar-left,
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .content-frame {
+            width: 100%;
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.46);
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 10px 18px rgba(179, 43, 88, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .logo-icon .material-symbols-outlined {
+            font-size: 24px;
+        }
+
+        .portal-title {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.28rem;
+            font-weight: 700;
+            color: var(--primary-strong);
+            letter-spacing: -0.05em;
+            white-space: nowrap;
+        }
+
+        .profile-chip {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f43f5e, #fb7185);
+            color: #fff6f8;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.72);
+            box-shadow: 0 12px 24px rgba(179, 43, 88, 0.22);
+            flex-shrink: 0;
+        }
+
+        /* Navigation */
+        .bottom-nav {
+            min-height: 80px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: var(--nav-height);
+            padding: 8px 0;
+            border-radius: 32px 32px 0 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.5);
+            background:
+                linear-gradient(180deg, rgba(255, 250, 251, 0.96), rgba(255, 235, 240, 0.9)),
+                rgba(255, 231, 237, 0.42);
+            backdrop-filter: blur(16px) saturate(140%);
+            -webkit-backdrop-filter: blur(16px) saturate(140%);
+            box-shadow: 0 -18px 40px rgba(179, 43, 88, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transform: translateZ(0);
+            will-change: transform;
+            contain: paint;
+            padding-bottom: env(safe-area-inset-bottom, 8px);
+        }
+
+        .bottom-nav-inner {
+            display: flex;
+            gap: 0;
+            align-items: center;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 100%;
+            margin: 0;
+            padding: 0 10px;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            color: var(--muted);
+            text-decoration: none !important;
+            padding: 10px 0;
+            border-radius: 20px;
+            transition: color 0.2s ease, background 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            background: transparent;
+            border: none;
+            will-change: transform;
+            transform: translateZ(0);
+            cursor: pointer;
+        }
+
+        .nav-item.active {
+            color: var(--primary-strong);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 226, 232, 0.8)),
+                rgba(244, 63, 94, 0.1);
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(179, 43, 88, 0.12);
+            border-radius: 16px;
+        }
+
+        .nav-item:hover {
+            color: var(--primary-strong);
+            background: rgba(244, 63, 94, 0.08);
+            transform: translateY(-2px);
+        }
+
+        .nav-item .material-symbols-outlined {
+            font-size: 1.55rem;
+            font-variation-settings: 'FILL' 0;
+        }
+
+        .nav-item.active .material-symbols-outlined {
+            font-variation-settings: 'FILL' 1;
+        }
+
+        .nav-item span {
+            font-size: 0.63rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            line-height: 1;
+            white-space: nowrap;
+            letter-spacing: 0.01em;
+        }
+
+        /* Main Content Views */
+        .view-container {
+            flex: 1;
+            position: relative;
+            overflow: visible;
+        }
+
+        .view {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            padding-bottom: calc(var(--nav-height) + 20px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .view.active {
+            display: flex;
+        }
+
+        /* Map View Specific */
+        #mapView {
+            padding: 0;
+            inset: 0 0 calc(var(--nav-height) + env(safe-area-inset-bottom, 0px)) 0;
+        }
+
+        #map {
+            flex: 1;
+            z-index: 1;
+            background: #eee;
+        }
+
+        .map-overlay {
+            position: absolute;
+            top: 20px;
+            left: 16px;
+            right: 16px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .student-status-card {
+            pointer-events: auto;
+            background: var(--surface-strong);
+            backdrop-filter: blur(25px);
+            border-radius: 20px;
+            padding: 12px 16px;
+            border: 1px solid var(--line-strong);
+            box-shadow: var(--shadow-glow);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .student-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #f3eeff, #e2d8ff);
+            color: #5a1fe0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.95rem;
+            flex-shrink: 0;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            display: inline-block;
+        }
+
+        /* List Styling (General) */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-header h2 {
+            font-family: 'Sora';
+            font-weight: 800;
+            font-size: 1.4rem;
+        }
+
+        .card {
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+
+        .card:active {
+            transform: scale(0.98);
+        }
+
+        .download-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .download-btn:hover {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .download-btn span {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .vault-media-trigger {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: block;
+        }
+
+        .vault-media-trigger video,
+        .vault-media-trigger img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .vault-viewer-card {
+            background: rgba(20, 11, 19, 0.96);
+            width: min(92vw, 720px);
+            max-height: 88vh;
+            border-radius: 28px;
+            padding: 22px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .vault-viewer-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            color: #fff;
+        }
+
+        .vault-viewer-title {
+            font-family: 'Sora';
+            font-weight: 800;
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .vault-viewer-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.82rem;
+            margin: 4px 0 0;
+        }
+
+        .vault-viewer-close {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            border: none;
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .vault-viewer-media {
+            width: 100%;
+            max-height: 62vh;
+            border-radius: 22px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .vault-viewer-media img,
+        .vault-viewer-media video {
+            width: 100%;
+            max-height: 62vh;
+            object-fit: contain;
+            display: block;
+        }
+
+        .vault-viewer-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* GAD Bulletin Styles Sync with Student Portal */
+        .feed-card {
+            padding: 24px !important;
+            margin-bottom: 24px;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .feed-head {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+
+        .feed-meta strong {
+            display: block;
+            font-size: 1.05rem;
+            color: var(--ink);
+        }
+
+        .feed-meta span {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-top: 2px;
+            display: block;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.76rem;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            color: var(--primary);
+            background: rgba(90, 31, 224, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            padding: 6px 10px;
+            border-radius: 999px;
+        }
+
+        .like-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            padding: 10px 0 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .like-action.is-liked {
+            color: #d11f34;
+        }
+
+        .like-action:active {
+            transform: scale(0.95);
+        }
+
+        .icon-badge {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            background: #f1ebff;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(90, 31, 224, 0.08);
+        }
+
+        .alert-item {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.4);
+            margin-bottom: 12px;
+        }
+
+        .alert-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .icon-sos {
+            background: var(--red-soft);
+            color: var(--red);
+        }
+
+        .icon-attendance {
+            background: var(--primary-wash);
+            color: var(--primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+
+        .empty-state .material-symbols-outlined {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        /* Custom Styles for Guardian Monitor */
+        .student-selector-bar {
+            padding: 8px 16px;
+            background: rgba(255, 244, 247, 0.92);
+            backdrop-filter: blur(10px);
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .selector-chip {
+            padding: 8px 16px;
+            border-radius: 12px;
+            background: white;
+            border: 1px solid var(--line);
+            font-size: 0.85rem;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .selector-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(23, 20, 40, 0.6);
+            backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 24px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 28px;
+            padding: 32px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+            animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes modalPop {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-title {
+            font-family: 'Sora';
+            font-weight: 800;
+            font-size: 1.4rem;
+            margin-bottom: 12px;
+        }
+
+        .modal-copy {
+            color: var(--muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            border-radius: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            color: var(--muted);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 24px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .modal-title {
+            font-family: 'Sora';
+            font-weight: 800;
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+        }
+
+        .modal-copy {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 14px;
+            border: 1px solid var(--line);
+            background: #f8f7ff;
+            font-weight: 600;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            background: white;
+        }
+
+        button,
+        .btn-primary,
+        .btn-secondary {
+            transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+        }
+
+        button:hover:not(:disabled),
+        .btn-primary:hover:not(:disabled),
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+
+        button:disabled,
+        .btn-primary:disabled,
+        .btn-secondary:disabled {
+            opacity: 0.62;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        button.is-busy {
+            position: relative;
+            pointer-events: none;
+        }
+
+        button.is-busy > * {
+            opacity: 0;
+        }
+
+        button.is-busy::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 18px;
+            height: 18px;
+            margin: -9px 0 0 -9px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .btn-secondary.is-busy::after {
+            border-color: rgba(90, 31, 224, 0.18);
+            border-top-color: var(--primary);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+            border: none;
+            box-shadow: 0 8px 20px rgba(90, 31, 224, 0.2);
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 14px;
+            border-radius: 14px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            font-weight: 700;
+            border: none;
+            margin-top: 10px;
+        }
+
+        /* Profile Dropdown */
+        .profile-chip {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .profile-chip:active {
+            transform: scale(0.9);
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            width: 220px;
+            background: rgba(255, 255, 255, 0.98);
+            color: var(--ink);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 18px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            display: none;
+            flex-direction: column;
+            padding: 10px;
+            z-index: 1100;
+            animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .profile-dropdown.active {
+            display: flex;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-10px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: var(--ink);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.2s;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+        }
+
+        .dropdown-item:hover {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
+        .dropdown-item.logout {
+            color: var(--red);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--line);
+            margin: 8px 0;
+        }
+
+        /* Toasts */
+        .toast-notify {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(12px);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 999px;
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .toast-notify.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* (2026-07-13) Slim compact location alert card; was thick padding card */
+        .location-alert-card {
+            display: none;
+            margin-top: 8px;
+            padding: 10px 14px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(209, 31, 52, 0.14);
+            box-shadow: 0 8px 20px rgba(179, 43, 88, 0.08);
+            gap: 10px;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        .location-alert-card.active {
+            display: flex;
+        }
+
+        .location-alert-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 11px;
+            background: #fff1f2;
+            color: var(--red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .location-alert-icon .material-symbols-outlined {
+            font-size: 18px;
+        }
+
+        .notification-history {
+            display: grid;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .notification-item {
+            display: flex;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .notification-item.unread {
+            border-color: rgba(244, 63, 94, 0.25);
+            background: rgba(255, 241, 242, 0.9);
+        }
+
+        .notification-item-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 14px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .pending-state-card {
+            display: none;
+            margin-top: 14px;
+            padding: 18px;
+            border-radius: 22px;
+            background: rgba(255, 255, 255, 0.94);
+            border: 1px solid rgba(244, 63, 94, 0.12);
+            box-shadow: 0 18px 36px rgba(179, 43, 88, 0.12);
+            pointer-events: auto;
+        }
+
+        .pending-state-card.active {
+            display: block;
+        }
+
+        .pending-state-head {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .pending-state-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #fff1f2, #ffe4ea);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .pending-state-meta {
+            margin-top: 14px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .pending-state-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 14px;
+        }
+
+        .pending-meta-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border-radius: 14px;
+            background: rgba(255, 241, 242, 0.72);
+            color: var(--muted);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .support-chat-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 48px;
+            padding: 0 16px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--primary), #e11d48);
+            color: white;
+            font-weight: 800;
+            border: none;
+            box-shadow: 0 12px 24px rgba(183, 36, 76, 0.2);
+        }
+
+        .chat-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(23, 20, 40, 0.42);
+            backdrop-filter: blur(6px);
+            z-index: 2600;
+            display: none;
+            align-items: stretch;
+            justify-content: center;
+        }
+
+        .chat-overlay.active {
+            display: flex;
+        }
+
+        .chat-box {
+            width: 100vw;
+            height: 100dvh;
+            min-height: 100dvh;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 20px;
+            padding-top: calc(20px + env(safe-area-inset-top, 0px));
+            background: linear-gradient(135deg, var(--primary), #e11d48);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .chat-header button {
+            background: transparent;
+            border: none;
+            color: white;
+        }
+
+        .chat-messages {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #fff7f9;
+        }
+
+        .chat-message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 0.92rem;
+            line-height: 1.45;
+        }
+
+        .chat-message.sent {
+            align-self: flex-end;
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-message.received {
+            align-self: flex-start;
+            background: white;
+            color: var(--ink);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+
+        .chat-time {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.7rem;
+            opacity: 0.7;
+            text-align: right;
+        }
+
+        .chat-message.received .chat-time {
+            text-align: left;
+        }
+
+        .chat-input-area {
+            padding: 14px;
+            padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            background: white;
+            position: sticky;
+            bottom: 0;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            min-width: 0;
+            min-height: 48px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            background: #fff1f4;
+            outline: none;
+            font: inherit;
+        }
+
+        .chat-send-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell">
+        <header class="topbar">
+            <div class="content-frame" style="display:flex; align-items:center; justify-content:space-between;">
+                <!-- (2026-07-13) Topbar brand using logo with text.png; was icon box -->
+                <div class="topbar-left">
+                    <div class="logo-wrap" style="display:flex; align-items:center; gap:10px;">
+                        <img src="logo with text.png" alt="Securo" style="height: 28px; max-height: 28px; max-width: 155px; object-fit: contain; display: block;">
+                        <div class="portal-title" style="font-size:0.75rem; font-weight:800; padding:3px 8px; border-radius:6px; background:rgba(225,29,72,0.1); color:var(--primary); letter-spacing:0.04em;">Guardian</div>
+                    </div>
+                </div>
+                <div class="topbar-right">
+                    <div class="profile-chip" id="profileBtn">
+                        <span id="userInitials">P</span>
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <div style="padding: 10px 15px;">
+                                <div id="dropdownName" style="font-weight: 800; font-size: 0.95rem; color: var(--ink);">Loading...</div>
+                                <div style="font-size: 0.75rem; color: var(--muted); font-weight: 700;">GUARDIAN ACCOUNT</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <a href="profile.html" class="dropdown-item">
+                                <span class="material-symbols-outlined">account_circle</span>
+                                <span>My Profile</span>
+                            </a>
+                            <a href="settings.html" class="dropdown-item">
+                                <span class="material-symbols-outlined">settings</span>
+                                <span>Settings</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item logout" id="logoutBtn">
+                                <span class="material-symbols-outlined">logout</span>
+                                <span>Sign Out</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="student-selector-bar" id="studentSelectorBar">
+            <div id="studentSelector" style="display:flex; gap:12px; overflow-x:auto; flex:1;">
+                <!-- Chips will be injected -->
+            </div>
+            <button class="selector-chip" id="addStudentBtn"
+                style="background:var(--primary-soft); color:var(--primary); border:none; display:flex; align-items:center; gap:6px;">
+                <span class="material-symbols-outlined" style="font-size:18px;">add</span>
+                Link Child
+            </button>
+        </div>
+
+        <div class="view-container">
+            <!-- Map View -->
+            <div class="view active" id="mapView">
+                <div id="map"></div>
+                <div class="map-overlay">
+                    <div class="student-status-card">
+                        <div class="student-avatar" id="studentAvatar"></div>
+                        <div style="flex:1;">
+                            <div style="font-weight:800; font-size:1rem; display:flex; align-items:center; gap:8px;">
+                                <span id="activeStudentName">Loading...</span>
+                                <div class="status-dot" id="statusDot"></div>
+                            </div>
+                            <div style="font-size:0.75rem; color:var(--muted); font-weight:600;" id="lastSeen">Awaiting
+                                guardian signal...</div>
+                        </div>
+                        <button id="locateBtn"
+                            style="background:var(--primary-soft); color:var(--primary); width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+                            <span class="material-symbols-outlined">my_location</span>
+                        </button>
+                    </div>
+                    <div class="pending-state-card" id="pendingStateCard">
+                        <div class="pending-state-head">
+                            <div class="pending-state-icon">
+                                <span class="material-symbols-outlined">hourglass_top</span>
+                            </div>
+                            <div style="flex:1;">
+                                <div style="font-weight:800; font-size:1rem;">Parent request pending approval</div>
+                                <div id="pendingStateCopy" style="font-size:0.86rem; color:var(--muted); line-height:1.55; margin-top:4px;">
+                                    Your child still needs to accept your invitation before live map tracking, vault access, and safety updates become available.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pending-state-meta">
+                            <div class="pending-meta-chip" id="pendingStudentMeta">
+                                <span class="material-symbols-outlined" style="font-size:18px;">badge</span>
+                                <span>Student ID pending</span>
+                            </div>
+                            <div class="pending-meta-chip">
+                                <span class="material-symbols-outlined" style="font-size:18px;">notifications_active</span>
+                                <span>Your child will see the request in their notification center.</span>
+                            </div>
+                        </div>
+                        <div class="pending-state-actions">
+                            <button class="btn-secondary" id="cancelPendingRequestBtn" type="button" style="margin-top:0;">Cancel Wrong Student ID</button>
+                            <button class="btn-secondary" id="editPendingRequestBtn" type="button" style="margin-top:0;">Enter Another Student ID</button>
+                        </div>
+                    </div>
+                    <!-- (2026-07-13) Slim location alert layout; was bulky stacked card -->
+                    <div class="location-alert-card" id="locationAlertCard">
+                        <div class="location-alert-icon">
+                            <span class="material-symbols-outlined">location_off</span>
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <strong style="font-size:0.84rem; color:var(--ink); font-weight:800; display:block;">Child location required</strong>
+                            <div id="locationAlertText" style="font-size:0.75rem; color:var(--muted); line-height:1.35; margin-top:1px;">
+                                Your child needs to turn on location sharing before live tracking can continue.
+                            </div>
+                            <button class="btn-primary" id="requestLocationBtn" type="button" style="margin-top:6px; padding:6px 12px; min-height:32px; height:32px; font-size:0.75rem; border-radius:10px; width:100%; box-shadow:none;">
+                                Ask Child to Turn On Location
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vault View -->
+            <div class="view" id="vaultView">
+                <div class="section-header">
+                    <h2>Child Vault</h2>
+                </div>
+                <p style="color:var(--muted); font-size:0.9rem; margin-bottom:20px;">Images and videos from your child's vault appear here for guardian review.</p>
+                <div id="sharedVaultGrid" class="row g-3">
+                    <!-- Media items -->
+                </div>
+                <div id="vaultEmpty" class="empty-state">
+                    <span class="material-symbols-outlined">auto_stories</span>
+                    <h3>No Vault Media</h3>
+                    <p>When your child uploads vault photos or videos, they appear here.</p>
+                </div>
+            </div>
+
+            <!-- Alerts View -->
+            <div class="view" id="alertsView">
+                <div class="section-header">
+                    <h2>Guardian Alerts</h2>
+                </div>
+                <div class="section-header" style="margin-top:0;">
+                    <h2 style="font-size:1rem;">Notification History</h2>
+                </div>
+                <div id="notificationHistory" class="notification-history"></div>
+                <div id="notificationHistoryEmpty" class="empty-state">
+                    <span class="material-symbols-outlined">notifications</span>
+                    <h3>No Notifications Yet</h3>
+                    <p>Account notifications and location requests will appear here.</p>
+                </div>
+                <div class="section-header" style="margin-top:24px;">
+                    <h2 style="font-size:1rem;">Safety Activity</h2>
+                </div>
+                <div id="alertHistory">
+                    <!-- Alert items -->
+                </div>
+                <div id="alertsEmpty" class="empty-state">
+                    <span class="material-symbols-outlined">notifications_active</span>
+                    <h3>All Clear</h3>
+                    <p>No active emergency alerts from your child.</p>
+                </div>
+            </div>
+
+            <!-- GAD View -->
+            <div class="view" id="gadView">
+                <div class="page-header"
+                    style="display: flex; gap: 14px; align-items: flex-start; margin-bottom: 28px;">
+                    <div class="icon-badge"
+                        style="background: var(--primary-soft); color: var(--primary); flex-shrink: 0;">
+                        <span class="material-symbols-outlined">campaign</span>
+                    </div>
+                    <div>
+                        <h1 class="page-title"
+                            style="margin: 2px 0 4px; font-family: 'Sora', sans-serif; font-size: 1.18rem; color: #262033; letter-spacing: -0.04em;">
+                            Guardian Bulletin</h1>
+                        <p class="page-copy" style="margin: 0; color: #4f4a62; line-height: 1.5; font-size: 0.95rem;">
+                            Official campus updates guardians may want to review alongside their child.</p>
+                    </div>
+                </div>
+                <button class="support-chat-trigger" id="openGuardianSupportBtn" type="button" style="margin-bottom: 18px;">
+                    <span class="material-symbols-outlined">support_agent</span>
+                    <span>Message GAD Support</span>
+                </button>
+                <div id="gadPostsFeed">
+                    <!-- GAD Posts -->
+                </div>
+            </div>
+
+        </div>
+
+        <nav class="bottom-nav" aria-label="Primary">
+            <div class="bottom-nav-inner">
+                <a href="#" class="nav-item active" data-nav="map">
+                    <span class="material-symbols-outlined">map</span>
+                    <span>Child Map</span>
+                </a>
+                <a href="#" class="nav-item" data-nav="vault">
+                    <span class="material-symbols-outlined">shield</span>
+                    <span>Vault</span>
+                </a>
+                <a href="#" class="nav-item" data-nav="alerts">
+                    <span class="material-symbols-outlined">emergency_home</span>
+                    <span>Safety</span>
+                </a>
+                <a href="#" class="nav-item" data-nav="gad">
+                    <span class="material-symbols-outlined">campaign</span>
+                    <span>GAD</span>
+                </a>
+            </div>
+        </nav>
+
+        <!-- (2026-07-13) Fix balanced modal div hierarchy; was extra closing div -->
+        <!-- Link Student Modal -->
+        <div class="modal-overlay" id="linkModal">
+            <div class="modal-card">
+                <h3 class="modal-title">Link Your Child</h3>
+                <p class="modal-copy">A child link is required before you can use the guardian dashboard. Enter the 7-digit Student ID to send a request now.</p>
+                <div class="form-group">
+                    <label class="form-label">Student ID Number</label>
+                    <input type="text" id="studentIdInput" class="form-input" placeholder="e.g. 1234567" maxlength="7">
+                </div>
+                <button class="btn-primary" id="sendRequestBtn">Send Request to Continue</button>
+                <button class="btn-secondary" id="closeLinkModalBtn" type="button">Not Now</button>
+            </div>
+        </div>
+
+    <div class="toast-notify" id="toastNotify">
+        <span class="material-symbols-outlined" id="toastIcon">info</span>
+        <span id="toastMsg">Notification message</span>
+    </div>
+
+    <div class="modal-overlay" id="vaultViewerModal">
+        <div class="vault-viewer-card">
+            <div class="vault-viewer-head">
+                <div>
+                    <h3 class="vault-viewer-title">Vault Media</h3>
+                    <p class="vault-viewer-subtitle" id="vaultViewerMeta">Review shared media from your child.</p>
+                </div>
+                <button class="vault-viewer-close" id="closeVaultViewerBtn" type="button" aria-label="Close vault viewer">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="vault-viewer-media" id="vaultViewerMedia"></div>
+            <div class="vault-viewer-actions">
+                <button class="btn-primary" id="downloadVaultViewerBtn" type="button">
+                    <span class="material-symbols-outlined">download</span>
+                    <span>Download</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="chat-overlay" id="guardianChatOverlay">
+        <div class="chat-box">
+            <div class="chat-header">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span class="material-symbols-outlined">support_agent</span>
+                    <strong style="font-family:'Sora';">GAD Support</strong>
+                </div>
+                <button id="closeGuardianChatBtn" type="button" aria-label="Close chat">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="chat-messages" id="guardianChatMessages"></div>
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="guardianChatInput" placeholder="Type your message...">
+                <button class="chat-send-btn" id="guardianSendChatBtn" type="button">
+                    <span class="material-symbols-outlined">send</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth } from './firebase-config.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import {
+            getUserProfile,
+            getAcceptedLinksForGuardian,
+            getAllLinksForGuardian,
+            getAllUsers,
+            getStudentBootstrapProfile,
+            subscribeToStudentLocation,
+            subscribeToStudentAttendance,
+            getAttendanceHistory,
+            getGADPosts,
+            getUserEmergencyPosts,
+            createGuardianLinkRequest,
+            removeGuardianLink,
+            updateGuardianLinkStudentId,
+            toggleLikeGADPost,
+            sendAccountNotification,
+            subscribeToAccountNotifications,
+            sendChatMessage,
+            subscribeToMessagesByThread,
+            sendGuardianLocationReminder,
+            subscribeToCampusMapConfig
+        } from './db.js';
+
+        let map, studentMarker, polyline;
+        let activeLink = null;
+        let attendanceUnsub = null;
+        let locationUnsub = null;
+        let guardianProfile = null;
+        let currentSharedVaultItems = [];
+        let latestStudentLocation = null;
+        let notificationUnsub = null;
+        let pendingGuardianLink = null;
+        let guardianSupportUnsub = null;
+        let currentGuardianSupportThreadId = null;
+
+        // --- Navigation Logic ---
+        const navItems = document.querySelectorAll('.nav-item');
+        const views = document.querySelectorAll('.view');
+        const studentSelectorBar = document.getElementById('studentSelectorBar');
+        const vaultViewerModal = document.getElementById('vaultViewerModal');
+        const vaultViewerMedia = document.getElementById('vaultViewerMedia');
+        const vaultViewerMeta = document.getElementById('vaultViewerMeta');
+        const closeVaultViewerBtn = document.getElementById('closeVaultViewerBtn');
+        const downloadVaultViewerBtn = document.getElementById('downloadVaultViewerBtn');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const target = item.dataset.nav;
+                console.log("Navigating to:", target);
+                setActiveView(target);
+            });
+        });
+
+        function setActiveView(viewId) {
+            navItems.forEach(i => i.classList.toggle('active', i.dataset.nav === viewId));
+            views.forEach(v => v.classList.toggle('active', v.id === `${viewId}View`));
+            if (viewId === 'map' && map) setTimeout(() => map.invalidateSize(), 300);
+            if (viewId === 'gad') loadGADPosts();
+        }
+
+        // (2026-07-13) Define CAMPUS_CENTER and geofence polygon for guardian map; was missing
+        const CAMPUS_CENTER = [11.26659, 124.00872];
+        const DEFAULT_CAMPUS_GEOFENCE_POLYGON = [
+            [11.26805, 124.00780],
+            [11.26820, 124.00902],
+            [11.26760, 124.00900],
+            [11.26755, 124.00965],
+            [11.26522, 124.00930],
+            [11.26538, 124.00755]
+        ];
+        const CAMPUS_GEOFENCE_POLYGON = DEFAULT_CAMPUS_GEOFENCE_POLYGON;
+
+        let activeGuardianGeofencePolygon = null;
+
+        function getCampusGeofencePolygon() {
+            try {
+                const stored = localStorage.getItem('securo_custom_geofence');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length >= 3) {
+                        activeGuardianGeofencePolygon = parsed;
+                        return parsed;
+                    }
+                }
+            } catch (e) {}
+            if (activeGuardianGeofencePolygon && Array.isArray(activeGuardianGeofencePolygon) && activeGuardianGeofencePolygon.length >= 3) {
+                return activeGuardianGeofencePolygon;
+            }
+            return DEFAULT_CAMPUS_GEOFENCE_POLYGON;
+        }
+
+        // (2026-07-13) Set exact 9 campus facilities matching adminGeofenceModalMap; was 7 facilities
+        const DEFAULT_CAMPUS_BUILDINGS = [
+            { name: "Guard House", coords: [11.26785, 124.00865], icon: "security", desc: "24/7 campus security dispatch and visitor verification." },
+            { name: "Medical Clinic", coords: [11.26780, 124.00895], icon: "medical_services", desc: "First-aid, medical triage, and emergency response clinic." },
+            { name: "Admin Building", coords: [11.26735, 124.00835], icon: "account_balance", desc: "Administrative offices and student services." },
+            { name: "Main Gate", coords: [11.26735, 124.00865], icon: "door_front", desc: "Primary entry for students & staff" },
+            { name: "HM Building", coords: [11.26715, 124.00870], icon: "restaurant", desc: "Hospitality Management laboratories and culinary suites." },
+            { name: "Educ Building", coords: [11.26705, 124.00910], icon: "school", desc: "College of Education lecture rooms and dean's office." },
+            { name: "Engineering Complex", coords: [11.26680, 124.00925], icon: "precision_manufacturing", desc: "Engineering & Industrial Technology workshops." },
+            { name: "University Gym", coords: [11.26740, 124.00935], icon: "fitness_center", desc: "Campus sports arena and assembly gymnasium." },
+            { name: "Campus Library", coords: [11.26620, 124.00895], icon: "local_library", desc: "Learning commons, digital archives, and quiet study hall." }
+        ];
+
+        function getActiveCampusBuildings() {
+            try {
+                const stored = localStorage.getItem('securo_campus_buildings');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                }
+            } catch (e) {}
+            return DEFAULT_CAMPUS_BUILDINGS.map(b => ({ ...b, coords: [...b.coords] }));
+        }
+
+        let CAMPUS_BUILDINGS = getActiveCampusBuildings();
+        let guardianBuildingMarkersLayer = null;
+        // (2026-07-13) Hoist guardianGeofencePolygonLayer declaration; was declared after subscriber
+        let guardianGeofencePolygonLayer = null;
+
+        // (2026-07-13) Clean icon-only markers with hover/tap details; was wide text cards
+        function renderGuardianCampusMarkers() {
+            if (!map) return;
+            if (!guardianBuildingMarkersLayer) {
+                guardianBuildingMarkersLayer = L.layerGroup().addTo(map);
+            } else {
+                guardianBuildingMarkersLayer.clearLayers();
+            }
+
+            CAMPUS_BUILDINGS.forEach(b => {
+                const icon = L.divIcon({
+                    className: 'campus-facility-icon-marker',
+                    html: `<div style="background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 3px 10px rgba(24,20,40,0.16); border:2px solid #f43f5e; display:flex; align-items:center; justify-content:center; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:16px; color:#f43f5e;">${b.icon || 'location_on'}</span></div>`,
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+                // (2026-07-13) Single clean popup on marker click; was duplicate tooltip + popup
+                const m = L.marker(b.coords, { icon }).addTo(guardianBuildingMarkersLayer);
+                m.bindPopup(`<strong>${b.name}</strong><br><small>${b.desc || ''}</small>`);
+            });
+        }
+
+        // (2026-07-13) Subscribe to real-time campus map configuration for guardian view; was static markers
+        subscribeToCampusMapConfig((config) => {
+            if (config?.geofence && Array.isArray(config.geofence) && config.geofence.length >= 3) {
+                activeGuardianGeofencePolygon = config.geofence;
+                if (guardianGeofencePolygonLayer && map) {
+                    guardianGeofencePolygonLayer.setLatLngs(config.geofence);
+                }
+            }
+            if (config?.buildings && Array.isArray(config.buildings)) {
+                CAMPUS_BUILDINGS = config.buildings;
+                renderGuardianCampusMarkers();
+            }
+        });
+
+        window.addEventListener('storage', (e) => {
+            if (!e.key || e.key === 'securo_custom_geofence') {
+                activeGuardianGeofencePolygon = null;
+                const updated = getCampusGeofencePolygon();
+                if (guardianGeofencePolygonLayer && map) {
+                    guardianGeofencePolygonLayer.setLatLngs(updated);
+                }
+            }
+            if (!e.key || e.key === 'securo_campus_buildings') {
+                CAMPUS_BUILDINGS = getActiveCampusBuildings();
+                renderGuardianCampusMarkers();
+            }
+        });
+
+        function isPointInPolygon(point, vs) {
+            const x = point[0], y = point[1];
+            let inside = false;
+            for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+                const xi = vs[i][0], yi = vs[i][1];
+                const xj = vs[j][0], yj = vs[j][1];
+                const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        // --- Map Initialization ---
+        function initMap() {
+            if (map) return;
+            map = L.map('map', {
+                zoomControl: false,
+                zoomSnap: 0.25,
+                zoomDelta: 0.5,
+                wheelPxPerZoomLevel: 140
+            }).setView(CAMPUS_CENTER, 17);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            // Campus Geofence Visual Polygon
+            guardianGeofencePolygonLayer = L.polygon(getCampusGeofencePolygon(), {
+                color: '#e11d48',
+                weight: 3,
+                dashArray: '5, 6',
+                fillColor: '#f43f5e',
+                fillOpacity: 0.1
+            }).addTo(map);
+
+            renderGuardianCampusMarkers();
+        }
+
+        function clearStudentMarker() {
+            if (studentMarker && map) {
+                map.removeLayer(studentMarker);
+                studentMarker = null;
+            }
+        }
+
+        function getLocationUnavailableReason(loc) {
+            if (!loc) {
+                return "We have not received your child's live location yet. Ask them to turn on location services.";
+            }
+
+            if (loc.sharingEnabled === false) {
+                return loc.sharingMessage || "Your child has location sharing turned off. They need to enable it before you can see live tracking.";
+            }
+
+            if (typeof loc.lat !== 'number' || typeof loc.lng !== 'number') {
+                return "Your child's device has not shared a live location yet. Ask them to turn on location services.";
+            }
+
+            const updatedAt = loc.updatedAt?.toDate?.();
+            if (updatedAt && (Date.now() - updatedAt.getTime()) > 5 * 60 * 1000) {
+                return "Your child's live location has not updated recently. Ask them to turn on location services again.";
+            }
+
+            return "";
+        }
+
+        function renderLocationAlert(reason = "") {
+            const card = document.getElementById('locationAlertCard');
+            const text = document.getElementById('locationAlertText');
+            const locateBtn = document.getElementById('locateBtn');
+            if (!card || !text) return;
+
+            if (reason) {
+                card.classList.add('active');
+                text.textContent = reason;
+                if (locateBtn) locateBtn.disabled = true;
+                return;
+            }
+
+            card.classList.remove('active');
+            if (locateBtn) locateBtn.disabled = false;
+        }
+
+        function formatNotificationTime(value) {
+            const date = value?.toDate?.() || (value ? new Date(value) : null);
+            return date ? date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just now';
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function getGuardianNotificationIcon(type) {
+            if (type === 'location_request_sent') return 'notifications_active';
+            if (type === 'student_guardian_request') return 'family_restroom';
+            if (type === 'guardian_request_accepted') return 'check_circle';
+            if (type === 'guardian_request_declined') return 'cancel';
+            return 'info';
+        }
+
+        function renderGuardianNotificationHistory(notifications = []) {
+            const container = document.getElementById('notificationHistory');
+            const empty = document.getElementById('notificationHistoryEmpty');
+            if (!container || !empty) return;
+
+            if (!notifications.length) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.innerHTML = notifications.map((item) => `
+                <div class="notification-item ${item.isRead ? '' : 'unread'}">
+                    <div class="notification-item-icon">
+                        <span class="material-symbols-outlined">${getGuardianNotificationIcon(item.type)}</span>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="display:flex; justify-content:space-between; gap:12px;">
+                            <div style="font-weight:800;">${escapeHtml(item.title)}</div>
+                            <div style="font-size:0.75rem; color:var(--muted); font-weight:700;">${escapeHtml(formatNotificationTime(item.createdAt))}</div>
+                        </div>
+                        <div style="font-size:0.84rem; color:var(--muted); line-height:1.5; margin-top:4px;">${escapeHtml(item.message)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setPendingGuardianState(link = null) {
+            pendingGuardianLink = link;
+            const pendingCard = document.getElementById('pendingStateCard');
+            const pendingCopy = document.getElementById('pendingStateCopy');
+            const pendingMeta = document.getElementById('pendingStudentMeta');
+            const locateBtn = document.getElementById('locateBtn');
+            const requestLocationBtn = document.getElementById('requestLocationBtn');
+            const studentAvatar = document.getElementById('studentAvatar');
+            const activeStudentName = document.getElementById('activeStudentName');
+            const lastSeen = document.getElementById('lastSeen');
+            const statusDot = document.getElementById('statusDot');
+            const cancelPendingRequestBtn = document.getElementById('cancelPendingRequestBtn');
+            const editPendingRequestBtn = document.getElementById('editPendingRequestBtn');
+
+            if (!link) {
+                pendingCard?.classList.remove('active');
+                if (locateBtn) locateBtn.style.display = 'flex';
+                if (cancelPendingRequestBtn) cancelPendingRequestBtn.style.display = 'none';
+                if (editPendingRequestBtn) editPendingRequestBtn.style.display = 'none';
+                return;
+            }
+
+            if (pendingCard) pendingCard.classList.add('active');
+            if (locateBtn) locateBtn.style.display = 'none';
+            if (requestLocationBtn) requestLocationBtn.style.display = 'none';
+            if (activeStudentName) activeStudentName.textContent = 'Request Pending';
+            if (lastSeen) lastSeen.textContent = 'Waiting for child approval';
+            if (statusDot) statusDot.style.background = 'var(--green)';
+            if (studentAvatar) studentAvatar.textContent = 'â³';
+            if (pendingCopy) {
+                pendingCopy.textContent = `${link.studentId ? `Your invitation for Student ID ${link.studentId} is waiting for your child to accept.` : 'Your invitation is waiting for your child to accept.'} Once approved, this dashboard will unlock live tracking and updates automatically.`;
+            }
+            if (pendingMeta) {
+                pendingMeta.innerHTML = `
+                    <span class="material-symbols-outlined" style="font-size:18px;">badge</span>
+                    <span>${link.studentId ? `Requested student ID: ${link.studentId}` : 'Requested student ID pending'}</span>
+                `;
+            }
+            if (cancelPendingRequestBtn) cancelPendingRequestBtn.style.display = 'inline-flex';
+            if (editPendingRequestBtn) editPendingRequestBtn.style.display = 'inline-flex';
+
+            renderLocationAlert("");
+            clearStudentMarker();
+            latestStudentLocation = null;
+        }
+
+        // --- Data Loading ---
+        async function initDashboard(user) {
+            console.log("Initializing dashboard for:", user.email);
+            try {
+                guardianProfile = await getUserProfile(user.uid);
+                if (guardianProfile) guardianProfile.uid = user.uid;
+                console.log("Guardian Profile:", guardianProfile);
+
+                if (guardianProfile) {
+                    document.getElementById('userInitials').textContent = guardianProfile.name.charAt(0);
+                    document.getElementById('dropdownName').textContent = guardianProfile.name;
+                }
+
+                if (notificationUnsub) notificationUnsub();
+                notificationUnsub = subscribeToAccountNotifications(user.uid, renderGuardianNotificationHistory);
+
+                const links = await getAcceptedLinksForGuardian(user.uid);
+                console.log("Accepted Links:", links.length);
+                renderStudentSelector(links);
+
+                if (links.length > 0) {
+                    if (studentSelectorBar) studentSelectorBar.style.display = 'none';
+                    document.getElementById('addStudentBtn').style.display = 'none';
+                    setPendingGuardianState(null);
+                    document.getElementById('requestLocationBtn').style.display = 'inline-flex';
+                    selectStudent(links[0]);
+                } else {
+                    if (studentSelectorBar) studentSelectorBar.style.display = 'flex';
+                    const allLinks = await getAllLinksForGuardian(user.uid);
+                    console.log("All Links (inc pending):", allLinks.length);
+
+                    if (allLinks.length === 0) {
+                        console.log("No links found. Triggering modal.");
+                        setPendingGuardianState(null);
+                        document.getElementById('addStudentBtn').style.display = 'flex';
+                        document.getElementById('linkModal').classList.add('active');
+                    } else {
+                        document.getElementById('addStudentBtn').style.display = 'none';
+                        showToast("Waiting for child approval...");
+                        const pendingLink = allLinks.find((link) => link.status === 'pending') || allLinks[0];
+                        setPendingGuardianState(pendingLink);
+                        document.getElementById('vaultEmpty').style.display = 'block';
+                        document.getElementById('vaultEmpty').querySelector('h3').textContent = 'Vault unlocks after approval';
+                        document.getElementById('vaultEmpty').querySelector('p').textContent = 'Your child needs to accept your invitation before shared vault media appears here.';
+                        document.getElementById('alertsEmpty').style.display = 'block';
+                        document.getElementById('alertsEmpty').querySelector('h3').textContent = 'Safety feed pending approval';
+                        document.getElementById('alertsEmpty').querySelector('p').textContent = 'Emergency alerts and attendance updates will appear after your child approves your request.';
+                    }
+                }
+            } catch (err) {
+                console.warn("Dashboard init failed:", err);
+                showToast("Failed to load data. Please refresh.", "error");
+                // Even on error, if we're sure it's a new user, show modal
+                if (studentSelectorBar) studentSelectorBar.style.display = 'flex';
+                document.getElementById('addStudentBtn').style.display = 'flex';
+                document.getElementById('linkModal').classList.add('active');
+            }
+        }
+
+        // Profile Handlers
+        const profileBtn = document.getElementById('profileBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+
+        profileBtn.onclick = (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle('active');
+        };
+
+        document.addEventListener('click', () => {
+            profileDropdown.classList.remove('active');
+        });
+
+        document.getElementById('logoutBtn').onclick = async () => {
+            await auth.signOut();
+            window.location.href = 'login.html';
+        };
+
+        // Modal Handlers
+        const closeLinkModal = () => document.getElementById('linkModal').classList.remove('active');
+        document.getElementById('addStudentBtn').onclick = () => {
+            document.getElementById('linkModal').classList.add('active');
+        };
+        document.getElementById('closeLinkModalBtn').onclick = closeLinkModal;
+
+        function setButtonBusy(button, isBusy = true) {
+            if (!button) return;
+            button.classList.toggle('is-busy', isBusy);
+            button.disabled = isBusy;
+        }
+
+        function isGenericChildName(name) {
+            const normalized = String(name || '').trim().toLowerCase();
+            return !normalized || [
+                'student',
+                'linked child',
+                'linked student',
+                'securo user'
+            ].includes(normalized);
+        }
+
+        async function resolveChildDisplayName(link) {
+            let resolvedName = !isGenericChildName(link?.studentName) ? link.studentName : '';
+
+            if (link?.studentUid) {
+                try {
+                    const profile = await getUserProfile(link.studentUid);
+                    if (!isGenericChildName(profile?.name)) {
+                        resolvedName = profile.name;
+                    }
+                } catch (error) {
+                    
+                }
+
+                if (isGenericChildName(resolvedName)) {
+                    try {
+                        const bootstrapProfile = await getStudentBootstrapProfile(link.studentUid);
+                        if (!isGenericChildName(bootstrapProfile?.name)) {
+                            resolvedName = bootstrapProfile.name;
+                        }
+                    } catch (error) {
+                        
+                    }
+                }
+            }
+
+            if (isGenericChildName(resolvedName) && link?.studentId) {
+                try {
+                    const users = await getAllUsers();
+                    const matchedUser = users.find((user) => String(user.studentId || '') === String(link.studentId));
+                    if (!isGenericChildName(matchedUser?.name)) {
+                        resolvedName = matchedUser.name;
+                    }
+                } catch (error) {
+                    
+                }
+            }
+
+            return resolvedName || link?.studentId || 'Linked Child';
+        }
+
+        document.getElementById('studentIdInput').addEventListener('input', (event) => {
+            event.target.value = event.target.value.replace(/\D/g, '').slice(0, 7);
+        });
+
+        document.getElementById('sendRequestBtn').onclick = async () => {
+            const sendRequestBtn = document.getElementById('sendRequestBtn');
+            const sid = document.getElementById('studentIdInput').value.trim();
+            if (sid.length !== 7) {
+                showToast("Please enter a valid 7-digit ID", "error");
+                return;
+            }
+            try {
+                setButtonBusy(sendRequestBtn, true);
+                if (pendingGuardianLink?.id && pendingGuardianLink.status === 'pending') {
+                    await updateGuardianLinkStudentId(pendingGuardianLink.id, sid);
+                    showToast("Student ID request updated. Waiting for your child to accept.");
+                } else {
+                    const linkData = {
+                        guardianId: auth.currentUser.uid,
+                        studentId: sid,
+                        guardianName: guardianProfile?.name || auth.currentUser.email,
+                        guardianEmail: auth.currentUser.email
+                    };
+                    console.log("Sending link request:", linkData);
+                    await createGuardianLinkRequest(linkData);
+                    showToast("Request sent! Waiting for your child to accept.");
+                }
+                closeLinkModal();
+                initDashboard(auth.currentUser); // Refresh
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                setButtonBusy(sendRequestBtn, false);
+            }
+        };
+
+        document.getElementById('cancelPendingRequestBtn')?.addEventListener('click', async () => {
+            if (!pendingGuardianLink?.id) return;
+
+            const button = document.getElementById('cancelPendingRequestBtn');
+            try {
+                setButtonBusy(button, true);
+                await removeGuardianLink(pendingGuardianLink.id);
+                pendingGuardianLink = null;
+                document.getElementById('studentIdInput').value = '';
+                showToast("Pending request cancelled.");
+                document.getElementById('addStudentBtn').style.display = 'flex';
+                document.getElementById('linkModal').classList.add('active');
+                await initDashboard(auth.currentUser);
+            } catch (error) {
+                console.warn("Cancel pending request failed:", error);
+                showToast("Could not cancel that request right now.", "error");
+            } finally {
+                setButtonBusy(button, false);
+            }
+        });
+
+        document.getElementById('editPendingRequestBtn')?.addEventListener('click', async () => {
+            if (pendingGuardianLink?.studentId) {
+                document.getElementById('studentIdInput').value = pendingGuardianLink.studentId;
+            }
+            document.getElementById('linkModal').classList.add('active');
+        });
+
+        function getGuardianSupportThreadState() {
+            const adminId = "system_admin_securo";
+            return {
+                adminId,
+                participantId: guardianProfile?.uid || auth.currentUser?.uid || "",
+                threadId: [guardianProfile?.uid || auth.currentUser?.uid || "", adminId].sort().join("_")
+            };
+        }
+
+        function renderGuardianSupportMessages(messages = []) {
+            const container = document.getElementById('guardianChatMessages');
+            if (!container) return;
+
+            container.innerHTML = '';
+            if (!messages.length) {
+                container.innerHTML = '<div class="chat-message received">Hello! You can message GAD support here anytime.<span class="chat-time">Just now</span></div>';
+                return;
+            }
+
+            [...messages]
+                .sort((a, b) => {
+                    const timeA = a.timestamp?.toDate?.() || new Date(a.localTime || 0);
+                    const timeB = b.timestamp?.toDate?.() || new Date(b.localTime || 0);
+                    return timeA - timeB;
+                })
+                .forEach((msg) => {
+                    const isSent = msg.senderId === (guardianProfile?.uid || auth.currentUser?.uid);
+                    const date = msg.timestamp?.toDate?.() || new Date(msg.localTime || Date.now());
+                    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const item = document.createElement('div');
+                    item.className = `chat-message ${isSent ? 'sent' : 'received'}`;
+                    item.innerHTML = `${escapeHtml(msg.text || '')}<span class="chat-time">${timeStr}</span>`;
+                    container.appendChild(item);
+                });
+
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        }
+
+        function openGuardianSupportChat() {
+            const overlay = document.getElementById('guardianChatOverlay');
+            if (!overlay || !guardianProfile?.uid) return;
+            overlay.classList.add('active');
+
+            const supportState = getGuardianSupportThreadState();
+            currentGuardianSupportThreadId = supportState.threadId;
+            if (guardianSupportUnsub) guardianSupportUnsub();
+            guardianSupportUnsub = subscribeToMessagesByThread(currentGuardianSupportThreadId, renderGuardianSupportMessages);
+
+            setTimeout(() => document.getElementById('guardianChatInput')?.focus(), 200);
+        }
+
+        function closeGuardianSupportChat() {
+            const overlay = document.getElementById('guardianChatOverlay');
+            overlay?.classList.remove('active');
+            if (guardianSupportUnsub) {
+                guardianSupportUnsub();
+                guardianSupportUnsub = null;
+            }
+        }
+
+        async function sendGuardianSupportMessage() {
+            const input = document.getElementById('guardianChatInput');
+            const text = input?.value?.trim();
+            if (!text || !guardianProfile?.uid) return;
+
+            const supportState = getGuardianSupportThreadState();
+            currentGuardianSupportThreadId = supportState.threadId;
+            input.value = '';
+
+            try {
+                await sendChatMessage(guardianProfile.uid, supportState.adminId, text, guardianProfile.name || 'Guardian', {
+                    threadId: currentGuardianSupportThreadId,
+                    supportMode: 'gad_support',
+                    senderLabel: guardianProfile.name || 'Guardian',
+                    ownerId: guardianProfile.uid
+                });
+            } catch (error) {
+                console.warn("Guardian support message failed:", error);
+                showToast("Could not send your message right now.", "error");
+            }
+        }
+
+        document.getElementById('openGuardianSupportBtn')?.addEventListener('click', openGuardianSupportChat);
+        document.getElementById('closeGuardianChatBtn')?.addEventListener('click', closeGuardianSupportChat);
+        document.getElementById('guardianSendChatBtn')?.addEventListener('click', sendGuardianSupportMessage);
+        document.getElementById('guardianChatInput')?.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                sendGuardianSupportMessage();
+            }
+        });
+        document.getElementById('guardianChatOverlay')?.addEventListener('click', (event) => {
+            if (event.target.id === 'guardianChatOverlay') {
+                closeGuardianSupportChat();
+            }
+        });
+
+        async function renderStudentSelector(links) {
+            const bar = document.getElementById('studentSelector');
+            bar.innerHTML = '';
+            for (const link of links) {
+                const resolvedName = await resolveChildDisplayName(link);
+                const chip = document.createElement('div');
+                chip.className = 'selector-chip';
+                chip.textContent = resolvedName;
+                chip.onclick = () => selectStudent(link, resolvedName);
+                bar.appendChild(chip);
+            }
+        }
+
+        async function selectStudent(link, fetchedName = null) {
+            activeLink = link;
+            const displayName = fetchedName || await resolveChildDisplayName(link);
+
+            document.getElementById('activeStudentName').textContent = displayName;
+            const studentAvatar = document.getElementById('studentAvatar');
+            if (studentAvatar) {
+                studentAvatar.textContent = displayName
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map((part) => part[0])
+                    .join('')
+                    .toUpperCase() || '?';
+            }
+            document.querySelectorAll('.selector-chip').forEach(c => c.classList.toggle('active', c.textContent === displayName));
+
+            initMap();
+            latestStudentLocation = null;
+            clearStudentMarker();
+            renderLocationAlert("Waiting for your child's live location...");
+            document.getElementById('lastSeen').textContent = "Waiting for location...";
+            document.getElementById('statusDot').style.background = 'var(--red)';
+            startMonitoring(link.studentUid);
+            loadSharedVault(link.studentUid);
+        }
+
+        async function loadSharedVault(studentUid) {
+            const container = document.getElementById('sharedVaultGrid');
+            const empty = document.getElementById('vaultEmpty');
+
+            try {
+                // Get emergency posts for this student
+                const posts = await getUserEmergencyPosts(studentUid);
+                const sharedItems = [];
+                posts.forEach(post => {
+                    if (post.guardianVisible !== false && Array.isArray(post.attachments)) {
+                        post.attachments.forEach(att => {
+                            if (att?.kind === 'image' || att?.kind === 'video') {
+                                sharedItems.push({
+                                    ...att,
+                                    timestamp: post.timestamp,
+                                    location: post.location
+                                });
+                            }
+                        });
+                    }
+                });
+
+                currentSharedVaultItems = sharedItems.sort((a, b) => {
+                    const aTime = a.timestamp?.seconds || 0;
+                    const bTime = b.timestamp?.seconds || 0;
+                    return bTime - aTime;
+                });
+
+                if (currentSharedVaultItems.length === 0) {
+                    container.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+
+                empty.style.display = 'none';
+                container.innerHTML = currentSharedVaultItems.map((item, index) => {
+                    const date = item.timestamp?.toDate() || new Date();
+                    const isVideo = item.kind === 'video';
+                    return `
+                        <div class="col-6">
+                            <div class="card" style="padding:0; overflow:hidden; position:relative; aspect-ratio:1/1;">
+                                <button class="download-btn" type="button" data-download-index="${index}">
+                                    <span class="material-symbols-outlined">download</span>
+                                </button>
+                                <button class="vault-media-trigger" type="button" data-vault-index="${index}">
+                                    ${isVideo ?
+                            `<video src="${item.src}" muted playsinline preload="metadata"></video>` :
+                            `<img src="${item.src}" alt="${item.label || 'Vault image'}">`
+                        }
+                                </button>
+                                <div style="position:absolute; bottom:0; left:0; right:0; padding:8px; background:linear-gradient(transparent, rgba(0,0,0,0.6)); color:white; font-size:0.7rem;">
+                                    ${date.toLocaleDateString()}
+                                </div>
+                                ${isVideo ? `<span class="material-symbols-outlined" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:white; font-size:32px;">play_circle</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                container.querySelectorAll('[data-vault-index]').forEach((button) => {
+                    button.addEventListener('click', () => {
+                        const item = currentSharedVaultItems[Number(button.dataset.vaultIndex)];
+                        if (item) openGuardianVaultViewer(item);
+                    });
+                });
+
+                container.querySelectorAll('[data-download-index]').forEach((button) => {
+                    button.addEventListener('click', (event) => {
+                        event.stopPropagation();
+                        const item = currentSharedVaultItems[Number(button.dataset.downloadIndex)];
+                        if (item) downloadFile(item.src, getGuardianVaultFilename(item));
+                    });
+                });
+            } catch (err) {
+                console.warn("Vault loading failed:", err);
+            }
+        }
+
+        function getGuardianVaultFilename(item) {
+            const date = item?.timestamp?.toDate?.() || new Date();
+            const extension = item?.kind === 'video' ? 'mp4' : 'jpg';
+            return `securo_vault_${item?.kind || 'media'}_${date.getTime()}.${extension}`;
+        }
+
+        function openGuardianVaultViewer(item) {
+            if (!item || !vaultViewerModal || !vaultViewerMedia) return;
+            const date = item.timestamp?.toDate?.() || new Date();
+            vaultViewerMeta.textContent = `${item.kind === 'video' ? 'Video' : 'Image'} â€¢ ${date.toLocaleString()}`;
+            vaultViewerMedia.innerHTML = item.kind === 'video'
+                ? `<video src="${item.src}" controls playsinline autoplay></video>`
+                : `<img src="${item.src}" alt="${item.label || 'Vault image'}">`;
+            downloadVaultViewerBtn.onclick = () => downloadFile(item.src, getGuardianVaultFilename(item));
+            vaultViewerModal.classList.add('active');
+        }
+
+        function startMonitoring(studentUid) {
+            if (locationUnsub) locationUnsub();
+            if (attendanceUnsub) attendanceUnsub();
+
+            locationUnsub = subscribeToStudentLocation(studentUid, (loc) => {
+                updateStudentMap(loc);
+            });
+
+            attendanceUnsub = subscribeToStudentAttendance(studentUid, (logs) => {
+                renderAlerts(logs);
+            });
+        }
+
+// (2026-07-13) Add campus geofence and exit duration tracking; was basic marker pan
+        function updateStudentMap(loc) {
+            if (!map) return;
+            const unavailableReason = getLocationUnavailableReason(loc);
+            renderLocationAlert(unavailableReason);
+
+            if (unavailableReason) {
+                latestStudentLocation = null;
+                clearStudentMarker();
+                document.getElementById('lastSeen').textContent = "Location unavailable";
+                document.getElementById('statusDot').style.background = 'var(--red)';
+                return;
+            }
+
+            latestStudentLocation = loc;
+            const pos = [loc.lat, loc.lng];
+// (2026-07-13) Check point-in-polygon for child location; was radius check
+            const isInside = isPointInPolygon([loc.lat, loc.lng], CAMPUS_GEOFENCE_POLYGON);
+
+            if (!studentMarker) {
+                const icon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="width:22px;height:22px;background:${isInside ? '#0f9b67' : '#d11f34'};border:3px solid white;border-radius:50%;box-shadow:0 0 20px ${isInside ? 'rgba(15,155,103,0.5)' : 'rgba(209,31,52,0.5)'};"></div>`,
+                    iconSize: [22, 22],
+                    iconAnchor: [11, 11]
+                });
+                studentMarker = L.marker(pos, { icon }).addTo(map);
+            } else {
+                studentMarker.setLatLng(pos);
+            }
+
+            map.panTo(pos);
+            const time = loc.updatedAt?.toDate() || new Date();
+            const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            if (isInside) {
+                document.getElementById('lastSeen').innerHTML = `<span style="color:#0f9b67; font-weight:700;">Inside Campus</span> · Active ${timeStr}`;
+                document.getElementById('statusDot').style.background = 'var(--green)';
+            } else {
+                const diffMs = Math.max(0, Date.now() - time.getTime());
+                const diffMins = Math.floor(diffMs / 60000);
+                const diffHours = Math.floor(diffMins / 60);
+                const exitText = diffHours >= 1
+                    ? `Left campus ${diffHours}h ago`
+                    : (diffMins >= 1 ? `Left campus ${diffMins}m ago` : `Outside campus bounds`);
+
+                document.getElementById('lastSeen').innerHTML = `<span style="color:#d11f34; font-weight:700;">${exitText}</span> · Active ${timeStr}`;
+                document.getElementById('statusDot').style.background = 'var(--red)';
+            }
+        }
+
+        document.getElementById('requestLocationBtn')?.addEventListener('click', async () => {
+            if (!activeLink?.studentUid || !guardianProfile?.uid) {
+                showToast("Link a child first before sending a location request.", "error");
+                return;
+            }
+
+            const button = document.getElementById('requestLocationBtn');
+            const childName = document.getElementById('activeStudentName')?.textContent?.trim() || activeLink.studentName || 'your child';
+
+            try {
+                setButtonBusy(button, true);
+                await sendGuardianLocationReminder(activeLink.id, {
+                    guardianId: guardianProfile.uid,
+                    guardianName: guardianProfile.name || "",
+                    studentId: activeLink.studentId || "",
+                    message: `${guardianProfile.name || "Your parent or guardian"} asked you to turn on location sharing so live tracking can continue.`
+                });
+
+                await sendAccountNotification({
+                    userId: guardianProfile.uid,
+                    type: "location_request_sent",
+                    title: "Location request sent",
+                    message: `We sent ${childName} a reminder to turn on location sharing.`,
+                    sourceUserId: activeLink.studentUid,
+                    sourceName: childName,
+                    studentId: activeLink.studentId || "",
+                    metadata: {
+                        linkId: activeLink.id || ""
+                    }
+                }).catch(() => {});
+
+                showToast("Location reminder sent to your child.");
+            } catch (error) {
+                showToast("Could not send the location reminder right now.", "error");
+            } finally {
+                setButtonBusy(button, false);
+            }
+        });
+
+        document.getElementById('locateBtn')?.addEventListener('click', () => {
+            if (!map || !latestStudentLocation?.lat || !latestStudentLocation?.lng) {
+                showToast("Live location not available yet.", "error");
+                return;
+            }
+
+            map.flyTo([latestStudentLocation.lat, latestStudentLocation.lng], Math.max(map.getZoom(), 18), {
+                duration: 1.2
+            });
+        });
+
+        function closeGuardianVaultViewer() {
+            if (!vaultViewerModal) return;
+            vaultViewerModal.classList.remove('active');
+            vaultViewerMedia.innerHTML = '';
+            downloadVaultViewerBtn.onclick = null;
+        }
+
+        function renderAlerts(logs) {
+            const container = document.getElementById('alertHistory');
+            const empty = document.getElementById('alertsEmpty');
+
+            // Filter only SOS or critical events if any
+            const sosLogs = logs.filter(l => l.type === 'sos' || l.type === 'in' || l.type === 'out');
+
+            if (sosLogs.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.innerHTML = sosLogs.map(log => {
+                const date = log.timestamp?.toDate() || new Date();
+                const isSOS = log.type === 'sos';
+                return `
+                    <div class="alert-item">
+                        <div class="alert-icon ${isSOS ? 'icon-sos' : 'icon-attendance'}">
+                            <span class="material-symbols-outlined">${isSOS ? 'emergency' : (log.type === 'in' ? 'login' : 'logout')}</span>
+                        </div>
+                        <div style="flex:1;">
+                            <div style="font-weight:700;">${isSOS ? 'EMERGENCY ALERT' : (log.type === 'in' ? 'Timed In' : 'Timed Out')}</div>
+                            <div style="font-size:0.8rem; color:var(--muted);">${log.location?.address || 'Campus Location'}</div>
+                        </div>
+                        <div style="font-size:0.75rem; font-weight:700; color:var(--muted);">${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadStudentLogs(studentUid) {
+            const logs = await getAttendanceHistory(studentUid);
+            const container = document.getElementById('attendanceHistory');
+            const empty = document.getElementById('logsEmpty');
+
+            if (logs.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.innerHTML = logs.map(log => {
+                const date = log.timestamp?.toDate() || new Date();
+                return `
+                    <div class="card" style="padding:16px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span style="font-weight:800; color:var(--primary); font-size:0.85rem;">${log.type.toUpperCase()}</span>
+                            <span style="font-size:0.8rem; color:var(--muted); font-weight:600;">${date.toLocaleDateString()}</span>
+                        </div>
+                        <div style="font-weight:700; font-size:0.9rem;">${log.location?.address || 'Campus'}</div>
+                        <div style="font-size:0.75rem; color:var(--muted); margin-top:4px;">Recorded at ${date.toLocaleTimeString()}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        const fallbackGadPosts = [
+            {
+                id: "fallback-1",
+                author: "GAD Office Official",
+                content: "The quarterly diversity report is now available in the Vault. Students and guardians may review the latest inclusion metrics and campus support initiatives.",
+                image: "",
+                email: "gad-office@securo.local",
+                timestamp: "May 2, 4:15 PM",
+                likes: 256,
+                likedBy: []
+            },
+            {
+                id: "fallback-2",
+                author: "GAD Office Official",
+                content: "New wellness support channels are now available through the SOS page. During emergencies, students can quickly post voice, photo, video, or gallery evidence for faster response.",
+                image: "",
+                email: "gad-office@securo.local",
+                timestamp: "May 1, 10:20 AM",
+                likes: 89,
+                likedBy: []
+            }
+        ];
+
+        let currentGadPosts = [];
+
+        async function loadGADPosts() {
+            const feed = document.getElementById('gadPostsFeed');
+            try {
+                const posts = await getGADPosts();
+                feed.innerHTML = "";
+                const safePosts = Array.isArray(posts) && posts.length ? posts : fallbackGadPosts;
+                currentGadPosts = safePosts.map(post => ({ ...post, likedBy: Array.isArray(post.likedBy) ? [...post.likedBy] : [] }));
+                currentGadPosts.forEach(post => renderPost(post));
+            } catch (error) {
+                console.warn("Error loading posts:", error);
+                feed.innerHTML = "";
+                currentGadPosts = fallbackGadPosts.map(post => ({ ...post, likedBy: Array.isArray(post.likedBy) ? [...post.likedBy] : [] }));
+                currentGadPosts.forEach(post => renderPost(post));
+            }
+        }
+
+        function formatGadAuthor(author) {
+            return (author || "GAD Office").replace(/\s+official$/i, "");
+        }
+
+        function renderPost(post) {
+            const feed = document.getElementById('gadPostsFeed');
+            const likeCount = typeof post.likes === "number" ? post.likes : (Array.isArray(post.likedBy) ? post.likedBy.length : 0);
+            const isLiked = !!(guardianProfile?.uid && Array.isArray(post.likedBy) && post.likedBy.includes(guardianProfile.uid));
+            const postHtml = `
+                <article class="card feed-card" id="post-${post.id}">
+                    <div class="feed-head">
+                        <div style="display: flex; gap: 15px;">
+                            <div class="icon-badge">
+                                <span class="material-symbols-outlined" style="font-size: 26px;">verified_user</span>
+                            </div>
+                            <div class="feed-meta">
+                                <strong>${formatGadAuthor(post.author)}</strong>
+                                <span>${post.timestamp}</span>
+                            </div>
+                        </div>
+                        <div class="eyebrow">Official</div>
+                    </div>
+                    <p style="font-size: 1rem; line-height: 1.6; margin-bottom: ${post.image ? "20px" : "0"}; color: #3a364d;">${post.content}</p>
+                    ${post.image ? `<img src="${post.image}" style="width: 100%; max-height: 380px; object-fit: cover; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin-bottom:15px;">` : ""}
+                    <button class="like-action ${isLiked ? "is-liked" : ""}" type="button" data-like-post="${post.id}">
+                        <span class="material-symbols-outlined">${isLiked ? "favorite" : "favorite_border"}</span>
+                        <span>${likeCount} ${likeCount === 1 ? "Like" : "Likes"}</span>
+                    </button>
+                </article>
+            `;
+            feed.insertAdjacentHTML('beforeend', postHtml);
+        }
+
+        document.getElementById('gadPostsFeed').addEventListener("click", async (event) => {
+            const likeButton = event.target.closest("[data-like-post]");
+            if (!likeButton || !guardianProfile?.uid) return;
+
+            const postId = likeButton.dataset.likePost;
+            const postIndex = currentGadPosts.findIndex((post) => String(post.id) === String(postId));
+            if (postIndex < 0) return;
+
+            try {
+                if (String(postId).startsWith("fallback-")) {
+                    const post = currentGadPosts[postIndex];
+                    const likedBy = [...post.likedBy];
+                    const likedIndex = likedBy.indexOf(guardianProfile.uid);
+                    if (likedIndex >= 0) likedBy.splice(likedIndex, 1);
+                    else likedBy.push(guardianProfile.uid);
+                    currentGadPosts[postIndex] = { ...post, likedBy, likes: likedBy.length };
+                } else {
+                    const result = await toggleLikeGADPost(postId, guardianProfile.uid);
+                    currentGadPosts[postIndex] = {
+                        ...currentGadPosts[postIndex],
+                        likes: result.likes,
+                        likedBy: result.isLiked
+                            ? Array.from(new Set([...currentGadPosts[postIndex].likedBy, guardianProfile.uid]))
+                            : currentGadPosts[postIndex].likedBy.filter(id => id !== guardianProfile.uid)
+                    };
+                }
+
+                document.getElementById('gadPostsFeed').innerHTML = "";
+                currentGadPosts.forEach(post => renderPost(post));
+            } catch (error) {
+                console.warn("Like toggle failed:", error);
+            }
+        });
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById("toastNotify");
+            if (!toast) return;
+            const msgEl = document.getElementById("toastMsg");
+            if (msgEl) msgEl.textContent = msg;
+
+            toast.classList.add("active");
+            setTimeout(() => {
+                toast.classList.remove("active");
+            }, 3000);
+        }
+
+        window.downloadFile = (url, filename) => {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Downloading file...");
+        };
+
+        closeVaultViewerBtn?.addEventListener('click', closeGuardianVaultViewer);
+        vaultViewerModal?.addEventListener('click', (event) => {
+            if (event.target === vaultViewerModal) {
+                closeGuardianVaultViewer();
+            }
+        });
+
+        // --- Auth Hub ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                initDashboard(user);
+            } else {
+                window.location.href = 'guardian.html';
+            }
+        });
+
+    </script>
+</body>
+
+</html>
+

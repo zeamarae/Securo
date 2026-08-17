@@ -1,0 +1,4093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Securo - Admin Command Center</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+    <!-- (2026-07-13) Add Leaflet stylesheet and script for SOS map; was standard head links -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: rgba(255,255,255,0.96);
+            --surface-strong: rgba(255,255,255,0.98);
+            --ink: #181428;
+            --muted: #6f6a86;
+            --primary: #5a1fe0;
+            --primary-strong: #4311c5;
+            --primary-soft: #f1ebff;
+            --cyan: #6cd7ff;
+            --green: #0f9b67;
+            --red: #d11f34;
+            --amber: #ffb649;
+            --line: rgba(226,232,240,0.9);
+            --shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+            --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.06);
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+            --radius-md: 18px;
+        }
+
+        /* (2026-07-13) Enable text highlighting in admin; was user-select none */
+        *, *::before, *::after { 
+            box-sizing: border-box; 
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Outfit", sans-serif;
+            color: var(--ink);
+            background: #f8fafc;
+            line-height: 1.5;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .admin-shell {
+            height: 100vh;
+            max-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+
+        .glass-shell {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 0;
+            position: relative;
+        }
+
+        .admin-section {
+            display: none;
+            gap: 20px;
+        }
+
+        .admin-section.active {
+            display: grid;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            padding: 18px 22px;
+            border-bottom: 1px solid rgba(226,232,240,0.9);
+            background: rgba(255,255,255,0.96);
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-badge {
+            width: 56px;
+            height: 56px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #f3eeff, #e2d8ff);
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 12px 24px rgba(90,31,224,0.12);
+        }
+
+        .brand-wrap h1 {
+            margin: 0;
+            font-family: "Sora", sans-serif;
+            font-size: 1rem;
+            letter-spacing: -0.04em;
+        }
+
+        .brand-wrap p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.74rem;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .profile-chip {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.75);
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            box-shadow: 0 10px 20px rgba(90,31,224,0.14);
+            position: relative;
+            cursor: pointer;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 58px;
+            right: 0;
+            width: 240px;
+            background: rgba(255,255,255,0.98);
+            border: 1px solid rgba(255,255,255,0.8);
+            border-radius: 16px;
+            box-shadow: 0 24px 48px rgba(15, 23, 42, 0.16);
+            padding: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            z-index: 120;
+        }
+
+        .profile-dropdown.active {
+            display: flex;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: rgba(15,23,42,0.06);
+            margin: 6px 4px;
+        }
+
+        .dropdown-item {
+            min-height: 38px;
+            padding: 0 14px;
+            border-radius: 12px;
+            border: none;
+            background: transparent;
+            color: var(--ink);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(90,31,224,0.08);
+            color: var(--primary);
+        }
+
+        .dropdown-item.logout {
+            color: var(--red);
+        }
+
+        .dropdown-item.logout:hover {
+            background: #fff1f2;
+            color: var(--red);
+        }
+
+        .ghost-btn,
+        .primary-btn,
+        .danger-btn {
+            min-height: 48px;
+            padding: 0 18px;
+            border: 0;
+            border-radius: 16px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+            text-decoration: none;
+        }
+
+        .ghost-btn {
+            background: rgba(255,255,255,0.7);
+            color: var(--ink);
+            border: 1px solid rgba(255,255,255,0.7);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: #fff;
+            box-shadow: 0 16px 32px rgba(90,31,224,0.22);
+        }
+
+        .danger-btn {
+            background: linear-gradient(135deg, #eb3a53, #c71d35);
+            color: #fff;
+            box-shadow: 0 16px 32px rgba(209,31,52,0.22);
+        }
+
+        .signal-chip {
+            min-height: 48px;
+            padding: 0 16px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.72);
+            border: 1px solid rgba(255,255,255,0.74);
+            box-shadow: var(--shadow-soft);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .signal-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: #37d67a;
+            box-shadow: 0 0 0 5px rgba(55,214,122,0.12);
+        }
+
+        @keyframes pulseDot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.72; }
+        }
+
+        .ghost-btn:hover,
+        .primary-btn:hover,
+        .danger-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 240px minmax(0, 1fr);
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            border-right: 1px solid rgba(0,0,0,0.05);
+            background: rgba(255,255,255,0.4);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .sidebar-inner {
+            padding: 18px 14px;
+        }
+
+        .sidebar-label {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--muted);
+            margin: 0 10px 12px;
+        }
+
+        .nav-stack {
+            display: grid;
+            gap: 10px;
+        }
+
+        .tab-btn {
+            width: 100%;
+            min-height: 54px;
+            padding: 11px 13px;
+            border: 0;
+            border-radius: 16px;
+            background: transparent;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 0.88rem;
+        }
+
+        .tab-btn .material-symbols-outlined {
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.62);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(239,232,255,0.84));
+            color: var(--ink);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .sidebar-note {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(244,240,255,0.64));
+            border: 1px solid rgba(255,255,255,0.68);
+        }
+
+        .sidebar-note strong {
+            display: block;
+            font-family: "Sora", sans-serif;
+            margin-bottom: 6px;
+        }
+
+        .sidebar-note p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.76rem;
+            line-height: 1.35;
+        }
+
+        .main-panel {
+            padding: 18px 22px;
+            overflow-y: auto;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            height: 100%; 
+            min-height: 0;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+            gap: 18px;
+        }
+
+        .chart-card {
+            padding: 24px;
+            display: grid;
+            gap: 18px;
+        }
+
+        .chart-title {
+            margin: 0;
+            font-family: "Sora", sans-serif;
+            font-size: 1.15rem;
+            letter-spacing: -0.04em;
+        }
+
+        .chart-copy {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .role-chart-wrap {
+            display: grid;
+            grid-template-columns: 180px minmax(0, 1fr);
+            gap: 18px;
+            align-items: center;
+        }
+
+        .role-chart {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary) 0deg 220deg, #ff7a90 220deg 310deg, #c7b8ff 310deg 360deg);
+            position: relative;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.78), 0 18px 36px rgba(90,31,224,0.1);
+        }
+
+        .role-chart::after {
+            content: "";
+            position: absolute;
+            inset: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.96);
+            box-shadow: inset 0 0 0 1px rgba(15,23,42,0.04);
+        }
+
+        .role-chart-center {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .role-chart-center strong {
+            display: block;
+            font-family: "Sora", sans-serif;
+            font-size: 1rem;
+        }
+
+        .legend-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.66);
+            border: 1px solid rgba(255,255,255,0.74);
+        }
+
+        .legend-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .legend-swatch {
+            width: 12px;
+            height: 12px;
+            border-radius: 999px;
+            flex-shrink: 0;
+        }
+
+        .bar-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .bar-row {
+            display: grid;
+            gap: 8px;
+        }
+
+        .bar-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 12px;
+            border-radius: 999px;
+            background: rgba(90,31,224,0.08);
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: inherit;
+            background: linear-gradient(135deg, var(--primary), #7c5cff);
+        }
+
+        .accounts-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .danger-inline-btn {
+            min-height: 40px;
+            padding: 0 14px;
+            border-radius: 12px;
+            border: none;
+            background: #fff1f2;
+            color: var(--red);
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .thread-hint {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .overview-card {
+            padding: 24px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 12px;
+            background:
+                radial-gradient(circle at top right, rgba(108, 215, 255, 0.24), transparent 28%),
+                radial-gradient(circle at bottom left, rgba(90,31,224,0.16), transparent 30%),
+                linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,243,255,0.74));
+        }
+
+        .overview-copy h2 {
+            margin: 10px 0 8px;
+            font-family: "Sora", sans-serif;
+            font-size: clamp(1.5rem, 2.2vw, 2.2rem);
+            letter-spacing: -0.05em;
+        }
+
+        .overview-copy p {
+            margin: 0;
+            max-width: 56ch;
+            color: var(--muted);
+            line-height: 1.35;
+        }
+
+        .overview-tags,
+        .sync-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .overview-tags {
+            margin-top: 14px;
+        }
+
+        .capsule {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 40px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.74);
+            border: 1px solid rgba(255,255,255,0.74);
+            color: var(--ink);
+            font-size: 0.76rem;
+            font-weight: 700;
+        }
+
+        .overview-side {
+            display: grid;
+            gap: 12px;
+            align-content: start;
+        }
+
+        .sync-card {
+            padding: 18px;
+            border-radius: 22px;
+            background: rgba(255,255,255,0.66);
+            border: 1px solid rgba(255,255,255,0.72);
+        }
+
+        .sync-card strong {
+            display: block;
+            margin-bottom: 6px;
+            font-family: "Sora", sans-serif;
+            letter-spacing: -0.03em;
+        }
+
+        .sync-card p {
+            margin: 0 0 12px;
+            color: var(--muted);
+            font-size: 0.8rem;
+            line-height: 1.55;
+        }
+
+        .metric-card,
+        .panel-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.64));
+            border: 1px solid rgba(255,255,255,0.74);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            backdrop-filter: blur(20px);
+        }
+
+        .metric-card {
+            padding: 10px 12px;
+        }
+
+        .metric-label {
+            color: var(--muted);
+            font-size: 0.66rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            margin-bottom: 8px;
+        }
+
+        .metric-value {
+            font-family: "Sora", sans-serif;
+            font-size: 1.45rem;
+            letter-spacing: -0.05em;
+            line-height: 1.05;
+        }
+
+        .metric-sub {
+            color: var(--muted);
+            font-size: 0.78rem;
+            margin-top: 4px;
+        }
+
+        .panel-card {
+            padding: 16px;
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .section-head h2 {
+            margin: 0;
+            font-family: "Sora", sans-serif;
+            font-size: 1rem;
+            letter-spacing: -0.04em;
+        }
+
+        .section-head p {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 0.8rem;
+        }
+
+        .section-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: rgba(90,31,224,0.08);
+            color: var(--primary);
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .composer-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .announcement-input-shell {
+            border: 1px solid rgba(90,31,224,0.14);
+            border-radius: 20px;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,245,255,0.9));
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.9),
+                0 14px 28px rgba(55, 31, 129, 0.06);
+            overflow: hidden;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        .announcement-input-shell:focus-within {
+            border-color: rgba(90,31,224,0.3);
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.96),
+                0 0 0 4px rgba(90,31,224,0.07),
+                0 18px 32px rgba(55, 31, 129, 0.1);
+        }
+
+        .announcement-input-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px 16px 0;
+        }
+
+        .announcement-input-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--ink);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .announcement-input-hint {
+            color: var(--muted);
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .announcement-textarea {
+            min-height: 190px;
+            padding: 14px 16px 16px;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            resize: vertical;
+            line-height: 1.65;
+            font-size: 0.95rem;
+        }
+
+        .announcement-textarea:focus {
+            border: none;
+            box-shadow: none;
+        }
+
+        .announcement-textarea::placeholder {
+            color: rgba(68, 59, 105, 0.72);
+        }
+
+        .composer-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            padding-top: 4px;
+        }
+
+        .helper-text {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.74rem;
+            line-height: 1.5;
+        }
+
+        .counter-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 34px;
+            padding: 0 12px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.7);
+            border: 1px solid rgba(255,255,255,0.76);
+            color: var(--muted);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .counter-pill.warn {
+            color: var(--amber);
+        }
+
+        .counter-pill.limit {
+            color: var(--red);
+            background: #fff1f2;
+        }
+
+        .glass-input,
+        .glass-textarea {
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.86);
+            background: rgba(255,255,255,0.72);
+            border-radius: 15px;
+            padding: 11px 13px;
+            outline: none;
+            font: inherit;
+            color: var(--ink);
+            font-size: 0.9rem;
+        }
+
+        .glass-input:focus,
+        .glass-textarea:focus {
+            border-color: rgba(90,31,224,0.3);
+            box-shadow: 0 0 0 4px rgba(90,31,224,0.08);
+        }
+
+        .glass-textarea {
+            min-height: 112px;
+            resize: vertical;
+        }
+
+        .search-input {
+            min-width: 220px;
+            max-width: 320px;
+        }
+
+        .table-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) 1fr 1fr auto;
+            gap: 12px;
+            align-items: center;
+            padding: 13px 14px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.76);
+            border: 1px solid rgba(255,255,255,0.74);
+        }
+
+        .management-grid {
+            display: grid;
+            grid-template-columns: minmax(300px, 0.95fr) minmax(0, 1.25fr);
+            gap: 18px;
+            align-items: start;
+        }
+
+        .users-table {
+            display: grid;
+            gap: 10px;
+        }
+
+        .users-table-head,
+        .user-table-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1.35fr) 140px minmax(0, 1fr) 56px;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .users-table-head {
+            padding: 0 14px 8px;
+            color: var(--muted);
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .user-table-row {
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.82);
+            border: 1px solid rgba(90,31,224,0.08);
+        }
+
+        .user-table-main {
+            min-width: 0;
+        }
+
+        .user-table-actions {
+            display: flex;
+            justify-content: flex-end;
+            position: relative;
+        }
+
+        .icon-ghost-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            border: 1px solid rgba(90,31,224,0.12);
+            background: rgba(248,245,255,0.9);
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+
+        .icon-ghost-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-soft);
+            background: rgba(241,235,255,0.96);
+        }
+
+        .row-action-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 160px;
+            padding: 8px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.98);
+            border: 1px solid rgba(90,31,224,0.1);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+            display: grid;
+            gap: 6px;
+            z-index: 30;
+        }
+
+        .row-action-item {
+            min-height: 40px;
+            padding: 0 12px;
+            border: 0;
+            border-radius: 12px;
+            background: transparent;
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.82rem;
+            text-align: left;
+        }
+
+        .row-action-item:hover {
+            background: rgba(90,31,224,0.06);
+        }
+
+        .row-action-item.delete {
+            color: var(--red);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.38);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 400;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-card {
+            width: min(760px, 100%);
+            max-height: min(88vh, 920px);
+            overflow-y: auto;
+            background: rgba(255,255,255,0.98);
+            border: 1px solid rgba(255,255,255,0.9);
+            border-radius: 28px;
+            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.22);
+            padding: 20px;
+        }
+
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 10px;
+        }
+
+        .modal-close-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            border: 1px solid rgba(90,31,224,0.1);
+            background: rgba(248,245,255,0.92);
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .management-list {
+            display: grid;
+            gap: 12px;
+            max-height: 72vh;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .management-card {
+            padding: 13px 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.74);
+            background: rgba(255,255,255,0.78);
+            cursor: pointer;
+            transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .management-card:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .management-card.active {
+            border-color: rgba(90,31,224,0.26);
+            box-shadow: 0 0 0 4px rgba(90,31,224,0.08);
+        }
+
+        .management-card-top,
+        .editor-header,
+        .inline-fields,
+        .editor-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .management-card-top {
+            justify-content: space-between;
+        }
+
+        .editor-header,
+        .editor-actions {
+            justify-content: space-between;
+        }
+
+        .management-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            box-shadow: 0 10px 20px rgba(90,31,224,0.16);
+            flex-shrink: 0;
+        }
+
+        .management-meta {
+            display: grid;
+            gap: 10px;
+        }
+
+        .role-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 28px;
+            padding: 0 12px;
+            border-radius: 999px;
+            font-size: 0.64rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        .role-pill.student {
+            color: var(--primary);
+            background: rgba(90,31,224,0.08);
+        }
+
+        .role-pill.guardian {
+            color: #d1465b;
+            background: #fff1f2;
+        }
+
+        .role-pill.admin {
+            color: #0f766e;
+            background: #ecfeff;
+        }
+
+        .editor-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .field-block {
+            display: grid;
+            gap: 8px;
+        }
+
+        .field-block.full {
+            grid-column: 1 / -1;
+        }
+
+        .field-block label {
+            font-size: 0.66rem;
+            font-weight: 800;
+            color: var(--muted);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .editor-note {
+            margin: 14px 0 0;
+            padding: 11px 13px;
+            border-radius: 15px;
+            background: #f8fafc;
+            color: var(--muted);
+            font-size: 0.8rem;
+            line-height: 1.45;
+        }
+
+        .relation-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .relation-chip {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 16px;
+            background: rgba(248,250,252,0.96);
+            border: 1px solid rgba(226,232,240,0.9);
+        }
+
+        .relation-status {
+            font-size: 0.64rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .log-time {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .row-title {
+            font-weight: 700;
+            line-height: 1.35;
+            font-size: 0.9rem;
+        }
+
+        .row-sub {
+            color: var(--muted);
+            font-size: 0.76rem;
+            margin-top: 4px;
+            line-height: 1.35;
+        }
+
+        .chart-title {
+            margin: 0;
+            font-family: "Sora", sans-serif;
+            font-size: 1rem;
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+        }
+
+        .chart-copy {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 0.78rem;
+            line-height: 1.4;
+        }
+
+        .table-row {
+            padding: 2px 0;
+            align-items: start;
+        }
+
+        .search-input {
+            min-width: 180px;
+            max-width: 280px;
+            font-size: 0.88rem;
+        }
+
+        .meta-pair {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .mini-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 28px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: rgba(90,31,224,0.08);
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .status-pill.emergency { background: #fff1f2; color: var(--red); }
+        .status-pill.gad { background: #f1ebff; color: var(--primary); }
+        .status-pill.active { background: #eefdf6; color: var(--green); }
+
+        .row-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: rgba(255,255,255,0.72);
+            color: var(--ink);
+        }
+
+        .icon-btn.delete { color: var(--red); background: #fff1f2; }
+
+        .incident-row {
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr) auto;
+            align-items: start;
+        }
+
+        .incident-link {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .incident-link .table-row {
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+
+        .incident-link:hover .table-row {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-soft);
+            border-color: rgba(90,31,224,0.18);
+        }
+
+        .empty-state {
+            padding: 34px 20px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .toast-stack {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1400;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: min(360px, calc(100vw - 32px));
+        }
+
+        .toast-card {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 11px 13px;
+            border-radius: 15px;
+            background: rgba(255,255,255,0.9);
+            border: 1px solid rgba(255,255,255,0.76);
+            backdrop-filter: blur(18px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .toast-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1ebff;
+            color: var(--primary);
+            flex: 0 0 auto;
+        }
+
+        .toast-card.error .toast-icon { background: #fff1f2; color: var(--red); }
+        .toast-card.success .toast-icon { background: #eefdf6; color: var(--green); }
+
+        .toast-copy strong {
+            display: block;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }
+
+        .toast-copy span {
+            font-size: 0.74rem;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        @media (max-width: 960px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .overview-card {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-row {
+                grid-template-columns: 1fr;
+            }
+
+            .row-actions {
+                justify-content: flex-start;
+            }
+
+            .sidebar {
+                border-right: 0;
+                border-bottom: 1px solid rgba(255,255,255,0.5);
+            }
+
+            .sidebar-inner {
+                position: static;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 0;
+            }
+
+            .topbar,
+            .main-panel,
+            .sidebar {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+            }
+
+            .brand-wrap {
+                align-items: flex-start;
+            }
+        }
+        .thread-item {
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .thread-item:hover {
+            background: rgba(90,31,224,0.04);
+        }
+
+        .thread-item.active {
+            background: rgba(90,31,224,0.08);
+            border-left: 4px solid var(--primary);
+        }
+
+        .thread-item.unread .thread-name,
+        .thread-item.unread .thread-preview {
+            font-weight: 800;
+            color: var(--ink);
+        }
+
+        .thread-badge {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: #ef4444;
+            box-shadow: 0 0 0 4px rgba(239,68,68,0.14);
+            flex-shrink: 0;
+        }
+
+        .thread-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: var(--primary-soft);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .thread-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .thread-name {
+            font-weight: 700;
+            font-size: 0.86rem;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .thread-preview {
+            font-size: 0.74rem;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .readable-card {
+            border: 1px solid rgba(90,31,224,0.08);
+            box-shadow: 0 18px 40px rgba(49, 30, 105, 0.08);
+        }
+
+        .image-preview-card {
+            display: none;
+            gap: 12px;
+            padding: 14px;
+            border-radius: 15px;
+            background: rgba(90,31,224,0.06);
+            border: 1px solid rgba(90,31,224,0.08);
+            align-items: center;
+        }
+
+        .image-preview-card.active {
+            display: flex;
+        }
+
+        .image-preview-card img {
+            width: 88px;
+            height: 88px;
+            object-fit: cover;
+            border-radius: 16px;
+            border: 1px solid rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+
+        .admin-msg {
+            max-width: 80%;
+            padding: 10px 13px;
+            border-radius: 15px;
+            font-size: 0.86rem;
+            line-height: 1.4;
+            position: relative;
+            margin-bottom: 4px;
+        }
+
+        .admin-msg.received {
+            align-self: flex-start;
+            background: white;
+            color: #1e293b;
+            border: 1px solid rgba(0,0,0,0.05);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+
+        .admin-msg.sent {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            color: white;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+
+        .msg-time {
+            font-size: 0.62rem;
+            opacity: 0.7;
+            margin-top: 4px;
+            display: block;
+        }
+
+        .admin-msg.sent .msg-time { 
+            text-align: right; 
+            color: rgba(255,255,255,0.8);
+        }
+
+        .messages-shell {
+            padding: 0 !important;
+            min-height: 68vh;
+            height: 68vh;
+            display: grid;
+            grid-template-columns: 340px minmax(0, 1fr);
+            overflow: hidden;
+            border: 1px solid rgba(90,31,224,0.08);
+            box-shadow: 0 22px 50px rgba(49, 30, 105, 0.08);
+        }
+
+        .messages-sidebar {
+            border-right: 1px solid rgba(15,23,42,0.06);
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(248,245,255,0.82));
+            height: 100%;
+            min-height: 0;
+        }
+
+        .messages-sidebar-head {
+            padding: 18px 18px 16px;
+            border-bottom: 1px solid rgba(15,23,42,0.06);
+            background: rgba(255,255,255,0.94);
+            flex-shrink: 0;
+        }
+
+        .messages-sidebar-head h3 {
+            margin: 0;
+            font-family: "Sora", sans-serif;
+            font-size: 1rem;
+            letter-spacing: -0.03em;
+        }
+
+        .thread-hint {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+
+        .messages-thread-list {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+            padding: 6px;
+        }
+
+        .messages-main {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            background: #fcfcff;
+            height: 100%;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .messages-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(15,23,42,0.06);
+            display: grid;
+            justify-items: center;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.96);
+            z-index: 10;
+            text-align: center;
+        }
+
+        .messages-header .thread-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            font-size: 0.92rem;
+        }
+
+        .messages-header-name {
+            font-weight: 800;
+            font-size: 0.98rem;
+            color: var(--ink);
+            line-height: 1.2;
+        }
+
+        .messages-header-status {
+            font-size: 0.74rem;
+            color: var(--green);
+            line-height: 1.2;
+        }
+
+        .messages-body {
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: linear-gradient(180deg, #fcfcff 0%, #f7f7fb 100%);
+            min-height: 0;
+        }
+
+        .messages-empty {
+            margin: auto;
+            text-align: center;
+            color: var(--muted);
+            display: grid;
+            gap: 8px;
+            justify-items: center;
+        }
+
+        .messages-composer {
+            padding: 16px 18px;
+            border-top: 1px solid rgba(15,23,42,0.06);
+            display: flex;
+            gap: 12px;
+            background: rgba(255,255,255,0.96);
+            z-index: 10;
+            align-items: center;
+        }
+
+        .messages-composer #adminChatInput {
+            min-height: 46px;
+        }
+
+        .messages-composer #adminSendBtn {
+            min-width: 54px;
+            padding: 0 16px;
+            justify-content: center;
+        }
+
+        @media (max-width: 980px) {
+            .messages-shell {
+                grid-template-columns: 1fr;
+                grid-template-rows: 260px minmax(0, 1fr);
+                min-height: 76vh;
+                height: 76vh;
+            }
+
+            .messages-sidebar {
+                border-right: 0;
+                border-bottom: 1px solid rgba(15,23,42,0.06);
+            }
+        }
+
+        .thread-item {
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 4px solid transparent;
+        }
+
+        .thread-item:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .thread-item.active {
+            background: rgba(99, 102, 241, 0.08);
+            border-left-color: var(--primary);
+        }
+
+        .thread-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 960px) {
+            .management-grid,
+            .chat-panel {
+                grid-template-columns: 1fr !important;
+            }
+            #threadList {
+                max-height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+    <div class="admin-shell">
+        <div class="glass-shell">
+            <header class="topbar">
+                <!-- (2026-07-13) Topbar brand using logo with text.png; was icon box -->
+                <div class="brand-wrap" style="display:flex; align-items:center; gap:14px;">
+                    <img src="logo with text.png" alt="Securo" style="height: 32px; max-height: 32px; object-fit: contain; display: block;">
+                    <div style="border-left: 1px solid rgba(0,0,0,0.1); padding-left: 14px;">
+                        <h1 style="margin:0; font-size:1.08rem; font-family:'Sora', sans-serif; font-weight:800; color:var(--ink);">Command Center</h1>
+                        <p style="margin:0; font-size:0.75rem; color:var(--muted);">Campus safety operations & dispatch management</p>
+                    </div>
+                </div>
+                <div class="topbar-actions">
+                    <div class="signal-chip">
+                        <span class="signal-dot"></span>
+                        <span>Live</span>
+                    </div>
+                    <a href="index.html" class="ghost-btn">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                        <span>Back to App</span>
+                    </a>
+                    <div class="profile-chip" id="adminProfileChip" aria-label="Admin menu">
+                        <span id="adminInitials">AD</span>
+                        <div class="profile-dropdown" id="adminProfileDropdown">
+                            <div style="padding: 10px 14px;">
+                                <div id="adminDropdownName" style="font-weight: 800; color: var(--ink);">Administrator</div>
+                                <div style="font-size: 0.68rem; color: var(--muted); font-weight: 700;">ADMIN ACCOUNT</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item logout" id="adminLogoutBtn" type="button">
+                                <span class="material-symbols-outlined">logout</span>
+                                <span>Log Out</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <aside class="sidebar">
+                    <div class="sidebar-inner">
+                        <div class="sidebar-label">Operations</div>
+                        <div class="nav-stack">
+                            <button class="tab-btn active" data-tab="stats">
+                                <span class="material-symbols-outlined">monitoring</span>
+                                <span>Statistics</span>
+                            </button>
+                            <button class="tab-btn" data-tab="sos">
+                                <span class="material-symbols-outlined">crisis_alert</span>
+                                <span>SOS Triggers</span>
+                            </button>
+                            <button class="tab-btn" data-tab="users">
+                                <span class="material-symbols-outlined">manage_accounts</span>
+                                <span>Users</span>
+                            </button>
+                            <button class="tab-btn" data-tab="gad">
+                                <span class="material-symbols-outlined">campaign</span>
+                                <span>GAD</span>
+                            </button>
+                            <button class="tab-btn" data-tab="messages">
+                                <span class="material-symbols-outlined">chat</span>
+                                <span>Messages</span>
+                            </button>
+                        </div>
+                    </div>
+                </aside>
+
+                <main class="main-panel">
+                    <section class="admin-section active" id="sec-stats">
+                        <div class="stats-grid">
+                            <div class="metric-card">
+                                <div class="metric-label">Total Users</div>
+                                <div class="metric-value" id="metricUsers">0</div>
+                                <div class="metric-sub">Visible accounts</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Students</div>
+                                <div class="metric-value" id="metricStudents">0</div>
+                                <div class="metric-sub">Student profiles</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Guardians</div>
+                                <div class="metric-value" id="metricGuardians">0</div>
+                                <div class="metric-sub">Guardian profiles</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Conversations</div>
+                                <div class="metric-value" id="metricThreads">0</div>
+                                <div class="metric-sub">Support threads</div>
+                            </div>
+                        </div>
+
+                        <div class="chart-grid">
+                            <div class="panel-card chart-card">
+                                <div>
+                                    <div class="eyebrow">Roles</div>
+                                    <h2 class="chart-title">User Distribution</h2>
+                                    <p class="chart-copy">A quick view of student, guardian, and admin account balance.</p>
+                                </div>
+                                <div class="role-chart-wrap">
+                                    <div class="role-chart" id="roleChart">
+                                        <div class="role-chart-center">
+                                            <div>
+                                                <strong id="roleChartTotal">0</strong>
+                                                <span style="font-size:0.78rem; color:var(--muted); font-weight:700;">accounts</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="legend-list" id="roleLegend"></div>
+                                </div>
+                            </div>
+                            <div class="panel-card chart-card">
+                                <div>
+                                    <div class="eyebrow">Reach</div>
+                                    <h2 class="chart-title">Platform Activity</h2>
+                                    <p class="chart-copy">Visual reach snapshot for users, GAD posts, and support conversations.</p>
+                                </div>
+                                <div class="bar-list" id="statsBarList"></div>
+                            </div>
+                            <div class="panel-card chart-card readable-card">
+                                <div>
+                                    <div class="eyebrow">Reporters</div>
+                                    <h2 class="chart-title">Most Active Reporters</h2>
+                                    <p class="chart-copy">Students and staff who sent the most SOS or evidence reports.</p>
+                                </div>
+                                <div class="table-list" id="reporterStatsList"></div>
+                            </div>
+                            <div class="panel-card chart-card readable-card">
+                                <div>
+                                    <div class="eyebrow">Notifications</div>
+                                    <h2 class="chart-title">Admin Notification History</h2>
+                                    <p class="chart-copy">Recent system-facing account notifications for the admin account.</p>
+                                </div>
+                                <div class="table-list" id="adminNotificationHistory"></div>
+                            </div>
+                        </div>
+
+                        <div class="panel-card">
+                            <div class="accounts-head">
+                                <div>
+                                    <div class="eyebrow">Accounts</div>
+                                    <h2 class="chart-title">Account Snapshot</h2>
+                                    <p class="chart-copy">Quick account overview. Use the Users tab for editing, adding, and deleting profiles.</p>
+                                </div>
+                                <input type="search" id="statsUserSearch" class="glass-input search-input" placeholder="Search users, IDs, or email">
+                            </div>
+                            <div class="table-list" id="statsUserList" style="margin-top:18px;"></div>
+                        </div>
+                    </section>
+
+                    <!-- (2026-07-13) Add dedicated SOS Triggers tab and table; was stats map only -->
+                    <section class="admin-section" id="sec-sos">
+                        <div class="panel-card chart-card" style="margin-bottom: 20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+                                <div>
+                                    <div class="eyebrow" style="color:var(--red);">INCIDENT INTELLIGENCE</div>
+                                    <h2 class="chart-title" style="margin-top:2px;">Campus SOS Hotspots & Incident Map</h2>
+                                    <p class="chart-copy">Real-time emergency signal visualization with campus geofence perimeter and facilities.</p>
+                                </div>
+                                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                    <button class="action-btn" id="btnEditGeofence" type="button" style="padding:7px 14px; font-size:0.78rem; border-radius:12px; background:white; border:1px solid #e2e8f0; font-weight:700; display:inline-flex; align-items:center; gap:6px; cursor:pointer; color:#475569; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                                        <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">edit_location_alt</span>
+                                        <span>Edit Geofence & Markers</span>
+                                    </button>
+                                    <button class="action-btn" id="btnSaveGeofence" type="button" style="padding:7px 14px; font-size:0.78rem; border-radius:12px; background:#5a1fe0; color:white; font-weight:700; display:none; align-items:center; gap:6px; cursor:pointer; border:none; box-shadow:0 4px 12px rgba(90,31,224,0.25);">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">cloud_sync</span>
+                                        <span>Save & Sync Database</span>
+                                    </button>
+                                    <button class="action-btn" id="btnResetGeofence" type="button" style="padding:7px 14px; font-size:0.78rem; border-radius:12px; background:#fee2e2; color:#b91c1c; font-weight:700; display:none; align-items:center; gap:6px; cursor:pointer; border:none;">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">restart_alt</span>
+                                        <span>Reset</span>
+                                    </button>
+                                    <span class="capsule" style="background:rgba(209,31,52,0.1); color:var(--red); font-weight:800; font-size:0.78rem;">
+                                        <span class="material-symbols-outlined" style="font-size:18px;">crisis_alert</span>
+                                        <span id="adminSosCountBadge">0 SOS Triggers</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div id="adminSosMap" style="width:100%; height:400px; border-radius:18px; overflow:hidden; border:1px solid rgba(15,23,42,0.08); box-shadow:inset 0 2px 6px rgba(0,0,0,0.06); z-index:1;"></div>
+                        </div>
+
+                        <div class="panel-card">
+                            <div class="accounts-head">
+                                <div>
+                                    <div class="eyebrow" style="color:var(--red);">INCIDENT LOGS</div>
+                                    <h2 class="chart-title">SOS Triggers & Emergency History</h2>
+                                    <p class="chart-copy">Verified reporter identities, student numbers, incident coordinates, and map links.</p>
+                                </div>
+                                <div class="section-actions">
+                                    <input type="search" id="sosLogSearch" class="glass-input search-input" placeholder="Search reporter name, ID, or location">
+                                </div>
+                            </div>
+                            <div class="users-table-head" style="margin-top:16px; grid-template-columns: minmax(0, 1.4fr) 1fr 1.3fr 0.8fr auto;">
+                                <span>Reporter</span>
+                                <span>Role / ID</span>
+                                <span>Location & GPS</span>
+                                <span>Time Triggered</span>
+                                <span style="text-align:right;">Actions</span>
+                            </div>
+                            <div class="table-list" id="sosLogsTable" style="margin-top:8px;"></div>
+                        </div>
+                    </section>
+
+                    <section class="admin-section" id="sec-users">
+                        <div class="panel-card">
+                            <div class="accounts-head">
+                                <div>
+                                    <div class="eyebrow">Directory</div>
+                                    <h2 class="chart-title">User Directory</h2>
+                                    <p class="chart-copy">Review users first, then use the 3-dot action button to edit each account in a modal.</p>
+                                </div>
+                                <div class="section-actions">
+                                    <input type="search" id="managementUserSearch" class="glass-input search-input" placeholder="Search users">
+                                    <button class="primary-btn" id="createUserBtn" type="button">
+                                        <span class="material-symbols-outlined">person_add</span>
+                                        <span>Add User</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="users-table-head" style="margin-top:16px;">
+                                <span>User</span>
+                                <span>Role</span>
+                                <span>Email / ID</span>
+                                <span style="text-align:right;">More</span>
+                            </div>
+                            <div class="users-table" id="managementUserList"></div>
+                        </div>
+                    </section>
+
+                    <section class="admin-section" id="sec-gad">
+                        <div class="panel-card">
+                            <div class="section-head">
+                                <div>
+                                    <div class="eyebrow">Post</div>
+                                    <h2 id="gadComposerTitle">New GAD Post</h2>
+                                    <p id="gadComposerCopy">Publishes to the GAD feed.</p>
+                                </div>
+                                <div class="section-actions">
+                                    <span class="counter-pill" id="gadCounter">0 / 500</span>
+                                </div>
+                            </div>
+                            <div class="composer-grid">
+                                <div class="announcement-input-shell">
+                                    <div class="announcement-input-meta">
+                                        <span class="announcement-input-label">Announcement Body</span>
+                                        <span class="announcement-input-hint">Clear, short, and official</span>
+                                    </div>
+                                    <textarea id="gadPostText" class="glass-textarea announcement-textarea" placeholder="Write the official announcement here..." maxlength="500"></textarea>
+                                </div>
+                                <input id="gadImageInput" type="file" accept="image/*" hidden>
+                                <div class="image-preview-card" id="gadImagePreviewCard">
+                                    <img id="gadImagePreview" alt="GAD post preview">
+                                    <button class="ghost-btn" id="removeGadImageBtn" type="button">
+                                        <span class="material-symbols-outlined">close</span>
+                                        <span>Remove Image</span>
+                                    </button>
+                                </div>
+                                <div class="composer-toolbar">
+                                    <p class="helper-text">12-500 characters.</p>
+                                    <button class="ghost-btn" id="cancelGadEditBtn" type="button" style="display:none;">
+                                        <span class="material-symbols-outlined">close</span>
+                                        <span>Cancel Edit</span>
+                                    </button>
+                                    <button class="ghost-btn" id="attachGadImageBtn" type="button">
+                                        <span class="material-symbols-outlined">image</span>
+                                        <span>Attach Image</span>
+                                    </button>
+                                    <button class="primary-btn" id="postGadBtn">
+                                        <span class="material-symbols-outlined">send</span>
+                                        <span>Publish</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-card">
+                            <div class="section-head">
+                                <div>
+                                    <div class="eyebrow">Feed</div>
+                                    <h2>GAD Posts</h2>
+                                    <p>Manage posts and see how many users they can reach.</p>
+                                </div>
+                                <div class="section-actions">
+                                    <input type="search" id="gadSearch" class="glass-input search-input" placeholder="Search GAD posts">
+                                </div>
+                            </div>
+                            <div class="hero-grid" style="margin-bottom: 14px;">
+                                <div class="metric-card">
+                                    <div class="metric-label">Posts</div>
+                                    <div class="metric-value" id="metricPosts">0</div>
+                                    <div class="metric-sub">Published bulletins</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">Users Reached</div>
+                                    <div class="metric-value" id="metricGadReach">0</div>
+                                    <div class="metric-sub">Registered audience</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">Engaged Users</div>
+                                    <div class="metric-value" id="metricGadEngaged">0</div>
+                                    <div class="metric-sub">Unique likes recorded</div>
+                                </div>
+                            </div>
+                            <div class="table-list" id="gadList"></div>
+                        </div>
+                    </section>
+
+                    <section class="admin-section" id="sec-messages" style="flex: 0;">
+                        <div class="panel-card chat-panel messages-shell">
+                            <div class="messages-sidebar">
+                                <div class="messages-sidebar-head">
+                                    <h3>Messages</h3>
+                                    <p class="thread-hint">Long press a conversation to delete it.</p>
+                                </div>
+                                <div id="threadList" class="messages-thread-list">
+                                </div>
+                            </div>
+                            <div class="messages-main">
+                                <div id="chatHeader" class="messages-header">
+                                    <div id="activeUserAvatar" class="thread-avatar">?</div>
+                                    <div id="activeUserName" class="messages-header-name">Select a conversation</div>
+                                    <div id="activeUserStatus" class="messages-header-status">Ready to assist</div>
+                                </div>
+                                <div id="adminChatMessages" class="messages-body">
+                                    <div class="messages-empty">
+                                        <span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.2;">chat_bubble</span>
+                                        <p>Select a user to start messaging</p>
+                                    </div>
+                                </div>
+                                <div class="messages-composer">
+                                    <input type="text" id="adminChatInput" class="glass-input" placeholder="Type a reply..." disabled>
+                                    <button id="adminSendBtn" class="primary-btn" disabled>
+                                        <span class="material-symbols-outlined">send</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="userEditorModal" aria-hidden="true">
+        <div class="modal-card">
+            <div class="modal-head">
+                <div class="editor-header" style="flex:1; margin:0;">
+                    <div>
+                        <div class="eyebrow" id="userEditorBadge">Profile Editor</div>
+                        <h2 class="chart-title" id="userEditorTitle">Select a user</h2>
+                        <p class="chart-copy" id="userEditorCopy">Choose a saved account to edit its details and linked family information.</p>
+                    </div>
+                    <span class="role-pill student" id="userEditorRolePill">Student</span>
+                </div>
+                <button class="modal-close-btn" id="closeUserModalBtn" type="button" aria-label="Close editor">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="editor-grid">
+                <div class="field-block full">
+                    <label for="manageUserId">Record ID</label>
+                    <input id="manageUserId" class="glass-input" type="text" readonly>
+                </div>
+                <div class="field-block">
+                    <label for="manageUserName">Full Name</label>
+                    <input id="manageUserName" class="glass-input" type="text" placeholder="Enter full name">
+                </div>
+                <div class="field-block">
+                    <label for="manageUserRole">Role</label>
+                    <select id="manageUserRole" class="glass-input">
+                        <option value="student">Student</option>
+                        <option value="guardian">Guardian</option>
+                        <option value="staff">Staff</option>
+                    </select>
+                </div>
+                <div class="field-block" id="manageUserEmailBlock">
+                    <label for="manageUserEmail" id="manageUserEmailLabel">Email</label>
+                    <input id="manageUserEmail" class="glass-input" type="email" placeholder="user@example.com">
+                </div>
+                <div class="field-block">
+                    <label for="manageUserPassword">Password</label>
+                    <input id="manageUserPassword" class="glass-input" type="password" placeholder="Required for new sign-in accounts">
+                </div>
+                <div class="field-block" id="manageUserStudentIdBlock">
+                    <label for="manageUserStudentId" id="manageUserStudentIdLabel">Student ID</label>
+                    <input id="manageUserStudentId" class="glass-input" type="text" placeholder="7-digit student ID">
+                </div>
+            </div>
+
+            <div class="editor-note" id="userEditorMeta">
+                Parent or guardian relationships will appear here once a saved profile is selected.
+            </div>
+
+            <div class="panel-card readable-card" style="padding:16px 18px; margin-top:16px;">
+                <div class="eyebrow">Location</div>
+                <h3 class="chart-title" id="userLocationTitle" style="font-size:1rem; margin-top:6px;">No recent location loaded</h3>
+                <p class="chart-copy" id="userLocationCopy" style="margin-bottom:0;">Select a user to check the latest shared location or evidence area.</p>
+            </div>
+
+            <div class="relation-list" id="managementRelationList"></div>
+
+            <div class="editor-actions" style="margin-top:18px;">
+                <div class="inline-fields">
+                    <button class="ghost-btn" id="resetUserEditorBtn" type="button">
+                        <span class="material-symbols-outlined">ink_eraser</span>
+                        <span>Reset</span>
+                    </button>
+                </div>
+                <div class="inline-fields">
+                    <button class="danger-btn" id="deleteManagedUserBtn" type="button">
+                        <span class="material-symbols-outlined">delete</span>
+                        <span>Delete</span>
+                    </button>
+                    <button class="primary-btn" id="saveManagedUserBtn" type="button">
+                        <span class="material-symbols-outlined">save</span>
+                        <span>Save User</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- (2026-07-13) Fullscreen Geofence & Campus Marker Editor Modal -->
+    <div class="modal-overlay" id="adminGeofenceModal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(15,23,42,0.8); backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:16px;">
+        <div class="geofence-modal-card" style="width:96vw; max-width:1440px; height:92vh; background:white; border-radius:24px; box-shadow:0 25px 60px rgba(0,0,0,0.3); display:flex; flex-direction:column; overflow:hidden; border:1px solid rgba(255,255,255,0.4);">
+            <div style="padding:16px 24px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:#fbfbfe;">
+                <div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="material-symbols-outlined" style="font-size:22px; color:var(--primary);">edit_location_alt</span>
+                        <h2 style="font-size:1.15rem; font-weight:800; margin:0; color:#181428;">Campus Geofence & Building Markers Live Editor</h2>
+                        <span style="font-size:0.75rem; font-weight:700; background:#f1ebff; color:var(--primary); padding:3px 8px; border-radius:8px;">Fullscreen View</span>
+                    </div>
+                    <p style="margin:3px 0 0; font-size:0.8rem; color:#64748b;">Drag numbered purple badges to adjust the geofence perimeter. Drag building markers to update facility locations.</p>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button class="action-btn" id="btnResetGeofenceModal" type="button" style="padding:8px 14px; font-size:0.82rem; border-radius:12px; background:#fee2e2; color:#b91c1c; font-weight:700; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:17px;">restart_alt</span>
+                        <span>Reset Defaults</span>
+                    </button>
+                    <button class="action-btn" id="btnSaveGeofenceModal" type="button" style="padding:8px 18px; font-size:0.82rem; border-radius:12px; background:#5a1fe0; color:white; font-weight:700; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 14px rgba(90,31,224,0.3);">
+                        <span class="material-symbols-outlined" style="font-size:17px;">cloud_sync</span>
+                        <span>Save & Sync Database</span>
+                    </button>
+                    <button class="action-btn" id="btnCloseGeofenceModal" type="button" style="padding:8px 12px; font-size:0.82rem; border-radius:12px; background:#f1f5f9; color:#475569; font-weight:700; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+                        <span>Close</span>
+                    </button>
+                </div>
+            </div>
+            <div style="flex:1; position:relative; width:100%; height:100%; min-height:400px;">
+                <div id="adminGeofenceModalMap" style="position:absolute; inset:0; width:100%; height:100%;"></div>
+            </div>
+            <div style="padding:10px 24px; border-top:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; color:#64748b;">
+                <span id="geofenceModalVertexCount">6 Boundary Vertices • 9 Campus Buildings</span>
+                <span style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#10b981;"></span> Real-time Firestore Sync Active</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, app, firebaseConfig } from './firebase-config.js';
+        import { logout, roleIdToEmail } from './auth.js';
+        import { 
+            getGADPosts, 
+            saveGADPost, 
+            deleteGADPost, 
+            updateGADPost,
+            getAllUsers, 
+            getUserProfile,
+            saveUserProfile,
+            updateUserProfile,
+            sendChatMessage,
+            subscribeToMessages,
+            getAllChatThreads,
+            getAllChatThreadsOnce,
+            getAllGuardianLinksAdmin,
+// (2026-07-13) Add GAD messages and reply helpers to admin imports; was db imports
+            deleteConversationThread,
+            deleteUserRecord,
+            getAllSOSLogs,
+            getAllEmergencyPosts,
+            getStudentLiveLocationOnce,
+            subscribeToAccountNotifications,
+            subscribeToMessagesByThread,
+            subscribeToGADMessages,
+            replyToGADMessage,
+            saveCampusMapConfig,
+            subscribeToCampusMapConfig
+        } from './db.js';
+        import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        // (2026-07-13) Support multiple admin accounts in admin panel; was single email
+        const ADMIN_EMAILS = ['admin@admin.com', 'zearamil9@gmail.com'];
+        const isAdminEmail = (email) => ADMIN_EMAILS.includes(String(email || '').toLowerCase().trim());
+        const toastStack = document.getElementById('toastStack');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const sections = document.querySelectorAll('.admin-section');
+        const adminProfileChip = document.getElementById('adminProfileChip');
+        const adminProfileDropdown = document.getElementById('adminProfileDropdown');
+        const adminDropdownName = document.getElementById('adminDropdownName');
+        const adminInitials = document.getElementById('adminInitials');
+        const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+        const gadList = document.getElementById('gadList');
+        const statsUserList = document.getElementById('statsUserList');
+        const managementUserList = document.getElementById('managementUserList');
+        const managementUserSearch = document.getElementById('managementUserSearch');
+        const createUserBtn = document.getElementById('createUserBtn');
+        const userEditorModal = document.getElementById('userEditorModal');
+        const closeUserModalBtn = document.getElementById('closeUserModalBtn');
+        const saveManagedUserBtn = document.getElementById('saveManagedUserBtn');
+        const deleteManagedUserBtn = document.getElementById('deleteManagedUserBtn');
+        const resetUserEditorBtn = document.getElementById('resetUserEditorBtn');
+        const managementRelationList = document.getElementById('managementRelationList');
+        const userEditorTitle = document.getElementById('userEditorTitle');
+        const userEditorCopy = document.getElementById('userEditorCopy');
+        const userEditorMeta = document.getElementById('userEditorMeta');
+        const userEditorBadge = document.getElementById('userEditorBadge');
+        const userEditorRolePill = document.getElementById('userEditorRolePill');
+        const manageUserId = document.getElementById('manageUserId');
+        const manageUserName = document.getElementById('manageUserName');
+        const manageUserEmail = document.getElementById('manageUserEmail');
+        const manageUserEmailBlock = document.getElementById('manageUserEmailBlock');
+        const manageUserEmailLabel = document.getElementById('manageUserEmailLabel');
+        const manageUserRole = document.getElementById('manageUserRole');
+        const manageUserPassword = document.getElementById('manageUserPassword');
+        const manageUserStudentId = document.getElementById('manageUserStudentId');
+        const manageUserStudentIdBlock = document.getElementById('manageUserStudentIdBlock');
+        const manageUserStudentIdLabel = document.getElementById('manageUserStudentIdLabel');
+        const gadPostText = document.getElementById('gadPostText');
+        const postGadBtn = document.getElementById('postGadBtn');
+        const cancelGadEditBtn = document.getElementById('cancelGadEditBtn');
+        const gadComposerTitle = document.getElementById('gadComposerTitle');
+        const gadComposerCopy = document.getElementById('gadComposerCopy');
+        const gadImageInput = document.getElementById('gadImageInput');
+        const attachGadImageBtn = document.getElementById('attachGadImageBtn');
+        const removeGadImageBtn = document.getElementById('removeGadImageBtn');
+        const gadImagePreviewCard = document.getElementById('gadImagePreviewCard');
+        const gadImagePreview = document.getElementById('gadImagePreview');
+        const metricPosts = document.getElementById('metricPosts');
+        const metricUsers = document.getElementById('metricUsers');
+        const metricStudents = document.getElementById('metricStudents');
+        const metricGuardians = document.getElementById('metricGuardians');
+        const metricThreads = document.getElementById('metricThreads');
+        const metricGadReach = document.getElementById('metricGadReach');
+        const metricGadEngaged = document.getElementById('metricGadEngaged');
+        const gadCounter = document.getElementById('gadCounter');
+        const gadSearch = document.getElementById('gadSearch');
+        const statsUserSearch = document.getElementById('statsUserSearch');
+        const roleChart = document.getElementById('roleChart');
+        const roleChartTotal = document.getElementById('roleChartTotal');
+        const roleLegend = document.getElementById('roleLegend');
+        const statsBarList = document.getElementById('statsBarList');
+        const reporterStatsList = document.getElementById('reporterStatsList');
+        const adminNotificationHistory = document.getElementById('adminNotificationHistory');
+        const userLocationTitle = document.getElementById('userLocationTitle');
+        const userLocationCopy = document.getElementById('userLocationCopy');
+
+        let deleteArmedPostId = null;
+        let cachedPosts = [];
+        let cachedUsers = [];
+        let cachedThreads = [];
+        let cachedGuardianLinks = [];
+        let cachedSosLogs = [];
+        let cachedEmergencyPosts = [];
+        let cachedAdminNotifications = [];
+        let currentAdminName = "Administrator";
+        let selectedManagedUserId = null;
+        let isCreatingManagedUser = false;
+        let openUserActionMenuId = null;
+        let selectedGadImage = "";
+        let editingGadPostId = null;
+        let unsubscribeAdminNotifications = null;
+        const seenAdminThreads = new Map();
+
+        const debounce = (callback, delay = 160) => {
+            let timeoutId = null;
+            return (...args) => {
+                window.clearTimeout(timeoutId);
+                timeoutId = window.setTimeout(() => callback(...args), delay);
+            };
+        };
+
+        const escapeHtml = (value = '') => String(value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+        // (2026-07-13) Support admin emails via isAdminEmail helper; was single email
+        const getRoleKey = (user = {}) => {
+            if (user?.role === 'admin' || isAdminEmail(user?.email)) return 'admin';
+            if (user?.role === 'guardian') return 'guardian';
+            if (user?.role === 'staff') return 'staff';
+            return 'student';
+        };
+
+        const getRoleLabel = (user = {}) => {
+            const role = getRoleKey(user);
+            return role.charAt(0).toUpperCase() + role.slice(1);
+        };
+
+        const getInitials = (name = 'U') => name
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((part) => part[0])
+            .join('')
+            .toUpperCase() || 'U';
+
+        const formatAdminTime = (value) => {
+            const date = value?.toDate?.() || (value ? new Date(value) : null);
+            return date ? date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Just now';
+        };
+
+        const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ''));
+            reader.onerror = () => reject(new Error('Could not read the selected image.'));
+            reader.readAsDataURL(file);
+        });
+
+        function getThreadLastActivityMs(thread = {}) {
+            const timestamp = thread.timestamp?.toDate?.() || new Date(thread.localTime || thread.createdAt || 0);
+            return Number.isFinite(timestamp.getTime()) ? timestamp.getTime() : 0;
+        }
+
+        function isThreadUnread(thread = {}) {
+            if (!thread?.threadId) return false;
+            if (String(thread.senderId || '') === ADMIN_ID) return false;
+            const seenAt = seenAdminThreads.get(thread.threadId) || 0;
+            return getThreadLastActivityMs(thread) > seenAt;
+        }
+
+        function renderAdminNotifications(notifications = []) {
+            cachedAdminNotifications = Array.isArray(notifications) ? notifications : [];
+            if (!adminNotificationHistory) return;
+            if (!cachedAdminNotifications.length) {
+                adminNotificationHistory.innerHTML = '<div class="empty-state">No admin notifications yet.</div>';
+                return;
+            }
+            adminNotificationHistory.innerHTML = cachedAdminNotifications.map((item) => `
+                <div class="table-row" style="grid-template-columns: minmax(0, 1fr) auto;">
+                    <div>
+                        <div class="row-title">${escapeHtml(item.title || 'Notification')}</div>
+                        <div class="row-sub">${escapeHtml(item.message || '')}</div>
+                    </div>
+                    <div class="row-sub" style="font-weight:700;">${escapeHtml(formatAdminTime(item.createdAt))}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderReporterStats() {
+            if (!reporterStatsList) return;
+            const reportMap = new Map();
+            const ensureReporter = (userId, fallback = {}) => {
+                const key = String(userId || '');
+                if (!key) return null;
+                if (!reportMap.has(key)) {
+                    reportMap.set(key, {
+                        userId: key,
+                        name: fallback.name || 'Unknown Reporter',
+                        studentId: fallback.studentId || '',
+                        sos: 0,
+                        evidence: 0
+                    });
+                }
+                return reportMap.get(key);
+            };
+
+            cachedSosLogs.forEach((log) => {
+                const profile = cachedUsers.find((user) => String(user.id) === String(log.userId)) || {};
+                const entry = ensureReporter(log.userId, profile);
+                if (entry) entry.sos += 1;
+            });
+
+            cachedEmergencyPosts.forEach((post) => {
+                const profile = cachedUsers.find((user) => String(user.id) === String(post.userId)) || {};
+                const entry = ensureReporter(post.userId, { ...profile, name: profile.name || post.userName, studentId: profile.studentId || post.studentId });
+                if (entry) entry.evidence += Array.isArray(post.attachments) ? post.attachments.length : 1;
+            });
+
+            const rows = Array.from(reportMap.values())
+                .map((entry) => ({ ...entry, total: Number(entry.sos || 0) + Number(entry.evidence || 0) }))
+                .filter((entry) => entry.total > 0)
+                .sort((a, b) => b.total - a.total)
+                .slice(0, 8);
+
+            if (!rows.length) {
+                reporterStatsList.innerHTML = '<div class="empty-state">No SOS or evidence reports recorded yet.</div>';
+                return;
+            }
+
+            reporterStatsList.innerHTML = rows.map((entry) => `
+                <div class="table-row" style="grid-template-columns: minmax(0, 1fr) auto auto auto;">
+                    <div>
+                        <div class="row-title">${escapeHtml(entry.name)}</div>
+                        <div class="row-sub">${escapeHtml(entry.studentId ? `ID: ${entry.studentId}` : 'No ID saved')}</div>
+                    </div>
+                    <div><span class="mini-chip">${entry.sos} SOS</span></div>
+                    <div><span class="mini-chip">${entry.evidence} media</span></div>
+                    <div><strong>${entry.total}</strong></div>
+                </div>
+            `).join('');
+        }
+
+        function renderGadImagePreview() {
+            if (!gadImagePreviewCard || !gadImagePreview) return;
+            const hasImage = !!selectedGadImage;
+            gadImagePreviewCard.classList.toggle('active', hasImage);
+            if (hasImage) {
+                gadImagePreview.src = selectedGadImage;
+            } else {
+                gadImagePreview.removeAttribute('src');
+            }
+        }
+
+        async function createAuthAccountForManagedUser(email, password) {
+            const secondaryAppName = `securo-admin-create-${Date.now()}`;
+            const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+            const secondaryAuth = getAuth(secondaryApp);
+            try {
+                const credential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+                return credential.user;
+            } finally {
+                await deleteApp(secondaryApp).catch(() => {});
+            }
+        }
+
+        async function loadManagedUserLocation(user) {
+            if (!userLocationTitle || !userLocationCopy) return;
+            if (!user?.id) {
+                userLocationTitle.textContent = 'No recent location loaded';
+                userLocationCopy.textContent = 'Select a user to check the latest shared location or evidence area.';
+                return;
+            }
+            if (!['student', 'staff'].includes(user.role || 'student')) {
+                userLocationTitle.textContent = 'Location is not tracked for this role';
+                userLocationCopy.textContent = 'Only student and staff map accounts currently share campus location data.';
+                return;
+            }
+            const liveLocation = await getStudentLiveLocationOnce(user.id);
+            const latestEvidence = cachedEmergencyPosts
+                .filter((post) => String(post.userId) === String(user.id))
+                .sort((a, b) => {
+                    const aTime = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime();
+                    const bTime = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime();
+                    return bTime - aTime;
+                })[0];
+
+            if (liveLocation?.lat && liveLocation?.lng) {
+                userLocationTitle.textContent = `Live location: ${Number(liveLocation.lat).toFixed(5)}, ${Number(liveLocation.lng).toFixed(5)}`;
+                userLocationCopy.textContent = liveLocation.updatedAt ? `Updated ${formatAdminTime(liveLocation.updatedAt)}` : 'Live location available.';
+                return;
+            }
+            if (latestEvidence?.location?.lat && latestEvidence?.location?.lng) {
+                userLocationTitle.textContent = `Last report area: ${Number(latestEvidence.location.lat).toFixed(5)}, ${Number(latestEvidence.location.lng).toFixed(5)}`;
+                userLocationCopy.textContent = latestEvidence.createdAt ? `From latest evidence â€¢ ${formatAdminTime(latestEvidence.createdAt)}` : 'Taken from saved evidence.';
+                return;
+            }
+            userLocationTitle.textContent = 'No recent location found';
+            userLocationCopy.textContent = 'This account has not shared a live location or report area yet.';
+        }
+
+        const getManagedUserById = (userId) => cachedUsers.find((user) => String(user.id) === String(userId)) || null;
+
+        const openUserEditorModal = () => {
+            userEditorModal?.classList.add('active');
+            userEditorModal?.setAttribute('aria-hidden', 'false');
+        };
+
+        const closeUserEditorModal = () => {
+            userEditorModal?.classList.remove('active');
+            userEditorModal?.setAttribute('aria-hidden', 'true');
+        };
+
+        const toggleUserActionMenu = (userId) => {
+            openUserActionMenuId = openUserActionMenuId === userId ? null : userId;
+            renderManagedUsers();
+        };
+
+        const closeUserActionMenu = () => {
+            if (!openUserActionMenuId) return;
+            openUserActionMenuId = null;
+            renderManagedUsers();
+        };
+
+        function buildUserRelations(user) {
+            if (!user) return [];
+
+            const role = getRoleKey(user);
+            const byId = new Map(cachedUsers.map((entry) => [String(entry.id), entry]));
+            const byStudentId = new Map(cachedUsers.filter((entry) => entry.studentId).map((entry) => [String(entry.studentId), entry]));
+
+            if (role === 'guardian') {
+                return cachedGuardianLinks
+                    .filter((link) => String(link.guardianId) === String(user.id))
+                    .map((link) => {
+                        const childUser = byId.get(String(link.studentUid || '')) || byStudentId.get(String(link.studentId || ''));
+                        return {
+                            title: childUser?.name || link.studentName || link.studentId || 'Child link',
+                            subtitle: link.studentId ? `Student ID: ${link.studentId}` : 'No student ID',
+                            status: link.status || 'pending'
+                        };
+                    });
+            }
+
+            const links = cachedGuardianLinks.filter((link) => {
+                if (user.studentId && String(link.studentId) === String(user.studentId)) return true;
+                if (String(link.studentUid || '') === String(user.id)) return true;
+                return false;
+            });
+
+            return links.map((link) => {
+                const guardianUser = byId.get(String(link.guardianId || ''));
+                return {
+                    title: guardianUser?.name || link.guardianName || link.guardianEmail || 'Guardian link',
+                    subtitle: guardianUser?.email || link.guardianEmail || 'No email',
+                    status: link.status || 'pending'
+                };
+            });
+        }
+
+        function renderRelationList(user) {
+            const relations = buildUserRelations(user);
+            if (!managementRelationList) return;
+
+            if (!user) {
+                managementRelationList.innerHTML = '';
+                return;
+            }
+
+            if (!relations.length) {
+                managementRelationList.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-symbols-outlined" style="font-size:30px; opacity:0.35;">family_restroom</span>
+                        <p style="margin:8px 0 0;">No parent, guardian, or child links saved for this account.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            managementRelationList.innerHTML = relations.map((relation) => `
+                <div class="relation-chip">
+                    <div>
+                        <div class="row-title">${escapeHtml(relation.title)}</div>
+                        <div class="row-sub">${escapeHtml(relation.subtitle)}</div>
+                    </div>
+                    <span class="relation-status">${escapeHtml(relation.status)}</span>
+                </div>
+            `).join('');
+        }
+
+        function setUserEditorState(user = null, options = {}) {
+            const creating = !!options.creating;
+            selectedManagedUserId = creating ? null : (user?.id || null);
+            isCreatingManagedUser = creating;
+
+            const roleKey = getRoleKey(user || { role: 'student' });
+            if (manageUserId) manageUserId.value = user?.id || 'Will be generated on save';
+            if (manageUserName) manageUserName.value = user?.name || '';
+            if (manageUserEmail) manageUserEmail.value = user?.email || '';
+            if (manageUserRole) manageUserRole.value = creating ? 'student' : roleKey;
+            if (manageUserStudentId) manageUserStudentId.value = user?.studentId || '';
+            if (manageUserPassword) manageUserPassword.value = '';
+            if (manageUserStudentId) {
+                manageUserStudentId.disabled = !['student', 'staff'].includes(creating ? 'student' : roleKey);
+            }
+
+            if (userEditorTitle) userEditorTitle.textContent = creating ? 'Create a new sign-in account' : (user?.name || 'Unnamed user');
+            if (userEditorCopy) userEditorCopy.textContent = creating
+                ? 'Create a real Firebase sign-in plus the saved profile record used by the app.'
+                : `Edit saved account details for this ${getRoleLabel(user).toLowerCase()} profile.`;
+            if (userEditorMeta) {
+                userEditorMeta.textContent = creating
+                    ? 'The new user will be added to Authentication first, then their app profile will be saved here.'
+                    : `${getRoleLabel(user)} account • ${user?.studentId ? `Student ID: ${user.studentId}` : 'No student ID saved'} • ${user?.email || 'No email saved'}`;
+            }
+            if (userEditorBadge) userEditorBadge.textContent = creating ? 'New Profile' : 'Profile Editor';
+            if (userEditorRolePill) {
+                userEditorRolePill.textContent = getRoleLabel(user || { role: 'student' });
+                userEditorRolePill.className = `role-pill ${creating ? 'student' : roleKey}`;
+            }
+            if (deleteManagedUserBtn) deleteManagedUserBtn.disabled = creating || !user?.id;
+
+            renderRelationList(creating ? null : user);
+            loadManagedUserLocation(creating ? null : user).catch(() => {});
+            updateManagedUserRoleFields(creating ? 'student' : roleKey, { creating });
+            renderManagedUsers();
+        }
+
+        function updateManagedUserRoleFields(roleValue = 'student', options = {}) {
+            const normalizedRole = ['student', 'staff', 'guardian'].includes(roleValue) ? roleValue : 'student';
+            const creating = options.creating ?? isCreatingManagedUser;
+
+            if (userEditorRolePill) {
+                userEditorRolePill.textContent = normalizedRole.charAt(0).toUpperCase() + normalizedRole.slice(1);
+                userEditorRolePill.className = `role-pill ${normalizedRole}`;
+            }
+
+            if (manageUserStudentIdBlock) {
+                manageUserStudentIdBlock.style.display = ['student', 'staff'].includes(normalizedRole) ? '' : 'none';
+            }
+            if (manageUserStudentIdLabel) {
+                manageUserStudentIdLabel.textContent = normalizedRole === 'staff' ? 'Staff ID' : 'Student ID';
+            }
+            if (manageUserStudentId) {
+                manageUserStudentId.disabled = !['student', 'staff'].includes(normalizedRole);
+                manageUserStudentId.placeholder = normalizedRole === 'staff' ? '7-digit staff ID' : '7-digit student ID';
+                if (!['student', 'staff'].includes(normalizedRole) && creating) {
+                    manageUserStudentId.value = '';
+                }
+            }
+
+            if (manageUserEmailLabel) {
+                manageUserEmailLabel.textContent = normalizedRole === 'guardian'
+                    ? 'Guardian Email'
+                    : normalizedRole === 'staff'
+                    ? 'Staff Email'
+                    : 'Student Email';
+            }
+            if (manageUserEmail) {
+                manageUserEmail.placeholder = normalizedRole === 'guardian'
+                    ? 'guardian@example.com'
+                    : normalizedRole === 'staff'
+                    ? 'Optional custom staff email'
+                    : 'Optional custom student email';
+                manageUserEmail.readOnly = false;
+            }
+        }
+
+        function renderManagedUsers() {
+            if (!managementUserList) return;
+            const term = (managementUserSearch?.value || '').trim().toLowerCase();
+            const users = cachedUsers.filter((user) => {
+                if (getRoleKey(user) === 'admin') return false;
+                const haystack = `${user.name || ''} ${user.email || ''} ${user.studentId || ''} ${user.role || ''}`.toLowerCase();
+                return haystack.includes(term);
+            });
+
+            if (!users.length) {
+                renderEmpty(managementUserList, 'manage_accounts', 'No saved users match this search.');
+                return;
+            }
+
+            managementUserList.innerHTML = users.map((user) => {
+                const roleKey = getRoleKey(user);
+                const relations = buildUserRelations(user);
+                const isMenuOpen = openUserActionMenuId === user.id;
+                const relationLabel = roleKey === 'guardian'
+                    ? `${relations.length} child link${relations.length === 1 ? '' : 's'}`
+                    : `${relations.length} parent/guardian link${relations.length === 1 ? '' : 's'}`;
+                return `
+                    <div class="user-table-row">
+                        <div class="user-table-main inline-fields" style="align-items:center;">
+                            <div class="management-avatar">${escapeHtml(getInitials(user.name || user.email || 'U'))}</div>
+                            <div>
+                                <div class="row-title">${escapeHtml(user.name || 'Unnamed user')}</div>
+                                <div class="row-sub">${escapeHtml(relationLabel)}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="role-pill ${roleKey}">${getRoleLabel(user)}</span>
+                        </div>
+                        <div>
+                            <div class="row-sub">${escapeHtml(user.email || 'No email saved')}</div>
+                            <div class="row-sub">${escapeHtml(user.studentId ? `ID: ${user.studentId}` : 'ID: N/A')}</div>
+                        </div>
+                        <div class="user-table-actions">
+                            <button class="icon-ghost-btn" type="button" data-user-action-trigger="${escapeHtml(user.id)}" aria-label="More actions for ${escapeHtml(user.name || 'user')}">
+                                <span class="material-symbols-outlined">more_horiz</span>
+                            </button>
+                            ${isMenuOpen ? `
+                                <div class="row-action-menu">
+                                    <button class="row-action-item" type="button" data-user-action="edit" data-user-id="${escapeHtml(user.id)}">
+                                        <span class="material-symbols-outlined">edit</span>
+                                        <span>Edit User</span>
+                                    </button>
+                                    <button class="row-action-item delete" type="button" data-user-action="delete" data-user-id="${escapeHtml(user.id)}" data-user-name="${escapeHtml(user.name || 'this user')}">
+                                        <span class="material-symbols-outlined">delete</span>
+                                        <span>Delete User</span>
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        const showToast = (title, message, type = 'info') => {
+            const icon = type === 'error' ? 'error' : type === 'success' ? 'check_circle' : 'info';
+            const toast = document.createElement('div');
+            toast.className = `toast-card ${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <span class="material-symbols-outlined">${icon}</span>
+                </div>
+                <div class="toast-copy">
+                    <strong>${title}</strong>
+                    <span>${message}</span>
+                </div>
+            `;
+            toastStack.appendChild(toast);
+            window.setTimeout(() => toast.remove(), 3200);
+        };
+
+// (2026-07-13) Invalidate map size on sos and stats tab switch; was stats only
+        const setTab = (tab) => {
+            tabBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === tab));
+            sections.forEach((section) => section.classList.toggle('active', section.id === `sec-${tab}`));
+            if (tab === 'stats' || tab === 'sos') {
+                if (adminSosLeafletMap) setTimeout(() => adminSosLeafletMap.invalidateSize(), 120);
+            }
+            if (tab === 'messages') {
+                initAdminChat();
+            } else {
+                stopAdminRealtimeThreads();
+            }
+        };
+
+        tabBtns.forEach((btn) => {
+            btn.addEventListener('click', () => setTab(btn.dataset.tab));
+        });
+
+        if (adminProfileChip) {
+            adminProfileChip.addEventListener('click', (event) => {
+                event.stopPropagation();
+                adminProfileDropdown?.classList.toggle('active');
+            });
+        }
+
+        if (adminLogoutBtn) {
+            adminLogoutBtn.addEventListener('click', async () => {
+                adminLogoutBtn.disabled = true;
+                try {
+                    await logout();
+                    window.location.href = 'admin-login.html';
+                } catch (error) {
+                    showToast("Logout failed", error.message || "Could not sign out right now.", "error");
+                    adminLogoutBtn.disabled = false;
+                }
+            });
+        }
+
+        document.addEventListener('click', () => {
+            adminProfileDropdown?.classList.remove('active');
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                showToast("Access denied", "Please sign in to the terminal first.", "error");
+                window.setTimeout(() => {
+                    window.location.href = 'admin-login.html';
+                }, 900);
+                return;
+            }
+            try {
+                const profile = await getUserProfile(user.uid);
+                const isSpecialAdmin = profile?.role === 'admin';
+                currentAdminName = profile?.name || user.displayName || 'Administrator';
+                if (adminDropdownName) adminDropdownName.textContent = currentAdminName;
+                if (adminInitials) {
+                    adminInitials.textContent = currentAdminName
+                        .split(/\s+/)
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((part) => part[0])
+                        .join('')
+                        .toUpperCase() || 'AD';
+                }
+
+                // (2026-07-13) Validate admin accounts via isAdminEmail; was single email check
+                if (!isAdminEmail(user.email) && !isSpecialAdmin) {
+                    showToast("Access denied", "Only authorized administrator accounts can open the command center.", "error");
+                    window.setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 900);
+                    return;
+                }
+                await loadAllData();
+                if (unsubscribeAdminNotifications) unsubscribeAdminNotifications();
+                unsubscribeAdminNotifications = subscribeToAccountNotifications(user.uid, renderAdminNotifications);
+                showToast("Admin ready", `Command center synced successfully. Welcome ${currentAdminName}.`, "success");
+            } catch (error) {
+                showToast("Sync failed", error.message || "Unable to load admin data right now.", "error");
+            }
+        });
+
+        async function loadAllData() {
+            const [posts, users, threads, guardianLinks, sosLogs, emergencyPosts] = await Promise.all([
+                getGADPosts(),
+                getAllUsers(),
+                getAllChatThreadsOnce(),
+                getAllGuardianLinksAdmin(),
+                getAllSOSLogs(),
+                getAllEmergencyPosts()
+            ]);
+            
+            // Explicitly sort posts by date descending
+            cachedPosts = (Array.isArray(posts) ? posts : []).sort((a, b) => {
+                const dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.timestamp || 0).getTime();
+                const dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.timestamp || 0).getTime();
+                return dateB - dateA;
+            });
+
+            cachedUsers = Array.isArray(users) ? users : [];
+            cachedThreads = Array.isArray(threads) ? threads : [];
+            cachedGuardianLinks = Array.isArray(guardianLinks) ? guardianLinks : [];
+            cachedSosLogs = Array.isArray(sosLogs) ? sosLogs : [];
+            cachedEmergencyPosts = Array.isArray(emergencyPosts) ? emergencyPosts : [];
+            applyFilters();
+            if (isCreatingManagedUser) {
+                setUserEditorState(null, { creating: true });
+            } else if (selectedManagedUserId) {
+                setUserEditorState(getManagedUserById(selectedManagedUserId));
+            } else {
+                setUserEditorState(cachedUsers[0] || null, { creating: !cachedUsers.length });
+            }
+        }
+
+        function renderEmpty(container, icon, text) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-outlined" style="font-size:42px; opacity:0.35;">${icon}</span>
+                    <p style="margin:10px 0 0;">${text}</p>
+                </div>
+            `;
+        }
+
+        function renderGadPosts(posts) {
+            if (!posts.length) {
+                renderEmpty(gadList, 'campaign', 'No GAD posts published yet.');
+                return;
+            }
+
+            gadList.innerHTML = posts.map((post) => `
+                <div class="table-row">
+                    <div>
+                        <div class="row-title">${post.content || 'Untitled GAD post'}</div>
+                        <div class="row-sub">Published as an official GAD bulletin.</div>
+                        ${post.image ? `<div class="row-sub" style="margin-top:8px;"><img src="${post.image}" alt="GAD post image" style="width:72px; height:72px; border-radius:14px; object-fit:cover; border:1px solid rgba(0,0,0,0.05);"></div>` : ''}
+                        <div class="meta-pair">
+                            <span class="mini-chip"><span class="material-symbols-outlined" style="font-size:16px;">groups</span>${cachedUsers.length} users reached</span>
+                            <span class="mini-chip"><span class="material-symbols-outlined" style="font-size:16px;">favorite</span>${Array.isArray(post.likedBy) ? post.likedBy.length : (post.likes || 0)} engaged</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="row-title">${post.author || 'GAD Office Official'}</div>
+                        <div class="row-sub">${post.email || 'No email'}</div>
+                    </div>
+                    <div>
+                        <span class="status-pill gad">Live</span>
+                        <div class="row-sub">${post.timestamp || 'Recent'}</div>
+                    </div>
+                    <div class="row-actions">
+                        <button class="icon-btn" onclick="handleEditPost('${post.id}')">
+                            <span class="material-symbols-outlined">edit</span>
+                        </button>
+                        <button class="icon-btn delete" onclick="handleDeletePost('${post.id}')">
+                            <span class="material-symbols-outlined">delete</span>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // (2026-07-13) Support admin emails in role counter; was single email string
+        function getRoleCounts(users) {
+            return (Array.isArray(users) ? users : []).reduce((acc, user) => {
+                const role = (user?.role === 'admin' || isAdminEmail(user?.email)) ? 'admin' : user?.role === 'guardian' ? 'guardian' : user?.role === 'staff' ? 'staff' : 'student';
+                acc[role] += 1;
+                return acc;
+            }, { student: 0, guardian: 0, staff: 0, admin: 0 });
+        }
+
+        function renderStatistics(users) {
+            const roleCounts = getRoleCounts(users);
+            const totalUsers = users.length;
+            const gadEngaged = new Set(
+                cachedPosts.flatMap((post) => Array.isArray(post.likedBy) ? post.likedBy : [])
+            ).size;
+            const maxMetric = Math.max(totalUsers || 0, cachedPosts.length || 0, cachedThreads.length || 0, gadEngaged || 0, 1);
+
+            // (2026-07-13) Guard metric elements against null textContent; was unguarded set
+            if (metricUsers) metricUsers.textContent = totalUsers;
+            if (metricStudents) metricStudents.textContent = roleCounts.student;
+            if (metricGuardians) metricGuardians.textContent = roleCounts.guardian;
+            if (metricThreads) metricThreads.textContent = cachedThreads.length;
+            if (metricPosts) metricPosts.textContent = cachedPosts.length;
+            if (metricGadReach) metricGadReach.textContent = totalUsers;
+            if (metricGadEngaged) metricGadEngaged.textContent = gadEngaged;
+
+            if (roleChart) {
+                const studentDeg = totalUsers ? (roleCounts.student / totalUsers) * 360 : 0;
+                const guardianDeg = totalUsers ? (roleCounts.guardian / totalUsers) * 360 : 0;
+                const staffDeg = totalUsers ? (roleCounts.staff / totalUsers) * 360 : 0;
+                roleChart.style.background = `conic-gradient(
+                    var(--primary) 0deg ${studentDeg}deg,
+                    #ff7a90 ${studentDeg}deg ${studentDeg + guardianDeg}deg,
+                    #9f67ff ${studentDeg + guardianDeg}deg ${studentDeg + guardianDeg + staffDeg}deg,
+                    #c7b8ff ${studentDeg + guardianDeg + staffDeg}deg 360deg
+                )`;
+            }
+            if (roleChartTotal) roleChartTotal.textContent = totalUsers;
+            if (roleLegend) {
+                roleLegend.innerHTML = `
+                    <div class="legend-item">
+                        <div class="legend-meta"><span class="legend-swatch" style="background: var(--primary);"></span><span>Students</span></div>
+                        <strong>${roleCounts.student}</strong>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-meta"><span class="legend-swatch" style="background: #ff7a90;"></span><span>Guardians</span></div>
+                        <strong>${roleCounts.guardian}</strong>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-meta"><span class="legend-swatch" style="background: #9f67ff;"></span><span>Staff</span></div>
+                        <strong>${roleCounts.staff}</strong>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-meta"><span class="legend-swatch" style="background: #c7b8ff;"></span><span>Admins</span></div>
+                        <strong>${roleCounts.admin}</strong>
+                    </div>
+                `;
+            }
+            if (statsBarList) {
+                const barRows = [
+                    { label: 'Registered Users', value: totalUsers },
+                    { label: 'Published GAD Posts', value: cachedPosts.length },
+                    { label: 'Support Conversations', value: cachedThreads.length },
+                    { label: 'Engaged Users', value: gadEngaged }
+                ];
+                statsBarList.innerHTML = barRows.map((row) => `
+                    <div class="bar-row">
+                        <div class="bar-top">
+                            <span>${row.label}</span>
+                            <strong>${row.value}</strong>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width:${Math.max(8, Math.round((row.value / maxMetric) * 100))}%;"></div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+// (2026-07-13) Add interactive Admin SOS Map & Hotspots renderer; was reporter stats only
+            renderReporterStats();
+            renderAdminSosMap();
+        }
+
+        let adminSosLeafletMap = null;
+        let adminSosMarkersLayer = null;
+        let adminGeofencePolygonLayer = null;
+        let adminGeofenceVertexMarkers = [];
+        let adminBuildingMarkers = [];
+        let adminModalLeafletMap = null;
+        let modalGeofencePolygonLayer = null;
+        let modalGeofenceVertexMarkers = [];
+        let modalBuildingMarkers = [];
+        // (2026-07-13) Set campus center coordinates for admin map editor; was missing definition
+        const ADMIN_CAMPUS_CENTER = [11.26659, 124.00872];
+        // (2026-07-13) Complete facility descriptions lookup dictionary; was missing desc
+        const CAMPUS_BUILDING_DESCRIPTIONS = {
+            "Guard House": "24/7 campus security dispatch and visitor verification.",
+            "Medical Clinic": "First-aid, medical triage, and emergency response clinic.",
+            "Admin Building": "Administrative offices and student services.",
+            "Main Gate": "Primary campus entrance & verification point.",
+            "HM Building": "Hospitality Management laboratories and culinary suites.",
+            "Educ Building": "College of Education lecture rooms and dean's office.",
+            "Engineering Complex": "Engineering & Industrial Technology workshops.",
+            "University Gym": "Campus sports arena and assembly gymnasium.",
+            "Campus Library": "Learning commons, digital archives, and quiet study hall."
+        };
+
+        // (2026-07-13) Set exact 9 campus facilities matching adminGeofenceModalMap; was 7 facilities
+        const DEFAULT_CAMPUS_BUILDINGS = [
+            { name: "Guard House", coords: [11.26785, 124.00865], icon: "security", desc: CAMPUS_BUILDING_DESCRIPTIONS["Guard House"] },
+            { name: "Medical Clinic", coords: [11.26780, 124.00895], icon: "medical_services", desc: CAMPUS_BUILDING_DESCRIPTIONS["Medical Clinic"] },
+            { name: "Admin Building", coords: [11.26735, 124.00835], icon: "account_balance", desc: CAMPUS_BUILDING_DESCRIPTIONS["Admin Building"] },
+            { name: "Main Gate", coords: [11.26735, 124.00865], icon: "door_front", desc: CAMPUS_BUILDING_DESCRIPTIONS["Main Gate"] },
+            { name: "HM Building", coords: [11.26715, 124.00870], icon: "restaurant", desc: CAMPUS_BUILDING_DESCRIPTIONS["HM Building"] },
+            { name: "Educ Building", coords: [11.26705, 124.00910], icon: "school", desc: CAMPUS_BUILDING_DESCRIPTIONS["Educ Building"] },
+            { name: "Engineering Complex", coords: [11.26680, 124.00925], icon: "precision_manufacturing", desc: CAMPUS_BUILDING_DESCRIPTIONS["Engineering Complex"] },
+            { name: "University Gym", coords: [11.26740, 124.00935], icon: "fitness_center", desc: CAMPUS_BUILDING_DESCRIPTIONS["University Gym"] },
+            { name: "Campus Library", coords: [11.26620, 124.00895], icon: "local_library", desc: CAMPUS_BUILDING_DESCRIPTIONS["Campus Library"] }
+        ];
+
+        // (2026-07-13) Set exact 6-point geofence matching adminGeofenceModalMap; was 5-point draft
+        const DEFAULT_CAMPUS_GEOFENCE_POLYGON = [
+            [11.26805, 124.00780],
+            [11.26820, 124.00902],
+            [11.26760, 124.00900],
+            [11.26755, 124.00965],
+            [11.26522, 124.00930],
+            [11.26538, 124.00755]
+        ];
+
+        function getActiveAdminBuildings() {
+            try {
+                const stored = localStorage.getItem('securo_campus_buildings');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                }
+            } catch (e) {}
+            return DEFAULT_CAMPUS_BUILDINGS.map(b => ({ ...b, coords: [...b.coords] }));
+        }
+
+        function getActiveAdminGeofencePolygon() {
+            try {
+                const stored = localStorage.getItem('securo_custom_geofence');
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    if (Array.isArray(parsed) && parsed.length >= 3) return parsed;
+                }
+            } catch (e) {}
+            return DEFAULT_CAMPUS_GEOFENCE_POLYGON.map(pt => [...pt]);
+        }
+
+        let currentAdminGeofence = getActiveAdminGeofencePolygon();
+        let currentAdminBuildings = getActiveAdminBuildings();
+
+        // (2026-07-13) Clean icon-only markers with hover/tap details; was wide text cards
+        function renderBuildingMarkers() {
+            if (!adminSosLeafletMap) return;
+            adminBuildingMarkers.forEach(m => adminSosLeafletMap.removeLayer(m));
+            adminBuildingMarkers = [];
+
+            currentAdminBuildings.forEach((b) => {
+                const bIcon = L.divIcon({
+                    className: 'campus-facility-icon-marker',
+                    html: `<div style="background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 3px 10px rgba(24,20,40,0.16); border:2px solid #5a1fe0; display:flex; align-items:center; justify-content:center; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:16px; color:#5a1fe0;">${b.icon || 'location_on'}</span></div>`,
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+                // (2026-07-13) Single clean popup on marker click; was duplicate tooltip + popup
+                const marker = L.marker(b.coords, { icon: bIcon }).addTo(adminSosLeafletMap);
+                marker.bindPopup(`
+                    <div style="padding:4px 2px; min-width:140px;">
+                        <strong style="display:flex; align-items:center; gap:5px; font-size:0.85rem; color:#181428;">
+                            <span class="material-symbols-outlined" style="font-size:16px; color:#5a1fe0;">${b.icon || 'location_on'}</span>
+                            ${b.name}
+                        </strong>
+                        <p style="margin:4px 0 0; font-size:0.75rem; color:#64748b; line-height:1.3;">${b.desc || 'Campus facility'}</p>
+                    </div>
+                `);
+                adminBuildingMarkers.push(marker);
+            });
+        }
+
+        function renderModalEditorMarkers() {
+            if (!adminModalLeafletMap) return;
+
+            modalBuildingMarkers.forEach(m => adminModalLeafletMap.removeLayer(m));
+            modalBuildingMarkers = [];
+            modalGeofenceVertexMarkers.forEach(m => adminModalLeafletMap.removeLayer(m));
+            modalGeofenceVertexMarkers = [];
+
+            if (!modalGeofencePolygonLayer) {
+                modalGeofencePolygonLayer = L.polygon(currentAdminGeofence, {
+                    color: '#5a1fe0',
+                    weight: 3.5,
+                    dashArray: '6, 6',
+                    fillColor: '#7c3aed',
+                    fillOpacity: 0.15
+                }).addTo(adminModalLeafletMap);
+            } else {
+                modalGeofencePolygonLayer.setLatLngs(currentAdminGeofence);
+            }
+
+            // Draggable Geofence Vertices
+            currentAdminGeofence.forEach((coord, idx) => {
+                const markerIcon = L.divIcon({
+                    className: 'modal-geofence-vertex',
+                    html: `<div style="background:#5a1fe0; color:white; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; border:2.5px solid white; box-shadow:0 4px 14px rgba(0,0,0,0.4); cursor:grab;">${idx + 1}</div>`,
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
+                });
+                const marker = L.marker(coord, { icon: markerIcon, draggable: true }).addTo(adminModalLeafletMap);
+                // (2026-07-13) Update local vertex position on drag; save only on button click
+                marker.on('drag', (e) => {
+                    const newPos = e.target.getLatLng();
+                    currentAdminGeofence[idx] = [Number(newPos.lat), Number(newPos.lng)];
+                    modalGeofencePolygonLayer.setLatLngs(currentAdminGeofence);
+                });
+                modalGeofenceVertexMarkers.push(marker);
+            });
+
+            // Draggable Building Markers
+            currentAdminBuildings.forEach((b, idx) => {
+                const bIcon = L.divIcon({
+                    className: 'modal-bldg-marker',
+                    html: `<div style="background:#f5f3ff; border-radius:10px; padding:4px 10px; box-shadow:0 4px 14px rgba(0,0,0,0.18); font-size:11px; font-weight:800; color:#181428; border:2px solid #5a1fe0; display:flex; align-items:center; gap:6px; cursor:grab;"><span class="material-symbols-outlined" style="font-size:15px; color:#5a1fe0;">${b.icon}</span>${b.name}</div>`,
+                    iconSize: [110, 28],
+                    iconAnchor: [55, 14]
+                });
+                const marker = L.marker(b.coords, { icon: bIcon, draggable: true }).addTo(adminModalLeafletMap);
+                marker.on('drag', (e) => {
+                    const newPos = e.target.getLatLng();
+                    currentAdminBuildings[idx].coords = [Number(newPos.lat), Number(newPos.lng)];
+                });
+                modalBuildingMarkers.push(marker);
+            });
+
+            const vertexCounter = document.getElementById('geofenceModalVertexCount');
+            if (vertexCounter) {
+                vertexCounter.textContent = `${currentAdminGeofence.length} Boundary Vertices • ${currentAdminBuildings.length} Campus Facilities`;
+            }
+        }
+
+        function openGeofenceEditorModal() {
+            const modal = document.getElementById('adminGeofenceModal');
+            if (!modal) return;
+
+            currentAdminGeofence = getActiveAdminGeofencePolygon();
+            currentAdminBuildings = getActiveAdminBuildings();
+            modal.style.display = 'flex';
+
+            setTimeout(() => {
+                if (!adminModalLeafletMap) {
+                    adminModalLeafletMap = L.map('adminGeofenceModalMap', {
+                        zoomControl: true,
+                        attributionControl: false,
+                        zoomSnap: 0.25,
+                        zoomDelta: 0.5,
+                        wheelPxPerZoomLevel: 140
+                    }).setView(ADMIN_CAMPUS_CENTER, 17);
+
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19
+                    }).addTo(adminModalLeafletMap);
+                }
+                adminModalLeafletMap.invalidateSize();
+                renderModalEditorMarkers();
+            }, 100);
+            setTimeout(() => {
+                if (adminModalLeafletMap) adminModalLeafletMap.invalidateSize();
+            }, 300);
+        }
+
+        // (2026-07-13) Close modal cleanly without uncommitted auto-save; was saving on close
+        function closeGeofenceEditorModal() {
+            const modal = document.getElementById('adminGeofenceModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function setupGeofenceEditorControls() {
+            const btnEdit = document.getElementById('btnEditGeofence');
+            const btnSaveCard = document.getElementById('btnSaveGeofence');
+            const btnSaveModal = document.getElementById('btnSaveGeofenceModal');
+            const btnResetModal = document.getElementById('btnResetGeofenceModal');
+            const btnCloseModal = document.getElementById('btnCloseGeofenceModal');
+
+            if (btnEdit && !btnEdit.dataset.bound) {
+                btnEdit.dataset.bound = 'true';
+                btnEdit.addEventListener('click', () => {
+                    openGeofenceEditorModal();
+                });
+            }
+
+            // (2026-07-13) Publish snapshot changes to database on save button click; was unthrottled drag
+            const handleSave = async (btn) => {
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:17px;">sync</span><span>Saving...</span>';
+                }
+                try {
+                    await saveCampusMapConfig({
+                        geofence: currentAdminGeofence,
+                        buildings: currentAdminBuildings
+                    });
+                } catch (e) {
+                    console.warn("Save error:", e);
+                } finally {
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:17px;">cloud_sync</span><span>Save & Sync Database</span>';
+                    }
+                    closeGeofenceEditorModal();
+                    if (adminSosLeafletMap) {
+                        renderBuildingMarkers();
+                        if (adminGeofencePolygonLayer) {
+                            adminSosLeafletMap.removeLayer(adminGeofencePolygonLayer);
+                            adminGeofencePolygonLayer = L.polygon(currentAdminGeofence, {
+                                color: '#e11d48',
+                                weight: 3,
+                                dashArray: '5, 6',
+                                fillColor: '#f43f5e',
+                                fillOpacity: 0.1
+                            }).addTo(adminSosLeafletMap);
+                        }
+                    }
+                }
+            };
+
+            if (btnSaveCard && !btnSaveCard.dataset.bound) {
+                btnSaveCard.dataset.bound = 'true';
+                btnSaveCard.addEventListener('click', () => handleSave(btnSaveCard));
+            }
+
+            if (btnSaveModal && !btnSaveModal.dataset.bound) {
+                btnSaveModal.dataset.bound = 'true';
+                btnSaveModal.addEventListener('click', () => handleSave(btnSaveModal));
+            }
+
+            if (btnResetModal && !btnResetModal.dataset.bound) {
+                btnResetModal.dataset.bound = 'true';
+                btnResetModal.addEventListener('click', async () => {
+                    if (!confirm('Are you sure you want to reset the geofence and building markers to default coordinates?')) return;
+                    localStorage.removeItem('securo_custom_geofence');
+                    localStorage.removeItem('securo_campus_buildings');
+                    currentAdminGeofence = DEFAULT_CAMPUS_GEOFENCE_POLYGON.map(pt => [...pt]);
+                    currentAdminBuildings = DEFAULT_CAMPUS_BUILDINGS.map(b => ({ ...b, coords: [...b.coords] }));
+                    await saveCampusMapConfig({
+                        geofence: currentAdminGeofence,
+                        buildings: currentAdminBuildings
+                    });
+                    renderModalEditorMarkers();
+                    alert('Geofence & building markers reset to default coordinates.');
+                });
+            }
+
+            if (btnCloseModal && !btnCloseModal.dataset.bound) {
+                btnCloseModal.dataset.bound = 'true';
+                btnCloseModal.addEventListener('click', () => {
+                    closeGeofenceEditorModal();
+                });
+            }
+        }
+
+        // (2026-07-13) Initialize geofence editor controls immediately; was delayed by stats
+        setupGeofenceEditorControls();
+
+        // (2026-07-13) Subscribe to real-time map and geofence updates across Firestore and storage
+        subscribeToCampusMapConfig((config) => {
+            if (config?.geofence && Array.isArray(config.geofence) && config.geofence.length >= 3) {
+                currentAdminGeofence = config.geofence;
+                if (adminGeofencePolygonLayer) {
+                    adminGeofencePolygonLayer.setLatLngs(currentAdminGeofence);
+                }
+                if (modalGeofencePolygonLayer) {
+                    modalGeofencePolygonLayer.setLatLngs(currentAdminGeofence);
+                }
+            }
+            if (config?.buildings && Array.isArray(config.buildings)) {
+                currentAdminBuildings = config.buildings;
+                renderBuildingMarkers();
+            }
+        });
+
+        // (2026-07-13) Verified reporter metadata resolution for SOS logs; was raw uid string
+        function getReporterInfo(log) {
+            const rawUid = String(log?.userId || log?.studentUid || log?.reporterId || '').trim();
+            const rawEmail = String(log?.userEmail || log?.email || '').trim().toLowerCase();
+            const rawStudentId = String(log?.studentId || '').trim();
+
+            const user = (cachedUsers || []).find((u) => {
+                if (rawUid && (String(u.id || '') === rawUid || String(u.userId || '') === rawUid || String(u.uid || '') === rawUid)) return true;
+                if (rawEmail && String(u.email || '').toLowerCase() === rawEmail) return true;
+                if (rawStudentId && String(u.studentId || '') === rawStudentId) return true;
+                return false;
+            });
+
+            let name = log?.userName || log?.reporterName || user?.name || '';
+            if (!name || (name.startsWith('User ') && name.length > 20)) {
+                if (user?.name) {
+                    name = user.name;
+                } else if (user?.email) {
+                    name = user.email.split('@')[0];
+                } else if (rawEmail) {
+                    name = rawEmail.split('@')[0];
+                } else if (rawUid) {
+                    name = `Student (${rawUid.slice(0, 6)})`;
+                } else {
+                    name = 'Student Reporter';
+                }
+            }
+
+            const role = user?.role || log?.role || 'student';
+            const email = user?.email || rawEmail || 'No email saved';
+            const studentId = user?.studentId || rawStudentId || (role === 'staff' ? 'Staff' : 'N/A');
+
+            return { name, email, studentId, role, uid: rawUid, user };
+        }
+
+        window.focusSosLocation = (lat, lng, name) => {
+            if (!adminSosLeafletMap) return;
+            setTab('sos');
+            adminSosLeafletMap.flyTo([lat, lng], 18, { duration: 1.2 });
+            const mapContainer = document.getElementById('adminSosMap');
+            if (mapContainer) {
+                mapContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        };
+
+        function renderSosTable(logs) {
+            const tableEl = document.getElementById('sosLogsTable');
+            if (!tableEl) return;
+
+            if (!logs || !logs.length) {
+                renderEmpty(tableEl, 'crisis_alert', 'No SOS emergency alerts logged yet.');
+                return;
+            }
+
+            tableEl.innerHTML = logs.map((log) => {
+                const rep = getReporterInfo(log);
+                const loc = log.location || {};
+                const hasCoords = typeof loc.lat === 'number' && typeof loc.lng === 'number';
+                const coordsStr = hasCoords ? `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}` : 'GPS unavailable';
+                const addressStr = loc.address || coordsStr;
+                const dateStr = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : (log.timestamp || 'Recently');
+                const roleClass = rep.role === 'guardian' ? 'guardian' : rep.role === 'staff' ? 'staff' : (rep.role === 'admin' ? 'admin' : 'student');
+                const roleLabel = rep.role === 'guardian' ? 'Guardian' : rep.role === 'staff' ? 'Staff' : (rep.role === 'admin' ? 'Admin' : 'Student');
+
+                return `
+                    <div class="table-row" style="grid-template-columns: minmax(0, 1.4fr) 1fr 1.3fr 0.8fr auto; align-items:center;">
+                        <div class="inline-fields" style="align-items:center;">
+                            <div class="management-avatar" style="background:linear-gradient(135deg, #d11f34, #991b1b);">${escapeHtml(getInitials(rep.name))}</div>
+                            <div>
+                                <div class="row-title" style="font-weight:800; color:var(--ink);">${escapeHtml(rep.name)}</div>
+                                <div class="row-sub">${escapeHtml(rep.email)}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="role-pill ${roleClass}">${roleLabel}</span>
+                            <div class="row-sub" style="margin-top:4px;">ID: ${escapeHtml(rep.studentId)}</div>
+                        </div>
+                        <div>
+                            <div class="row-title" style="font-size:0.84rem; display:flex; align-items:center; gap:4px;">
+                                <span class="material-symbols-outlined" style="font-size:16px; color:#d11f34;">location_on</span>
+                                <span>${escapeHtml(addressStr)}</span>
+                            </div>
+                            <div class="row-sub">${escapeHtml(coordsStr)}</div>
+                        </div>
+                        <div>
+                            <div class="row-title" style="font-size:0.84rem;">${escapeHtml(dateStr)}</div>
+                            <div class="row-sub"><span class="status-pill emergency">Active SOS</span></div>
+                        </div>
+                        <div class="row-actions">
+                            ${hasCoords ? `
+                                <button class="primary-btn" type="button" style="min-height:36px; padding:0 12px; font-size:0.78rem; background:linear-gradient(135deg, #d11f34, #991b1b);" onclick="focusSosLocation(${loc.lat}, ${loc.lng}, '${escapeHtml(rep.name)}')">
+                                    <span class="material-symbols-outlined" style="font-size:16px;">near_me</span>
+                                    <span>View on Map</span>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAdminSosMap() {
+            const mapEl = document.getElementById('adminSosMap');
+            if (!mapEl || typeof L === 'undefined') return;
+
+            setupGeofenceEditorControls();
+
+            if (!adminSosLeafletMap) {
+                adminSosLeafletMap = L.map('adminSosMap', {
+                    zoomControl: true,
+                    attributionControl: false,
+                    zoomSnap: 0.25,
+                    zoomDelta: 0.5,
+                    wheelPxPerZoomLevel: 140
+                }).setView(ADMIN_CAMPUS_CENTER, 17);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19
+                }).addTo(adminSosLeafletMap);
+
+                currentAdminGeofence = getActiveAdminGeofencePolygon();
+                adminGeofencePolygonLayer = L.polygon(currentAdminGeofence, {
+                    color: '#e11d48',
+                    weight: 3,
+                    dashArray: '5, 6',
+                    fillColor: '#f43f5e',
+                    fillOpacity: 0.1
+                }).addTo(adminSosLeafletMap);
+
+                renderBuildingMarkers();
+
+                adminSosMarkersLayer = L.layerGroup().addTo(adminSosLeafletMap);
+            } else {
+                if (adminGeofencePolygonLayer) {
+                    currentAdminGeofence = getActiveAdminGeofencePolygon();
+                    adminGeofencePolygonLayer.setLatLngs(currentAdminGeofence);
+                }
+                // (2026-07-13) Direct building render; was referencing undefined isGeofenceEditing
+                renderBuildingMarkers();
+            }
+
+            if (adminSosMarkersLayer) {
+                adminSosMarkersLayer.clearLayers();
+            }
+
+            const sosBadge = document.getElementById('adminSosCountBadge');
+            const sosCount = (cachedSosLogs || []).length;
+            if (sosBadge) sosBadge.textContent = `${sosCount} SOS Trigger${sosCount === 1 ? '' : 's'}`;
+
+            (cachedSosLogs || []).forEach((log, idx) => {
+                const loc = log.location;
+                if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return;
+
+                const pos = [loc.lat, loc.lng];
+                const dateStr = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : (log.timestamp || 'Recently');
+                const rep = getReporterInfo(log);
+
+                // Pulsing red hotspot marker
+                const sosIcon = L.divIcon({
+                    className: 'sos-hotspot-marker',
+                    html: `
+                        <div style="position:relative; width:28px; height:28px; display:flex; align-items:center; justify-content:center;">
+                            <div style="position:absolute; width:28px; height:28px; background:rgba(209,31,52,0.3); border-radius:50%; animation:pulse 1.8s infinite;"></div>
+                            <div style="width:16px; height:16px; background:#d11f34; border:2px solid white; border-radius:50%; box-shadow:0 0 10px rgba(209,31,52,0.6);"></div>
+                        </div>
+                    `,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                });
+
+                const marker = L.marker(pos, { icon: sosIcon });
+                marker.bindPopup(`
+                    <div style="padding:4px; min-width:160px;">
+                        <strong style="color:#d11f34; font-size:0.9rem; display:flex; align-items:center; gap:4px;">
+                            <span class="material-symbols-outlined" style="font-size:18px;">crisis_alert</span>
+                            SOS Alert
+                        </strong>
+                        <div style="font-size:0.82rem; margin-top:4px; font-weight:700; color:#181428;">${escapeHtml(rep.name)}</div>
+                        <div style="font-size:0.75rem; color:#6f6a86; margin-top:2px;"><strong>Role:</strong> ${escapeHtml(rep.role)} • ID: ${escapeHtml(rep.studentId)}</div>
+                        <div style="font-size:0.75rem; color:#6f6a86; margin-top:2px;"><strong>Time:</strong> ${escapeHtml(dateStr)}</div>
+                        <div style="font-size:0.75rem; color:#6f6a86; margin-top:2px;"><strong>Location:</strong> ${escapeHtml(loc.address || `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`)}</div>
+                    </div>
+                `);
+
+                if (adminSosMarkersLayer) {
+                    adminSosMarkersLayer.addLayer(marker);
+                }
+            });
+
+            requestAnimationFrame(() => {
+                if (adminSosLeafletMap) adminSosLeafletMap.invalidateSize();
+            });
+        }
+
+        // (2026-07-13) Live sync admin map with database updates; was manual reload only
+        subscribeToCampusMapConfig((config) => {
+            if (!config) return;
+            if (Array.isArray(config.geofence) && config.geofence.length >= 3) {
+                currentAdminGeofence = config.geofence;
+                if (adminGeofencePolygonLayer && adminSosLeafletMap) {
+                    adminSosLeafletMap.removeLayer(adminGeofencePolygonLayer);
+                    adminGeofencePolygonLayer = L.polygon(currentAdminGeofence, {
+                        color: '#e11d48',
+                        weight: 3,
+                        dashArray: '5, 6',
+                        fillColor: '#f43f5e',
+                        fillOpacity: 0.1
+                    }).addTo(adminSosLeafletMap);
+                }
+            }
+            if (Array.isArray(config.buildings) && config.buildings.length > 0) {
+                currentAdminBuildings = config.buildings;
+                if (adminSosLeafletMap) renderBuildingMarkers();
+            }
+        });
+
+        // (2026-07-13) Support admin emails in stats users list; was single email string
+        function renderStatsUsers(users) {
+            if (!users.length) {
+                renderEmpty(statsUserList, 'groups', 'No user records available.');
+                return;
+            }
+
+            statsUserList.innerHTML = users.map((user) => {
+                const role = (user?.role === 'admin' || isAdminEmail(user?.email)) ? 'Admin' : user?.role === 'guardian' ? 'Guardian' : user?.role === 'staff' ? 'Staff' : 'Student';
+                return `
+                    <div class="table-row" style="grid-template-columns: minmax(0, 1.2fr) 1fr 1.3fr auto;">
+                        <div>
+                            <div class="row-title">${user.name || 'Unnamed user'}</div>
+                            <div class="row-sub">${role} account</div>
+                        </div>
+                        <div>
+                            <div class="row-title">${user.studentId || 'N/A'}</div>
+                            <div class="row-sub">Student ID</div>
+                        </div>
+                        <div>
+                            <div class="row-title">${user.email || 'N/A'}</div>
+                            <div class="row-sub">Registered email</div>
+                        </div>
+                        <div class="row-actions">
+                            <button class="danger-inline-btn" type="button" data-user-delete-id="${user.id}" data-user-delete-name="${user.name || 'this user'}">
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function applyFilters() {
+            const gadTerm = (gadSearch.value || '').trim().toLowerCase();
+            const userTerm = (statsUserSearch.value || '').trim().toLowerCase();
+            const sosTerm = (document.getElementById('sosLogSearch')?.value || '').trim().toLowerCase();
+
+            const filteredPosts = cachedPosts.filter((post) => {
+                const haystack = `${post.content || ''} ${post.author || ''} ${post.email || ''} ${post.timestamp || ''}`.toLowerCase();
+                return haystack.includes(gadTerm);
+            });
+
+            const filteredUsers = cachedUsers.filter((user) => {
+                const haystack = `${user.name || ''} ${user.studentId || ''} ${user.email || ''} ${user.role || ''}`.toLowerCase();
+                return haystack.includes(userTerm);
+            });
+
+            const filteredSos = cachedSosLogs.filter((log) => {
+                const rep = getReporterInfo(log);
+                const loc = log.location || {};
+                const haystack = `${rep.name} ${rep.email} ${rep.studentId} ${loc.address || ''} ${loc.lat || ''} ${loc.lng || ''}`.toLowerCase();
+                return haystack.includes(sosTerm);
+            });
+
+            renderStatistics(cachedUsers);
+            renderGadPosts(filteredPosts);
+            renderStatsUsers(filteredUsers);
+            renderManagedUsers();
+            renderSosTable(filteredSos);
+        }
+
+        const debouncedApplyFilters = debounce(applyFilters);
+        const sosSearchInputEl = document.getElementById('sosLogSearch');
+        [gadSearch, statsUserSearch, managementUserSearch, sosSearchInputEl].filter(Boolean).forEach((input) => {
+            input.addEventListener('input', debouncedApplyFilters);
+        });
+
+        if (statsUserList) {
+            statsUserList.addEventListener('click', (event) => {
+                const deleteButton = event.target.closest('[data-user-delete-id]');
+                if (!deleteButton) return;
+                window.handleDeleteUser(deleteButton.dataset.userDeleteId, deleteButton.dataset.userDeleteName);
+            });
+        }
+
+        if (managementUserList) {
+            managementUserList.addEventListener('click', (event) => {
+                const triggerButton = event.target.closest('[data-user-action-trigger]');
+                if (triggerButton) {
+                    event.stopPropagation();
+                    toggleUserActionMenu(triggerButton.dataset.userActionTrigger);
+                    return;
+                }
+
+                const actionItem = event.target.closest('[data-user-action][data-user-id]');
+                if (!actionItem) return;
+                event.stopPropagation();
+                const selectedUser = getManagedUserById(actionItem.dataset.userId);
+                if (!selectedUser) return;
+
+                if (actionItem.dataset.userAction === 'edit') {
+                    openUserActionMenuId = null;
+                    setUserEditorState(selectedUser);
+                    openUserEditorModal();
+                    return;
+                }
+
+                if (actionItem.dataset.userAction === 'delete') {
+                    openUserActionMenuId = null;
+                    renderManagedUsers();
+                    window.handleDeleteUser(actionItem.dataset.userId, actionItem.dataset.userName || selectedUser.name || 'this user');
+                }
+            });
+        }
+
+        if (createUserBtn) {
+            createUserBtn.addEventListener('click', () => {
+                setUserEditorState(null, { creating: true });
+                openUserEditorModal();
+                manageUserName?.focus();
+            });
+        }
+
+        closeUserModalBtn?.addEventListener('click', closeUserEditorModal);
+        userEditorModal?.addEventListener('click', (event) => {
+            if (event.target === userEditorModal) closeUserEditorModal();
+        });
+        document.addEventListener('click', () => {
+            closeUserActionMenu();
+        });
+
+        if (resetUserEditorBtn) {
+            resetUserEditorBtn.addEventListener('click', () => {
+                if (isCreatingManagedUser) {
+                    setUserEditorState(null, { creating: true });
+                    return;
+                }
+                setUserEditorState(getManagedUserById(selectedManagedUserId));
+            });
+        }
+
+        if (manageUserRole) {
+            manageUserRole.addEventListener('change', () => {
+                const roleValue = manageUserRole.value || 'student';
+                updateManagedUserRoleFields(roleValue, { creating: isCreatingManagedUser });
+            });
+        }
+
+        manageUserStudentId?.addEventListener('input', () => {
+            manageUserStudentId.value = manageUserStudentId.value.replace(/\D/g, '').slice(0, 7);
+            if (isCreatingManagedUser && ['student', 'staff'].includes(manageUserRole?.value || 'student')) {
+                updateManagedUserRoleFields(manageUserRole?.value || 'student', { creating: true });
+            }
+        });
+
+        function updateGadCounter() {
+            const count = gadPostText.value.trim().length;
+            gadCounter.textContent = `${count} / 500`;
+            gadCounter.classList.toggle('warn', count >= 400 && count < 500);
+            gadCounter.classList.toggle('limit', count >= 500);
+        }
+
+        function resetGadComposer() {
+            editingGadPostId = null;
+            gadPostText.value = '';
+            selectedGadImage = "";
+            if (gadComposerTitle) gadComposerTitle.textContent = 'New GAD Post';
+            if (gadComposerCopy) gadComposerCopy.textContent = 'Publishes to the GAD feed.';
+            if (postGadBtn) {
+                const label = postGadBtn.querySelector('span:last-child');
+                if (label) label.textContent = 'Publish';
+            }
+            if (cancelGadEditBtn) cancelGadEditBtn.style.display = 'none';
+            renderGadImagePreview();
+            updateGadCounter();
+        }
+
+        window.handleEditPost = function(postId) {
+            const post = (cachedPosts || []).find((entry) => String(entry.id) === String(postId));
+            if (!post) {
+                showToast("Post not found", "That GAD post could not be loaded for editing.", "error");
+                return;
+            }
+
+            editingGadPostId = post.id;
+            gadPostText.value = post.content || '';
+            selectedGadImage = post.image || "";
+            if (gadComposerTitle) gadComposerTitle.textContent = 'Edit GAD Post';
+            if (gadComposerCopy) gadComposerCopy.textContent = 'Update this published announcement for the GAD feed.';
+            if (postGadBtn) {
+                const label = postGadBtn.querySelector('span:last-child');
+                if (label) label.textContent = 'Save Changes';
+            }
+            if (cancelGadEditBtn) cancelGadEditBtn.style.display = 'inline-flex';
+            renderGadImagePreview();
+            updateGadCounter();
+            gadPostText.focus();
+            gadPostText.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
+        gadPostText.addEventListener('input', updateGadCounter);
+        updateGadCounter();
+
+        attachGadImageBtn?.addEventListener('click', () => gadImageInput?.click());
+        gadImageInput?.addEventListener('change', async () => {
+            const file = gadImageInput.files?.[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showToast("Invalid image", "Choose a valid image file.", "error");
+                gadImageInput.value = '';
+                return;
+            }
+            try {
+                selectedGadImage = await readFileAsDataUrl(file);
+                renderGadImagePreview();
+            } catch (error) {
+                showToast("Attach failed", error.message || "Could not load the selected image.", "error");
+            } finally {
+                gadImageInput.value = '';
+            }
+        });
+        removeGadImageBtn?.addEventListener('click', () => {
+            selectedGadImage = "";
+            renderGadImagePreview();
+        });
+        cancelGadEditBtn?.addEventListener('click', () => {
+            resetGadComposer();
+        });
+
+        window.handleDeletePost = async (postId) => {
+            if (deleteArmedPostId !== postId) {
+                deleteArmedPostId = postId;
+                showToast("Delete armed", "Click delete again to remove this GAD post.", "info");
+                window.setTimeout(() => {
+                    if (deleteArmedPostId === postId) deleteArmedPostId = null;
+                }, 2600);
+                return;
+            }
+
+            try {
+                await deleteGADPost(postId);
+                deleteArmedPostId = null;
+                if (editingGadPostId === postId) {
+                    resetGadComposer();
+                }
+                showToast("GAD post deleted", "The bulletin was removed successfully.", "success");
+                await loadAllData();
+            } catch (error) {
+                showToast("Delete failed", error.message, "error");
+            }
+        };
+
+        postGadBtn.addEventListener('click', async () => {
+            const text = gadPostText.value.trim();
+            if (!text) {
+                showToast("Missing content", "Write the GAD post before publishing.", "error");
+                return;
+            }
+
+            if (text.length < 12) {
+                showToast("Post too short", "Please provide a more complete official update.", "error");
+                return;
+            }
+
+            postGadBtn.disabled = true;
+            try {
+                if (editingGadPostId) {
+                    await updateGADPost(editingGadPostId, {
+                        author: "GAD Office",
+                        content: text,
+                        image: selectedGadImage || "",
+                        email: auth.currentUser.email,
+                        timestamp: new Date().toLocaleString()
+                    });
+                    showToast("GAD post updated", "Your GAD bulletin changes are now live.", "success");
+                } else {
+                    await saveGADPost({
+                        author: "GAD Office",
+                        content: text,
+                        image: selectedGadImage || "",
+                        email: auth.currentUser.email,
+                        timestamp: new Date().toLocaleString()
+                    });
+                    showToast("GAD post published", "The new GAD bulletin is now live.", "success");
+                }
+                resetGadComposer();
+                await loadAllData();
+            } catch (error) {
+                showToast("Publish failed", error.message, "error");
+            } finally {
+                postGadBtn.disabled = false;
+            }
+        });
+
+        // --- ADMIN CHAT LOGIC (Date: 2026-05-02) ---
+        const threadList = document.getElementById('threadList');
+        const adminChatMessages = document.getElementById('adminChatMessages');
+        const adminChatInput = document.getElementById('adminChatInput');
+        const adminSendBtn = document.getElementById('adminSendBtn');
+        const activeUserName = document.getElementById('activeUserName');
+        const activeUserAvatar = document.getElementById('activeUserAvatar');
+
+        let currentActiveUserId = null;
+        let currentActiveThreadId = null;
+        let unsubscribeAdminChat = null;
+        let unsubscribeAdminThreads = null;
+        const ADMIN_ID = "system_admin_securo";
+
+        function stopAdminRealtimeThreads() {
+            if (unsubscribeAdminThreads) {
+                unsubscribeAdminThreads();
+                unsubscribeAdminThreads = null;
+            }
+            if (unsubscribeAdminChat) {
+                unsubscribeAdminChat();
+                unsubscribeAdminChat = null;
+            }
+        }
+
+        function initAdminChat() {
+            if (unsubscribeAdminThreads) return;
+            unsubscribeAdminThreads = getAllChatThreads((threads) => {
+                cachedThreads = Array.isArray(threads) ? threads : [];
+                renderStatistics(cachedUsers);
+                renderThreads(threads);
+                if (currentActiveThreadId && currentActiveUserId && !unsubscribeAdminChat) {
+                    window.openAdminThread(currentActiveThreadId, currentActiveUserId, activeUserName.textContent);
+                }
+            });
+        }
+
+        function renderThreads(threads) {
+            if (threads.length === 0) {
+                threadList.innerHTML = '<div class="messages-empty" style="padding:24px 12px;"><span class="material-symbols-outlined" style="font-size:38px; opacity:0.2;">forum</span><p>No messages yet.</p></div>';
+                return;
+            }
+
+            threadList.innerHTML = threads.map(thread => {
+                const parts = thread.threadId.split('_');
+                const otherUserId = thread.ownerId || (parts[0] === ADMIN_ID ? parts[1] : parts[0]);
+                const isActive = currentActiveThreadId === thread.threadId;
+                const unread = isThreadUnread(thread);
+                const displayName = thread.senderLabel || thread.senderName || 'Anonymous';
+                const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase();
+
+                return `
+                    <div class="thread-item ${isActive ? 'active' : ''} ${unread ? 'unread' : ''}" data-thread-id="${thread.threadId}" data-other-user-id="${otherUserId}" data-other-user-name="${displayName}">
+                        <div class="thread-avatar">${initials}</div>
+                        <div class="thread-info">
+                            <div class="thread-name">${displayName}</div>
+                            <div class="thread-preview">${thread.text}</div>
+                        </div>
+                        ${unread ? '<div class="thread-badge"></div>' : ''}
+                    </div>
+                `;
+            }).join('');
+
+            attachThreadDeleteGesture();
+        }
+
+        function attachThreadDeleteGesture() {
+            threadList.querySelectorAll('.thread-item').forEach((item) => {
+                let holdTimer = null;
+                const clearHold = () => {
+                    if (holdTimer) {
+                        clearTimeout(holdTimer);
+                        holdTimer = null;
+                    }
+                };
+                item.addEventListener('pointerdown', () => {
+                    holdTimer = window.setTimeout(() => {
+                        item.dataset.longPressTriggered = 'true';
+                        const threadId = item.dataset.threadId;
+                        const userName = item.dataset.otherUserName || 'this conversation';
+                        window.handleDeleteThread(threadId, userName);
+                    }, 700);
+                });
+                item.addEventListener('click', () => {
+                    if (item.dataset.longPressTriggered === 'true') {
+                        item.dataset.longPressTriggered = 'false';
+                        return;
+                    }
+                    window.openAdminThread(
+                        item.dataset.threadId,
+                        item.dataset.otherUserId,
+                        item.dataset.otherUserName
+                    );
+                });
+                ['pointerup', 'pointerleave', 'pointercancel'].forEach((eventName) => {
+                    item.addEventListener(eventName, () => {
+                        clearHold();
+                        if (eventName !== 'pointerleave') {
+                            window.setTimeout(() => {
+                                item.dataset.longPressTriggered = 'false';
+                            }, 0);
+                        }
+                    });
+                });
+            });
+        }
+
+        window.openAdminThread = function(threadId, userId, userName) {
+            currentActiveThreadId = threadId;
+            currentActiveUserId = userId;
+            seenAdminThreads.set(threadId, Date.now());
+            activeUserName.textContent = userName || 'User';
+            activeUserAvatar.textContent = (userName || 'U').split(" ").map(n => n[0]).join("").toUpperCase();
+            
+            adminChatInput.disabled = false;
+            adminSendBtn.disabled = false;
+            setTimeout(() => adminChatInput.focus(), 100);
+
+            if (unsubscribeAdminChat) unsubscribeAdminChat();
+            
+            unsubscribeAdminChat = subscribeToMessagesByThread(threadId, (messages) => {
+                renderAdminMessages(messages);
+            });
+
+            renderThreads(cachedThreads);
+        };
+
+        function renderAdminMessages(messages) {
+            adminChatMessages.innerHTML = "";
+            messages.forEach(msg => {
+                const isSent = msg.senderId === ADMIN_ID;
+                const date = msg.timestamp?.toDate?.() || new Date(msg.localTime || Date.now());
+                const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+
+                const msgEl = document.createElement("div");
+                msgEl.className = `admin-msg ${isSent ? 'sent' : 'received'}`;
+                if (msg.isPending) msgEl.style.opacity = "0.7";
+                msgEl.innerHTML = `${msg.text}<span class="msg-time">${timeStr}</span>`;
+                adminChatMessages.appendChild(msgEl);
+            });
+            adminChatMessages.scrollTo({ top: adminChatMessages.scrollHeight, behavior: 'smooth' });
+        }
+
+        async function handleAdminSendMessage() {
+            const text = adminChatInput.value.trim();
+            if (!text || !currentActiveUserId) return;
+
+            // Predictive Update
+            const msgEl = document.createElement("div");
+            msgEl.className = "admin-msg sent";
+            msgEl.style.opacity = "0.7";
+            msgEl.innerHTML = `${text}<span class="msg-time">${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}</span>`;
+            adminChatMessages.appendChild(msgEl);
+            adminChatMessages.scrollTo({ top: adminChatMessages.scrollHeight, behavior: 'smooth' });
+            adminChatInput.value = "";
+
+            try {
+                await sendChatMessage(ADMIN_ID, currentActiveUserId, text, "GAD Office", {
+                    threadId: currentActiveThreadId,
+                    supportMode: "gad_support",
+                    ownerId: currentActiveUserId
+                });
+            } catch (err) {
+                console.warn("Failed to send admin message:", err);
+                msgEl.style.color = "#ef4444";
+                msgEl.innerHTML += '<span style="font-size:0.5rem;display:block;">Failed to send</span>';
+            }
+        }
+
+        window.handleDeleteThread = async (threadId, userName) => {
+            if (!threadId) return;
+            const confirmed = window.confirm(`Delete the conversation with ${userName || 'this user'}?`);
+            if (!confirmed) return;
+            try {
+                await deleteConversationThread(threadId);
+                if (currentActiveThreadId === threadId) {
+                    currentActiveThreadId = null;
+                    currentActiveUserId = null;
+                    if (unsubscribeAdminChat) {
+                        unsubscribeAdminChat();
+                        unsubscribeAdminChat = null;
+                    }
+                    activeUserName.textContent = 'Select a conversation';
+                    activeUserAvatar.textContent = '?';
+                    adminChatInput.value = '';
+                    adminChatInput.disabled = true;
+                    adminSendBtn.disabled = true;
+                    adminChatMessages.innerHTML = `
+                        <div class="messages-empty">
+                            <span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.2;">chat_bubble</span>
+                            <p>Select a user to start messaging</p>
+                        </div>
+                    `;
+                }
+                showToast("Conversation deleted", "The support thread was removed.", "success");
+            } catch (error) {
+                showToast("Delete failed", error.message || "Could not delete this conversation.", "error");
+            }
+        };
+
+        window.handleDeleteUser = async (userId, userName) => {
+            if (!userId) return;
+            const confirmed = window.confirm(`Delete ${userName || 'this user'} from the admin directory?`);
+            if (!confirmed) return;
+            try {
+                await deleteUserRecord(userId);
+                if (currentActiveUserId === userId) {
+                    currentActiveUserId = null;
+                    currentActiveThreadId = null;
+                    if (unsubscribeAdminChat) {
+                        unsubscribeAdminChat();
+                        unsubscribeAdminChat = null;
+                    }
+                    activeUserName.textContent = 'Select a conversation';
+                    activeUserAvatar.textContent = '?';
+                    adminChatInput.value = '';
+                    adminChatInput.disabled = true;
+                    adminSendBtn.disabled = true;
+                    adminChatMessages.innerHTML = `
+                        <div class="messages-empty">
+                            <span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.2;">chat_bubble</span>
+                            <p>Select a user to start messaging</p>
+                        </div>
+                    `;
+                }
+                showToast("User deleted", `${userName || 'The user'} was removed from admin records.`, "success");
+                closeUserActionMenu();
+                closeUserEditorModal();
+                await loadAllData();
+            } catch (error) {
+                showToast("Delete failed", error.message || "Could not delete this user.", "error");
+            }
+        };
+
+        if (saveManagedUserBtn) {
+            saveManagedUserBtn.addEventListener('click', async () => {
+                const name = manageUserName?.value.trim() || '';
+                const email = manageUserEmail?.value.trim() || '';
+                const password = manageUserPassword?.value || '';
+                const role = manageUserRole?.value || 'student';
+                const studentId = manageUserStudentId?.value.trim() || '';
+                const normalizedEmail = ['student', 'staff'].includes(role)
+                    ? (email ? email.toLowerCase() : roleIdToEmail(studentId, role))
+                    : email.toLowerCase();
+
+                if (name.length < 3) {
+                    showToast("Missing name", "Please enter the user's full name.", "error");
+                    return;
+                }
+
+                if ((role === 'student' || role === 'staff') && !studentId) {
+                    showToast("Missing ID", `${role === 'staff' ? 'Staff' : 'Student'} accounts require a 7-digit ID number.`, "error");
+                    return;
+                }
+
+                if ((role === 'student' || role === 'staff') && studentId && !/^\d{7}$/.test(studentId)) {
+                    showToast("Invalid ID", "Student IDs must be 7 digits.", "error");
+                    return;
+                }
+
+                if ((role === 'student' || role === 'staff') && email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+                    showToast("Invalid email", `Please enter a valid ${role === 'staff' ? 'staff' : 'student'} email address.`, "error");
+                    return;
+                }
+
+                if (role === 'guardian' && !email) {
+                    showToast("Missing email", "Guardian accounts require an email address.", "error");
+                    return;
+                }
+
+                if (role === 'guardian' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+                    showToast("Invalid email", "Please enter a valid guardian email address.", "error");
+                    return;
+                }
+
+                if (isCreatingManagedUser && password.length < 6) {
+                    showToast("Missing password", "New sign-in accounts need a password with at least 6 characters.", "error");
+                    return;
+                }
+
+                const payload = {
+                    name,
+                    email: normalizedEmail,
+                    role,
+                    studentId: (role === 'student' || role === 'staff') ? studentId : ''
+                };
+
+                saveManagedUserBtn.disabled = true;
+                try {
+                    if (isCreatingManagedUser) {
+                        const authUser = await createAuthAccountForManagedUser(normalizedEmail, password);
+                        await saveUserProfile(authUser.uid, payload);
+                        showToast("Account created", "The new account can now sign in with the saved email and password.", "success");
+                    } else if (selectedManagedUserId) {
+                        await updateUserProfile(selectedManagedUserId, payload);
+                        showToast("User updated", "Saved profile details were updated successfully.", "success");
+                    }
+                    closeUserActionMenu();
+                    closeUserEditorModal();
+                    await loadAllData();
+                } catch (error) {
+                    const raw = String(error?.message || '').toLowerCase();
+                    const friendly = raw.includes('email-already-in-use')
+                        ? 'That email is already used by another account.'
+                        : raw.includes('invalid-email')
+                        ? 'Please enter a valid email address.'
+                        : raw.includes('weak-password')
+                        ? 'Password must be at least 6 characters.'
+                        : 'Could not save this user profile.';
+                    showToast("Save failed", friendly, "error");
+                } finally {
+                    saveManagedUserBtn.disabled = false;
+                }
+            });
+        }
+
+        if (deleteManagedUserBtn) {
+            deleteManagedUserBtn.addEventListener('click', async () => {
+                const user = getManagedUserById(selectedManagedUserId);
+                if (!user?.id) return;
+                await window.handleDeleteUser(user.id, user.name || 'this user');
+            });
+        }
+
+        adminSendBtn.addEventListener('click', handleAdminSendMessage);
+        adminChatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAdminSendMessage();
+            }
+        });
+
+    </script>
+</body>
+</html>
+
+
+

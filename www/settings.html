@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Securo Settings</title>
+    <meta name="description" content="Manage your Securo profile settings and app preferences.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1" rel="stylesheet" />
+    <style>
+        :root {
+            --bg: linear-gradient(180deg, #f7f4ff 0%, #fdfcff 100%);
+            --surface: rgba(255, 255, 255, 0.92);
+            --surface-soft: rgba(245, 241, 255, 0.9);
+            --ink: #1f1638;
+            --muted: #736a92;
+            --line: rgba(90, 31, 224, 0.14);
+            --primary: #5a1fe0;
+            --primary-strong: #4311c6;
+            --green: #109f67;
+            --amber: #c98209;
+            --red: #d11f34;
+            --shadow-soft: 0 24px 48px rgba(53, 33, 110, 0.14);
+        }
+
+        * { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            min-height: 100%;
+            font-family: "Inter", sans-serif;
+            color: var(--ink);
+            background: var(--bg);
+        }
+
+        body.guardian-theme {
+            --primary: #ff4f7b;
+            --primary-strong: #e62d63;
+            --line: rgba(255, 79, 123, 0.14);
+        }
+
+        .page-shell {
+            min-height: 100vh;
+            padding: 24px 16px 40px;
+        }
+
+        .settings-stack {
+            width: min(100%, 760px);
+            margin: 0 auto;
+            display: grid;
+            gap: 18px;
+        }
+
+        .hero-card,
+        .settings-card {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.78);
+            border-radius: 28px;
+            box-shadow: var(--shadow-soft);
+            overflow: hidden;
+        }
+
+        .hero-card {
+            position: relative;
+        }
+
+        .hero-back-btn {
+            position: absolute;
+            top: 18px;
+            left: 18px;
+            width: 44px;
+            height: 44px;
+            border-radius: 16px;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            z-index: 2;
+        }
+
+        .hero-cover {
+            min-height: 156px;
+            background:
+                linear-gradient(125deg, rgba(90, 31, 224, 0.96), rgba(65, 17, 197, 0.84)),
+                radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 28%);
+        }
+
+        .hero-body {
+            padding: 0 24px 24px;
+            margin-top: -36px;
+            position: relative;
+        }
+
+        .settings-badge {
+            width: 78px;
+            height: 78px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #ffffff, #ece6ff);
+            border: 5px solid rgba(255, 255, 255, 0.96);
+            box-shadow: 0 18px 34px rgba(49, 30, 105, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(90, 31, 224, 0.08);
+            color: var(--primary);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .hero-title {
+            margin: 14px 0 8px;
+            font-family: "Sora", sans-serif;
+            font-size: 2rem;
+            letter-spacing: -0.04em;
+        }
+
+        .hero-copy,
+        .helper-copy {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.55;
+            font-size: 0.92rem;
+        }
+
+        .hero-user {
+            margin-top: 12px;
+            font-size: 0.86rem;
+            color: var(--muted);
+            font-weight: 700;
+        }
+
+        .settings-card {
+            padding: 20px;
+            display: grid;
+            gap: 16px;
+        }
+
+        .card-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .card-title {
+            margin: 0;
+            font-family: "Sora", sans-serif;
+            font-size: 1.08rem;
+        }
+
+        .card-copy {
+            margin: 6px 0 0;
+            color: var(--muted);
+            font-size: 0.86rem;
+            line-height: 1.5;
+        }
+
+        .settings-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            border-radius: 20px;
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+        }
+
+        .setting-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 16px;
+            background: rgba(90, 31, 224, 0.1);
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+        }
+
+        .setting-copy {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .setting-title {
+            margin: 0;
+            font-weight: 800;
+            font-size: 0.95rem;
+        }
+
+        .setting-desc {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.8rem;
+            line-height: 1.45;
+        }
+
+        .ios-switch {
+            position: relative;
+            width: 52px;
+            height: 32px;
+            flex: 0 0 auto;
+        }
+
+        .ios-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .ios-slider {
+            position: absolute;
+            inset: 0;
+            background: rgba(126, 117, 156, 0.32);
+            border-radius: 999px;
+            transition: 0.25s ease;
+        }
+
+        .ios-slider::before {
+            content: "";
+            position: absolute;
+            left: 4px;
+            top: 4px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(18, 11, 42, 0.18);
+            transition: 0.25s ease;
+        }
+
+        .ios-switch input:checked + .ios-slider {
+            background: linear-gradient(135deg, var(--green), #0c7e54);
+        }
+
+        .ios-switch input:checked + .ios-slider::before {
+            transform: translateX(20px);
+        }
+
+        .quick-links {
+            display: grid;
+            gap: 10px;
+        }
+
+        .quick-link {
+            width: 100%;
+            min-height: 54px;
+            padding: 0 16px;
+            border-radius: 18px;
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--ink);
+            text-decoration: none;
+            font: inherit;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(16, 159, 103, 0.1);
+            color: var(--green);
+            font-size: 0.76rem;
+            font-weight: 800;
+        }
+
+        @media (max-width: 640px) {
+            .page-shell {
+                padding: 18px 12px 34px;
+            }
+
+            .hero-title {
+                font-size: 1.72rem;
+            }
+
+            .setting-row {
+                padding: 13px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page-shell">
+        <div class="settings-stack">
+            <section class="hero-card">
+                <a id="settingsBackBtn" class="hero-back-btn" href="index.html" aria-label="Go back">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </a>
+                <div class="hero-cover"></div>
+                <div class="hero-body">
+                    <div class="settings-badge">
+                        <span class="material-symbols-outlined" style="font-size:36px;">settings</span>
+                    </div>
+                    <div class="eyebrow">App Preferences</div>
+                    <h1 class="hero-title">Settings</h1>
+                    <p class="hero-copy">Manage your account preferences, privacy defaults, and quick access shortcuts in one place.</p>
+                    <div class="hero-user" id="settingsUserMeta">Loading your account...</div>
+                </div>
+            </section>
+
+            <section class="settings-card">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title">Preferences</h2>
+                        <p class="card-copy">These settings stay saved on this device for your Securo account.</p>
+                    </div>
+                    <div class="status-pill">
+                        <span class="material-symbols-outlined" style="font-size:16px;">check_circle</span>
+                        <span>Saved automatically</span>
+                    </div>
+                </div>
+                <div class="settings-list">
+                    <div class="setting-row">
+                        <div class="setting-icon"><span class="material-symbols-outlined">notifications_active</span></div>
+                        <div class="setting-copy">
+                            <p class="setting-title">Notification sounds</p>
+                            <p class="setting-desc">Keep alert sounds on for safety updates and important account activity.</p>
+                        </div>
+                        <label class="ios-switch">
+                            <input type="checkbox" id="notifSoundsToggle">
+                            <span class="ios-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-icon"><span class="material-symbols-outlined">support_agent</span></div>
+                        <div class="setting-copy">
+                            <p class="setting-title">Anonymous GAD chat by default</p>
+                            <p class="setting-desc">Start customer support chats in anonymous mode unless you switch it off.</p>
+                        </div>
+                        <label class="ios-switch">
+                            <input type="checkbox" id="anonymousSupportToggle">
+                            <span class="ios-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row" id="guardianShareRow">
+                        <div class="setting-icon"><span class="material-symbols-outlined">group</span></div>
+                        <div class="setting-copy">
+                            <p class="setting-title">Default parent media access</p>
+                            <p class="setting-desc">Set whether new vault media should be shared with parents or guardians by default.</p>
+                        </div>
+                        <label class="ios-switch">
+                            <input type="checkbox" id="guardianMediaToggle">
+                            <span class="ios-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-row">
+                        <div class="setting-icon"><span class="material-symbols-outlined">location_on</span></div>
+                        <div class="setting-copy">
+                            <p class="setting-title">Location reminders</p>
+                            <p class="setting-desc">Keep reminders on when live location is needed for guardians or emergency tools.</p>
+                        </div>
+                        <label class="ios-switch">
+                            <input type="checkbox" id="locationReminderToggle">
+                            <span class="ios-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </section>
+
+            <section class="settings-card">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title">Account Shortcuts</h2>
+                        <p class="card-copy">Jump straight to the account screens you use most often.</p>
+                    </div>
+                </div>
+                <div class="quick-links">
+                    <a class="quick-link" href="profile.html">
+                        <span style="display:inline-flex; align-items:center; gap:10px;">
+                            <span class="material-symbols-outlined">account_circle</span>
+                            <span>Open profile</span>
+                        </span>
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </a>
+                    <a class="quick-link" id="dashboardShortcut" href="index.html">
+                        <span style="display:inline-flex; align-items:center; gap:10px;">
+                            <span class="material-symbols-outlined">dashboard</span>
+                            <span>Back to dashboard</span>
+                        </span>
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </a>
+                    <a class="quick-link" href="profile.html#passwordPanel">
+                        <span style="display:inline-flex; align-items:center; gap:10px;">
+                            <span class="material-symbols-outlined">lock_reset</span>
+                            <span>Change password</span>
+                        </span>
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script type="module">
+        import { auth } from './firebase-config.js';
+        import { checkAuth } from './auth.js';
+        import { getUserProfile } from './db.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        checkAuth();
+
+        const settingsUserMeta = document.getElementById('settingsUserMeta');
+        const settingsBackBtn = document.getElementById('settingsBackBtn');
+        const dashboardShortcut = document.getElementById('dashboardShortcut');
+        const guardianShareRow = document.getElementById('guardianShareRow');
+
+        const controls = {
+            notificationSounds: document.getElementById('notifSoundsToggle'),
+            anonymousSupportDefault: document.getElementById('anonymousSupportToggle'),
+            guardianMediaDefault: document.getElementById('guardianMediaToggle'),
+            locationReminders: document.getElementById('locationReminderToggle')
+        };
+
+        const defaultSettings = {
+            notificationSounds: true,
+            anonymousSupportDefault: true,
+            guardianMediaDefault: true,
+            locationReminders: true
+        };
+
+        function getSettingsStorageKey(uid) {
+            return `securo_settings_${uid || 'guest'}`;
+        }
+
+        function loadSettings(uid) {
+            try {
+                const raw = localStorage.getItem(getSettingsStorageKey(uid));
+                const parsed = raw ? JSON.parse(raw) : {};
+                return { ...defaultSettings, ...parsed };
+            } catch {
+                return { ...defaultSettings };
+            }
+        }
+
+        function saveSettings(uid) {
+            const payload = {
+                notificationSounds: controls.notificationSounds?.checked !== false,
+                anonymousSupportDefault: controls.anonymousSupportDefault?.checked !== false,
+                guardianMediaDefault: controls.guardianMediaDefault?.checked !== false,
+                locationReminders: controls.locationReminders?.checked !== false
+            };
+            localStorage.setItem(getSettingsStorageKey(uid), JSON.stringify(payload));
+        }
+
+        function bindSettings(uid) {
+            const settings = loadSettings(uid);
+            Object.entries(controls).forEach(([key, element]) => {
+                if (!element) return;
+                element.checked = settings[key] !== false;
+                element.addEventListener('change', () => saveSettings(uid), { passive: true });
+            });
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) return;
+
+            const profile = await getUserProfile(user.uid).catch(() => null);
+            const role = profile?.role || (user.email?.startsWith('staff.') ? 'staff' : 'student');
+            if (role === 'admin' || user.email === 'admin@admin.com') {
+                window.location.replace('admin.html');
+                return;
+            }
+            const name = profile?.name || user.displayName || 'Securo User';
+            const idLabel = profile?.studentId || (role === 'guardian' ? 'Guardian Account' : 'ID not linked');
+
+            settingsUserMeta.textContent = `${name} • ${role === 'guardian' ? 'Guardian' : role === 'staff' ? 'Staff' : 'Student'} • ${idLabel}`;
+
+            if (role === 'guardian') {
+                document.body.classList.add('guardian-theme');
+                settingsBackBtn.href = 'guardian-dashboard.html';
+                dashboardShortcut.href = 'guardian-dashboard.html';
+                guardianShareRow.style.display = 'none';
+            } else {
+                document.body.classList.remove('guardian-theme');
+                settingsBackBtn.href = 'index.html';
+                dashboardShortcut.href = 'index.html';
+                guardianShareRow.style.display = '';
+            }
+
+            bindSettings(user.uid);
+        });
+    </script>
+</body>
+</html>

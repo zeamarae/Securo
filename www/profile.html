@@ -1,0 +1,1871 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Securo - My Profile</title>
+    <meta name="description" content="View your Securo account, guardian links, and password settings.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        :root {
+            --bg: #f5f3ff;
+            --surface: rgba(255, 255, 255, 0.9);
+            --surface-soft: rgba(248, 246, 255, 0.98);
+            --ink: #171428;
+            --muted: #6e6a84;
+            --line: rgba(23, 20, 40, 0.08);
+            --primary: #5a1fe0;
+            --primary-strong: #4311c5;
+            --primary-soft: rgba(90, 31, 224, 0.08);
+            --green: #0f9b67;
+            --green-soft: rgba(15, 155, 103, 0.12);
+            --amber: #d88a13;
+            --amber-soft: rgba(216, 138, 19, 0.12);
+            --red: #d11f34;
+            --red-soft: rgba(209, 31, 52, 0.1);
+            --shadow: 0 35px 80px rgba(49, 30, 105, 0.18);
+            --radius-xl: 34px;
+            --radius-lg: 24px;
+            --radius-md: 18px;
+            --radius-sm: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Outfit", sans-serif;
+            color: var(--ink);
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(103, 213, 255, 0.18), transparent 24%),
+                radial-gradient(circle at top right, rgba(90, 31, 224, 0.12), transparent 28%),
+                linear-gradient(180deg, #f7f4ff 0%, #f3f1ff 100%);
+            padding: 0 16px 120px;
+        }
+
+        body.guardian-theme {
+            --bg: #fff4f6;
+            --surface: rgba(255, 255, 255, 0.92);
+            --surface-soft: rgba(255, 244, 247, 0.98);
+            --ink: #211621;
+            --muted: #7b5d6f;
+            --line: rgba(179, 43, 88, 0.12);
+            --primary: #f43f5e;
+            --primary-strong: #e11d48;
+            --primary-soft: rgba(244, 63, 94, 0.08);
+            --shadow: 0 35px 80px rgba(183, 36, 76, 0.16);
+            background:
+                radial-gradient(circle at top left, rgba(255, 177, 194, 0.22), transparent 24%),
+                radial-gradient(circle at top right, rgba(244, 63, 94, 0.14), transparent 28%),
+                linear-gradient(180deg, #fff7f9 0%, #fff2f5 100%);
+        }
+
+        body.guardian-theme .hero-cover {
+            background:
+                linear-gradient(125deg, rgba(244, 63, 94, 0.96), rgba(225, 29, 72, 0.84)),
+                radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 28%);
+        }
+
+        body.guardian-theme .profile-avatar {
+            background: linear-gradient(135deg, #ffffff, #ffe7ee);
+        }
+
+        body.guardian-theme .icon-edit-btn,
+        body.guardian-theme .btn-secondary {
+            background: rgba(244, 63, 94, 0.08);
+            color: var(--primary);
+        }
+
+        body.guardian-theme .hero-note {
+            background: rgba(255, 241, 242, 0.9);
+            border-color: rgba(244, 63, 94, 0.14);
+        }
+
+        button,
+        a {
+            transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+        }
+
+        button:hover:not(:disabled),
+        a:hover {
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            opacity: 0.62;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        button.is-busy {
+            position: relative;
+            pointer-events: none;
+        }
+
+        button.is-busy > * {
+            opacity: 0;
+        }
+
+        button.is-busy::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 18px;
+            height: 18px;
+            margin: -9px 0 0 -9px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .page-shell {
+            width: 100%;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+
+        .profile-topbar {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            margin: 0 0 14px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(255, 255, 255, 0.86);
+            border-top: none;
+            border-radius: 0 0 22px 22px;
+            box-shadow: 0 12px 30px rgba(49, 30, 105, 0.10);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .profile-topbar-title {
+            font-family: "Sora", sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--ink);
+            letter-spacing: -0.03em;
+        }
+
+        .profile-stack {
+            display: grid;
+            gap: 18px;
+        }
+
+        .hero-card,
+        .profile-card {
+            background: var(--surface);
+            border: 1px solid rgba(255, 255, 255, 0.78);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(18px);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+        }
+
+        .hero-card {
+            position: relative;
+        }
+
+        .hero-back-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 16px;
+            border: 1px solid rgba(90, 31, 224, 0.10);
+            background: #fff;
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            flex-shrink: 0;
+            box-shadow: 0 10px 24px rgba(32, 20, 72, 0.10);
+            transition: transform 0.18s ease, background 0.18s ease;
+        }
+
+        .hero-back-btn:hover,
+        .hero-back-btn:focus-visible {
+            transform: translateY(-1px);
+            background: #fff;
+            color: var(--primary);
+        }
+
+        .hero-back-btn .material-symbols-outlined {
+            font-size: 24px;
+            font-variation-settings: 'FILL' 1;
+        }
+
+        .hero-cover {
+            height: 156px;
+            background:
+                linear-gradient(125deg, rgba(90, 31, 224, 0.96), rgba(65, 17, 197, 0.84)),
+                radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 28%);
+            position: relative;
+        }
+
+        .hero-cover::after {
+            content: "";
+            position: absolute;
+            inset: 18px;
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+        }
+
+        .hero-body {
+            padding: 0 24px 24px;
+            position: relative;
+            margin-top: -46px;
+        }
+
+        .avatar-wrap {
+            position: relative;
+            display: inline-flex;
+            width: fit-content;
+        }
+
+        .profile-avatar {
+            width: 92px;
+            height: 92px;
+            border-radius: 28px;
+            background: linear-gradient(135deg, #ffffff, #ece6ff);
+            border: 5px solid rgba(255, 255, 255, 0.96);
+            box-shadow: 0 18px 34px rgba(49, 30, 105, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "Sora", sans-serif;
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: var(--primary);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .profile-avatar.has-photo {
+            background: #fff;
+            color: transparent;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .avatar-edit-btn {
+            position: absolute;
+            right: -8px;
+            bottom: -8px;
+            width: 36px;
+            height: 36px;
+            border-radius: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.92);
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 24px rgba(49, 30, 105, 0.18);
+            padding: 0;
+        }
+
+        .avatar-edit-btn .material-symbols-outlined,
+        .icon-edit-btn .material-symbols-outlined {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .hero-meta {
+            margin-top: 18px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(90, 31, 224, 0.08);
+            color: var(--primary);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .name-row {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+            align-items: center;
+            margin-top: 14px;
+        }
+
+        .profile-name-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: var(--ink);
+            font-family: "Sora", sans-serif;
+            font-size: 1.65rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            padding: 0;
+            outline: none;
+            min-width: 0;
+            width: 100%;
+        }
+
+        .profile-name-input:disabled {
+            opacity: 1;
+            cursor: default;
+        }
+
+        .icon-edit-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            border: none;
+            background: rgba(23, 20, 40, 0.06);
+            color: var(--ink);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            padding: 0;
+        }
+
+        .user-email {
+            margin: 8px 0 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .hero-note {
+            margin-top: 16px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 0.86rem;
+            line-height: 1.5;
+        }
+
+        .profile-card {
+            padding: 22px;
+        }
+
+        .card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            margin: 0;
+            font-family: "Sora", sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+        }
+
+        .card-copy {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.84rem;
+            line-height: 1.5;
+        }
+
+        .id-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 16px;
+            background: rgba(90, 31, 224, 0.08);
+            color: var(--primary);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 12px;
+        }
+
+        .info-row,
+        .connection-item {
+            background: var(--surface-soft);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 16px;
+        }
+
+        .is-hidden {
+            display: none !important;
+        }
+
+        .info-label {
+            font-size: 0.76rem;
+            font-weight: 800;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .info-value {
+            margin-top: 6px;
+            font-size: 0.98rem;
+            font-weight: 700;
+            color: var(--ink);
+            word-break: break-word;
+        }
+
+        .connection-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .connection-main {
+            flex: 1;
+        }
+
+        .connection-side {
+            display: grid;
+            gap: 8px;
+            justify-items: end;
+            flex-shrink: 0;
+        }
+
+        .connection-action-btn {
+            min-height: 38px;
+            padding: 0 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(209, 31, 52, 0.14);
+            background: rgba(255, 241, 242, 0.72);
+            color: var(--red);
+            font: inherit;
+            font-size: 0.75rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .connection-name {
+            display: block;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 4px;
+        }
+
+        .connection-meta {
+            display: block;
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.4;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 96px;
+            padding: 9px 12px;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status-badge.accepted {
+            background: var(--green-soft);
+            color: var(--green);
+        }
+
+        .status-badge.pending {
+            background: var(--amber-soft);
+            color: var(--amber);
+        }
+
+        .status-badge.rejected {
+            background: var(--red-soft);
+            color: var(--red);
+        }
+
+        .empty-state {
+            padding: 24px 18px;
+            border-radius: 18px;
+            background: var(--surface-soft);
+            border: 1px dashed rgba(23, 20, 40, 0.12);
+            color: var(--muted);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .input-stack {
+            display: grid;
+            gap: 12px;
+        }
+
+        .search-field-wrap {
+            position: relative;
+        }
+
+        .input-field {
+            width: 100%;
+            min-height: 54px;
+            border-radius: 16px;
+            border: 1px solid var(--line);
+            background: var(--surface-soft);
+            padding: 0 16px;
+            font: inherit;
+            color: var(--ink);
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: rgba(90, 31, 224, 0.5);
+            box-shadow: 0 0 0 4px rgba(90, 31, 224, 0.08);
+        }
+
+        .input-field:disabled {
+            color: var(--muted);
+            background: rgba(248, 246, 255, 0.72);
+        }
+
+        .password-input-wrap {
+            position: relative;
+        }
+
+        .password-input-wrap .input-field {
+            padding-right: 54px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            border: none;
+            background: rgba(23, 20, 40, 0.06);
+            color: var(--muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .guardian-search-results {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            z-index: 30;
+            display: grid;
+            gap: 8px;
+            padding: 10px;
+            border-radius: 18px;
+            border: 1px solid rgba(23, 20, 40, 0.08);
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 18px 42px rgba(23, 20, 40, 0.14);
+            backdrop-filter: blur(12px);
+        }
+
+        .guardian-search-results.is-hidden {
+            display: none;
+        }
+
+        .guardian-search-item {
+            width: 100%;
+            border: 1px solid rgba(23, 20, 40, 0.06);
+            background: var(--surface-soft);
+            border-radius: 16px;
+            padding: 12px 14px;
+            text-align: left;
+            color: var(--ink);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .guardian-search-item.disabled {
+            opacity: 0.68;
+        }
+
+        .guardian-search-copy {
+            display: grid;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        .guardian-search-name {
+            font-size: 0.96rem;
+            font-weight: 700;
+        }
+
+        .guardian-search-email {
+            font-size: 0.8rem;
+            color: var(--muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .guardian-search-badge {
+            flex: 0 0 auto;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(90, 31, 224, 0.12);
+            color: var(--primary);
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .guardian-search-empty {
+            padding: 14px 12px;
+            border-radius: 16px;
+            background: var(--surface-soft);
+            color: var(--muted);
+            font-size: 0.84rem;
+            text-align: center;
+        }
+
+        .section-actions,
+        .footer-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary,
+        .btn-secondary,
+        .btn-danger {
+            min-height: 54px;
+            padding: 0 18px;
+            border-radius: 18px;
+            border: none;
+            font: inherit;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: #fff;
+            box-shadow: 0 16px 28px rgba(90, 31, 224, 0.24);
+        }
+
+        .btn-secondary {
+            background: rgba(23, 20, 40, 0.06);
+            color: var(--ink);
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--red);
+            border: 1px solid rgba(209, 31, 52, 0.12);
+        }
+
+        .btn-secondary.is-busy::after {
+            border-color: rgba(23, 20, 40, 0.16);
+            border-top-color: var(--ink);
+        }
+
+        .password-panel.disabled .input-field {
+            pointer-events: none;
+        }
+
+        .helper-copy {
+            margin: 12px 0 0;
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.5;
+        }
+
+        .status-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(23, 20, 40, 0.84);
+            backdrop-filter: blur(12px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 4000;
+            padding: 24px;
+        }
+
+        .status-modal.active {
+            display: flex;
+        }
+
+        .status-card {
+            width: 100%;
+            max-width: 380px;
+            border-radius: 32px;
+            background: linear-gradient(180deg, #ffffff 0%, #f8f6ff 100%);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.36);
+            padding: 34px 28px 28px;
+            text-align: center;
+        }
+
+        .status-icon-wrap {
+            width: 78px;
+            height: 78px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 18px;
+            font-size: 40px;
+        }
+
+        .status-icon-wrap.success {
+            background: #eefdf6;
+            color: var(--green);
+        }
+
+        .status-icon-wrap.error {
+            background: #fff1f2;
+            color: var(--red);
+        }
+
+        .status-title {
+            margin: 0 0 10px;
+            font-family: "Sora", sans-serif;
+            font-size: 1.45rem;
+            font-weight: 800;
+        }
+
+        .status-msg {
+            margin: 0 0 24px;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .status-btn {
+            width: 100%;
+            min-height: 56px;
+            border: none;
+            border-radius: 18px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: #fff;
+            font: inherit;
+            font-weight: 800;
+        }
+
+        .sos-fab {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #ff4b61, #d71f35);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 32px rgba(215, 31, 53, 0.34);
+            z-index: 1000;
+        }
+
+        .sos-fab .material-symbols-outlined {
+            font-size: 32px;
+            font-variation-settings: 'FILL' 1;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                padding-inline: 12px;
+            }
+
+            .hero-body,
+            .profile-card {
+                padding-inline: 18px;
+            }
+
+            .profile-topbar {
+                margin-inline: -16px;
+                padding-inline: 16px;
+            }
+
+            .hero-actions,
+            .section-actions,
+            .footer-actions {
+                flex-direction: column;
+            }
+
+            .hero-actions > *,
+            .section-actions > *,
+            .footer-actions > * {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="sos-fab" id="globalSosFab" type="button" title="Emergency SOS" onclick="window.location.href='index.html?page=sos'">
+        <span class="material-symbols-outlined">emergency</span>
+    </button>
+
+    <main class="page-shell">
+        <header class="profile-topbar">
+            <a id="profileBackBtn" class="hero-back-btn" href="index.html" aria-label="Go back">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <div class="profile-topbar-title">Profile</div>
+        </header>
+        <div class="profile-stack">
+            <section class="hero-card">
+                <div class="hero-cover"></div>
+                <div class="hero-body">
+                    <div class="avatar-wrap">
+                        <div class="profile-avatar" id="profileAvatar">SU</div>
+                        <button id="editAvatarBtn" class="avatar-edit-btn" type="button" aria-label="Change profile picture">
+                            <span class="material-symbols-outlined">photo_camera</span>
+                        </button>
+                    </div>
+                    <input id="avatarInput" type="file" accept="image/*" hidden>
+                    <div class="hero-meta">
+                        <div class="eyebrow" id="roleBadge">Student Account</div>
+                        <div class="name-row">
+                            <input id="profileNameInput" class="profile-name-input" type="text" value="Loading..." disabled>
+                            <button id="editNameBtn" class="icon-edit-btn" type="button" aria-label="Edit name">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                        </div>
+                        <p class="user-email" id="profileEmail">Loading account...</p>
+                        <div class="hero-actions">
+                            <button id="saveNameBtn" class="btn-primary" type="button" disabled>
+                                <span class="material-symbols-outlined">save</span>
+                                <span>Save Name</span>
+                            </button>
+                            <a href="settings.html" class="btn-secondary">
+                                <span class="material-symbols-outlined">settings</span>
+                                <span>Settings</span>
+                            </a>
+                            <a href="index.html" class="btn-secondary">
+                                <span class="material-symbols-outlined">dashboard</span>
+                                <span>Back to Dashboard</span>
+                            </a>
+                        </div>
+                        <div class="hero-note" id="heroNote">
+                            Your student ID stays locked after signup. Only your display name and password can be updated here.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="profile-card">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title">My Profile</h2>
+                        <p class="card-copy">Your core account details and permanent ID.</p>
+                    </div>
+                    <div class="id-chip" id="myIdChip">
+                        <span class="material-symbols-outlined">badge</span>
+                        <span id="myIdLabel">ID: --</span>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-row" id="studentIdRow">
+                        <div class="info-label">Student ID</div>
+                        <div class="info-value" id="profileStudentId">Not linked</div>
+                    </div>
+                    <div class="info-row" id="emailRow">
+                        <div class="info-label">Email Address</div>
+                        <div class="info-value" id="profileEmailValue">--</div>
+                    </div>
+                    <div class="info-row" id="roleRow">
+                        <div class="info-label">Role</div>
+                        <div class="info-value" id="profileRoleValue">Student</div>
+                    </div>
+                    <div class="info-row is-hidden" id="guardianOfRow">
+                        <div class="info-label">Guardian Of</div>
+                        <div class="info-value" id="guardianOfValue">Pending child link</div>
+                        <div class="helper-copy" id="guardianOfMeta" style="margin-top: 6px;">Student ID pending</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="profile-card">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title" id="connectionsTitle">Parents / Guardians</h2>
+                        <p class="card-copy" id="connectionsCopy">Pending requests and approved family links appear here.</p>
+                    </div>
+                </div>
+                <div id="connectionsList" class="info-grid">
+                    <div class="empty-state">Loading connections...</div>
+                </div>
+                <p class="helper-copy" id="connectionsHelper">
+                    Students can have up to three parents or guardians. Guardian accounts can track one child at a time.
+                </p>
+            </section>
+
+            <section class="profile-card" id="guardianRequestCard">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title">Request a Parent / Guardian</h2>
+                        <p class="card-copy">Enter the registered guardian name and email to link them to your account.</p>
+                    </div>
+                </div>
+                <div class="input-stack">
+                    <div class="search-field-wrap">
+                        <input id="guardianRequestName" class="input-field" type="text" placeholder="Parent / Guardian full name" autocomplete="off">
+                        <div id="guardianSearchResults" class="guardian-search-results is-hidden"></div>
+                    </div>
+                    <input id="guardianRequestEmail" class="input-field" type="email" placeholder="Registered guardian email">
+                </div>
+                <div class="section-actions" style="margin-top: 16px;">
+                    <button id="guardianRequestBtn" class="btn-primary" type="button">
+                        <span class="material-symbols-outlined">person_add</span>
+                        <span>Send Parent Request</span>
+                    </button>
+                </div>
+                <p class="helper-copy" id="guardianSearchHint">Search registered guardian names, then tap a result to fill the correct email.</p>
+            </section>
+
+            <section class="profile-card">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title">Change Password</h2>
+                        <p class="card-copy">Enter your current password first, then choose a new one.</p>
+                    </div>
+                    <button id="togglePasswordEditBtn" class="btn-secondary" type="button">
+                        <span class="material-symbols-outlined">lock_reset</span>
+                        <span>Edit</span>
+                    </button>
+                </div>
+                <div class="password-panel disabled" id="passwordPanel">
+                    <div class="input-stack">
+                        <div class="password-input-wrap">
+                            <input id="currentPasswordInput" class="input-field" type="password" placeholder="Current password" disabled>
+                            <button class="password-toggle-btn" type="button" data-password-target="currentPasswordInput" aria-label="Show current password">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
+                        <div class="password-input-wrap">
+                            <input id="newPasswordInput" class="input-field" type="password" placeholder="New password" disabled>
+                            <button class="password-toggle-btn" type="button" data-password-target="newPasswordInput" aria-label="Show new password">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
+                        <div class="password-input-wrap">
+                            <input id="confirmPasswordInput" class="input-field" type="password" placeholder="Confirm new password" disabled>
+                            <button class="password-toggle-btn" type="button" data-password-target="confirmPasswordInput" aria-label="Show confirm password">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-actions" style="margin-top: 16px;">
+                    <button id="savePasswordBtn" class="btn-primary" type="button" disabled>
+                        <span class="material-symbols-outlined">password</span>
+                        <span>Save Password</span>
+                    </button>
+                </div>
+                <p class="helper-copy">If Firebase asks for a recent login before saving, sign in again and retry.</p>
+            </section>
+
+            <div class="footer-actions">
+                <button id="logoutBtn" class="btn-danger" type="button">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span>Sign Out</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <div class="status-modal" id="statusModal">
+        <div class="status-card">
+            <div id="statusIconWrap" class="status-icon-wrap success">
+                <span class="material-symbols-outlined" id="statusIcon">check_circle</span>
+            </div>
+            <h3 id="statusTitle" class="status-title">Success</h3>
+            <p id="statusMessage" class="status-msg">Message goes here.</p>
+            <button id="statusOkBtn" class="status-btn" type="button">Continue</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth } from './firebase-config.js';
+        import { logout, checkAuth } from './auth.js';
+        import { getUserProfile, updateUserProfile, getLinksForStudent, getAllLinksForGuardian, findStudentUidByStudentId, getAllUsers, getStudentBootstrapProfile, createGuardianLinkFromStudent, findUserByEmail, removeGuardianLink } from './db.js';
+        import { EmailAuthProvider, onAuthStateChanged, reauthenticateWithCredential, updatePassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        checkAuth();
+
+        const profileNameInput = document.getElementById('profileNameInput');
+        const editNameBtn = document.getElementById('editNameBtn');
+        const saveNameBtn = document.getElementById('saveNameBtn');
+        const profileAvatar = document.getElementById('profileAvatar');
+        const editAvatarBtn = document.getElementById('editAvatarBtn');
+        const avatarInput = document.getElementById('avatarInput');
+        const profileBackBtn = document.getElementById('profileBackBtn');
+        const profileEmail = document.getElementById('profileEmail');
+        const profileEmailValue = document.getElementById('profileEmailValue');
+        const profileStudentId = document.getElementById('profileStudentId');
+        const profileRoleValue = document.getElementById('profileRoleValue');
+        const studentIdRow = document.getElementById('studentIdRow');
+        const emailRow = document.getElementById('emailRow');
+        const roleRow = document.getElementById('roleRow');
+        const guardianOfRow = document.getElementById('guardianOfRow');
+        const guardianOfValue = document.getElementById('guardianOfValue');
+        const guardianOfMeta = document.getElementById('guardianOfMeta');
+        const roleBadge = document.getElementById('roleBadge');
+        const myIdLabel = document.getElementById('myIdLabel');
+        const heroNote = document.getElementById('heroNote');
+        const connectionsTitle = document.getElementById('connectionsTitle');
+        const connectionsCopy = document.getElementById('connectionsCopy');
+        const connectionsList = document.getElementById('connectionsList');
+        const connectionsHelper = document.getElementById('connectionsHelper');
+        const guardianRequestCard = document.getElementById('guardianRequestCard');
+        const guardianRequestName = document.getElementById('guardianRequestName');
+        const guardianSearchResults = document.getElementById('guardianSearchResults');
+        const guardianSearchHint = document.getElementById('guardianSearchHint');
+        const guardianRequestEmail = document.getElementById('guardianRequestEmail');
+        const guardianRequestBtn = document.getElementById('guardianRequestBtn');
+        const togglePasswordEditBtn = document.getElementById('togglePasswordEditBtn');
+        const passwordPanel = document.getElementById('passwordPanel');
+        const currentPasswordInput = document.getElementById('currentPasswordInput');
+        const newPasswordInput = document.getElementById('newPasswordInput');
+        const confirmPasswordInput = document.getElementById('confirmPasswordInput');
+        const savePasswordBtn = document.getElementById('savePasswordBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        const state = {
+            uid: '',
+            role: 'student',
+            email: '',
+            studentId: '',
+            name: '',
+            photoURL: '',
+            nameEditing: false,
+            passwordEditing: false,
+            connections: [],
+            guardianDirectory: [],
+            selectedGuardianCandidate: null
+        };
+
+        function setButtonBusy(button, isBusy = true) {
+            if (!button) return;
+            button.classList.toggle('is-busy', isBusy);
+            button.disabled = isBusy || (button === saveNameBtn && !state.nameEditing) || (button === savePasswordBtn && !state.passwordEditing);
+            button.setAttribute('aria-busy', isBusy ? 'true' : 'false');
+        }
+
+        function initialsFor(name) {
+            return (name || 'Securo User')
+                .split(/\s+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((part) => part[0])
+                .join('')
+                .toUpperCase() || 'SU';
+        }
+
+        function renderProfileAvatar() {
+            if (!profileAvatar) return;
+
+            if (state.photoURL) {
+                profileAvatar.classList.add('has-photo');
+                profileAvatar.innerHTML = `<img src="${state.photoURL}" alt="Profile picture">`;
+                return;
+            }
+
+            profileAvatar.classList.remove('has-photo');
+            profileAvatar.textContent = initialsFor(state.name);
+        }
+
+        function readFileAsDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ''));
+                reader.onerror = () => reject(new Error('Could not read the selected image.'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function normalizeText(value) {
+            return String(value || '').trim().toLowerCase();
+        }
+
+        function getExistingGuardianLinkStatus(guardian) {
+            const guardianEmail = normalizeText(guardian?.email);
+            const guardianId = normalizeText(guardian?.uid);
+            const linkedItem = (state.connections || []).find((link) => {
+                const sameEmail = guardianEmail && normalizeText(link.guardianEmail) === guardianEmail;
+                const sameGuardianId = guardianId && normalizeText(link.guardianId) === guardianId;
+                return (sameEmail || sameGuardianId) && (link.status === 'accepted' || link.status === 'pending');
+            });
+
+            return linkedItem?.status || '';
+        }
+
+        function getGuardianMatches(query) {
+            const normalizedQuery = normalizeText(query);
+            if (normalizedQuery.length < 2) return [];
+
+            return (state.guardianDirectory || [])
+                .filter((guardian) => {
+                    const name = normalizeText(guardian.name);
+                    const email = normalizeText(guardian.email);
+                    return name.includes(normalizedQuery) || email.includes(normalizedQuery);
+                })
+                .slice(0, 6)
+                .map((guardian) => ({
+                    ...guardian,
+                    existingStatus: getExistingGuardianLinkStatus(guardian)
+                }));
+        }
+
+        function hideGuardianSearchResults() {
+            if (!guardianSearchResults) return;
+            guardianSearchResults.classList.add('is-hidden');
+            guardianSearchResults.innerHTML = '';
+        }
+
+        function renderGuardianSearchResults(query) {
+            if (!guardianSearchResults) return;
+
+            const normalizedQuery = normalizeText(query);
+            const matches = getGuardianMatches(query);
+
+            if (!matches.length) {
+                guardianSearchResults.innerHTML = normalizedQuery.length < 2
+                    ? ''
+                    : '<div class="guardian-search-empty">No registered guardian matches found yet.</div>';
+                guardianSearchResults.classList.toggle('is-hidden', normalizedQuery.length < 2);
+                return;
+            }
+
+            guardianSearchResults.innerHTML = matches.map((guardian) => {
+                const badgeText = guardian.existingStatus === 'accepted'
+                    ? 'Already linked'
+                    : guardian.existingStatus === 'pending'
+                        ? 'Already pending'
+                        : 'Registered';
+                const disabledClass = guardian.existingStatus ? 'disabled' : '';
+
+                return `
+                    <button
+                        type="button"
+                        class="guardian-search-item ${disabledClass}"
+                        data-guardian-email="${guardian.email || ''}"
+                        data-guardian-name="${guardian.name || ''}"
+                        ${guardian.existingStatus ? 'disabled' : ''}
+                    >
+                        <span class="guardian-search-copy">
+                            <span class="guardian-search-name">${guardian.name || 'Guardian Account'}</span>
+                            <span class="guardian-search-email">${guardian.email || 'No email available'}</span>
+                        </span>
+                        <span class="guardian-search-badge">${badgeText}</span>
+                    </button>
+                `;
+            }).join('');
+
+            guardianSearchResults.classList.remove('is-hidden');
+        }
+
+        async function loadGuardianDirectory() {
+            if (state.role !== 'student') {
+                state.guardianDirectory = [];
+                return;
+            }
+
+            try {
+                const users = await getAllUsers();
+                state.guardianDirectory = users
+                    .filter((user) => user?.role === 'guardian' && normalizeText(user.email))
+                    .map((user) => ({
+                        uid: user.uid || user.userId || user.id || '',
+                        name: user.name || 'Guardian Account',
+                        email: user.email || ''
+                    }))
+                    .sort((a, b) => a.name.localeCompare(b.name));
+            } catch (error) {
+                console.warn('Guardian directory load failed:', error);
+                state.guardianDirectory = [];
+            }
+        }
+
+        function isGenericChildName(name) {
+            const normalized = String(name || '').trim().toLowerCase();
+            return !normalized || [
+                'student',
+                'linked student',
+                'linked child',
+                'securo user',
+                'guardian user'
+            ].includes(normalized);
+        }
+
+        async function resolveGuardianChildDetails(link) {
+            const fallbackStudentId = link?.studentId || '';
+            let resolvedName = !isGenericChildName(link?.studentName) ? link.studentName : '';
+            let resolvedStudentId = fallbackStudentId;
+
+            if (link?.studentUid) {
+                try {
+                    const profile = await getUserProfile(link.studentUid);
+                    if (profile?.studentId) resolvedStudentId = profile.studentId;
+                    if (!isGenericChildName(profile?.name)) {
+                        resolvedName = profile.name;
+                    }
+                } catch (error) {
+                    
+                }
+
+                if (isGenericChildName(resolvedName)) {
+                    try {
+                        const bootstrapProfile = await getStudentBootstrapProfile(link.studentUid);
+                        if (bootstrapProfile?.studentId) resolvedStudentId = bootstrapProfile.studentId;
+                        if (!isGenericChildName(bootstrapProfile?.name)) {
+                            resolvedName = bootstrapProfile.name;
+                        }
+                    } catch (error) {
+                        
+                    }
+                }
+            }
+
+            if (isGenericChildName(resolvedName) && fallbackStudentId) {
+                try {
+                    const studentMatch = await findStudentUidByStudentId(fallbackStudentId);
+                    if (studentMatch?.studentId) resolvedStudentId = studentMatch.studentId;
+                    if (!isGenericChildName(studentMatch?.name)) {
+                        resolvedName = studentMatch.name;
+                    }
+                } catch (error) {
+                    
+                }
+            }
+
+            if (isGenericChildName(resolvedName) && fallbackStudentId) {
+                try {
+                    const users = await getAllUsers();
+                    const matchedUser = users.find((user) => String(user.studentId || '') === String(fallbackStudentId));
+                    if (matchedUser?.studentId) resolvedStudentId = matchedUser.studentId;
+                    if (!isGenericChildName(matchedUser?.name)) {
+                        resolvedName = matchedUser.name;
+                    }
+                } catch (error) {
+                    
+                }
+            }
+
+            return {
+                ...link,
+                studentName: !isGenericChildName(resolvedName)
+                    ? resolvedName
+                    : (!isGenericChildName(link?.studentName) ? link.studentName : ''),
+                studentId: resolvedStudentId || fallbackStudentId || ''
+            };
+        }
+
+        function showStatus(title, msg, type = 'success') {
+            const statusModal = document.getElementById('statusModal');
+            const statusTitle = document.getElementById('statusTitle');
+            const statusMessage = document.getElementById('statusMessage');
+            const statusIconWrap = document.getElementById('statusIconWrap');
+            const statusIcon = document.getElementById('statusIcon');
+            const okBtn = document.getElementById('statusOkBtn');
+
+            statusTitle.textContent = title;
+            statusMessage.textContent = msg;
+            statusIconWrap.classList.remove('success', 'error');
+            statusIconWrap.classList.add(type);
+
+            if (type === 'success') {
+                statusIcon.textContent = 'check_circle';
+                okBtn.style.background = 'linear-gradient(135deg, #0f9b67, #0c7e54)';
+            } else {
+                statusIcon.textContent = 'warning';
+                okBtn.style.background = 'linear-gradient(135deg, #d11f34, #a8192a)';
+            }
+
+            statusModal.classList.add('active');
+            return new Promise((resolve) => {
+                okBtn.onclick = () => {
+                    statusModal.classList.remove('active');
+                    resolve();
+                };
+            });
+        }
+
+        function setNameEditing(isEditing) {
+            state.nameEditing = isEditing;
+            profileNameInput.disabled = !isEditing;
+            saveNameBtn.disabled = !isEditing;
+            editNameBtn.querySelector('.material-symbols-outlined').textContent = isEditing ? 'close' : 'edit';
+            if (isEditing) {
+                profileNameInput.focus();
+                profileNameInput.select();
+            } else {
+                profileNameInput.value = state.name;
+            }
+        }
+
+        function setPasswordEditing(isEditing) {
+            state.passwordEditing = isEditing;
+            passwordPanel.classList.toggle('disabled', !isEditing);
+            currentPasswordInput.disabled = !isEditing;
+            newPasswordInput.disabled = !isEditing;
+            confirmPasswordInput.disabled = !isEditing;
+            savePasswordBtn.disabled = !isEditing;
+            togglePasswordEditBtn.querySelector('span:last-child').textContent = isEditing ? 'Cancel' : 'Edit';
+            togglePasswordEditBtn.querySelector('.material-symbols-outlined').textContent = isEditing ? 'close' : 'lock_reset';
+
+            if (!isEditing) {
+                currentPasswordInput.value = '';
+                newPasswordInput.value = '';
+                confirmPasswordInput.value = '';
+            } else {
+                currentPasswordInput.focus();
+            }
+        }
+
+        function renderIdentity(profile) {
+            const roleLabel = profile?.role === 'guardian'
+                ? 'Guardian'
+                : profile?.role === 'staff'
+                ? 'Staff'
+                : profile?.role === 'admin'
+                ? 'Admin'
+                : 'Student';
+            const studentIdLabel = profile?.studentId || 'Not linked';
+
+            state.role = profile?.role || 'student';
+            state.studentId = profile?.studentId || '';
+            state.name = profile?.name || auth.currentUser?.displayName || 'Securo User';
+            state.email = profile?.email || auth.currentUser?.email || '';
+            state.photoURL = profile?.photoURL || auth.currentUser?.photoURL || '';
+
+            profileNameInput.value = state.name;
+            profileEmail.textContent = state.email;
+            profileEmailValue.textContent = state.email;
+            profileStudentId.textContent = studentIdLabel;
+            profileRoleValue.textContent = roleLabel;
+            roleBadge.textContent = `${roleLabel} Account`;
+            myIdLabel.textContent = state.studentId ? `ID: ${state.studentId}` : 'ID: Not linked';
+            renderProfileAvatar();
+            studentIdRow.classList.remove('is-hidden');
+            emailRow.classList.remove('is-hidden');
+            roleRow.classList.remove('is-hidden');
+            guardianOfRow.classList.add('is-hidden');
+            profileEmail.classList.remove('is-hidden');
+            document.getElementById('myIdChip').classList.remove('is-hidden');
+
+            if (state.role === 'guardian') {
+                document.body.classList.add('guardian-theme');
+                profileBackBtn.href = 'guardian-dashboard.html';
+                profileStudentId.textContent = 'Locked for guardian accounts';
+                myIdLabel.textContent = 'Guardian Account';
+                connectionsTitle.textContent = 'Child Access List';
+                connectionsCopy.textContent = 'Your linked child and any pending requests appear here.';
+                connectionsHelper.textContent = 'Guardian accounts can track one child at a time. Students can approve up to three guardians.';
+                heroNote.textContent = 'Only your display name and password are editable here. Your guardian profile centers on the child you monitor.';
+                guardianRequestCard.classList.add('is-hidden');
+                studentIdRow.classList.add('is-hidden');
+                emailRow.classList.add('is-hidden');
+                roleRow.classList.add('is-hidden');
+                guardianOfRow.classList.remove('is-hidden');
+                document.getElementById('myIdChip').classList.add('is-hidden');
+            } else if (state.role === 'staff' || state.role === 'admin') {
+                document.body.classList.remove('guardian-theme');
+                profileBackBtn.href = state.role === 'admin' ? 'admin.html' : 'index.html';
+                connectionsTitle.textContent = state.role === 'admin' ? 'Admin Access' : 'Workplace Access';
+                connectionsCopy.textContent = state.role === 'admin'
+                    ? 'Admin accounts do not use parent or guardian links.'
+                    : 'Staff accounts do not use parent or guardian links.';
+                connectionsHelper.textContent = state.role === 'admin'
+                    ? 'Admin accounts manage the platform and do not have family connections.'
+                    : 'Staff accounts keep the same campus tools as students, without family linking.';
+                heroNote.textContent = state.role === 'admin'
+                    ? 'Your admin profile keeps account management simple. Only your display name, photo, and password can be updated here.'
+                    : 'Your staff ID stays locked after signup. Only your display name and password can be updated here.';
+                guardianRequestCard.classList.add('is-hidden');
+            } else {
+                document.body.classList.remove('guardian-theme');
+                profileBackBtn.href = 'index.html';
+                connectionsTitle.textContent = 'Parents / Guardians';
+                connectionsCopy.textContent = 'Pending requests and approved family links appear here.';
+                connectionsHelper.textContent = 'Students can have up to three parents or guardians. Guardian accounts can track one child at a time.';
+                heroNote.textContent = 'Your student ID stays locked after signup. Only your display name and password can be updated here.';
+                guardianRequestCard.classList.remove('is-hidden');
+            }
+        }
+
+        function renderConnections(links = []) {
+            const visibleLinks = links.filter((link) => ['accepted', 'pending', 'rejected'].includes(link.status));
+            if (!visibleLinks.length) {
+                if (state.role === 'guardian') {
+                    guardianOfValue.textContent = state.studentId || 'Pending child link';
+                    guardianOfMeta.textContent = state.studentId ? `Student ID: ${state.studentId}` : 'Student ID pending';
+                    roleBadge.textContent = state.studentId ? `Guardian of ${state.studentId}` : 'Guardian of Pending Child';
+                }
+                    connectionsList.innerHTML = `<div class="empty-state">${state.role === 'guardian' ? 'No child access links yet.' : state.role === 'staff' ? 'Staff accounts do not have parent or guardian links.' : state.role === 'admin' ? 'Admin accounts do not have parent or guardian links.' : 'No parent or guardian requests yet.'}</div>`;
+                return;
+            }
+
+            connectionsList.innerHTML = visibleLinks.map((link) => {
+                const status = link.status || 'pending';
+                const badgeClass = status === 'accepted' ? 'accepted' : status === 'rejected' ? 'rejected' : 'pending';
+                const primary = state.role === 'guardian'
+                    ? (link.studentName || link.studentId || 'Pending child link')
+                    : (link.guardianName || 'Parent / Guardian');
+                const secondary = state.role === 'guardian'
+                    ? `${link.studentId ? `Student ID: ${link.studentId}` : 'Awaiting student match'}${link.studentUid ? '' : ' â€¢ Pending match'}`
+                    : `${link.guardianEmail || 'No email available'}${link.studentId ? ` â€¢ ID: ${link.studentId}` : ''}`;
+                const badgeText = status === 'accepted' ? (state.role === 'guardian' ? 'Active Child' : 'Parent Now') : status === 'rejected' ? 'Declined' : 'Pending';
+
+                return `
+                    <div class="connection-item">
+                        <div class="connection-main">
+                            <span class="connection-name">${primary}</span>
+                            <span class="connection-meta">${secondary}</span>
+                        </div>
+                        <span class="status-badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderConnectionsWithGuardianActions(links = []) {
+            const visibleLinks = links.filter((link) => ['accepted', 'pending', 'rejected'].includes(link.status));
+            if (!visibleLinks.length) {
+                renderConnections(links);
+                return;
+            }
+
+            if (state.role !== 'guardian') {
+                renderConnections(links);
+                return;
+            }
+
+            connectionsList.innerHTML = visibleLinks.map((link) => {
+                const status = link.status || 'pending';
+                const badgeClass = status === 'accepted' ? 'accepted' : status === 'rejected' ? 'rejected' : 'pending';
+                const primary = link.studentName || link.studentId || 'Pending child link';
+                const secondary = `${link.studentId ? `Student ID: ${link.studentId}` : 'Awaiting student match'}${link.studentUid ? '' : ' â€¢ Pending match'}`;
+                const badgeText = status === 'accepted' ? 'Active Child' : status === 'rejected' ? 'Declined' : 'Pending';
+                const actionMarkup = (status === 'pending' || status === 'accepted') && link.id
+                    ? `
+                        <button
+                            class="connection-action-btn"
+                            type="button"
+                            data-link-action="${status === 'pending' ? 'cancel' : 'remove'}"
+                            data-link-id="${link.id}"
+                        >
+                            <span class="material-symbols-outlined" style="font-size:16px;">${status === 'pending' ? 'close' : 'person_remove'}</span>
+                            <span>${status === 'pending' ? 'Cancel Request' : 'Remove Child'}</span>
+                        </button>
+                    `
+                    : '';
+
+                return `
+                    <div class="connection-item">
+                        <div class="connection-main">
+                            <span class="connection-name">${primary}</span>
+                            <span class="connection-meta">${secondary}</span>
+                        </div>
+                        <div class="connection-side">
+                            <span class="status-badge ${badgeClass}">${badgeText}</span>
+                            ${actionMarkup}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function loadConnections() {
+            if (!state.uid) return;
+            connectionsList.innerHTML = '<div class="empty-state">Loading connections...</div>';
+            try {
+                if (state.role === 'guardian') {
+                    const links = await getAllLinksForGuardian(state.uid);
+                    const visibleLinks = await Promise.all(
+                        links
+                            .filter((link) => link.status === 'accepted' || link.status === 'pending')
+                            .map((link) => resolveGuardianChildDetails(link))
+                    );
+                    const primaryLink = visibleLinks.find((link) => link.status === 'accepted') || visibleLinks[0];
+                    const childLabel = primaryLink?.studentName || primaryLink?.studentId || 'Pending child link';
+                    guardianOfValue.textContent = childLabel;
+                    guardianOfMeta.textContent = primaryLink?.studentId ? `Student ID: ${primaryLink.studentId}` : 'Student ID pending';
+                    roleBadge.textContent = `Guardian of ${childLabel}`;
+                    state.connections = visibleLinks;
+                    renderConnectionsWithGuardianActions(visibleLinks);
+                } else if (state.role === 'student') {
+                    const links = await getLinksForStudent(state.studentId, state.uid);
+                    state.connections = links;
+                    renderConnections(links);
+                } else {
+                    state.connections = [];
+                    renderConnections([]);
+                }
+            } catch (error) {
+                console.warn('Connection load failed:', error);
+                state.connections = [];
+                connectionsList.innerHTML = '<div class="empty-state">Could not load guardian information right now.</div>';
+            }
+        }
+
+        guardianRequestName?.addEventListener('input', () => {
+            state.selectedGuardianCandidate = null;
+            guardianSearchHint.textContent = 'Search registered guardian names, then tap a result to fill the correct email.';
+            renderGuardianSearchResults(guardianRequestName.value);
+        });
+
+        guardianRequestEmail?.addEventListener('input', () => {
+            const candidate = state.selectedGuardianCandidate;
+            if (!candidate) return;
+            const matchesCandidateEmail = normalizeText(guardianRequestEmail.value) === normalizeText(candidate.email);
+            const matchesCandidateName = normalizeText(guardianRequestName.value) === normalizeText(candidate.name);
+            if (!matchesCandidateEmail || !matchesCandidateName) {
+                state.selectedGuardianCandidate = null;
+            }
+        });
+
+        guardianRequestName?.addEventListener('focus', () => {
+            renderGuardianSearchResults(guardianRequestName.value);
+        });
+
+        guardianRequestName?.addEventListener('blur', () => {
+            setTimeout(() => hideGuardianSearchResults(), 120);
+        });
+
+        guardianSearchResults?.addEventListener('click', (event) => {
+            const button = event.target.closest('[data-guardian-email][data-guardian-name]');
+            if (!button || button.disabled) return;
+
+            guardianRequestName.value = button.dataset.guardianName || '';
+            guardianRequestEmail.value = button.dataset.guardianEmail || '';
+            state.selectedGuardianCandidate = (state.guardianDirectory || []).find((guardian) =>
+                normalizeText(guardian.email) === normalizeText(button.dataset.guardianEmail) &&
+                normalizeText(guardian.name) === normalizeText(button.dataset.guardianName)
+            ) || null;
+            guardianSearchHint.textContent = 'Selected registered guardian account. You can send the request now.';
+            hideGuardianSearchResults();
+        });
+
+        document.querySelectorAll('[data-password-target]').forEach((button) => {
+            button.addEventListener('click', () => {
+                const input = document.getElementById(button.dataset.passwordTarget || '');
+                if (!input) return;
+
+                const shouldShow = input.type === 'password';
+                input.type = shouldShow ? 'text' : 'password';
+                button.setAttribute('aria-label', shouldShow ? 'Hide password' : 'Show password');
+                const icon = button.querySelector('.material-symbols-outlined');
+                if (icon) icon.textContent = shouldShow ? 'visibility_off' : 'visibility';
+            });
+        });
+
+        editAvatarBtn?.addEventListener('click', () => {
+            avatarInput?.click();
+        });
+
+        avatarInput?.addEventListener('change', async () => {
+            const file = avatarInput.files?.[0];
+            if (!file || !state.uid) return;
+
+            if (!file.type.startsWith('image/')) {
+                await showStatus('Invalid Image', 'Choose a valid image file for your profile picture.', 'error');
+                avatarInput.value = '';
+                return;
+            }
+
+            if (file.size > 2 * 1024 * 1024) {
+                await showStatus('Image Too Large', 'Choose an image smaller than 2 MB.', 'error');
+                avatarInput.value = '';
+                return;
+            }
+
+            setButtonBusy(editAvatarBtn, true);
+            try {
+                const photoURL = await readFileAsDataUrl(file);
+                await updateUserProfile(state.uid, { photoURL });
+                if (auth.currentUser) {
+                    await updateProfile(auth.currentUser, { photoURL }).catch(() => {});
+                }
+                state.photoURL = photoURL;
+                renderProfileAvatar();
+                await showStatus('Profile Updated', 'Your profile picture has been updated.');
+            } catch (error) {
+                console.warn('Avatar update failed:', error);
+                await showStatus('Update Failed', error.message || 'Could not update your profile picture.', 'error');
+            } finally {
+                avatarInput.value = '';
+                setButtonBusy(editAvatarBtn, false);
+            }
+        });
+
+        editNameBtn.addEventListener('click', () => {
+            setNameEditing(!state.nameEditing);
+        });
+
+        saveNameBtn.addEventListener('click', async () => {
+            const newName = profileNameInput.value.trim();
+            if (!newName) {
+                await showStatus('Name Required', 'Please enter your name before saving.', 'error');
+                return;
+            }
+
+            setButtonBusy(saveNameBtn, true);
+            try {
+                await updateUserProfile(state.uid, { name: newName });
+                if (auth.currentUser) {
+                    await updateProfile(auth.currentUser, { displayName: newName }).catch(() => {});
+                }
+                state.name = newName;
+                renderProfileAvatar();
+                setNameEditing(false);
+                await showStatus('Profile Updated', 'Your display name has been updated.');
+            } catch (error) {
+                console.warn('Name update failed:', error);
+                await showStatus('Update Failed', error.message || 'Could not update your profile name.', 'error');
+            } finally {
+                setButtonBusy(saveNameBtn, false);
+                saveNameBtn.disabled = !state.nameEditing;
+            }
+        });
+
+        togglePasswordEditBtn.addEventListener('click', () => {
+            setPasswordEditing(!state.passwordEditing);
+        });
+
+        savePasswordBtn.addEventListener('click', async () => {
+            const currentPassword = currentPasswordInput.value.trim();
+            const newPassword = newPasswordInput.value.trim();
+            const confirmPassword = confirmPasswordInput.value.trim();
+
+            if (!currentPassword) {
+                await showStatus('Current Password Required', 'Enter your current password before changing it.', 'error');
+                return;
+            }
+
+            if (newPassword.length < 6) {
+                await showStatus('Weak Password', 'Use at least 6 characters for the new password.', 'error');
+                return;
+            }
+
+            if (currentPassword === newPassword) {
+                await showStatus('Choose a New Password', 'Your new password must be different from your current password.', 'error');
+                return;
+            }
+
+            if (newPassword !== confirmPassword) {
+                await showStatus('Password Mismatch', 'The confirmation password does not match.', 'error');
+                return;
+            }
+
+            setButtonBusy(savePasswordBtn, true);
+            try {
+                if (!auth.currentUser?.email) {
+                    throw new Error('Your account email is missing. Please sign in again, then retry.');
+                }
+
+                const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPassword);
+                await reauthenticateWithCredential(auth.currentUser, credential);
+                await updatePassword(auth.currentUser, newPassword);
+                setPasswordEditing(false);
+                await showStatus('Password Updated', 'Your password has been changed successfully.');
+            } catch (error) {
+                console.warn('Password update failed:', error);
+                const message = error.code === 'auth/wrong-password'
+                    ? 'The current password you entered is incorrect.'
+                    : error.code === 'auth/invalid-credential'
+                    ? 'The current password is incorrect. Please try again.'
+                    : error.code === 'auth/requires-recent-login'
+                    ? 'Please sign in again, then return here to change your password.'
+                    : (error.message || 'Could not update the password right now.');
+                await showStatus('Password Update Failed', message, 'error');
+            } finally {
+                setButtonBusy(savePasswordBtn, false);
+                savePasswordBtn.disabled = !state.passwordEditing;
+            }
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            setButtonBusy(logoutBtn, true);
+            try {
+                await logout();
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.warn('Logout failed:', error);
+                setButtonBusy(logoutBtn, false);
+                await showStatus('Logout Failed', error.message || 'Could not sign out right now.', 'error');
+            }
+        });
+
+        guardianRequestBtn?.addEventListener('click', async () => {
+            const guardianName = guardianRequestName.value.trim();
+            const guardianEmail = guardianRequestEmail.value.trim().toLowerCase();
+
+            if (state.role === 'guardian') {
+                await showStatus('Unavailable', 'Only student accounts can request a parent or guardian link.', 'error');
+                return;
+            }
+            if (guardianName.length < 3) {
+                await showStatus('Name Required', 'Enter the full name of your parent or guardian.', 'error');
+                return;
+            }
+            if (!guardianEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guardianEmail)) {
+                await showStatus('Email Required', 'Enter the registered guardian email address.', 'error');
+                return;
+            }
+
+            setButtonBusy(guardianRequestBtn, true);
+            try {
+                const selectedCandidate = state.selectedGuardianCandidate;
+                const candidateStillMatches = selectedCandidate &&
+                    normalizeText(selectedCandidate.email) === guardianEmail &&
+                    normalizeText(selectedCandidate.name) === guardianName.toLowerCase();
+
+                const guardianAccount = candidateStillMatches
+                    ? selectedCandidate
+                    : await findUserByEmail(guardianEmail);
+                if (!guardianAccount?.uid) {
+                    throw new Error('No registered guardian account was found with that email.');
+                }
+
+                const registeredName = String(guardianAccount.name || '').trim().toLowerCase();
+                if (registeredName && registeredName !== guardianName.toLowerCase()) {
+                    throw new Error('The entered guardian name does not match the registered account.');
+                }
+
+                const duplicateLink = (state.connections || []).find((link) => {
+                    const sameEmail = String(link.guardianEmail || '').trim().toLowerCase() === guardianEmail;
+                    const sameGuardianId = guardianAccount.uid && guardianAccount.uid === link.guardianId;
+                    return (sameEmail || sameGuardianId) && (link.status === 'accepted' || link.status === 'pending');
+                });
+                if (duplicateLink) {
+                    throw new Error(
+                        duplicateLink.status === 'accepted'
+                            ? 'That parent or guardian is already linked to your account.'
+                            : 'A request for that parent or guardian is already pending.'
+                    );
+                }
+
+                await createGuardianLinkFromStudent({
+                    studentUid: state.uid,
+                    studentId: state.studentId,
+                    studentName: state.name,
+                    guardianEmail: guardianAccount.email || guardianEmail,
+                    guardianName: guardianAccount.name || guardianName
+                });
+
+                guardianRequestName.value = '';
+                guardianRequestEmail.value = '';
+                state.selectedGuardianCandidate = null;
+                guardianSearchHint.textContent = 'Search registered guardian names, then tap a result to fill the correct email.';
+                await loadConnections();
+                await showStatus('Request Sent', 'Your parent or guardian has been linked and notified on their account.');
+            } catch (error) {
+                await showStatus('Request Failed', error.message || 'Could not link that guardian account right now.', 'error');
+            } finally {
+                setButtonBusy(guardianRequestBtn, false);
+            }
+        });
+
+        connectionsList?.addEventListener('click', async (event) => {
+            const actionButton = event.target.closest('[data-link-action][data-link-id]');
+            if (!actionButton || state.role !== 'guardian') return;
+
+            const linkId = actionButton.dataset.linkId || '';
+            const action = actionButton.dataset.linkAction || '';
+            if (!linkId || !action) return;
+
+            const link = (state.connections || []).find((entry) => String(entry.id) === String(linkId));
+            const childLabel = link?.studentName || link?.studentId || 'this child request';
+
+            setButtonBusy(actionButton, true);
+            try {
+                await removeGuardianLink(linkId);
+                await loadConnections();
+                await showStatus(
+                    action === 'cancel' ? 'Request Cancelled' : 'Child Removed',
+                    action === 'cancel'
+                        ? `Your request for ${childLabel} has been cancelled.`
+                        : `${childLabel} has been removed from your guardian profile.`
+                );
+            } catch (error) {
+                await showStatus(
+                    action === 'cancel' ? 'Cancel Failed' : 'Remove Failed',
+                    error.message || 'Could not update this child link right now.',
+                    'error'
+                );
+            } finally {
+                setButtonBusy(actionButton, false);
+            }
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) return;
+            state.uid = user.uid;
+
+            try {
+                const profile = await getUserProfile(user.uid);
+                if ((profile?.role || '') === 'admin' || user.email === 'admin@admin.com') {
+                    window.location.replace('admin.html');
+                    return;
+                }
+                renderIdentity({
+                    ...profile,
+                    email: profile?.email || user.email || '',
+                    name: profile?.name || user.displayName || 'Securo User'
+                });
+                setNameEditing(false);
+                setPasswordEditing(false);
+                await loadGuardianDirectory();
+                await loadConnections();
+            } catch (error) {
+                console.warn('Profile load failed:', error);
+                await showStatus('Profile Error', 'Could not load your profile details right now.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
+

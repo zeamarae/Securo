@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Securo - Incident Report</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,500,0,0">
+    <style>
+        :root {
+            --bg: #f5f3ff;
+            --surface: rgba(255,255,255,0.82);
+            --surface-strong: rgba(255,255,255,0.94);
+            --ink: #181428;
+            --muted: #6f6a86;
+            --primary: #5a1fe0;
+            --primary-strong: #4311c5;
+            --red: #d11f34;
+            --line: rgba(255,255,255,0.62);
+            --shadow: 0 24px 60px rgba(49, 30, 105, 0.14);
+            --shadow-soft: 0 18px 40px rgba(49, 30, 105, 0.1);
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+            --radius-md: 18px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Outfit", sans-serif;
+            color: var(--ink);
+            /* Perf: simplified from 3 gradient layers to 1 */
+            background: linear-gradient(180deg, #f4f0ff 0%, #f7f7ff 45%, #f0f6ff 100%);
+            padding: 24px;
+        }
+
+        .page-shell {
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+
+        .glass-shell {
+            min-height: calc(100vh - 48px);
+            background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.56));
+            border: 1px solid rgba(255,255,255,0.68);
+            border-radius: var(--radius-xl);
+            /* Perf: reduced blur from 22px to 12px */
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            /* Perf: contain repaints to this element */
+            contain: paint;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            padding: 24px 28px;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+            background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.52));
+        }
+
+        .brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .brand-badge {
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, #f3eeff, #e2d8ff);
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 12px 24px rgba(90,31,224,0.12);
+        }
+
+        .brand-wrap h1 {
+            margin: 0;
+            font-family: "Sora", sans-serif;
+            font-size: 1.4rem;
+            letter-spacing: -0.04em;
+        }
+
+        .brand-wrap p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.92rem;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .ghost-btn {
+            min-height: 48px;
+            padding: 0 18px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.7);
+            background: rgba(255,255,255,0.7);
+            color: var(--ink);
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .content {
+            padding: 24px;
+            display: grid;
+            gap: 20px;
+        }
+
+        .panel-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.66));
+            border: 1px solid rgba(255,255,255,0.74);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            padding: 24px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: rgba(90,31,224,0.08);
+            color: var(--primary);
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .hero-title {
+            margin: 14px 0 8px;
+            font-family: "Sora", sans-serif;
+            font-size: clamp(1.6rem, 2vw, 2.2rem);
+            letter-spacing: -0.04em;
+        }
+
+        .hero-copy {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .info-card {
+            padding: 18px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.76);
+            border: 1px solid rgba(255,255,255,0.72);
+        }
+
+        .info-card strong {
+            display: block;
+            font-size: 0.76rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .info-card span {
+            display: block;
+            font-weight: 700;
+            line-height: 1.45;
+        }
+
+        .attachment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .attachment-card {
+            overflow: hidden;
+            border-radius: 22px;
+            background: rgba(255,255,255,0.8);
+            border: 1px solid rgba(255,255,255,0.74);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .attachment-card img,
+        .attachment-card video {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
+            background: #f3efff;
+        }
+
+        .attachment-card audio {
+            width: calc(100% - 24px);
+            margin: 16px 12px 0;
+        }
+
+        .attachment-copy {
+            padding: 16px 16px 18px;
+        }
+
+        .attachment-copy strong {
+            display: block;
+            font-size: 0.96rem;
+            line-height: 1.35;
+        }
+
+        .attachment-copy span {
+            display: block;
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 0.84rem;
+        }
+
+        .empty-state {
+            padding: 40px 24px;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .toast-stack {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1400;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: min(360px, calc(100vw - 32px));
+        }
+
+        .toast-card {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.97);
+            border: 1px solid rgba(255,255,255,0.76);
+            /* Perf: reduced blur from 18px to 10px */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-soft);
+            will-change: transform, opacity;
+        }
+
+        .toast-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1ebff;
+            color: var(--primary);
+            flex: 0 0 auto;
+        }
+
+        .toast-card.error .toast-icon { background: #fff1f2; color: var(--red); }
+
+        .toast-copy strong {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .toast-copy span {
+            font-size: 0.82rem;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+
+        @media (max-width: 960px) {
+            .info-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 14px; }
+            .glass-shell { min-height: calc(100vh - 28px); }
+            .topbar, .content { padding-left: 16px; padding-right: 16px; }
+            .topbar { align-items: flex-start; flex-direction: column; }
+            .info-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+    <div class="page-shell">
+        <div class="glass-shell">
+            <header class="topbar">
+                <div class="brand-wrap">
+                    <div class="brand-badge">
+                        <span class="material-symbols-outlined">description</span>
+                    </div>
+                    <div>
+                        <h1>Incident Report</h1>
+                        <p>Detailed emergency capture record.</p>
+                    </div>
+                </div>
+                <div class="topbar-actions">
+                    <a href="admin.html" class="ghost-btn">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                        <span>Back to Admin</span>
+                    </a>
+                </div>
+            </header>
+
+            <main class="content">
+                <section class="panel-card">
+                    <div class="eyebrow">Emergency Record</div>
+                    <h2 class="hero-title" id="incidentTitle">Loading report...</h2>
+                    <p class="hero-copy" id="incidentCopy">Fetching incident details and attachments.</p>
+                </section>
+
+                <section class="panel-card">
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <strong>Report ID</strong>
+                            <span id="incidentId">--</span>
+                        </div>
+                        <div class="info-card">
+                            <strong>User</strong>
+                            <span id="incidentUser">--</span>
+                        </div>
+                        <div class="info-card">
+                            <strong>Time</strong>
+                            <span id="incidentTime">--</span>
+                        </div>
+                        <div class="info-card">
+                            <strong>Status</strong>
+                            <span id="incidentStatus">--</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel-card">
+                    <div class="info-grid">
+                        <div class="info-card" style="grid-column: 1 / -1;">
+                            <strong>Location</strong>
+                            <span id="incidentLocation">--</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="panel-card">
+                    <div class="eyebrow">Attachments</div>
+                    <div class="attachment-grid" id="attachmentGrid">
+                        <div class="empty-state">Loading attachments...</div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth } from './firebase-config.js';
+        import { getEmergencyPostById, getUserProfile } from './db.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const ADMIN_STUDENT_ID = '12312312';
+        const toastStack = document.getElementById('toastStack');
+        const incidentTitle = document.getElementById('incidentTitle');
+        const incidentCopy = document.getElementById('incidentCopy');
+        const incidentId = document.getElementById('incidentId');
+        const incidentUser = document.getElementById('incidentUser');
+        const incidentTime = document.getElementById('incidentTime');
+        const incidentStatus = document.getElementById('incidentStatus');
+        const incidentLocation = document.getElementById('incidentLocation');
+        const attachmentGrid = document.getElementById('attachmentGrid');
+
+        const params = new URLSearchParams(window.location.search);
+        const reportId = params.get('id');
+
+        const showToast = (title, message, type = 'info') => {
+            const icon = type === 'error' ? 'error' : 'info';
+            const toast = document.createElement('div');
+            toast.className = `toast-card ${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <span class="material-symbols-outlined">${icon}</span>
+                </div>
+                <div class="toast-copy">
+                    <strong>${title}</strong>
+                    <span>${message}</span>
+                </div>
+            `;
+            toastStack.appendChild(toast);
+            window.setTimeout(() => toast.remove(), 3200);
+        };
+
+        function formatCreatedAt(value) {
+            const date = value?.toDate?.() || (value ? new Date(value) : null);
+            return date?.toLocaleString?.([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) || 'Unknown time';
+        }
+
+        function renderAttachments(attachments) {
+            if (!attachments.length) {
+                attachmentGrid.innerHTML = '<div class="empty-state">No attachments available for this incident.</div>';
+                return;
+            }
+
+            attachmentGrid.innerHTML = attachments.map((attachment) => `
+                <article class="attachment-card">
+                    ${attachment.kind === 'image' ? `<img src="${attachment.src}" alt="${attachment.label || 'Incident image'}">` : ''}
+                    ${attachment.kind === 'video' ? `<video src="${attachment.src}" controls preload="metadata"></video>` : ''}
+                    ${attachment.kind === 'audio' ? `<audio src="${attachment.src}" controls preload="metadata"></audio>` : ''}
+                    <div class="attachment-copy">
+                        <strong>${attachment.label || 'Attachment'}</strong>
+                        <span>${attachment.kind === 'video' ? 'Video evidence' : attachment.kind === 'audio' ? 'Audio evidence' : 'Image evidence'}</span>
+                    </div>
+                </article>
+            `).join('');
+        }
+
+        async function loadIncidentReport() {
+            if (!reportId) {
+                incidentTitle.textContent = 'Report not found';
+                incidentCopy.textContent = 'This incident link is missing a report id.';
+                attachmentGrid.innerHTML = '<div class="empty-state">No report id was provided.</div>';
+                return;
+            }
+
+            const report = await getEmergencyPostById(reportId);
+            if (!report) {
+                incidentTitle.textContent = 'Report not found';
+                incidentCopy.textContent = 'We could not find a matching incident report.';
+                attachmentGrid.innerHTML = '<div class="empty-state">This incident may have been removed or never synced.</div>';
+                return;
+            }
+
+            incidentTitle.textContent = `${report.userName || 'Guardian User'} Incident Report`;
+            incidentCopy.textContent = `Review report ${report.id} and all submitted emergency evidence.`;
+            incidentId.textContent = report.id || '--';
+            incidentUser.textContent = report.studentId ? `${report.userName || 'Guardian User'} · ID ${report.studentId}` : (report.userName || 'Guardian User');
+            incidentTime.textContent = formatCreatedAt(report.createdAt);
+            incidentStatus.textContent = report.status || 'Posted';
+            incidentLocation.textContent = report.location?.address || 'Location unavailable';
+            renderAttachments(report.attachments || []);
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                showToast("Access denied", "Please sign in before opening incident reports.", "error");
+                window.setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 900);
+                return;
+            }
+
+            try {
+                const profile = await getUserProfile(user.uid);
+                const studentId = profile?.studentId || (user.email?.match(/^student\.(\d{8})@securo\.app$/)?.[1] || '');
+                if (studentId !== ADMIN_STUDENT_ID) {
+                    showToast("Access denied", "Only student ID 12312312 can open incident reports.", "error");
+                    window.setTimeout(() => {
+                        window.location.href = 'admin.html';
+                    }, 900);
+                    return;
+                }
+
+                await loadIncidentReport();
+            } catch (error) {
+                console.error("Incident report load failed:", error);
+                showToast("Load failed", error.message || "Unable to open the incident report right now.", "error");
+            }
+        });
+    </script>
+</body>
+</html>
