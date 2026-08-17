@@ -27,6 +27,12 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    // (2026-07-13) Rename output APK to securo.apk; was app-debug.apk
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "securo.apk"
+        }
+    }
 }
 
 repositories {
