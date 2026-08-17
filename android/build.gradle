@@ -17,10 +17,15 @@ buildscript {
 
 apply from: "variables.gradle"
 
+// (2026-07-13) Set Java 17 compile compatibility for all projects; was default Java 21
 allprojects {
     repositories {
         google()
         mavenCentral()
+    }
+    tasks.withType(JavaCompile) {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
