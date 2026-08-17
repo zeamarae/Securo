@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -911,9 +911,26 @@
                         <div class="info-label">Student ID</div>
                         <div class="info-value" id="profileStudentId">Not linked</div>
                     </div>
+                    <!-- (2026-07-13) Add section info row; was missing from profile card -->
+                    <div class="info-row" id="sectionRow">
+                        <div class="info-label">Section</div>
+                        <div class="info-value" id="profileSectionValue">--</div>
+                    </div>
+                    <!-- (2026-07-13) Support personal email input and hide synthetic auth email; was static text -->
                     <div class="info-row" id="emailRow">
                         <div class="info-label">Email Address</div>
-                        <div class="info-value" id="profileEmailValue">--</div>
+                        <div id="emailDisplayWrap" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                            <div class="info-value" id="profileEmailValue" style="word-break: break-all;">No email registered</div>
+                            <button id="editEmailBtn" class="btn-secondary" type="button" style="min-height: 36px; padding: 0 12px; font-size: 0.78rem; border-radius: 12px; flex-shrink: 0;">
+                                <span class="material-symbols-outlined" style="font-size: 16px;">edit</span>
+                                <span>Edit</span>
+                            </button>
+                        </div>
+                        <div id="emailEditWrap" style="margin-top: 8px; display: none; gap: 8px; align-items: center;">
+                            <input type="email" id="personalEmailInput" class="input-field" placeholder="Enter your email address" style="min-height: 42px; font-size: 0.85rem; padding: 0 12px;">
+                            <button id="savePersonalEmailBtn" class="btn-primary" type="button" style="min-height: 42px; padding: 0 14px; font-size: 0.8rem; flex-shrink: 0;">Save</button>
+                            <button id="cancelPersonalEmailBtn" class="btn-secondary" type="button" style="min-height: 42px; padding: 0 12px; font-size: 0.8rem; flex-shrink: 0;">Cancel</button>
+                        </div>
                     </div>
                     <div class="info-row" id="roleRow">
                         <div class="info-label">Role</div>
@@ -1044,7 +1061,15 @@
         const profileBackBtn = document.getElementById('profileBackBtn');
         const profileEmail = document.getElementById('profileEmail');
         const profileEmailValue = document.getElementById('profileEmailValue');
+        const emailDisplayWrap = document.getElementById('emailDisplayWrap');
+        const emailEditWrap = document.getElementById('emailEditWrap');
+        const editEmailBtn = document.getElementById('editEmailBtn');
+        const personalEmailInput = document.getElementById('personalEmailInput');
+        const savePersonalEmailBtn = document.getElementById('savePersonalEmailBtn');
+        const cancelPersonalEmailBtn = document.getElementById('cancelPersonalEmailBtn');
         const profileStudentId = document.getElementById('profileStudentId');
+        const profileSectionValue = document.getElementById('profileSectionValue');
+        const sectionRow = document.getElementById('sectionRow');
         const profileRoleValue = document.getElementById('profileRoleValue');
         const studentIdRow = document.getElementById('studentIdRow');
         const emailRow = document.getElementById('emailRow');
@@ -1077,7 +1102,9 @@
             uid: '',
             role: 'student',
             email: '',
+            personalEmail: '',
             studentId: '',
+            section: '',
             name: '',
             photoURL: '',
             nameEditing: false,
@@ -1365,6 +1392,12 @@
             }
         }
 
+        // (2026-07-13) Filter out backend synthetic email placeholders from display; was showing .securo.app
+        function getDisplayEmail(profile) {
+            const em = profile?.personalEmail || (profile?.email && !profile.email.endsWith('@securo.app') ? profile.email : '');
+            return em;
+        }
+
         function renderIdentity(profile) {
             const roleLabel = profile?.role === 'guardian'
                 ? 'Guardian'
@@ -1379,17 +1412,22 @@
             state.studentId = profile?.studentId || '';
             state.name = profile?.name || auth.currentUser?.displayName || 'Securo User';
             state.email = profile?.email || auth.currentUser?.email || '';
+            state.personalEmail = getDisplayEmail(profile);
+            state.section = profile?.section || (profile?.course && profile?.yearLevel ? `${profile.course} ${profile.yearLevel}` : '');
             state.photoURL = profile?.photoURL || auth.currentUser?.photoURL || '';
 
             profileNameInput.value = state.name;
-            profileEmail.textContent = state.email;
-            profileEmailValue.textContent = state.email;
+            profileEmail.textContent = state.personalEmail || 'No email registered';
+            profileEmailValue.textContent = state.personalEmail || 'No email registered';
+            if (personalEmailInput) personalEmailInput.value = state.personalEmail || '';
             profileStudentId.textContent = studentIdLabel;
+            if (profileSectionValue) profileSectionValue.textContent = state.section || 'Not set';
             profileRoleValue.textContent = roleLabel;
             roleBadge.textContent = `${roleLabel} Account`;
             myIdLabel.textContent = state.studentId ? `ID: ${state.studentId}` : 'ID: Not linked';
             renderProfileAvatar();
             studentIdRow.classList.remove('is-hidden');
+            if (sectionRow) sectionRow.classList.remove('is-hidden');
             emailRow.classList.remove('is-hidden');
             roleRow.classList.remove('is-hidden');
             guardianOfRow.classList.add('is-hidden');
@@ -1671,6 +1709,42 @@
             }
         });
 
+        // (2026-07-13) Handle personal email editing and saving; was static display
+        editEmailBtn?.addEventListener('click', () => {
+            if (emailDisplayWrap) emailDisplayWrap.style.display = 'none';
+            if (emailEditWrap) emailEditWrap.style.display = 'flex';
+            if (personalEmailInput) personalEmailInput.focus();
+        });
+
+        cancelPersonalEmailBtn?.addEventListener('click', () => {
+            if (personalEmailInput) personalEmailInput.value = state.personalEmail || '';
+            if (emailEditWrap) emailEditWrap.style.display = 'none';
+            if (emailDisplayWrap) emailDisplayWrap.style.display = 'flex';
+        });
+
+        savePersonalEmailBtn?.addEventListener('click', async () => {
+            const raw = personalEmailInput ? personalEmailInput.value.trim().toLowerCase() : '';
+            if (!raw || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(raw)) {
+                await showStatus('Invalid Email', 'Please enter a valid email address.', 'error');
+                return;
+            }
+            setButtonBusy(savePersonalEmailBtn, true);
+            try {
+                await updateUserProfile(state.uid, { personalEmail: raw });
+                state.personalEmail = raw;
+                if (profileEmail) profileEmail.textContent = raw;
+                if (profileEmailValue) profileEmailValue.textContent = raw;
+                if (emailEditWrap) emailEditWrap.style.display = 'none';
+                if (emailDisplayWrap) emailDisplayWrap.style.display = 'flex';
+                await showStatus('Email Saved', 'Your personal email address has been saved.');
+            } catch (err) {
+                console.warn('Email save failed:', err);
+                await showStatus('Save Failed', err.message || 'Could not save email right now.', 'error');
+            } finally {
+                setButtonBusy(savePersonalEmailBtn, false);
+            }
+        });
+
         togglePasswordEditBtn.addEventListener('click', () => {
             setPasswordEditing(!state.passwordEditing);
         });
@@ -1770,10 +1844,8 @@
                     throw new Error('No registered guardian account was found with that email.');
                 }
 
-                const registeredName = String(guardianAccount.name || '').trim().toLowerCase();
-                if (registeredName && registeredName !== guardianName.toLowerCase()) {
-                    throw new Error('The entered guardian name does not match the registered account.');
-                }
+                // (2026-07-13) Adopt registered guardian name when email matches; was strict exact string rejection
+                const resolvedGuardianName = guardianAccount.name || guardianName;
 
                 const duplicateLink = (state.connections || []).find((link) => {
                     const sameEmail = String(link.guardianEmail || '').trim().toLowerCase() === guardianEmail;

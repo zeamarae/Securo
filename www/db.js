@@ -1747,30 +1747,57 @@ export const findStudentUidByStudentId = async (studentId) => {
     }
 };
 
-/**
- * Find a user by registered email
- * @param {string} email
- */
+// (2026-07-13) Robust findUserByEmail with personalEmail and case-insensitive matching; was strict
 export const findUserByEmail = async (email) => {
     try {
-        const normalized = normalizeEmail(email);
+        const rawEmail = String(email || "").trim();
+        const normalized = normalizeEmail(rawEmail);
         if (!normalized) return null;
-        const q = query(collection(db, "users"), where("email", "==", normalized));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-            const userData = snap.docs[0];
-            return { uid: userData.id, ...userData.data() };
+
+        try {
+            const q1 = query(collection(db, "users"), where("email", "==", normalized));
+            const snap1 = await getDocs(q1);
+            if (!snap1.empty) {
+                const u = snap1.docs[0];
+                return { uid: u.id, ...u.data() };
+            }
+        } catch (e) {}
+
+        if (rawEmail !== normalized) {
+            try {
+                const q2 = query(collection(db, "users"), where("email", "==", rawEmail));
+                const snap2 = await getDocs(q2);
+                if (!snap2.empty) {
+                    const u = snap2.docs[0];
+                    return { uid: u.id, ...u.data() };
+                }
+            } catch (e) {}
         }
 
-        const users = await getAllUsers().catch(() => []);
-        const fallbackUser = users.find((user) => normalizeEmail(user?.email) === normalized);
-        if (fallbackUser) {
+        try {
+            const q3 = query(collection(db, "users"), where("personalEmail", "==", normalized));
+            const snap3 = await getDocs(q3);
+            if (!snap3.empty) {
+                const u = snap3.docs[0];
+                return { uid: u.id, ...u.data() };
+            }
+        } catch (e) {}
+
+        const allUsers = await getAllUsers();
+        const matched = allUsers.find((u) => {
+            const uEm = normalizeEmail(u?.email);
+            const uPem = normalizeEmail(u?.personalEmail);
+            return uEm === normalized || uPem === normalized;
+        });
+
+        if (matched) {
             return {
-                uid: fallbackUser.uid || fallbackUser.userId || fallbackUser.id || "",
-                ...fallbackUser,
-                email: fallbackUser.email || normalized
+                uid: matched.uid || matched.id || matched.userId || "",
+                ...matched,
+                email: matched.email || matched.personalEmail || normalized
             };
         }
+
         return null;
     } catch (error) {
         console.warn("Error finding user by email:", error);

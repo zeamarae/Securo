@@ -1213,15 +1213,8 @@
                     });
 
                     setButtonBusy(submitBtn, false);
-                    showToast("Account registered", "Please set up your name, section, and profile photo.", "success");
-                    
-                    // (2026-07-13) Prompt required onboarding immediately after registration
-                    openOnboardingModal({
-                        uid: user.uid,
-                        studentId,
-                        email: generatedEmail,
-                        role: preferredRole
-                    });
+                    // (2026-07-13) Navigate to index.html to launch map and onboarding; was local modal
+                    window.location.href = 'index.html';
                 }
             } catch (error) {
                 const friendlyMessage = getFriendlyAuthMessage(error, isLoginMode ? "login" : "signup", roleLabel);

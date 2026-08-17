@@ -1923,44 +1923,46 @@
             color: #d1232b;
         }
 
+        /* (2026-07-13) Lock map viewport to non-scrollable stage; was overflowing on mobile */
+        #page-map {
+            height: calc(100vh - 64px - 80px) !important;
+            height: calc(100dvh - 64px - 80px) !important;
+            overflow: hidden !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            position: relative !important;
+            overscroll-behavior: none !important;
+            touch-action: none;
+        }
+
         .map-stage {
             position: relative;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            border-radius: 28px;
-            background:
-                radial-gradient(circle at 72% 36%, rgba(255, 255, 255, 0.18), transparent 24%),
-                linear-gradient(180deg, #8fc1ef 0%, #5ea0cb 14%, #74bd7a 15%, #71b96e 84%, #72a7c7 100%);
+            height: 100% !important;
+            min-height: 100% !important;
+            max-height: 100% !important;
+            width: 100% !important;
+            overflow: hidden !important;
+            border-radius: 0 !important;
+            background: #e5e3df;
             box-shadow: none;
             border: none;
+            touch-action: none;
+            overscroll-behavior: none;
+        }
+
+        #map {
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
+            position: absolute;
+            inset: 0;
+            touch-action: none;
+            overscroll-behavior: none;
         }
 
         .map-nav-spacer {
             height: calc(var(--nav-height) + 24px);
             pointer-events: none;
-        }
-
-        .map-stage::before,
-        .map-stage::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-        }
-
-        .map-stage::before {
-            background:
-                linear-gradient(115deg, transparent 0 44%, rgba(243, 189, 83, 0.8) 45%, rgba(243, 189, 83, 0.85) 46%, transparent 47%),
-                linear-gradient(165deg, transparent 0 52%, rgba(179, 205, 121, 0.5) 53%, transparent 54%);
-            opacity: 0.75;
-        }
-
-        .map-stage::after {
-            background:
-                radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.16), transparent 14%),
-                radial-gradient(circle at 80% 74%, rgba(255, 255, 255, 0.1), transparent 16%);
-            mix-blend-mode: screen;
         }
 
         .map-road {
@@ -3919,7 +3921,7 @@
             }
 
             .map-stage {
-                height: clamp(320px, 48vh, 460px);
+                height: 100% !important;
             }
 
             .nav-item span:last-child {
@@ -3992,18 +3994,68 @@
                 background: #f1f0ff;
             }
 
-            /* (2026-07-13) Set responsive top/bottom map control positioning; was single center cluster */
-            .map-controls-custom.map-controls-top {
+            /* (2026-07-13) Position bottom controls lower and closer right; was 20px bottom 6px right */
+            .map-controls-custom {
                 position: absolute;
-                top: 16px;
-                right: 16px;
                 z-index: 1000;
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
             }
+            .map-controls-custom.map-controls-top {
+                top: 10px;
+                right: 4px;
+            }
+            /* (2026-07-13) Position bottom controls lower; was 8px bottom */
             .map-controls-custom.map-controls-bottom {
-                position: absolute;
-                bottom: 24px;
-                right: 16px;
-                z-index: 1000;
+                bottom: 2px;
+                right: 4px;
+            }
+
+            .attendance-log-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 12px 14px;
+                margin-bottom: 10px;
+                border-radius: 16px;
+                background: #f8fafc;
+                border: 1px solid rgba(0, 0, 0, 0.05);
+            }
+
+            .log-type {
+                width: 44px;
+                height: 32px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.72rem;
+                font-weight: 800;
+                letter-spacing: 0.04em;
+                flex-shrink: 0;
+            }
+
+            .log-type.in {
+                background: #ecfdf5;
+                color: #0f9b67;
+                border: 1px solid rgba(15, 155, 103, 0.2);
+            }
+
+            .log-type.out {
+                background: #fff1f2;
+                color: #e11d48;
+                border: 1px solid rgba(225, 29, 72, 0.2);
+            }
+
+            .log-time {
+                font-size: 0.78rem;
+                font-weight: 700;
+                color: var(--muted);
+                white-space: nowrap;
+                flex-shrink: 0;
+                text-align: right;
             }
 
             .map-btn {
@@ -4295,6 +4347,247 @@
                 line-height: 1.4;
             }
         }
+
+        /* (2026-07-13) Fullscreen app onboarding centered with 165px camera circle and custom inputs; was basic */
+        .fullscreen-onboarding-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            width: 100vw;
+            height: 100vh;
+            background: #ffffff;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 20px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            box-sizing: border-box;
+        }
+        .fullscreen-onboarding-screen.active {
+            display: flex;
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .fs-onboarding-container {
+            width: 100%;
+            max-width: 440px;
+            display: flex;
+            flex-direction: column;
+            margin: auto 0;
+            position: relative;
+        }
+        .fs-onboarding-title {
+            font-family: 'Sora', sans-serif;
+            font-weight: 800;
+            font-size: 1.65rem;
+            color: var(--ink);
+            text-align: center;
+            margin: 0 0 20px;
+            letter-spacing: -0.02em;
+        }
+        .fs-avatar-picker-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 22px;
+        }
+        .fs-avatar-circle-wrapper {
+            position: relative;
+            margin-bottom: 14px;
+            cursor: pointer;
+        }
+        .fs-avatar-circle {
+            width: 165px;
+            height: 165px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f3eeff 0%, #e9ddff 100%);
+            border: 4px solid #ffffff;
+            box-shadow: 0 16px 45px rgba(90, 31, 224, 0.28), 0 0 0 3px rgba(90, 31, 224, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            transition: transform 0.2s ease;
+        }
+        .fs-avatar-circle:hover {
+            transform: scale(1.02);
+        }
+        .fs-avatar-circle video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            inset: 0;
+            display: none;
+            transform: scaleX(-1);
+        }
+        .fs-avatar-placeholder-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            text-align: center;
+            width: 100%;
+            height: 100%;
+        }
+        .fs-avatar-placeholder-content .material-symbols-outlined {
+            font-size: 52px;
+            color: var(--primary);
+            opacity: 0.85;
+        }
+        .fs-avatar-initials {
+            font-family: 'Sora', sans-serif;
+            font-weight: 800;
+            font-size: 2.8rem;
+            color: white;
+            display: none;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #5a1fe0 0%, #7b42f6 50%, #4311c5 100%);
+        }
+        .fs-avatar-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+            position: absolute;
+            inset: 0;
+        }
+        .fs-avatar-badge-cam {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2.5px solid white;
+            box-shadow: 0 4px 14px rgba(90, 31, 224, 0.45);
+            transition: transform 0.15s ease;
+        }
+        .fs-avatar-badge-cam span {
+            font-size: 19px;
+        }
+        .fs-avatar-actions-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .fs-action-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            border: 1px solid rgba(90, 31, 224, 0.2);
+            background: rgba(90, 31, 224, 0.06);
+            color: var(--primary);
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+        .fs-action-chip:hover {
+            background: rgba(90, 31, 224, 0.12);
+            transform: translateY(-1px);
+        }
+        .fs-action-chip.secondary {
+            border-color: #e2e8f0;
+            background: #f8fafc;
+            color: var(--muted);
+        }
+        .fs-action-chip span.material-symbols-outlined {
+            font-size: 17px;
+        }
+        .fs-form-row-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .fs-input-field-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 0 14px;
+            height: 52px;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .fs-input-field-wrap:focus-within {
+            background: #ffffff;
+            border-color: #5a1fe0;
+            box-shadow: 0 0 0 3.5px rgba(90, 31, 224, 0.14);
+        }
+        .fs-input-field-wrap .input-icon {
+            font-size: 20px;
+            color: #5a1fe0;
+            flex-shrink: 0;
+        }
+        .fs-input-field-wrap input,
+        .fs-input-field-wrap select {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 0.93rem;
+            font-weight: 600;
+            color: #1e1b4b;
+            outline: none;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        #fsFirstName, #fsLastName {
+            text-transform: capitalize;
+        }
+        #fsSection {
+            text-transform: uppercase;
+        }
+        .fs-input-field-wrap select {
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            padding-right: 22px;
+        }
+        .fs-input-field-wrap .fs-select-arrow {
+            position: absolute;
+            right: 14px;
+            pointer-events: none;
+            color: #64748b;
+            font-size: 22px;
+        }
+        .fs-submit-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid rgba(255, 255, 255, 0.35);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: fsSpin 0.75s infinite linear;
+            display: inline-block;
+        }
+        @keyframes fsSpin {
+            to { transform: rotate(360deg); }
+        }
+        @media (max-width: 480px) {
+            .fullscreen-onboarding-screen {
+                padding: 20px 16px 28px;
+            }
+        }
     </style>
 </head>
 
@@ -4406,7 +4699,7 @@
                                     <!-- (2026-07-13) Remove quick access chips container; was parking/clinic/wifi buttons -->
                                 </div>
 
-                                <!-- (2026-07-13) Place recenter campus button below map-locate; was at top of stack -->
+                                <!-- (2026-07-13) Place zoom controls directly below map-recenter-campus; was split bottom cluster -->
                                 <div class="map-controls-custom map-controls-top">
                                     <button class="map-btn" id="map-toggle-markers" title="Hide Campus Markers">
                                         <span class="material-symbols-outlined">visibility</span>
@@ -4417,10 +4710,6 @@
                                     <button class="map-btn" id="map-recenter-campus" title="Center CTU Campus">
                                         <span class="material-symbols-outlined">domain</span>
                                     </button>
-                                </div>
-
-                                <!-- Map Zoom Controls Overlay (Bottom Right) -->
-                                <div class="map-controls-custom map-controls-bottom">
                                     <button class="map-btn" id="map-zoom-in" title="Zoom In">
                                         <span class="material-symbols-outlined">add</span>
                                     </button>
@@ -4891,6 +5180,7 @@
         import {
             getUserProfile,
             saveUserProfile,
+            saveUserDirectoryMarker,
             getGADPosts,
             toggleLikeGADPost,
             logAttendance,
@@ -5437,15 +5727,50 @@
             }
         };
 
+        // (2026-07-13) Fast locateUser with instant cached GPS center and quick refresh; was slow cold GPS
         function locateUser() {
-            getCurrentLocation()
-                .then((position) => {
-                    const latlng = [position.coords.latitude, position.coords.longitude];
+            const locateBtn = document.getElementById("map-locate");
+            if (locateBtn) locateBtn.style.transform = "scale(0.92)";
+            setTimeout(() => { if (locateBtn) locateBtn.style.transform = ""; }, 200);
+
+            if (userMarker) {
+                map.flyTo(userMarker.getLatLng(), 18, { duration: 0.6 });
+            } else if (appState.lastLocation?.lat && appState.lastLocation?.lng) {
+                const cached = [appState.lastLocation.lat, appState.lastLocation.lng];
+                updateOwnLocationHighlight(cached, true);
+                map.flyTo(cached, 18, { duration: 0.6 });
+            }
+
+            if (!navigator.geolocation) {
+                showStatus("Location Error", "Geolocation is not supported by your browser.", "error");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const latlng = [pos.coords.latitude, pos.coords.longitude];
+                    appState.lastLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                     updateOwnLocationHighlight(latlng, true);
-                })
-                .catch(() => {
-                    showStatus("Location Error", "Could not detect your GPS location.", "error");
-                });
+                    map.flyTo(latlng, 18, { duration: 0.6 });
+                },
+                () => {
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => {
+                            const latlng = [pos.coords.latitude, pos.coords.longitude];
+                            appState.lastLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                            updateOwnLocationHighlight(latlng, true);
+                            map.flyTo(latlng, 18, { duration: 0.6 });
+                        },
+                        () => {
+                            if (!userMarker && !appState.lastLocation) {
+                                showStatus("Location Error", "Could not detect your GPS location.", "error");
+                            }
+                        },
+                        { enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 }
+                    );
+                },
+                { enableHighAccuracy: true, timeout: 4000, maximumAge: 30000 }
+            );
         }
 
 // (2026-07-13) Connect geofence check to location highlight; was basic marker update
@@ -6730,6 +7055,368 @@
         const dropdownId = document.getElementById("dropdownId");
         const logoutLink = document.getElementById("logoutLink");
 
+        // (2026-07-13) Fullscreen Onboarding Screen Elements & Live Camera in Circle
+        const fsOnboardingScreen = document.getElementById("fullscreenOnboardingScreen");
+        const fsOnboardingForm = document.getElementById("fsOnboardingForm");
+        const fsFirstName = document.getElementById("fsFirstName");
+        const fsLastName = document.getElementById("fsLastName");
+        const fsCourse = document.getElementById("fsCourse");
+        const fsYearLevel = document.getElementById("fsYearLevel");
+        const fsSection = document.getElementById("fsSection");
+        const fsAvatarCircleWrap = document.getElementById("fsAvatarCircleWrap");
+        const fsAvatarPreviewCircle = document.getElementById("fsAvatarPreviewCircle");
+        const fsCircleLiveVideo = document.getElementById("fsCircleLiveVideo");
+        const fsAvatarPlaceholder = document.getElementById("fsAvatarPlaceholder");
+        const fsAvatarInitials = document.getElementById("fsAvatarInitials");
+        const fsAvatarImg = document.getElementById("fsAvatarImg");
+        const fsSnapSelfieBtn = document.getElementById("fsSnapSelfieBtn");
+        const fsSnapBtnLabel = document.getElementById("fsSnapBtnLabel");
+        const fsChooseGalleryBtn = document.getElementById("fsChooseGalleryBtn");
+        const fsGalleryInput = document.getElementById("fsGalleryInput");
+        const fsCameraCanvas = document.getElementById("fsCameraCanvas");
+        const fsOnboardingError = document.getElementById("fsOnboardingError");
+        const fsSubmitOnboardingBtn = document.getElementById("fsSubmitOnboardingBtn");
+
+        let fsOnboardingPhotoData = "";
+        let fsCameraStream = null;
+        let fsCurrentUserContext = null;
+
+        async function startCircleLiveCamera() {
+            if (fsOnboardingPhotoData) return;
+            try {
+                stopCircleLiveCamera();
+                fsCameraStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 640 } },
+                    audio: false
+                });
+                if (fsCircleLiveVideo) {
+                    fsCircleLiveVideo.srcObject = fsCameraStream;
+                    fsCircleLiveVideo.style.display = "block";
+                }
+                if (fsAvatarPlaceholder) fsAvatarPlaceholder.style.display = "none";
+                if (fsAvatarInitials) fsAvatarInitials.style.display = "none";
+                if (fsAvatarImg) fsAvatarImg.style.display = "none";
+                if (fsSnapBtnLabel) fsSnapBtnLabel.textContent = "Capture Selfie";
+            } catch (err) {
+                console.warn("Camera live stream permission or startup failed:", err);
+                stopCircleLiveCamera();
+                updateFsAvatarPreview();
+            }
+        }
+
+        function stopCircleLiveCamera() {
+            if (fsCameraStream) {
+                fsCameraStream.getTracks().forEach(t => t.stop());
+                fsCameraStream = null;
+            }
+            if (fsCircleLiveVideo) {
+                fsCircleLiveVideo.srcObject = null;
+                fsCircleLiveVideo.style.display = "none";
+            }
+        }
+
+        function snapSelfiePhoto() {
+            if (fsCameraStream && fsCircleLiveVideo && fsCircleLiveVideo.videoWidth) {
+                const size = Math.min(fsCircleLiveVideo.videoWidth, fsCircleLiveVideo.videoHeight);
+                fsCameraCanvas.width = 400;
+                fsCameraCanvas.height = 400;
+                const ctx = fsCameraCanvas.getContext("2d");
+                ctx.translate(400, 0);
+                ctx.scale(-1, 1);
+                const sx = (fsCircleLiveVideo.videoWidth - size) / 2;
+                const sy = (fsCircleLiveVideo.videoHeight - size) / 2;
+                ctx.drawImage(fsCircleLiveVideo, sx, sy, size, size, 0, 0, 400, 400);
+                fsOnboardingPhotoData = fsCameraCanvas.toDataURL("image/jpeg", 0.9);
+                stopCircleLiveCamera();
+                updateFsAvatarPreview();
+            } else if (fsOnboardingPhotoData) {
+                fsOnboardingPhotoData = "";
+                startCircleLiveCamera();
+            } else {
+                startCircleLiveCamera();
+            }
+        }
+
+        function updateFsAvatarPreview() {
+            if (!fsAvatarImg || !fsAvatarPlaceholder || !fsAvatarInitials) return;
+            if (fsOnboardingPhotoData) {
+                stopCircleLiveCamera();
+                fsAvatarImg.src = fsOnboardingPhotoData;
+                fsAvatarImg.style.display = "block";
+                fsAvatarPlaceholder.style.display = "none";
+                fsAvatarInitials.style.display = "none";
+                if (fsSnapBtnLabel) fsSnapBtnLabel.textContent = "Retake Selfie";
+                return;
+            }
+
+            fsAvatarImg.style.display = "none";
+
+            if (fsCameraStream) {
+                if (fsSnapBtnLabel) fsSnapBtnLabel.textContent = "Capture Selfie";
+                return;
+            }
+
+            if (fsSnapBtnLabel) fsSnapBtnLabel.textContent = "Turn On Camera";
+
+            const fn = fsFirstName ? fsFirstName.value.trim() : "";
+            const ln = fsLastName ? fsLastName.value.trim() : "";
+            if (fn || ln) {
+                let inits = "";
+                if (fn && ln) inits = (fn[0] + ln[0]).toUpperCase();
+                else if (fn) inits = fn.slice(0, 2).toUpperCase();
+                else inits = ln.slice(0, 2).toUpperCase();
+                fsAvatarInitials.textContent = inits;
+                fsAvatarInitials.style.display = "flex";
+                fsAvatarPlaceholder.style.display = "none";
+            } else {
+                fsAvatarInitials.style.display = "none";
+                fsAvatarPlaceholder.style.display = "flex";
+            }
+        }
+
+        // (2026-07-13) Disallow all-caps; capitalize first letter only, lowercase rest; was raw replace
+        function toTitleCase(str) {
+            if (!str) return "";
+            return str.toLowerCase().replace(/(?:^|\s|-|\.)[a-z]/g, char => char.toUpperCase());
+        }
+
+        if (fsFirstName) {
+            fsFirstName.addEventListener("input", () => {
+                const start = fsFirstName.selectionStart;
+                const end = fsFirstName.selectionEnd;
+                fsFirstName.value = toTitleCase(fsFirstName.value);
+                fsFirstName.setSelectionRange(start, end);
+                if (!fsCameraStream && !fsOnboardingPhotoData) updateFsAvatarPreview();
+            });
+            fsFirstName.addEventListener("blur", () => {
+                fsFirstName.value = toTitleCase(fsFirstName.value.trim());
+                if (!fsCameraStream && !fsOnboardingPhotoData) updateFsAvatarPreview();
+            });
+        }
+
+        if (fsLastName) {
+            fsLastName.addEventListener("input", () => {
+                const start = fsLastName.selectionStart;
+                const end = fsLastName.selectionEnd;
+                fsLastName.value = toTitleCase(fsLastName.value);
+                fsLastName.setSelectionRange(start, end);
+                if (!fsCameraStream && !fsOnboardingPhotoData) updateFsAvatarPreview();
+            });
+            fsLastName.addEventListener("blur", () => {
+                fsLastName.value = toTitleCase(fsLastName.value.trim());
+                if (!fsCameraStream && !fsOnboardingPhotoData) updateFsAvatarPreview();
+            });
+        }
+
+        if (fsSection) {
+            fsSection.addEventListener("input", () => {
+                const start = fsSection.selectionStart;
+                const end = fsSection.selectionEnd;
+                // (2026-07-13) Restrict section to letters only up to 4 chars; was allowing numbers
+                fsSection.value = fsSection.value.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase();
+                fsSection.setSelectionRange(start, end);
+            });
+            fsSection.addEventListener("blur", () => {
+                fsSection.value = fsSection.value.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase();
+            });
+        }
+
+        if (fsAvatarCircleWrap) {
+            fsAvatarCircleWrap.addEventListener("click", () => {
+                if (fsCameraStream) {
+                    snapSelfiePhoto();
+                } else if (!fsOnboardingPhotoData) {
+                    startCircleLiveCamera();
+                }
+            });
+        }
+
+        if (fsSnapSelfieBtn) {
+            fsSnapSelfieBtn.addEventListener("click", () => {
+                if (fsCameraStream) {
+                    snapSelfiePhoto();
+                } else if (fsOnboardingPhotoData) {
+                    fsOnboardingPhotoData = "";
+                    startCircleLiveCamera();
+                } else {
+                    startCircleLiveCamera();
+                }
+            });
+        }
+
+        if (fsChooseGalleryBtn) {
+            fsChooseGalleryBtn.addEventListener("click", () => {
+                stopCircleLiveCamera();
+                if (fsGalleryInput) fsGalleryInput.click();
+            });
+        }
+
+        if (fsGalleryInput) {
+            fsGalleryInput.addEventListener("change", () => {
+                const file = fsGalleryInput.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    fsOnboardingPhotoData = e.target?.result || "";
+                    stopCircleLiveCamera();
+                    updateFsAvatarPreview();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // (2026-07-13) Save directory entry locally in index.html; was missing definition
+        function saveLocalUserDirectoryEntry(uid, data) {
+            try {
+                const raw = localStorage.getItem("securo_user_directory");
+                const dir = raw ? JSON.parse(raw) : {};
+                dir[uid] = { ...(dir[uid] || {}), ...data, updatedAt: new Date().toISOString() };
+                localStorage.setItem("securo_user_directory", JSON.stringify(dir));
+            } catch (e) {
+                console.warn("Local user directory save failed:", e);
+            }
+        }
+
+        function triggerFullscreenOnboarding(user, existingProfile) {
+            fsCurrentUserContext = { user, profile: existingProfile };
+            if (fsOnboardingError) fsOnboardingError.textContent = "";
+            if (existingProfile?.firstName && fsFirstName) fsFirstName.value = toTitleCase(existingProfile.firstName);
+            if (existingProfile?.lastName && fsLastName) fsLastName.value = toTitleCase(existingProfile.lastName);
+            if (existingProfile?.course && fsCourse) fsCourse.value = existingProfile.course;
+            if (existingProfile?.yearLevel && fsYearLevel) fsYearLevel.value = existingProfile.yearLevel;
+            if (existingProfile?.section && fsSection) {
+                const extractedSec = existingProfile.section.replace(/^.*[0-9]-?/, '').replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase();
+                fsSection.value = extractedSec || existingProfile.section.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase();
+            }
+            updateFsAvatarPreview();
+            if (fsOnboardingScreen) fsOnboardingScreen.classList.add("active");
+            // Automatically prompt and start live camera selfie feed inside circle
+            if (!fsOnboardingPhotoData) {
+                startCircleLiveCamera();
+            }
+        }
+
+        if (fsOnboardingForm) {
+            fsOnboardingForm.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                if (fsOnboardingError) fsOnboardingError.textContent = "";
+                const fn = fsFirstName ? toTitleCase(fsFirstName.value.trim()) : "";
+                const ln = fsLastName ? toTitleCase(fsLastName.value.trim()) : "";
+                const course = fsCourse ? fsCourse.value.trim() : "";
+                const year = fsYearLevel ? fsYearLevel.value.trim() : "";
+                const rawSec = fsSection ? fsSection.value.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase() : "";
+
+                if (fn.length < 2) {
+                    if (fsOnboardingError) fsOnboardingError.textContent = "Please enter your first name.";
+                    return;
+                }
+                if (ln.length < 2) {
+                    if (fsOnboardingError) fsOnboardingError.textContent = "Please enter your last name.";
+                    return;
+                }
+                if (!course) {
+                    if (fsOnboardingError) fsOnboardingError.textContent = "Please select your course.";
+                    return;
+                }
+                if (!year) {
+                    if (fsOnboardingError) fsOnboardingError.textContent = "Please select your year level.";
+                    return;
+                }
+                if (!rawSec) {
+                    if (fsOnboardingError) fsOnboardingError.textContent = "Please enter your section letter (e.g. A).";
+                    return;
+                }
+
+                // If user submits while live camera is on and no static photo snapped yet, automatically snap live frame!
+                if (fsCameraStream && !fsOnboardingPhotoData) {
+                    snapSelfiePhoto();
+                }
+
+                // (2026-07-13) Show animated spinner on onboarding submit button; was plain opacity
+                if (fsSubmitOnboardingBtn) {
+                    fsSubmitOnboardingBtn.disabled = true;
+                    fsSubmitOnboardingBtn.style.opacity = "0.85";
+                    fsSubmitOnboardingBtn.innerHTML = '<div class="fs-submit-spinner"></div><span>Saving Profile...</span>';
+                }
+
+                try {
+                    const user = fsCurrentUserContext?.user || auth.currentUser;
+                    const derivedId = user.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1] || "";
+                    const derivedRole = user.email?.startsWith("staff.") ? "staff" : "student";
+                    const fullName = `${fn} ${ln}`;
+                    const initials = (fn[0] + ln[0]).toUpperCase();
+                    const cleanYearNum = year.replace(/[^0-9]/g, '') || year;
+                    const formattedSection = `${course} ${cleanYearNum}-${rawSec}`;
+
+                    const updatedProfile = {
+                        studentId: fsCurrentUserContext?.profile?.studentId || derivedId,
+                        firstName: fn,
+                        lastName: ln,
+                        name: fullName,
+                        initials,
+                        course,
+                        yearLevel: year,
+                        section: formattedSection,
+                        photoURL: fsOnboardingPhotoData || "",
+                        avatar: fsOnboardingPhotoData || "",
+                        email: user.email || "",
+                        role: fsCurrentUserContext?.profile?.role || derivedRole,
+                        onboardingCompleted: true,
+                        updatedAt: new Date().toISOString()
+                    };
+
+                    await saveUserProfile(user.uid, updatedProfile);
+                    await saveUserDirectoryMarker(user.uid, updatedProfile);
+                    saveLocalUserDirectoryEntry(user.uid, updatedProfile);
+
+                    appState.user.studentId = updatedProfile.studentId;
+                    appState.user.name = updatedProfile.name;
+                    appState.user.role = updatedProfile.role;
+                    appState.user.course = updatedProfile.course;
+                    appState.user.yearLevel = updatedProfile.yearLevel;
+                    appState.user.section = updatedProfile.section;
+                    appState.user.photoURL = updatedProfile.photoURL;
+                    appState.user.initials = updatedProfile.initials;
+
+                    dropdownName.textContent = appState.user.name;
+                    dropdownId.textContent = appState.user.studentId ? `ID: ${appState.user.studentId}` : "ID: Not linked";
+
+                    const initialsEl = document.getElementById("userInitials");
+                    if (appState.user.photoURL) {
+                        let chipImg = profileChip.querySelector(".profile-chip-avatar");
+                        if (!chipImg) {
+                            chipImg = document.createElement("img");
+                            chipImg.className = "profile-chip-avatar";
+                            chipImg.style.cssText = "width:100%; height:100%; border-radius:50%; object-fit:cover; position:absolute; inset:0;";
+                            profileChip.insertBefore(chipImg, profileChip.firstChild);
+                        }
+                        chipImg.src = appState.user.photoURL;
+                        chipImg.style.display = "block";
+                        if (initialsEl) initialsEl.style.display = "none";
+                    } else {
+                        const chipImg = profileChip.querySelector(".profile-chip-avatar");
+                        if (chipImg) chipImg.style.display = "none";
+                        if (initialsEl) {
+                            initialsEl.style.display = "block";
+                            initialsEl.textContent = appState.user.initials;
+                        }
+                    }
+
+                    stopCircleLiveCamera();
+                    if (fsOnboardingScreen) fsOnboardingScreen.classList.remove("active");
+                    if (map) requestAnimationFrame(() => map.invalidateSize());
+                } catch (err) {
+                    console.warn("Onboarding submit failed:", err);
+                    if (fsOnboardingError) fsOnboardingError.textContent = "Failed to save profile. Please try again.";
+                    if (fsSubmitOnboardingBtn) {
+                        fsSubmitOnboardingBtn.disabled = false;
+                        fsSubmitOnboardingBtn.style.opacity = "1";
+                        fsSubmitOnboardingBtn.innerHTML = '<span id="fsSubmitText">Save & Enter Campus Hub</span><span class="material-symbols-outlined" id="fsSubmitIcon">arrow_forward</span>';
+                    }
+                }
+            });
+        }
+
         // Listen for auth state changes to update profile (Date: 2026-05-01)
         onAuthStateChanged(auth, async (user) => {
             if (!user) return;
@@ -6747,9 +7434,10 @@
             try {
                 let profile = await getUserProfile(user.uid);
                 const derivedId = user.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1] || "";
-                // (2026-07-13) Check if user account requires onboarding profile setup; was auto-filling Student
+                
+                // (2026-07-13) Trigger fullscreen onboarding if profile incomplete; was redirecting to login
                 if (!profile || !profile.name || profile.name === 'Student' || !profile.section || !profile.onboardingCompleted) {
-                    window.location.replace('login.html');
+                    triggerFullscreenOnboarding(user, profile);
                     return;
                 }
 
@@ -8755,6 +9443,113 @@
                 <button type="button" id="cancelGadPmBtn" class="status-btn secondary" style="flex:1;">Cancel</button>
                 <button type="button" id="submitGadPmBtn" class="status-btn" style="flex:2; background:linear-gradient(135deg, #5a1fe0, #4311c5); color:white;">Send Message</button>
             </div>
+        </div>
+    </div>
+
+    <!-- (2026-07-13) Fullscreen app onboarding occupying full view; was card modal -->
+    <div id="fullscreenOnboardingScreen" class="fullscreen-onboarding-screen">
+        <div class="fs-onboarding-container">
+            <h1 class="fs-onboarding-title">Set Up Your Profile</h1>
+
+            <!-- Avatar Picker Section with 165px live camera circle -->
+            <div class="fs-avatar-picker-section">
+                <div class="fs-avatar-circle-wrapper" id="fsAvatarCircleWrap" title="Click to snap selfie photo">
+                    <div class="fs-avatar-circle" id="fsAvatarPreviewCircle">
+                        <video id="fsCircleLiveVideo" autoplay playsinline muted></video>
+                        <div class="fs-avatar-placeholder-content" id="fsAvatarPlaceholder">
+                            <span class="material-symbols-outlined">add_a_photo</span>
+                        </div>
+                        <div class="fs-avatar-initials" id="fsAvatarInitials">ST</div>
+                        <img id="fsAvatarImg" class="fs-avatar-img" src="" alt="Profile Photo">
+                    </div>
+                    <div class="fs-avatar-badge-cam" id="fsAvatarBadgeCam">
+                        <span class="material-symbols-outlined">photo_camera</span>
+                    </div>
+                </div>
+
+                <div class="fs-avatar-actions-row">
+                    <button type="button" class="fs-action-chip" id="fsSnapSelfieBtn">
+                        <span class="material-symbols-outlined">camera</span>
+                        <span id="fsSnapBtnLabel">Capture Selfie</span>
+                    </button>
+                    <button type="button" class="fs-action-chip secondary" id="fsChooseGalleryBtn">
+                        <span class="material-symbols-outlined">image</span>
+                        <span>From Gallery</span>
+                    </button>
+                </div>
+                <input type="file" id="fsGalleryInput" accept="image/*" style="display:none;">
+                <canvas id="fsCameraCanvas" style="display:none;"></canvas>
+            </div>
+
+            <!-- Onboarding Form -->
+            <form id="fsOnboardingForm">
+                <div class="fs-form-row-grid" style="margin-bottom: 12px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">First Name</label>
+                        <div class="fs-input-field-wrap">
+                            <span class="material-symbols-outlined input-icon">person</span>
+                            <input type="text" id="fsFirstName" placeholder="e.g. Juan" required autocomplete="given-name">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Last Name</label>
+                        <div class="fs-input-field-wrap">
+                            <span class="material-symbols-outlined input-icon">badge</span>
+                            <input type="text" id="fsLastName" placeholder="e.g. Dela Cruz" required autocomplete="family-name">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Course Dropdown -->
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Course</label>
+                    <div class="fs-input-field-wrap">
+                        <span class="material-symbols-outlined input-icon">school</span>
+                        <select id="fsCourse" required>
+                            <option value="" disabled selected>Select your course</option>
+                            <option value="BSIT">BSIT - Information Technology</option>
+                            <option value="BIT">BIT - Industrial Technology</option>
+                            <option value="BSHM">BSHM - Hospitality Management</option>
+                            <option value="BSED">BSED - Secondary Education</option>
+                            <option value="BEED">BEED - Elementary Education</option>
+                            <option value="BSIE">BSIE - Industrial Engineering</option>
+                        </select>
+                        <span class="material-symbols-outlined fs-select-arrow">arrow_drop_down</span>
+                    </div>
+                </div>
+
+                <!-- Year Level on Left and Section on Right -->
+                <div class="fs-form-row-grid" style="margin-bottom: 20px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Year</label>
+                        <div class="fs-input-field-wrap">
+                            <span class="material-symbols-outlined input-icon">calendar_today</span>
+                            <select id="fsYearLevel" required>
+                                <option value="" disabled selected>Select Year</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                            </select>
+                            <span class="material-symbols-outlined fs-select-arrow">arrow_drop_down</span>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Section</label>
+                        <div class="fs-input-field-wrap">
+                            <span class="material-symbols-outlined input-icon">group</span>
+                            <input type="text" id="fsSection" placeholder="e.g. A" maxlength="4" required autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="fsOnboardingError" class="error-msg" style="color: #d11f34; font-size: 0.82rem; font-weight: 600; margin-bottom: 12px; text-align: center;"></div>
+
+                <button type="submit" class="btn-action" id="fsSubmitOnboardingBtn" style="width: 100%; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #5a1fe0, #4311c5); color: white; border: none; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 12px 24px rgba(90, 31, 224, 0.25); cursor: pointer; transition: opacity 0.2s ease;">
+                    <span id="fsSubmitText">Save & Enter Campus Hub</span>
+                    <span class="material-symbols-outlined" id="fsSubmitIcon">arrow_forward</span>
+                </button>
+            </form>
         </div>
     </div>
 
