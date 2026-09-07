@@ -2138,6 +2138,11 @@
                     <p style="margin:3px 0 0; font-size:0.8rem; color:#64748b;">Drag numbered purple badges to adjust the geofence perimeter. Drag building markers to update facility locations.</p>
                 </div>
                 <div style="display:flex; gap:10px; align-items:center;">
+                    <!-- (2026-07-13) Add facility marker button in modal; was save and reset only -->
+                    <button class="action-btn" id="btnAddMarkerModal" type="button" style="padding:8px 14px; font-size:0.82rem; border-radius:12px; background:#eff6ff; color:#1d4ed8; font-weight:700; border:1px solid #bfdbfe; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:17px;">add_location_alt</span>
+                        <span id="btnAddMarkerLabel">Add Marker</span>
+                    </button>
                     <button class="action-btn" id="btnResetGeofenceModal" type="button" style="padding:8px 14px; font-size:0.82rem; border-radius:12px; background:#fee2e2; color:#b91c1c; font-weight:700; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
                         <span class="material-symbols-outlined" style="font-size:17px;">restart_alt</span>
                         <span>Reset Defaults</span>
@@ -3090,11 +3095,28 @@
                 modalGeofenceVertexMarkers.push(marker);
             });
 
-            // Draggable Building Markers
+            // (2026-07-13) Enable marker name & icon editing in modal; was delete only
+            window._deleteAdminFacilityMarker = (targetIdx) => {
+                currentAdminBuildings.splice(targetIdx, 1);
+                renderModalEditorMarkers();
+            };
+
+            window._saveAdminFacilityMarker = (targetIdx) => {
+                const nameEl = document.getElementById(`facilityMarkerName_${targetIdx}`);
+                const iconEl = document.getElementById(`facilityMarkerIcon_${targetIdx}`);
+                if (nameEl && nameEl.value.trim() && currentAdminBuildings[targetIdx]) {
+                    currentAdminBuildings[targetIdx].name = nameEl.value.trim();
+                    if (iconEl && iconEl.value) {
+                        currentAdminBuildings[targetIdx].icon = iconEl.value;
+                    }
+                    renderModalEditorMarkers();
+                }
+            };
+
             currentAdminBuildings.forEach((b, idx) => {
                 const bIcon = L.divIcon({
                     className: 'modal-bldg-marker',
-                    html: `<div style="background:#f5f3ff; border-radius:10px; padding:4px 10px; box-shadow:0 4px 14px rgba(0,0,0,0.18); font-size:11px; font-weight:800; color:#181428; border:2px solid #5a1fe0; display:flex; align-items:center; gap:6px; cursor:grab;"><span class="material-symbols-outlined" style="font-size:15px; color:#5a1fe0;">${b.icon}</span>${b.name}</div>`,
+                    html: `<div style="background:#f5f3ff; border-radius:10px; padding:4px 10px; box-shadow:0 4px 14px rgba(0,0,0,0.18); font-size:11px; font-weight:800; color:#181428; border:2px solid #5a1fe0; display:flex; align-items:center; gap:6px; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:15px; color:#5a1fe0;">${b.icon || 'location_on'}</span>${b.name}</div>`,
                     iconSize: [110, 28],
                     iconAnchor: [55, 14]
                 });
@@ -3103,6 +3125,45 @@
                     const newPos = e.target.getLatLng();
                     currentAdminBuildings[idx].coords = [Number(newPos.lat), Number(newPos.lng)];
                 });
+                /* Facility marker edit card */
+                marker.bindPopup(`
+                    <div class="facility-marker-editor-card" style="padding:8px 4px; min-width:180px; display:flex; flex-direction:column; gap:8px;">
+                        <div style="font-weight:800; font-size:0.85rem; color:#181428; display:flex; align-items:center; gap:6px;">
+                            <span class="material-symbols-outlined" style="font-size:18px; color:#5a1fe0;">${b.icon || 'location_on'}</span>
+                            <span>Edit Facility Marker</span>
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; font-weight:700; color:#64748b; display:block; margin-bottom:2px;">Marker Name</label>
+                            <input type="text" id="facilityMarkerName_${idx}" value="${b.name.replace(/"/g, '&quot;')}" style="width:100%; box-sizing:border-box; padding:5px 8px; font-size:0.8rem; border-radius:8px; border:1px solid #cbd5e1; outline:none;" />
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; font-weight:700; color:#64748b; display:block; margin-bottom:2px;">Facility Icon</label>
+                            <select id="facilityMarkerIcon_${idx}" style="width:100%; box-sizing:border-box; padding:5px 8px; font-size:0.8rem; border-radius:8px; border:1px solid #cbd5e1; outline:none; background:white;">
+                                <option value="school" ${b.icon==='school'?'selected':''}>school (Classrooms / Academics)</option>
+                                <option value="apartment" ${b.icon==='apartment'?'selected':''}>apartment (Admin Building)</option>
+                                <option value="local_library" ${b.icon==='local_library'?'selected':''}>local_library (Library)</option>
+                                <option value="science" ${b.icon==='science'?'selected':''}>science (Laboratory)</option>
+                                <option value="restaurant" ${b.icon==='restaurant'?'selected':''}>restaurant (Canteen)</option>
+                                <option value="sports_soccer" ${b.icon==='sports_soccer'?'selected':''}>sports_soccer (Gym / Oval)</option>
+                                <option value="local_hospital" ${b.icon==='local_hospital'?'selected':''}>local_hospital (Clinic)</option>
+                                <option value="security" ${b.icon==='security'?'selected':''}>security (Guardhouse)</option>
+                                <option value="local_parking" ${b.icon==='local_parking'?'selected':''}>local_parking (Parking)</option>
+                                <option value="location_city" ${b.icon==='location_city'?'selected':''}>location_city (Facility)</option>
+                                <option value="place" ${b.icon==='place'?'selected':''}>place (General Landmark)</option>
+                            </select>
+                        </div>
+                        <div style="display:flex; gap:6px; justify-content:space-between; margin-top:4px;">
+                            <button type="button" class="action-btn" style="flex:1; padding:6px 10px; font-size:0.75rem; border-radius:8px; background:#5a1fe0; color:white; border:none; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;" onclick="window._saveAdminFacilityMarker(${idx})">
+                                <span class="material-symbols-outlined" style="font-size:15px;">check</span>
+                                <span>Save</span>
+                            </button>
+                            <button type="button" class="action-btn" style="padding:6px 10px; font-size:0.75rem; border-radius:8px; background:#fee2e2; color:#b91c1c; border:none; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;" onclick="window._deleteAdminFacilityMarker(${idx})">
+                                <span class="material-symbols-outlined" style="font-size:15px;">delete</span>
+                                <span>Delete</span>
+                            </button>
+                        </div>
+                    </div>
+                `);
                 modalBuildingMarkers.push(marker);
             });
 
@@ -3111,6 +3172,8 @@
                 vertexCounter.textContent = `${currentAdminGeofence.length} Boundary Vertices • ${currentAdminBuildings.length} Campus Facilities`;
             }
         }
+
+        let isModalAddingMarker = false;
 
         function openGeofenceEditorModal() {
             const modal = document.getElementById('adminGeofenceModal');
@@ -3130,9 +3193,39 @@
                         wheelPxPerZoomLevel: 140
                     }).setView(ADMIN_CAMPUS_CENTER, 17);
 
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        maxZoom: 19
-                    }).addTo(adminModalLeafletMap);
+                    // (2026-07-13) Add Google Satellite & view switcher; was OSM tile layer only
+                    const modalBaseMaps = {
+                        "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                        "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                        "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                        "Google Terrain": L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                        "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
+                    };
+                    modalBaseMaps["Google Hybrid"].addTo(adminModalLeafletMap);
+                    L.control.layers(modalBaseMaps, null, { position: 'topright' }).addTo(adminModalLeafletMap);
+
+                    adminModalLeafletMap.on('click', (e) => {
+                        if (!isModalAddingMarker) return;
+                        const markerName = prompt('Enter name for the new campus facility/building marker:');
+                        if (markerName && markerName.trim()) {
+                            currentAdminBuildings.push({
+                                name: markerName.trim(),
+                                coords: [Number(e.latlng.lat), Number(e.latlng.lng)],
+                                icon: 'location_city',
+                                desc: 'Campus facility'
+                            });
+                            isModalAddingMarker = false;
+                            const btnAddMarkerLabel = document.getElementById('btnAddMarkerLabel');
+                            const btnAddMarker = document.getElementById('btnAddMarkerModal');
+                            if (btnAddMarkerLabel) btnAddMarkerLabel.textContent = 'Add Marker';
+                            if (btnAddMarker) {
+                                btnAddMarker.style.background = '#eff6ff';
+                                btnAddMarker.style.color = '#1d4ed8';
+                                btnAddMarker.style.borderColor = '#bfdbfe';
+                            }
+                            renderModalEditorMarkers();
+                        }
+                    });
                 }
                 adminModalLeafletMap.invalidateSize();
                 renderModalEditorMarkers();
@@ -3221,6 +3314,27 @@
                     });
                     renderModalEditorMarkers();
                     alert('Geofence & building markers reset to default coordinates.');
+                });
+            }
+
+            // (2026-07-13) Add marker click mode toggle handler; was missing add control
+            const btnAddMarker = document.getElementById('btnAddMarkerModal');
+            if (btnAddMarker && !btnAddMarker.dataset.bound) {
+                btnAddMarker.dataset.bound = 'true';
+                btnAddMarker.addEventListener('click', () => {
+                    isModalAddingMarker = !isModalAddingMarker;
+                    const btnAddMarkerLabel = document.getElementById('btnAddMarkerLabel');
+                    if (isModalAddingMarker) {
+                        btnAddMarker.style.background = '#dcfce7';
+                        btnAddMarker.style.color = '#15803d';
+                        btnAddMarker.style.borderColor = '#86efac';
+                        if (btnAddMarkerLabel) btnAddMarkerLabel.textContent = 'Click Map to Place';
+                    } else {
+                        btnAddMarker.style.background = '#eff6ff';
+                        btnAddMarker.style.color = '#1d4ed8';
+                        btnAddMarker.style.borderColor = '#bfdbfe';
+                        if (btnAddMarkerLabel) btnAddMarkerLabel.textContent = 'Add Marker';
+                    }
                 });
             }
 
@@ -3368,9 +3482,16 @@
                     wheelPxPerZoomLevel: 140
                 }).setView(ADMIN_CAMPUS_CENTER, 17);
 
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19
-                }).addTo(adminSosLeafletMap);
+                // (2026-07-13) Add Google Satellite & view switcher; was OSM tile layer only
+                const adminSosBaseMaps = {
+                    "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                    "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                    "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                    "Google Terrain": L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                    "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
+                };
+                adminSosBaseMaps["Google Hybrid"].addTo(adminSosLeafletMap);
+                L.control.layers(adminSosBaseMaps, null, { position: 'topright' }).addTo(adminSosLeafletMap);
 
                 currentAdminGeofence = getActiveAdminGeofencePolygon();
                 adminGeofencePolygonLayer = L.polygon(currentAdminGeofence, {

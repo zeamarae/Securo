@@ -1539,6 +1539,7 @@
             getStudentBootstrapProfile,
             subscribeToStudentLocation,
             subscribeToStudentAttendance,
+            logAttendance,
             getAttendanceHistory,
             getGADPosts,
             getUserEmergencyPosts,
@@ -1724,9 +1725,16 @@
                 zoomDelta: 0.5,
                 wheelPxPerZoomLevel: 140
             }).setView(CAMPUS_CENTER, 17);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19
-            }).addTo(map);
+            // (2026-07-13) Add Google Satellite & view switcher; was OSM tile layer only
+            const baseMapLayers = {
+                "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                "Google Terrain": L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
+            };
+            baseMapLayers["Google Hybrid"].addTo(map);
+            L.control.layers(baseMapLayers, null, { position: 'topright' }).addTo(map);
 
             // Campus Geofence Visual Polygon
             guardianGeofencePolygonLayer = L.polygon(getCampusGeofencePolygon(), {
@@ -2317,6 +2325,44 @@
             vaultViewerModal.classList.add('active');
         }
 
+        let monitoredStudentAttendance = [];
+        let childAutoAttendanceBusy = false;
+        let lastChildAutoAttendanceTime = 0;
+
+        // (2026-07-13) Auto time in/out for monitored child; was map marker update
+        async function processChildAutoAttendance(studentUid, loc, isInside) {
+            if (!studentUid || !loc?.lat || !loc?.lng || childAutoAttendanceBusy) return;
+            const currentTimedIn = monitoredStudentAttendance[0]?.type === 'in';
+            if (isInside && currentTimedIn) return;
+            if (!isInside && !currentTimedIn) return;
+            if (Date.now() - lastChildAutoAttendanceTime < 15000) return;
+
+            const recent = monitoredStudentAttendance[0];
+            const targetType = isInside ? 'in' : 'out';
+            if (recent && recent.type === targetType) {
+                const recentTs = recent.timestamp?.toDate ? recent.timestamp.toDate().getTime() : new Date(recent.timestamp || recent.clientTimestamp || 0).getTime();
+                if (Date.now() - recentTs < 30000) return;
+            }
+
+            childAutoAttendanceBusy = true;
+            lastChildAutoAttendanceTime = Date.now();
+            try {
+                const address = isInside ? 'Inside Campus Bounds (Auto Time In)' : 'Outside Campus Bounds (Auto Time Out)';
+                await logAttendance(studentUid, targetType, {
+                    lat: loc.lat,
+                    lng: loc.lng,
+                    address,
+                    auto: true
+                });
+                const childName = document.getElementById('activeStudentName')?.textContent?.trim() || activeLink?.studentName || 'Child';
+                showToast(`Auto ${targetType === 'in' ? 'Time In' : 'Time Out'} recorded for ${childName}.`);
+            } catch (err) {
+                console.warn("Child auto attendance error:", err);
+            } finally {
+                childAutoAttendanceBusy = false;
+            }
+        }
+
         function startMonitoring(studentUid) {
             if (locationUnsub) locationUnsub();
             if (attendanceUnsub) attendanceUnsub();
@@ -2326,6 +2372,7 @@
             });
 
             attendanceUnsub = subscribeToStudentAttendance(studentUid, (logs) => {
+                monitoredStudentAttendance = Array.isArray(logs) ? logs : [];
                 renderAlerts(logs);
             });
         }
@@ -2348,6 +2395,10 @@
             const pos = [loc.lat, loc.lng];
 // (2026-07-13) Check point-in-polygon for child location; was radius check
             const isInside = isPointInPolygon([loc.lat, loc.lng], CAMPUS_GEOFENCE_POLYGON);
+
+            if (activeLink?.studentUid) {
+                processChildAutoAttendance(activeLink.studentUid, loc, isInside);
+            }
 
             if (!studentMarker) {
                 const icon = L.divIcon({

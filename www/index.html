@@ -4699,8 +4699,11 @@
                                     <!-- (2026-07-13) Remove quick access chips container; was parking/clinic/wifi buttons -->
                                 </div>
 
-                                <!-- (2026-07-13) Place zoom controls directly below map-recenter-campus; was split bottom cluster -->
+                                <!-- (2026-07-13) Add map view switcher button; was standard control buttons only -->
                                 <div class="map-controls-custom map-controls-top">
+                                    <button class="map-btn" id="map-layers-btn" title="Toggle Map Style (Satellite / Hybrid / Streets)">
+                                        <span class="material-symbols-outlined">layers</span>
+                                    </button>
                                     <button class="map-btn" id="map-toggle-markers" title="Hide Campus Markers">
                                         <span class="material-symbols-outlined">visibility</span>
                                     </button>
@@ -5451,6 +5454,58 @@
             return inside;
         }
 
+        // (2026-07-13) Auto time in/out on campus geofence; was status banner update
+        let _autoAttendanceBusy = false;
+        let _lastAutoAttendanceTime = 0;
+
+        async function processAutoAttendance(type, lat, lng) {
+            if (!appState.user?.uid || _autoAttendanceBusy) return;
+            if (type === 'in' && appState.isTimedIn) return;
+            if (type === 'out' && !appState.isTimedIn) return;
+            if (Date.now() - _lastAutoAttendanceTime < 15000) return;
+
+            const recent = _fullAttendanceHistory?.[0];
+            if (recent && recent.type === type) {
+                const ts = getAttendanceLogDate(recent).getTime();
+                if (Date.now() - ts < 30000) return;
+            }
+
+            _autoAttendanceBusy = true;
+            _lastAutoAttendanceTime = Date.now();
+
+            try {
+                const capturedAt = new Date();
+                const landmark = typeof getNearestLandmark === 'function' ? getNearestLandmark(lat, lng) : '';
+                const location = {
+                    lat,
+                    lng,
+                    address: landmark || (type === 'in' ? 'Inside Campus Bounds' : 'Outside Campus Bounds')
+                };
+
+                queueAttendanceLog(appState.user.uid, {
+                    localId: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+                    type,
+                    location,
+                    clientTimestamp: capturedAt.toISOString(),
+                    auto: true
+                });
+
+                const updatedHistory = getMergedAttendanceHistory([], appState.user.uid);
+                setAttendanceState(type === 'in');
+                renderAttendanceHistory(updatedHistory);
+                calculateStats(updatedHistory);
+                updateAttendanceSummary(updatedHistory);
+                syncPendingAttendanceLogs().catch((e) => console.warn("Auto attendance sync failed:", e));
+                if (typeof showToast === 'function') {
+                    showToast(type === 'in' ? "Auto Timed In: Entered campus bounds" : "Auto Timed Out: Left campus bounds");
+                }
+            } catch (err) {
+                console.warn("Auto attendance failed:", err);
+            } finally {
+                _autoAttendanceBusy = false;
+            }
+        }
+
         function checkCampusGeofence(lat, lng) {
             const isInside = isPointInPolygon([lat, lng], getCampusGeofencePolygon());
             const storedExitTime = localStorage.getItem("securo_campus_exit_ts");
@@ -5461,6 +5516,7 @@
                 }
                 appState.isInsideCampus = true;
                 appState.campusExitDuration = "";
+                processAutoAttendance('in', lat, lng);
             } else {
                 appState.isInsideCampus = false;
                 let exitTs = storedExitTime ? parseInt(storedExitTime, 10) : null;
@@ -5479,6 +5535,7 @@
                 } else {
                     appState.campusExitDuration = `Student just left the campus bounds`;
                 }
+                processAutoAttendance('out', lat, lng);
             }
             updateTrackingStatusBanner();
         }
@@ -5548,9 +5605,16 @@
                 wheelPxPerZoomLevel: 140
             }).setView(CAMPUS_CENTER, 17);
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19
-            }).addTo(map);
+            // (2026-07-13) Add Google Satellite & view switcher; was OSM tile layer only
+            const baseMapLayers = {
+                "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                "Google Terrain": L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
+            };
+            baseMapLayers["Google Hybrid"].addTo(map);
+            L.control.layers(baseMapLayers, null, { position: 'topright' }).addTo(map);
 
             // Draw geofence polygon with exact admin-saved vertices
             campusGeofencePolygonLayer = L.polygon(currentStudentGeofence, {
@@ -5586,6 +5650,22 @@
             if (recenterBtn) {
                 recenterBtn.onclick = () => {
                     if (map) map.flyTo(CAMPUS_CENTER, 17, { duration: 1.2 });
+                };
+            }
+            const mapLayersBtn = document.getElementById('map-layers-btn');
+            if (mapLayersBtn) {
+                const layerKeys = Object.keys(baseMapLayers);
+                let currentLayerIdx = 0;
+                mapLayersBtn.onclick = () => {
+                    const prevLayer = baseMapLayers[layerKeys[currentLayerIdx]];
+                    currentLayerIdx = (currentLayerIdx + 1) % layerKeys.length;
+                    const nextKey = layerKeys[currentLayerIdx];
+                    const nextLayer = baseMapLayers[nextKey];
+                    map.removeLayer(prevLayer);
+                    map.addLayer(nextLayer);
+                    if (typeof showToast === 'function') {
+                        showToast(`Map View: ${nextKey}`);
+                    }
                 };
             }
             const toggleMarkersBtn = document.getElementById('map-toggle-markers');
@@ -8464,10 +8544,14 @@
 
         // --- ATTENDANCE & TRACKING LOGIC (Date: 2026-05-02) ---
 
+        // (2026-07-13) Evaluate geofence attendance on init; was history state only
         async function initializeAttendance() {
             const history = await loadAttendanceUI();
             setAttendanceState(getIsTimedInFromHistory(history));
             syncPendingAttendanceLogs().catch((error) => console.warn("Attendance background sync failed:", error));
+            if (appState.lastLocation?.lat && appState.lastLocation?.lng) {
+                checkCampusGeofence(appState.lastLocation.lat, appState.lastLocation.lng);
+            }
         }
 
         function getIsTimedInFromHistory(history = []) {
