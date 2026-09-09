@@ -2765,6 +2765,8 @@
                 }, 900);
                 return;
             }
+            // (2026-09-09) store real UID for Firestore-rules-aware queries
+            currentAdminUid = user.uid;
             try {
                 const profile = await getUserProfile(user.uid);
                 const isSpecialAdmin = profile?.role === 'admin';
@@ -2801,7 +2803,8 @@
             const [posts, users, threads, guardianLinks, sosLogs, emergencyPosts] = await Promise.all([
                 getGADPosts(),
                 getAllUsers(),
-                getAllChatThreadsOnce(),
+                // (2026-09-09) pass real adminUid so Firestore rules accept the read
+                getAllChatThreadsOnce(currentAdminUid),
                 getAllGuardianLinksAdmin(),
                 getAllSOSLogs(),
                 getAllEmergencyPosts()
@@ -3886,6 +3889,7 @@
         let currentActiveThreadId = null;
         let unsubscribeAdminChat = null;
         let unsubscribeAdminThreads = null;
+        let currentAdminUid = "system_admin_securo"; // (2026-09-09) real UID set after auth
         const ADMIN_ID = "system_admin_securo";
 
         function stopAdminRealtimeThreads() {
@@ -3901,7 +3905,8 @@
 
         function initAdminChat() {
             if (unsubscribeAdminThreads) return;
-            unsubscribeAdminThreads = getAllChatThreads((threads) => {
+            // (2026-09-09) pass real adminUid so Firestore rules accept the read
+            unsubscribeAdminThreads = getAllChatThreads(currentAdminUid, (threads) => {
                 cachedThreads = Array.isArray(threads) ? threads : [];
                 renderStatistics(cachedUsers);
                 renderThreads(threads);

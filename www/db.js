@@ -870,19 +870,29 @@ export const getAllUsers = async () => {
         .filter((user) => !user?.isDeleted && !user?.deletedAt);
 };
 
-export const getAllChatThreadsOnce = async () => {
+// (2026-09-09) accept adminUid; two where-queries so Firestore rules pass
+export const getAllChatThreadsOnce = async (adminUid = "system_admin_securo") => {
+    const ADMIN_CONST = "system_admin_securo";
     try {
-        const snapshot = await getDocs(query(collection(db, "messages"), orderBy("timestamp", "desc")));
+        const [sentSnap, recvSnap] = await Promise.all([
+            // messages the admin sent (senderId == real UID)
+            getDocs(query(collection(db, "messages"), where("senderId", "==", adminUid))),
+            // messages sent TO the admin (receiverId == hardcoded constant)
+            getDocs(query(collection(db, "messages"), where("receiverId", "==", ADMIN_CONST)))
+        ]);
+        const allDocs = [...sentSnap.docs, ...recvSnap.docs];
         const threadsMap = new Map();
-
-        snapshot.docs.forEach((entry) => {
+        allDocs.forEach((entry) => {
             const payload = { id: entry.id, ...entry.data() };
-            if (payload.threadId && !threadsMap.has(payload.threadId)) {
+            if (!payload.threadId) return;
+            const existing = threadsMap.get(payload.threadId);
+            const t = payload.timestamp?.seconds || 0;
+            if (!existing || t > (existing.timestamp?.seconds || 0)) {
                 threadsMap.set(payload.threadId, payload);
             }
         });
-
-        return Array.from(threadsMap.values());
+        return Array.from(threadsMap.values())
+            .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
     } catch (error) {
         console.warn("Error getting chat threads once:", error);
         return [];
@@ -965,23 +975,36 @@ export const sendChatMessage = async (senderId, receiverId, text, senderName, op
 /**
  * Messaging: Get all chat threads (for Admin)
  */
-export const getAllChatThreads = (callback) => {
-    const q = query(
-        collection(db, "messages"),
-        orderBy("timestamp", "desc")
-    );
-
-    return onSnapshot(q, (snapshot) => {
-        const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Group by threadId and get latest message
+// (2026-09-09) accept adminUid; two where-queries so Firestore rules pass
+export const getAllChatThreads = (adminUid = "system_admin_securo", callback) => {
+    const ADMIN_CONST = "system_admin_securo";
+    const merge = (snap1, snap2) => {
+        const allDocs = [...snap1.docs, ...snap2.docs];
         const threadsMap = new Map();
-        messages.forEach(msg => {
-            if (!threadsMap.has(msg.threadId)) {
+        allDocs.forEach(entry => {
+            const msg = { id: entry.id, ...entry.data() };
+            if (!msg.threadId) return;
+            const existing = threadsMap.get(msg.threadId);
+            if (!existing || (msg.timestamp?.seconds || 0) > (existing.timestamp?.seconds || 0)) {
                 threadsMap.set(msg.threadId, msg);
             }
         });
-        callback(Array.from(threadsMap.values()));
-    }, () => callback([]));
+        return Array.from(threadsMap.values())
+            .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+    };
+
+    let snap1 = null, snap2 = null;
+    const tryCallback = () => { if (snap1 && snap2) callback(merge(snap1, snap2)); };
+
+    // messages the admin sent (senderId == real UID)
+    const qSent = query(collection(db, "messages"), where("senderId", "==", adminUid));
+    // messages sent TO the admin (receiverId == hardcoded constant stored by users)
+    const qRecv = query(collection(db, "messages"), where("receiverId", "==", ADMIN_CONST));
+
+    const unsub1 = onSnapshot(qSent,  s => { snap1 = s; tryCallback(); }, err => { console.warn("getAllChatThreads(sent) error:", err); snap1 = { docs: [] }; tryCallback(); });
+    const unsub2 = onSnapshot(qRecv,  s => { snap2 = s; tryCallback(); }, err => { console.warn("getAllChatThreads(recv) error:", err); snap2 = { docs: [] }; tryCallback(); });
+
+    return () => { unsub1(); unsub2(); };
 };
 
 /**
