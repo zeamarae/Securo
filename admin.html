@@ -1044,7 +1044,8 @@
             box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
             display: grid;
             gap: 6px;
-            z-index: 900;
+            /* (2026-07-13) Elevate portal z-index to 9999; was 900 */
+            z-index: 9999;
         }
 
         .row-action-item {
@@ -1088,11 +1089,10 @@
             display: flex;
         }
 
-        /* (2026-07-13) Modal card border outline; was faint white border */
+        /* (2026-07-13) Fix consistent modal height; was variable max-height */
         .modal-card {
             width: min(820px, 100%);
-            /* (2026-07-13) Card no longer scrolls — panels scroll; was overflow-y:auto */
-            max-height: min(92vh, 960px);
+            height: min(88vh, 660px);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -1143,10 +1143,11 @@
         }
 
         .modal-tab-panel.active {
-            /* (2026-07-13) Panels scroll instead of the card; was display:block only */
+            /* (2026-07-13) Flex fill modal body; was max-height calc */
             display: block;
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
-            max-height: calc(min(92vh, 960px) - 170px);
             padding-right: 2px;
         }
 
@@ -3058,19 +3059,16 @@
             return el;
         };
 
+        // (2026-07-13) Fix action menu coords; was detached element zero rect
         const toggleUserActionMenu = (userId, triggerEl) => {
             const portal = _ensurePortal();
             if (openUserActionMenuId === userId) {
-                // Close
                 openUserActionMenuId = null;
                 portal.style.display = 'none';
-                renderManagedUsers();
                 return;
             }
             openUserActionMenuId = userId;
-            renderManagedUsers(); // re-render to update active state on trigger btn
 
-            // Find trigger button position (after re-render)
             const btn = triggerEl || managementUserList?.querySelector(`[data-user-action-trigger="${userId}"]`);
             const rect = btn ? btn.getBoundingClientRect() : { bottom: 0, right: 0 };
 
@@ -3086,10 +3084,9 @@
                 </button>
             `;
             portal.style.display = 'grid';
-            // Position: right-align below trigger
-            portal.style.top = `${rect.bottom + 8}px`;
+            portal.style.top = `${rect.bottom + 6}px`;
             portal.style.left = 'auto';
-            portal.style.right = `${window.innerWidth - rect.right}px`;
+            portal.style.right = `${Math.max(8, window.innerWidth - rect.right)}px`;
         };
 
         const closeUserActionMenu = () => {
@@ -3097,7 +3094,6 @@
             openUserActionMenuId = null;
             const portal = document.getElementById('userActionPortal');
             if (portal) portal.style.display = 'none';
-            renderManagedUsers();
         };
 
         // (2026-07-13) Support multiple parent/child links; was raw un-deduped map
