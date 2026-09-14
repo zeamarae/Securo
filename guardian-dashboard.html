@@ -1807,12 +1807,35 @@
                 .replace(/'/g, '&#39;');
         }
 
+        // (2026-07-13) Add push alerts for campus entry/exit; was in-app list only
         function getGuardianNotificationIcon(type) {
+            if (type === 'campus_entry') return 'login';
+            if (type === 'campus_exit') return 'logout';
             if (type === 'location_request_sent') return 'notifications_active';
             if (type === 'student_guardian_request') return 'family_restroom';
             if (type === 'guardian_request_accepted') return 'check_circle';
             if (type === 'guardian_request_declined') return 'cancel';
             return 'info';
+        }
+
+        const _notifiedAccountEventIds = new Set();
+        function triggerBrowserNotification(title, body) {
+            if (!("Notification" in window)) return;
+            if (Notification.permission === "granted") {
+                try {
+                    new Notification(title, { body, icon: "logo.png" });
+                } catch (e) {
+                    console.warn("Push error:", e);
+                }
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        try {
+                            new Notification(title, { body, icon: "logo.png" });
+                        } catch (e) {}
+                    }
+                });
+            }
         }
 
         function renderGuardianNotificationHistory(notifications = []) {
@@ -1825,6 +1848,14 @@
                 empty.style.display = 'block';
                 return;
             }
+
+            // Check for new unread notifications and dispatch push
+            notifications.forEach((item) => {
+                if (!item.isRead && !_notifiedAccountEventIds.has(item.id)) {
+                    _notifiedAccountEventIds.add(item.id);
+                    triggerBrowserNotification(item.title || "Campus Update", item.message || "");
+                }
+            });
 
             empty.style.display = 'none';
             container.innerHTML = notifications.map((item) => `

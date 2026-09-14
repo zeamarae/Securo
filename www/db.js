@@ -1895,6 +1895,45 @@ export const subscribeToAccountNotifications = (userId, callback) => {
         return () => {};
     }
 };
+
+// (2026-07-13) Notify guardians of geofence event; was client toast only
+export const notifyGuardiansOfGeofenceEvent = async (studentUid, studentName, type, location = {}) => {
+    if (!studentUid) return [];
+    try {
+        const links = await getLinksForStudent(null, studentUid);
+        const acceptedLinks = (Array.isArray(links) ? links : []).filter(l => l.status === 'accepted' && l.guardianId);
+        const isEntry = type === 'in';
+        const actionText = isEntry ? 'entered campus bounds (Time In)' : 'left campus bounds (Time Out)';
+        const title = `Campus Geofence: ${studentName || 'Your Child'} ${isEntry ? 'Entered' : 'Departed'}`;
+        const message = `${studentName || 'Your child'} has ${actionText} at ${location.address || 'Campus Grounds'}.`;
+
+        const dispatches = acceptedLinks.map(link => 
+            sendAccountNotification({
+                userId: link.guardianId,
+                type: isEntry ? 'campus_entry' : 'campus_exit',
+                title,
+                message,
+                sourceUserId: studentUid,
+                sourceName: studentName || 'Student',
+                studentId: link.studentId || '',
+                metadata: {
+                    type,
+                    lat: location.lat || null,
+                    lng: location.lng || null,
+                    address: location.address || '',
+                    timestamp: new Date().toISOString()
+                }
+            }).catch(err => {
+                console.warn("Failed to notify guardian:", link.guardianId, err);
+                return null;
+            })
+        );
+        return await Promise.all(dispatches);
+    } catch (error) {
+        console.warn("Error notifying guardians of geofence event:", error);
+        return [];
+    }
+};
 // (2026-07-13) Add GAD messaging and SOS stats query helpers; was end of file
 const LOCAL_GAD_MESSAGES_KEY = "securo_gad_messages_local";
 

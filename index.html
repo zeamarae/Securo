@@ -5587,7 +5587,8 @@
             sendGADMessage,
             subscribeToGADMessages,
             subscribeToCampusMapConfig,
-            // (2026-08-17) Direct Firestore fetch for admin map config; was subscription-only
+            // (2026-07-13) Import notifyGuardiansOfGeofenceEvent; was map config only
+            notifyGuardiansOfGeofenceEvent,
             fetchLatestCampusMapConfig
         } from './db.js';
 
@@ -5869,6 +5870,9 @@
                 calculateStats(updatedHistory);
                 updateAttendanceSummary(updatedHistory);
                 syncPendingAttendanceLogs().catch((e) => console.warn("Auto attendance sync failed:", e));
+                // (2026-07-13) Dispatch geofence notice to guardians; was local sync only
+                updateStudentLiveLocation(appState.user.uid, { lat, lng }).catch(() => {});
+                notifyGuardiansOfGeofenceEvent(appState.user.uid, appState.user.name || appState.user.displayName || 'Student', type, location).catch(() => {});
                 if (typeof showToast === 'function') {
                     showToast(type === 'in' ? "Auto Timed In: Entered campus bounds" : "Auto Timed Out: Left campus bounds");
                 }

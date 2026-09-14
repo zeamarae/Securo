@@ -280,9 +280,11 @@
             overflow: hidden;
         }
 
+        /* (2026-07-13) Modernize admin sidebar styling; was flat tab buttons */
         .sidebar {
-            border-right: 1px solid rgba(0,0,0,0.05);
-            background: rgba(255,255,255,0.4);
+            border-right: 1px solid rgba(226,232,240,0.85);
+            background: rgba(255,255,255,0.72);
+            backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -298,19 +300,20 @@
             letter-spacing: 0.16em;
             color: var(--muted);
             margin: 0 10px 12px;
+            font-weight: 700;
         }
 
         .nav-stack {
             display: grid;
-            gap: 10px;
+            gap: 8px;
         }
 
         .tab-btn {
             width: 100%;
-            min-height: 54px;
-            padding: 11px 13px;
-            border: 0;
-            border-radius: 16px;
+            min-height: 50px;
+            padding: 10px 14px;
+            border: 1px solid transparent;
+            border-radius: 14px;
             background: transparent;
             color: var(--muted);
             display: flex;
@@ -319,23 +322,44 @@
             text-align: left;
             font-weight: 700;
             font-size: 0.88rem;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+        }
+
+        .tab-btn:hover {
+            background: rgba(90,31,224,0.06);
+            color: var(--primary);
+            transform: translateX(3px);
         }
 
         .tab-btn .material-symbols-outlined {
-            width: 34px;
-            height: 34px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.62);
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            background: rgba(90,31,224,0.08);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             color: var(--primary);
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover .material-symbols-outlined {
+            background: var(--primary);
+            color: white;
         }
 
         .tab-btn.active {
-            background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(239,232,255,0.84));
-            color: var(--ink);
-            box-shadow: var(--shadow-soft);
+            background: #ffffff;
+            color: var(--primary);
+            border-color: rgba(90,31,224,0.14);
+            box-shadow: 0 4px 16px rgba(90,31,224,0.12), 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .tab-btn.active .material-symbols-outlined {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 10px rgba(90,31,224,0.3);
         }
 
         .sidebar-note {
@@ -611,42 +635,60 @@
             line-height: 1.55;
         }
 
+        /* (2026-07-13) Modernize panel & metric cards; was flat low-padding card */
         .metric-card,
         .panel-card {
-            background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(255,255,255,0.64));
-            border: 1px solid rgba(255,255,255,0.74);
+            background: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(226, 232, 240, 0.85);
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-soft);
-            backdrop-filter: blur(20px);
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+            backdrop-filter: blur(24px);
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .metric-card {
-            padding: 10px 12px;
+            padding: 16px 18px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px -4px rgba(90, 31, 224, 0.09), 0 4px 8px -2px rgba(15, 23, 42, 0.03);
+            border-color: rgba(90, 31, 224, 0.2);
         }
 
         .metric-label {
             color: var(--muted);
-            font-size: 0.66rem;
+            font-size: 0.68rem;
             text-transform: uppercase;
             letter-spacing: 0.14em;
+            font-weight: 700;
             margin-bottom: 8px;
         }
 
         .metric-value {
             font-family: "Sora", sans-serif;
-            font-size: 1.45rem;
+            font-size: 1.7rem;
+            font-weight: 800;
             letter-spacing: -0.05em;
             line-height: 1.05;
+            color: var(--ink);
         }
 
         .metric-sub {
             color: var(--muted);
             font-size: 0.78rem;
-            margin-top: 4px;
+            margin-top: 6px;
+            font-weight: 500;
         }
 
+        /* (2026-07-13) Fix panel-card padding; was cramped 16px */
         .panel-card {
-            padding: 16px;
+            padding: 22px 24px;
         }
 
         .section-head {
@@ -741,14 +783,16 @@
             white-space: nowrap;
         }
 
+        /* (2026-07-13) Compact announcement composer styling; was 190px blank area */
         .announcement-textarea {
-            min-height: 190px;
+            min-height: 110px;
+            height: 120px;
             padding: 14px 16px 16px;
             border: none;
             background: transparent;
             box-shadow: none;
             resize: vertical;
-            line-height: 1.65;
+            line-height: 1.6;
             font-size: 0.95rem;
         }
 
@@ -758,7 +802,7 @@
         }
 
         .announcement-textarea::placeholder {
-            color: rgba(68, 59, 105, 0.72);
+            color: rgba(68, 59, 105, 0.6);
         }
 
         .composer-toolbar {
@@ -767,7 +811,7 @@
             justify-content: space-between;
             gap: 12px;
             flex-wrap: wrap;
-            padding-top: 4px;
+            padding-top: 8px;
         }
 
         .helper-text {
@@ -800,23 +844,51 @@
             background: #fff1f2;
         }
 
+        /* (2026-07-13) Fix invisible outlines for inputs and rows; was faint white */
         .glass-input,
         .glass-textarea {
             width: 100%;
-            border: 1px solid rgba(255,255,255,0.86);
-            background: rgba(255,255,255,0.72);
-            border-radius: 15px;
-            padding: 11px 13px;
+            border: 1.5px solid #cbd5e1;
+            background: #ffffff;
+            border-radius: 14px;
+            padding: 11px 14px;
             outline: none;
             font: inherit;
             color: var(--ink);
             font-size: 0.9rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+        }
+
+        .glass-input:hover,
+        .glass-textarea:hover {
+            border-color: #94a3b8;
         }
 
         .glass-input:focus,
         .glass-textarea:focus {
-            border-color: rgba(90,31,224,0.3);
-            box-shadow: 0 0 0 4px rgba(90,31,224,0.08);
+            border-color: var(--primary);
+            background: #ffffff;
+            box-shadow: 0 0 0 3.5px rgba(90, 31, 224, 0.14);
+        }
+
+        .glass-input:read-only,
+        .glass-input:disabled {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+            color: var(--muted);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        select.glass-input {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+            padding-right: 36px;
         }
 
         .glass-textarea {
@@ -841,8 +913,9 @@
             align-items: center;
             padding: 13px 14px;
             border-radius: 16px;
-            background: rgba(255,255,255,0.76);
-            border: 1px solid rgba(255,255,255,0.74);
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
         }
 
         .management-grid {
@@ -875,10 +948,18 @@
         }
 
         .user-table-row {
-            padding: 14px;
+            padding: 14px 16px;
             border-radius: 16px;
-            background: rgba(255,255,255,0.82);
-            border: 1px solid rgba(90,31,224,0.08);
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .user-table-row:hover {
+            border-color: rgba(90, 31, 224, 0.3);
+            box-shadow: 0 4px 12px rgba(90, 31, 224, 0.08);
+            transform: translateY(-1px);
         }
 
         .user-table-main {
@@ -966,15 +1047,16 @@
             display: flex;
         }
 
+        /* (2026-07-13) Modal card border outline; was faint white border */
         .modal-card {
             width: min(760px, 100%);
             max-height: min(88vh, 920px);
             overflow-y: auto;
-            background: rgba(255,255,255,0.98);
-            border: 1px solid rgba(255,255,255,0.9);
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
             border-radius: 28px;
             box-shadow: 0 28px 80px rgba(15, 23, 42, 0.22);
-            padding: 20px;
+            padding: 24px;
         }
 
         .modal-head {
@@ -1116,11 +1198,13 @@
             text-transform: uppercase;
         }
 
+        /* (2026-07-13) Visible border for editor-note; was borderless */
         .editor-note {
             margin: 14px 0 0;
             padding: 11px 13px;
             border-radius: 15px;
             background: #f8fafc;
+            border: 1px solid #e2e8f0;
             color: var(--muted);
             font-size: 0.8rem;
             line-height: 1.45;
@@ -1184,9 +1268,21 @@
             line-height: 1.4;
         }
 
+        /* (2026-07-13) Fix table-row padding; was broken 2px 0 */
         .table-row {
-            padding: 2px 0;
-            align-items: start;
+            padding: 16px 20px;
+            border-radius: 16px;
+            background: #ffffff;
+            border: 1.5px solid #e2e8f0;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+            align-items: center;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .table-row:hover {
+            border-color: rgba(90, 31, 224, 0.3);
+            box-shadow: 0 4px 12px rgba(90, 31, 224, 0.08);
+            transform: translateY(-1px);
         }
 
         .search-input {
@@ -1490,9 +1586,9 @@
             align-self: flex-start;
             background: white;
             color: #1e293b;
-            border: 1px solid rgba(0,0,0,0.05);
+            border: 1.5px solid #e2e8f0;
             border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
 
         .admin-msg.sent {
@@ -1504,8 +1600,9 @@
         }
 
         .msg-time {
-            font-size: 0.62rem;
-            opacity: 0.7;
+            font-size: 0.68rem;
+            font-weight: 500;
+            opacity: 0.75;
             margin-top: 4px;
             display: block;
         }
@@ -1515,15 +1612,26 @@
             color: rgba(255,255,255,0.8);
         }
 
+        /* (2026-07-13) Full height messages section; was fixed 68vh height */
+        #sec-messages.active {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            height: 100%;
+        }
+
         .messages-shell {
             padding: 0 !important;
-            min-height: 68vh;
-            height: 68vh;
+            flex: 1;
+            min-height: 0;
+            height: 100%;
             display: grid;
             grid-template-columns: 340px minmax(0, 1fr);
             overflow: hidden;
-            border: 1px solid rgba(90,31,224,0.08);
-            box-shadow: 0 22px 50px rgba(49, 30, 105, 0.08);
+            border: 1.5px solid #e2e8f0;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
         }
 
         .messages-sidebar {
@@ -1753,6 +1861,11 @@
                                 <span class="material-symbols-outlined">crisis_alert</span>
                                 <span>SOS Triggers</span>
                             </button>
+                            <!-- (2026-07-13) Add Geofence Simulator tab; was 5 operation tabs only -->
+                            <button class="tab-btn" data-tab="geofence">
+                                <span class="material-symbols-outlined">share_location</span>
+                                <span>Geofence Simulator</span>
+                            </button>
                             <button class="tab-btn" data-tab="users">
                                 <span class="material-symbols-outlined">manage_accounts</span>
                                 <span>Users</span>
@@ -1771,26 +1884,67 @@
 
                 <main class="main-panel">
                     <section class="admin-section active" id="sec-stats">
+                        <!-- (2026-07-13) Add executive metric cards with icons; was bare text -->
                         <div class="stats-grid">
                             <div class="metric-card">
-                                <div class="metric-label">Total Users</div>
-                                <div class="metric-value" id="metricUsers">0</div>
-                                <div class="metric-sub">Visible accounts</div>
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                    <div>
+                                        <div class="metric-label">Total Users</div>
+                                        <div class="metric-value" id="metricUsers">0</div>
+                                    </div>
+                                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(90,31,224,0.1); color:var(--primary); display:flex; align-items:center; justify-content:center;">
+                                        <span class="material-symbols-outlined" style="font-size:22px;">groups</span>
+                                    </div>
+                                </div>
+                                <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
+                                    <span class="signal-dot" style="background:var(--primary); width:7px; height:7px;"></span>
+                                    <span>All platform accounts</span>
+                                </div>
                             </div>
                             <div class="metric-card">
-                                <div class="metric-label">Students</div>
-                                <div class="metric-value" id="metricStudents">0</div>
-                                <div class="metric-sub">Student profiles</div>
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                    <div>
+                                        <div class="metric-label">Students</div>
+                                        <div class="metric-value" id="metricStudents">0</div>
+                                    </div>
+                                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(2,132,199,0.1); color:#0284c7; display:flex; align-items:center; justify-content:center;">
+                                        <span class="material-symbols-outlined" style="font-size:22px;">school</span>
+                                    </div>
+                                </div>
+                                <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
+                                    <span class="signal-dot" style="background:#0284c7; width:7px; height:7px;"></span>
+                                    <span>Active student profiles</span>
+                                </div>
                             </div>
                             <div class="metric-card">
-                                <div class="metric-label">Guardians</div>
-                                <div class="metric-value" id="metricGuardians">0</div>
-                                <div class="metric-sub">Guardian profiles</div>
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                    <div>
+                                        <div class="metric-label">Guardians</div>
+                                        <div class="metric-value" id="metricGuardians">0</div>
+                                    </div>
+                                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(15,155,103,0.1); color:var(--green); display:flex; align-items:center; justify-content:center;">
+                                        <span class="material-symbols-outlined" style="font-size:22px;">family_restroom</span>
+                                    </div>
+                                </div>
+                                <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
+                                    <span class="signal-dot" style="background:var(--green); width:7px; height:7px;"></span>
+                                    <span>Connected guardians</span>
+                                </div>
                             </div>
                             <div class="metric-card">
-                                <div class="metric-label">Conversations</div>
-                                <div class="metric-value" id="metricThreads">0</div>
-                                <div class="metric-sub">Support threads</div>
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                    <div>
+                                        <div class="metric-label">Conversations</div>
+                                        <div class="metric-value" id="metricThreads">0</div>
+                                    </div>
+                                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(124,58,237,0.1); color:#7c3aed; display:flex; align-items:center; justify-content:center;">
+                                        <span class="material-symbols-outlined" style="font-size:22px;">chat</span>
+                                    </div>
+                                </div>
+                                <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
+                                    <span class="signal-dot" style="background:#7c3aed; width:7px; height:7px;"></span>
+                                    <span>Support inquiry channels</span>
+                                </div>
                             </div>
                         </div>
 
@@ -1905,6 +2059,147 @@
                         </div>
                     </section>
 
+                    <!-- (2026-07-13) Add Geofence Simulator section; was no simulator -->
+                    <section class="admin-section" id="sec-geofence">
+                        <div class="panel-card" style="margin-bottom: 20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
+                                <div>
+                                    <div class="eyebrow" style="color:var(--primary);">ATTENDANCE AUTOMATION</div>
+                                    <h2 class="chart-title" style="margin-top:2px;">Campus Geofence Simulator & Dispatcher</h2>
+                                    <p class="chart-copy">Trigger entry and exit events for testing without physically traveling outside. Automatically writes attendance and pushes notifications to parents.</p>
+                                </div>
+                                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                    <span class="capsule" style="background:rgba(15,155,103,0.1); color:var(--green); font-weight:800; font-size:0.78rem;">
+                                        <span class="signal-dot"></span>
+                                        <span id="simulatorGeofenceStatus">Geofence Active</span>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div style="background:rgba(248,250,252,0.9); border:1px solid rgba(226,232,240,0.9); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:12px;">
+                                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                                    <label for="simulatorStudentSelect" style="font-size:0.84rem; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:6px;">
+                                        <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary);">person_search</span>
+                                        Select Target Student
+                                    </label>
+                                    <button id="btnRefreshSimStudents" type="button" class="ghost-btn" style="min-height:36px; padding:0 12px; font-size:0.76rem; gap:6px;" title="Refresh student directory">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">sync</span>
+                                        <span>Refresh Directory</span>
+                                    </button>
+                                </div>
+                                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                                    <select id="simulatorStudentSelect" class="glass-input" style="flex:1; min-height:44px; font-weight:600; background:white;">
+                                        <option value="">Loading student profiles...</option>
+                                    </select>
+                                    <span id="simulatorStudentStatusBadge" class="capsule" style="min-height:44px; padding:0 14px; background:white; border:1px solid #e2e8f0; color:var(--muted);">
+                                        No student selected
+                                    </span>
+                                </div>
+                                <div id="simulatorStudentMetaText" style="font-size:0.8rem; color:var(--muted); display:flex; align-items:center; gap:6px;">
+                                    <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">info</span>
+                                    <span>Select a student above to trigger automated Time In or Time Out.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:18px; margin-bottom: 20px;">
+                            <div class="panel-card" style="display:flex; flex-direction:column; justify-content:space-between; gap:14px; border-left: 4px solid var(--green);">
+                                <div>
+                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                                        <div style="width:38px; height:38px; border-radius:12px; background:rgba(15,155,103,0.12); color:var(--green); display:flex; align-items:center; justify-content:center;">
+                                            <span class="material-symbols-outlined" style="font-size:22px;">login</span>
+                                        </div>
+                                        <div>
+                                            <h3 style="margin:0; font-size:1.02rem; font-family:'Sora', sans-serif; font-weight:700;">Simulate Campus Entry</h3>
+                                            <span style="font-size:0.75rem; color:var(--green); font-weight:700;">Action: Time In</span>
+                                        </div>
+                                    </div>
+                                    <p style="margin:0; font-size:0.82rem; color:var(--muted); line-height:1.45;">
+                                        Simulates student walking through campus gates into school perimeter. Writes official Time In log, updates GPS coordinates, and dispatches parent push notification.
+                                    </p>
+                                </div>
+                                <button id="btnSimulateTimeIn" type="button" class="primary-btn" style="background:linear-gradient(135deg, #0f9b67, #0b7c52); width:100%; justify-content:center; box-shadow:0 8px 20px rgba(15,155,103,0.22); min-height:46px;">
+                                    <span class="material-symbols-outlined">login</span>
+                                    <span>Trigger Campus Entry (Time In)</span>
+                                </button>
+                            </div>
+
+                            <div class="panel-card" style="display:flex; flex-direction:column; justify-content:space-between; gap:14px; border-left: 4px solid var(--red);">
+                                <div>
+                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+                                        <div style="width:38px; height:38px; border-radius:12px; background:rgba(209,31,52,0.12); color:var(--red); display:flex; align-items:center; justify-content:center;">
+                                            <span class="material-symbols-outlined" style="font-size:22px;">logout</span>
+                                        </div>
+                                        <div>
+                                            <h3 style="margin:0; font-size:1.02rem; font-family:'Sora', sans-serif; font-weight:700;">Simulate Campus Exit</h3>
+                                            <span style="font-size:0.75rem; color:var(--red); font-weight:700;">Action: Time Out</span>
+                                        </div>
+                                    </div>
+                                    <p style="margin:0; font-size:0.82rem; color:var(--muted); line-height:1.45;">
+                                        Simulates student leaving the campus boundary. Writes official Time Out log, updates GPS coordinates, and dispatches departure push notification to parents.
+                                    </p>
+                                </div>
+                                <button id="btnSimulateTimeOut" type="button" class="danger-btn" style="background:linear-gradient(135deg, #eb3a53, #c71d35); width:100%; justify-content:center; box-shadow:0 8px 20px rgba(209,31,52,0.22); min-height:46px;">
+                                    <span class="material-symbols-outlined">logout</span>
+                                    <span>Trigger Campus Exit (Time Out)</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="panel-card chart-card" style="margin-bottom: 20px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                                <div>
+                                    <div class="eyebrow" style="color:var(--primary);">INTERACTIVE GPS PIN SIMULATOR</div>
+                                    <h2 class="chart-title" style="margin-top:2px;">Custom Map Location Simulator</h2>
+                                    <p class="chart-copy">Click anywhere on the map to drop a test GPS pin. The system detects if the pin is inside or outside the geofence perimeter.</p>
+                                </div>
+                                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                    <span id="simulatorPinStatusBadge" class="capsule" style="background:rgba(90,31,224,0.1); color:var(--primary); font-weight:800; font-size:0.78rem;">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">pin_drop</span>
+                                        <span id="simulatorPinStatusText">Click Map to Drop Pin</span>
+                                    </span>
+                                    <button id="btnDispatchPinAttendance" type="button" class="primary-btn" style="padding:0 18px; min-height:40px; font-size:0.8rem;" disabled>
+                                        <span class="material-symbols-outlined" style="font-size:18px;">send_to_mobile</span>
+                                        <span>Dispatch At Pin</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="adminSimulatorMap" style="width:100%; height:400px; border-radius:18px; overflow:hidden; border:1px solid rgba(15,23,42,0.08); box-shadow:inset 0 2px 6px rgba(0,0,0,0.06); z-index:1;"></div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:10px; font-size:0.78rem; color:var(--muted);">
+                                <div>
+                                    Pin Coordinates: <strong id="simulatorPinCoordsText" style="color:var(--ink); font-family:monospace;">None (Click map)</strong>
+                                </div>
+                                <div id="simulatorPinZoneText" style="font-weight:600;">
+                                    Tip: Inside geofence triggers Time In; outside triggers Time Out.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-card">
+                            <div class="accounts-head">
+                                <div>
+                                    <div class="eyebrow" style="color:var(--primary);">ACTIVITY AUDIT FEED</div>
+                                    <h2 class="chart-title">Recent Geofence Simulation Logs</h2>
+                                    <p class="chart-copy">Audit trail of automated and simulated student attendance events and guardian delivery status.</p>
+                                </div>
+                                <div class="section-actions">
+                                    <button id="btnClearSimLogs" type="button" class="ghost-btn" style="min-height:36px; padding:0 12px; font-size:0.76rem;">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">clear_all</span>
+                                        <span>Clear Feed</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="users-table-head" style="margin-top:16px; grid-template-columns: minmax(0, 1.4fr) 1fr 1.2fr 0.9fr auto;">
+                                <span>Student</span>
+                                <span>Action</span>
+                                <span>Coordinates & Zone</span>
+                                <span>Triggered At</span>
+                                <span style="text-align:right;">Guardian Status</span>
+                            </div>
+                            <div class="table-list" id="simulatorDispatchLogsList" style="margin-top:8px;"></div>
+                        </div>
+                    </section>
+
                     <section class="admin-section" id="sec-users">
                         <div class="panel-card">
                             <div class="accounts-head">
@@ -1959,20 +2254,26 @@
                                         <span>Remove Image</span>
                                     </button>
                                 </div>
+                                <!-- (2026-07-13) Group composer actions with hints; was wide separate row -->
                                 <div class="composer-toolbar">
-                                    <p class="helper-text">12-500 characters.</p>
-                                    <button class="ghost-btn" id="cancelGadEditBtn" type="button" style="display:none;">
-                                        <span class="material-symbols-outlined">close</span>
-                                        <span>Cancel Edit</span>
-                                    </button>
-                                    <button class="ghost-btn" id="attachGadImageBtn" type="button">
-                                        <span class="material-symbols-outlined">image</span>
-                                        <span>Attach Image</span>
-                                    </button>
-                                    <button class="primary-btn" id="postGadBtn">
-                                        <span class="material-symbols-outlined">send</span>
-                                        <span>Publish</span>
-                                    </button>
+                                    <div style="display:flex; align-items:center; gap:6px; color:var(--muted); font-size:0.76rem;">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">info</span>
+                                        <span>12-500 characters &bull; Official Bulletin</span>
+                                    </div>
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <button class="ghost-btn" id="cancelGadEditBtn" type="button" style="display:none; min-height:42px; padding:0 14px;">
+                                            <span class="material-symbols-outlined">close</span>
+                                            <span>Cancel Edit</span>
+                                        </button>
+                                        <button class="ghost-btn" id="attachGadImageBtn" type="button" style="min-height:42px; padding:0 14px;">
+                                            <span class="material-symbols-outlined">image</span>
+                                            <span>Attach Image</span>
+                                        </button>
+                                        <button class="primary-btn" id="postGadBtn" style="min-height:42px; padding:0 20px;">
+                                            <span class="material-symbols-outlined">send</span>
+                                            <span>Publish</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1988,28 +2289,60 @@
                                     <input type="search" id="gadSearch" class="glass-input search-input" placeholder="Search GAD posts">
                                 </div>
                             </div>
-                            <div class="hero-grid" style="margin-bottom: 14px;">
+                            <!-- (2026-07-13) Executive GAD analytics cards; was bare text metrics -->
+                            <div class="hero-grid" style="margin-bottom: 18px;">
                                 <div class="metric-card">
-                                    <div class="metric-label">Posts</div>
-                                    <div class="metric-value" id="metricPosts">0</div>
-                                    <div class="metric-sub">Published bulletins</div>
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                        <div>
+                                            <div class="metric-label">Posts</div>
+                                            <div class="metric-value" id="metricPosts">0</div>
+                                        </div>
+                                        <div style="width:40px; height:40px; border-radius:12px; background:rgba(90,31,224,0.1); color:var(--primary); display:flex; align-items:center; justify-content:center;">
+                                            <span class="material-symbols-outlined" style="font-size:20px;">campaign</span>
+                                        </div>
+                                    </div>
+                                    <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
+                                        <span class="signal-dot" style="background:var(--primary); width:6px; height:6px;"></span>
+                                        <span>Published bulletins</span>
+                                    </div>
                                 </div>
                                 <div class="metric-card">
-                                    <div class="metric-label">Users Reached</div>
-                                    <div class="metric-value" id="metricGadReach">0</div>
-                                    <div class="metric-sub">Registered audience</div>
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                        <div>
+                                            <div class="metric-label">Users Reached</div>
+                                            <div class="metric-value" id="metricGadReach">0</div>
+                                        </div>
+                                        <div style="width:40px; height:40px; border-radius:12px; background:rgba(2,132,199,0.1); color:#0284c7; display:flex; align-items:center; justify-content:center;">
+                                            <span class="material-symbols-outlined" style="font-size:20px;">visibility</span>
+                                        </div>
+                                    </div>
+                                    <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
+                                        <span class="signal-dot" style="background:#0284c7; width:6px; height:6px;"></span>
+                                        <span>Registered audience</span>
+                                    </div>
                                 </div>
                                 <div class="metric-card">
-                                    <div class="metric-label">Engaged Users</div>
-                                    <div class="metric-value" id="metricGadEngaged">0</div>
-                                    <div class="metric-sub">Unique likes recorded</div>
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                        <div>
+                                            <div class="metric-label">Engaged Users</div>
+                                            <div class="metric-value" id="metricGadEngaged">0</div>
+                                        </div>
+                                        <div style="width:40px; height:40px; border-radius:12px; background:rgba(209,31,52,0.1); color:var(--red); display:flex; align-items:center; justify-content:center;">
+                                            <span class="material-symbols-outlined" style="font-size:20px;">favorite</span>
+                                        </div>
+                                    </div>
+                                    <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
+                                        <span class="signal-dot" style="background:var(--red); width:6px; height:6px;"></span>
+                                        <span>Audience reactions</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="table-list" id="gadList"></div>
                         </div>
                     </section>
 
-                    <section class="admin-section" id="sec-messages" style="flex: 0;">
+                    <!-- (2026-07-13) Expand messages section to full height; was flex: 0 -->
+                    <section class="admin-section" id="sec-messages">
                         <div class="panel-card chat-panel messages-shell">
                             <div class="messages-sidebar">
                                 <div class="messages-sidebar-head">
@@ -2195,6 +2528,11 @@
             subscribeToGADMessages,
             replyToGADMessage,
             saveCampusMapConfig,
+            // (2026-07-13) Import attendance & geofence simulator methods; was base imports
+            logAttendance,
+            updateStudentLiveLocation,
+            notifyGuardiansOfGeofenceEvent,
+            getAttendanceHistory,
             subscribeToCampusMapConfig
         } from './db.js';
         import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -2715,12 +3053,19 @@
             window.setTimeout(() => toast.remove(), 3200);
         };
 
-// (2026-07-13) Invalidate map size on sos and stats tab switch; was stats only
+        // (2026-07-13) Persist active tab on reload; was resetting to stats
         const setTab = (tab) => {
             tabBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === tab));
             sections.forEach((section) => section.classList.toggle('active', section.id === `sec-${tab}`));
+            try { localStorage.setItem('securo_admin_active_tab', tab); } catch (e) {}
             if (tab === 'stats' || tab === 'sos') {
                 if (adminSosLeafletMap) setTimeout(() => adminSosLeafletMap.invalidateSize(), 120);
+            }
+            if (tab === 'geofence') {
+                if (typeof initAdminSimulatorMap === 'function') initAdminSimulatorMap();
+                if (typeof populateSimulatorStudents === 'function') populateSimulatorStudents();
+                if (typeof setupSimulatorControls === 'function') setupSimulatorControls();
+                if (typeof renderSimulatorDispatchLogs === 'function') renderSimulatorDispatchLogs();
             }
             if (tab === 'messages') {
                 initAdminChat();
@@ -2732,6 +3077,11 @@
         tabBtns.forEach((btn) => {
             btn.addEventListener('click', () => setTab(btn.dataset.tab));
         });
+
+        try {
+            const savedTab = localStorage.getItem('securo_admin_active_tab');
+            if (savedTab && document.getElementById(`sec-${savedTab}`)) setTab(savedTab);
+        } catch (e) {}
 
         if (adminProfileChip) {
             adminProfileChip.addEventListener('click', (event) => {
@@ -2757,6 +3107,62 @@
             adminProfileDropdown?.classList.remove('active');
         });
 
+        // (2026-07-13) Add local caching for all data on reload; was network only
+        const SECURO_CACHE_KEY = 'securo_admin_master_cache';
+
+        function saveToLocalCache() {
+            try {
+                const payload = {
+                    posts: cachedPosts,
+                    users: cachedUsers,
+                    threads: cachedThreads,
+                    guardianLinks: cachedGuardianLinks,
+                    sosLogs: cachedSosLogs,
+                    emergencyPosts: cachedEmergencyPosts,
+                    savedAdminName: currentAdminName,
+                    time: Date.now()
+                };
+                localStorage.setItem(SECURO_CACHE_KEY, JSON.stringify(payload));
+            } catch (err) {
+                console.warn("Could not save to local cache:", err);
+            }
+        }
+
+        function loadFromLocalCache() {
+            try {
+                const raw = localStorage.getItem(SECURO_CACHE_KEY);
+                if (!raw) return false;
+                const data = JSON.parse(raw);
+                if (!data) return false;
+                if (Array.isArray(data.posts) && data.posts.length) cachedPosts = data.posts;
+                if (Array.isArray(data.users) && data.users.length) cachedUsers = data.users;
+                if (Array.isArray(data.threads) && data.threads.length) cachedThreads = data.threads;
+                if (Array.isArray(data.guardianLinks)) cachedGuardianLinks = data.guardianLinks;
+                if (Array.isArray(data.sosLogs)) cachedSosLogs = data.sosLogs;
+                if (Array.isArray(data.emergencyPosts)) cachedEmergencyPosts = data.emergencyPosts;
+                if (data.savedAdminName && adminDropdownName) {
+                    adminDropdownName.textContent = data.savedAdminName;
+                    if (adminInitials) {
+                        adminInitials.textContent = data.savedAdminName
+                            .split(/\s+/)
+                            .filter(Boolean)
+                            .slice(0, 2)
+                            .map((p) => p[0])
+                            .join('')
+                            .toUpperCase() || 'AD';
+                    }
+                }
+                applyFilters();
+                if (typeof populateSimulatorStudents === 'function') populateSimulatorStudents();
+                return true;
+            } catch (err) {
+                console.warn("Could not load from local cache:", err);
+                return false;
+            }
+        }
+
+        loadFromLocalCache();
+
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 showToast("Access denied", "Please sign in to the terminal first.", "error");
@@ -2770,7 +3176,12 @@
             try {
                 const profile = await getUserProfile(user.uid);
                 const isSpecialAdmin = profile?.role === 'admin';
-                currentAdminName = profile?.name || user.displayName || 'Administrator';
+                // (2026-07-13) Normalize admin display name; was showing Student
+                let resolvedAdminName = profile?.name || user.displayName || 'Administrator';
+                if (['student', 'user'].includes(resolvedAdminName.toLowerCase().trim())) {
+                    resolvedAdminName = 'Administrator';
+                }
+                currentAdminName = resolvedAdminName;
                 if (adminDropdownName) adminDropdownName.textContent = currentAdminName;
                 if (adminInitials) {
                     adminInitials.textContent = currentAdminName
@@ -2793,7 +3204,7 @@
                 await loadAllData();
                 if (unsubscribeAdminNotifications) unsubscribeAdminNotifications();
                 unsubscribeAdminNotifications = subscribeToAccountNotifications(user.uid, renderAdminNotifications);
-                showToast("Admin ready", `Command center synced successfully. Welcome ${currentAdminName}.`, "success");
+                showToast("Command Center Ready", `Session authenticated. Welcome ${currentAdminName}.`, "success");
             } catch (error) {
                 showToast("Sync failed", error.message || "Unable to load admin data right now.", "error");
             }
@@ -2822,7 +3233,11 @@
             cachedGuardianLinks = Array.isArray(guardianLinks) ? guardianLinks : [];
             cachedSosLogs = Array.isArray(sosLogs) ? sosLogs : [];
             cachedEmergencyPosts = Array.isArray(emergencyPosts) ? emergencyPosts : [];
+            // (2026-07-13) Save fresh data to local cache; was unpersisted
+            saveToLocalCache();
             applyFilters();
+            // (2026-07-13) Sync students with simulator dropdown; was user list only
+            if (typeof populateSimulatorStudents === 'function') populateSimulatorStudents();
             if (isCreatingManagedUser) {
                 setUserEditorState(null, { creating: true });
             } else if (selectedManagedUserId) {
@@ -2904,56 +3319,82 @@
             if (metricGadReach) metricGadReach.textContent = totalUsers;
             if (metricGadEngaged) metricGadEngaged.textContent = gadEngaged;
 
+            // (2026-07-13) Modernize role distribution & activity bars; was plain bars
             if (roleChart) {
                 const studentDeg = totalUsers ? (roleCounts.student / totalUsers) * 360 : 0;
                 const guardianDeg = totalUsers ? (roleCounts.guardian / totalUsers) * 360 : 0;
                 const staffDeg = totalUsers ? (roleCounts.staff / totalUsers) * 360 : 0;
                 roleChart.style.background = `conic-gradient(
-                    var(--primary) 0deg ${studentDeg}deg,
-                    #ff7a90 ${studentDeg}deg ${studentDeg + guardianDeg}deg,
-                    #9f67ff ${studentDeg + guardianDeg}deg ${studentDeg + guardianDeg + staffDeg}deg,
-                    #c7b8ff ${studentDeg + guardianDeg + staffDeg}deg 360deg
+                    #5a1fe0 0deg ${studentDeg}deg,
+                    #ec4899 ${studentDeg}deg ${studentDeg + guardianDeg}deg,
+                    #0284c7 ${studentDeg + guardianDeg}deg ${studentDeg + guardianDeg + staffDeg}deg,
+                    #8b5cf6 ${studentDeg + guardianDeg + staffDeg}deg 360deg
                 )`;
             }
             if (roleChartTotal) roleChartTotal.textContent = totalUsers;
             if (roleLegend) {
+                const studentPct = totalUsers ? Math.round((roleCounts.student / totalUsers) * 100) : 0;
+                const guardianPct = totalUsers ? Math.round((roleCounts.guardian / totalUsers) * 100) : 0;
+                const staffPct = totalUsers ? Math.round((roleCounts.staff / totalUsers) * 100) : 0;
+                const adminPct = totalUsers ? Math.round((roleCounts.admin / totalUsers) * 100) : 0;
+
                 roleLegend.innerHTML = `
-                    <div class="legend-item">
-                        <div class="legend-meta"><span class="legend-swatch" style="background: var(--primary);"></span><span>Students</span></div>
-                        <strong>${roleCounts.student}</strong>
+                    <div class="legend-item" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px 14px;">
+                        <div class="legend-meta"><span class="legend-swatch" style="background:#5a1fe0;"></span><span style="font-weight:700;">Students</span></div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:0.75rem; color:var(--muted); font-weight:700;">${studentPct}%</span>
+                            <strong style="font-size:0.95rem;">${roleCounts.student}</strong>
+                        </div>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-meta"><span class="legend-swatch" style="background: #ff7a90;"></span><span>Guardians</span></div>
-                        <strong>${roleCounts.guardian}</strong>
+                    <div class="legend-item" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px 14px;">
+                        <div class="legend-meta"><span class="legend-swatch" style="background:#ec4899;"></span><span style="font-weight:700;">Guardians</span></div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:0.75rem; color:var(--muted); font-weight:700;">${guardianPct}%</span>
+                            <strong style="font-size:0.95rem;">${roleCounts.guardian}</strong>
+                        </div>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-meta"><span class="legend-swatch" style="background: #9f67ff;"></span><span>Staff</span></div>
-                        <strong>${roleCounts.staff}</strong>
+                    <div class="legend-item" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px 14px;">
+                        <div class="legend-meta"><span class="legend-swatch" style="background:#0284c7;"></span><span style="font-weight:700;">Staff</span></div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:0.75rem; color:var(--muted); font-weight:700;">${staffPct}%</span>
+                            <strong style="font-size:0.95rem;">${roleCounts.staff}</strong>
+                        </div>
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-meta"><span class="legend-swatch" style="background: #c7b8ff;"></span><span>Admins</span></div>
-                        <strong>${roleCounts.admin}</strong>
+                    <div class="legend-item" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px 14px;">
+                        <div class="legend-meta"><span class="legend-swatch" style="background:#8b5cf6;"></span><span style="font-weight:700;">Admins</span></div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:0.75rem; color:var(--muted); font-weight:700;">${adminPct}%</span>
+                            <strong style="font-size:0.95rem;">${roleCounts.admin}</strong>
+                        </div>
                     </div>
                 `;
             }
             if (statsBarList) {
                 const barRows = [
-                    { label: 'Registered Users', value: totalUsers },
-                    { label: 'Published GAD Posts', value: cachedPosts.length },
-                    { label: 'Support Conversations', value: cachedThreads.length },
-                    { label: 'Engaged Users', value: gadEngaged }
+                    { label: 'Registered Users', value: totalUsers, color: 'linear-gradient(90deg, #4f46e5, #6366f1)', icon: 'groups' },
+                    { label: 'Published GAD Posts', value: cachedPosts.length, color: 'linear-gradient(90deg, #0284c7, #38bdf8)', icon: 'campaign' },
+                    { label: 'Support Conversations', value: cachedThreads.length, color: 'linear-gradient(90deg, #7c3aed, #a855f7)', icon: 'chat' },
+                    { label: 'Engaged Users', value: gadEngaged, color: 'linear-gradient(90deg, #059669, #10b981)', icon: 'favorite' }
                 ];
-                statsBarList.innerHTML = barRows.map((row) => `
-                    <div class="bar-row">
+                statsBarList.innerHTML = barRows.map((row) => {
+                    const pct = Math.min(100, Math.max(8, Math.round((row.value / Math.max(1, maxMetric)) * 100)));
+                    return `
+                    <div class="bar-row" style="margin-bottom:12px;">
                         <div class="bar-top">
-                            <span>${row.label}</span>
-                            <strong>${row.value}</strong>
+                            <span style="display:flex; align-items:center; gap:8px; font-weight:700;">
+                                <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">${row.icon}</span>
+                                <span>${row.label}</span>
+                            </span>
+                            <span style="display:flex; align-items:center; gap:8px;">
+                                <span style="font-size:0.75rem; color:var(--muted); font-weight:700;">${pct}%</span>
+                                <strong style="font-size:0.9rem;">${row.value}</strong>
+                            </span>
                         </div>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width:${Math.max(8, Math.round((row.value / maxMetric) * 100))}%;"></div>
+                        <div class="bar-track" style="height:10px; background:#f1f5f9; border-radius:999px; overflow:hidden; border:1px solid #e2e8f0;">
+                            <div class="bar-fill" style="width:${pct}%; background:${row.color}; height:100%; border-radius:999px; transition:width 0.6s ease;"></div>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             }
 // (2026-07-13) Add interactive Admin SOS Map & Hotspots renderer; was reporter stats only
             renderReporterStats();
@@ -3368,6 +3809,361 @@
                 renderBuildingMarkers();
             }
         });
+
+        // (2026-07-13) Add Geofence simulator engine & attendance dispatch; was none
+        function isPointInPolygon(point, vs) {
+            if (!point || !Array.isArray(vs) || vs.length < 3) return false;
+            const x = point[0], y = point[1];
+            let inside = false;
+            for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+                const xi = vs[i][0] ?? vs[i].lat, yi = vs[i][1] ?? vs[i].lng;
+                const xj = vs[j][0] ?? vs[j].lat, yj = vs[j][1] ?? vs[j].lng;
+                const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        let adminSimulatorLeafletMap = null;
+        let simulatorPinMarker = null;
+        let simulatorPolygonLayer = null;
+        let simulatorBuildingMarkers = [];
+        let activeSimPinCoords = null;
+        let isSimPinInsideCampus = false;
+        let simulatorDispatchLogs = [];
+
+        function populateSimulatorStudents() {
+            const select = document.getElementById('simulatorStudentSelect');
+            if (!select) return;
+            const currentSelected = select.value;
+            const students = (cachedUsers || []).filter((u) => getRoleKey(u) === 'student');
+
+            if (!students.length) {
+                select.innerHTML = '<option value="">No registered student profiles found</option>';
+                updateSimulatorStudentStatus();
+                return;
+            }
+
+            select.innerHTML = '<option value="">-- Choose a Student to Simulate --</option>' + students.map((s) => {
+                const label = `${escapeHtml(s.name || 'Student')} (${escapeHtml(s.studentId || s.email || s.id)})`;
+                return `<option value="${escapeHtml(s.id)}">${label}</option>`;
+            }).join('');
+
+            if (currentSelected && students.some((s) => s.id === currentSelected)) {
+                select.value = currentSelected;
+            } else if (students.length === 1) {
+                select.value = students[0].id;
+            }
+            updateSimulatorStudentStatus();
+        }
+
+        async function updateSimulatorStudentStatus() {
+            const select = document.getElementById('simulatorStudentSelect');
+            const badge = document.getElementById('simulatorStudentStatusBadge');
+            const metaText = document.getElementById('simulatorStudentMetaText');
+            if (!select || !badge || !metaText) return;
+
+            const studentId = select.value;
+            if (!studentId) {
+                badge.textContent = 'No student selected';
+                badge.style.background = 'white';
+                badge.style.color = 'var(--muted)';
+                badge.style.borderColor = '#e2e8f0';
+                metaText.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">info</span><span>Select a student above to trigger automated Time In or Time Out.</span>';
+                return;
+            }
+
+            const student = (cachedUsers || []).find((u) => u.id === studentId);
+            badge.textContent = 'Checking status...';
+
+            try {
+                const history = await getAttendanceHistory(studentId);
+                const latest = history?.[0];
+                if (latest && latest.type === 'in') {
+                    badge.innerHTML = '<span class="signal-dot" style="background:#0f9b67;"></span><span>Timed IN (On Campus)</span>';
+                    badge.style.background = 'rgba(15,155,103,0.1)';
+                    badge.style.color = 'var(--green)';
+                    badge.style.borderColor = 'rgba(15,155,103,0.2)';
+                } else if (latest && latest.type === 'out') {
+                    badge.innerHTML = '<span class="signal-dot" style="background:#d11f34;"></span><span>Timed OUT (Off Campus)</span>';
+                    badge.style.background = 'rgba(209,31,52,0.1)';
+                    badge.style.color = 'var(--red)';
+                    badge.style.borderColor = 'rgba(209,31,52,0.2)';
+                } else {
+                    badge.textContent = 'No attendance logs yet';
+                    badge.style.background = 'rgba(90,31,224,0.06)';
+                    badge.style.color = 'var(--primary)';
+                    badge.style.borderColor = 'rgba(90,31,224,0.15)';
+                }
+
+                metaText.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">verified</span><span>Target: <strong>${escapeHtml(student?.name || 'Student')}</strong> &bull; ID: ${escapeHtml(student?.studentId || 'N/A')} &bull; Email: ${escapeHtml(student?.email || 'N/A')}</span>`;
+            } catch (err) {
+                badge.textContent = 'Status ready';
+            }
+        }
+
+        function renderSimulatorBuildingMarkers() {
+            if (!adminSimulatorLeafletMap) return;
+            simulatorBuildingMarkers.forEach((m) => adminSimulatorLeafletMap.removeLayer(m));
+            simulatorBuildingMarkers = [];
+
+            const buildings = getActiveAdminBuildings();
+            buildings.forEach((b) => {
+                if (!b?.coords || !Array.isArray(b.coords)) return;
+                const bIcon = L.divIcon({
+                    className: 'facility-marker-icon',
+                    html: `<div style="background:#2563eb; color:white; width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid white;"><span class="material-symbols-outlined" style="font-size:16px;">${b.icon || 'location_city'}</span></div>`,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                });
+                const m = L.marker(b.coords, { icon: bIcon }).addTo(adminSimulatorLeafletMap);
+                m.bindTooltip(`<strong>${escapeHtml(b.name || 'Facility')}</strong>`, { direction: 'top', offset: [0, -14] });
+                simulatorBuildingMarkers.push(m);
+            });
+        }
+
+        function initAdminSimulatorMap() {
+            const mapEl = document.getElementById('adminSimulatorMap');
+            if (!mapEl || typeof L === 'undefined') return;
+
+            if (!adminSimulatorLeafletMap) {
+                adminSimulatorLeafletMap = L.map('adminSimulatorMap', {
+                    zoomControl: true,
+                    attributionControl: false,
+                    zoomSnap: 0.25,
+                    zoomDelta: 0.5,
+                    wheelPxPerZoomLevel: 140
+                }).setView(ADMIN_CAMPUS_CENTER, 17);
+
+                const simBaseMaps = {
+                    "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                    "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                    "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                    "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
+                };
+                simBaseMaps["Google Hybrid"].addTo(adminSimulatorLeafletMap);
+                L.control.layers(simBaseMaps, null, { position: 'topright' }).addTo(adminSimulatorLeafletMap);
+
+                const geofence = getActiveAdminGeofencePolygon();
+                simulatorPolygonLayer = L.polygon(geofence, {
+                    color: '#0f9b67',
+                    weight: 3,
+                    dashArray: '6, 6',
+                    fillColor: '#10b981',
+                    fillOpacity: 0.15
+                }).addTo(adminSimulatorLeafletMap);
+
+                renderSimulatorBuildingMarkers();
+
+                adminSimulatorLeafletMap.on('click', (e) => {
+                    const lat = Number(e.latlng.lat);
+                    const lng = Number(e.latlng.lng);
+                    activeSimPinCoords = [lat, lng];
+                    isSimPinInsideCampus = isPointInPolygon([lat, lng], currentAdminGeofence);
+
+                    if (simulatorPinMarker) {
+                        adminSimulatorLeafletMap.removeLayer(simulatorPinMarker);
+                    }
+
+                    const pinColor = isSimPinInsideCampus ? '#0f9b67' : '#d11f34';
+                    const pinIconName = isSimPinInsideCampus ? 'login' : 'logout';
+                    const pinHtml = `<div style="width:34px; height:34px; border-radius:50%; background:${pinColor}; border:3px solid white; box-shadow:0 0 16px ${pinColor}88; display:flex; align-items:center; justify-content:center; color:white;"><span class="material-symbols-outlined" style="font-size:18px;">${pinIconName}</span></div>`;
+
+                    simulatorPinMarker = L.marker([lat, lng], {
+                        icon: L.divIcon({ className: 'sim-pin-icon', html: pinHtml, iconSize: [34, 34], iconAnchor: [17, 17] })
+                    }).addTo(adminSimulatorLeafletMap);
+
+                    const badge = document.getElementById('simulatorPinStatusBadge');
+                    const badgeText = document.getElementById('simulatorPinStatusText');
+                    const coordsText = document.getElementById('simulatorPinCoordsText');
+                    const zoneText = document.getElementById('simulatorPinZoneText');
+                    const dispatchBtn = document.getElementById('btnDispatchPinAttendance');
+
+                    if (coordsText) coordsText.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                    if (badge) {
+                        badge.style.background = isSimPinInsideCampus ? 'rgba(15,155,103,0.12)' : 'rgba(209,31,52,0.12)';
+                        badge.style.color = isSimPinInsideCampus ? 'var(--green)' : 'var(--red)';
+                    }
+                    if (badgeText) {
+                        badgeText.textContent = isSimPinInsideCampus ? 'Inside Campus (Time In)' : 'Outside Campus (Time Out)';
+                    }
+                    if (zoneText) {
+                        zoneText.textContent = isSimPinInsideCampus ? 'Position inside school perimeter. Dispatching will trigger Time In.' : 'Position outside campus boundary. Dispatching will trigger Time Out.';
+                    }
+                    if (dispatchBtn) dispatchBtn.disabled = false;
+                });
+            } else {
+                if (simulatorPolygonLayer) {
+                    simulatorPolygonLayer.setLatLngs(getActiveAdminGeofencePolygon());
+                }
+                renderSimulatorBuildingMarkers();
+            }
+
+            setTimeout(() => {
+                if (adminSimulatorLeafletMap) adminSimulatorLeafletMap.invalidateSize();
+            }, 100);
+        }
+
+        async function executeSimulatorAttendance(actionType, customLat = null, customLng = null, customAddress = '') {
+            const select = document.getElementById('simulatorStudentSelect');
+            const studentId = select?.value;
+
+            if (!studentId) {
+                showToast("Select Student", "Please choose a student profile to simulate.", "error");
+                return;
+            }
+
+            const student = (cachedUsers || []).find((u) => u.id === studentId);
+            const studentName = student?.name || 'Student';
+
+            let lat = customLat;
+            let lng = customLng;
+            let address = customAddress;
+
+            if (lat === null || lng === null) {
+                if (actionType === 'in') {
+                    lat = ADMIN_CAMPUS_CENTER[0];
+                    lng = ADMIN_CAMPUS_CENTER[1];
+                    address = address || 'Campus Main Grounds (Admin Simulator)';
+                } else {
+                    lat = 14.526800;
+                    lng = 120.978500;
+                    address = address || 'Outside Campus Bounds (Admin Simulator)';
+                }
+            }
+
+            const btnIn = document.getElementById('btnSimulateTimeIn');
+            const btnOut = document.getElementById('btnSimulateTimeOut');
+            const btnPin = document.getElementById('btnDispatchPinAttendance');
+
+            if (btnIn) btnIn.disabled = true;
+            if (btnOut) btnOut.disabled = true;
+            if (btnPin) btnPin.disabled = true;
+
+            try {
+                const locationPayload = { lat, lng, address, simulated: true };
+                await logAttendance(studentId, actionType, locationPayload);
+                await updateStudentLiveLocation(studentId, { lat, lng }).catch(() => {});
+                const notifiedGuardians = await notifyGuardiansOfGeofenceEvent(studentId, studentName, actionType, locationPayload);
+
+                const logItem = {
+                    id: Date.now(),
+                    studentName,
+                    studentId: student?.studentId || studentId,
+                    type: actionType,
+                    coords: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+                    address,
+                    timestamp: new Date(),
+                    guardianCount: Array.isArray(notifiedGuardians) ? notifiedGuardians.length : 0
+                };
+
+                simulatorDispatchLogs.unshift(logItem);
+                renderSimulatorDispatchLogs();
+                await updateSimulatorStudentStatus();
+
+                const actionLabel = actionType === 'in' ? 'Timed IN (Campus Entry)' : 'Timed OUT (Campus Exit)';
+                showToast("Simulation Successful", `${studentName} was ${actionLabel}. Parents notified.`, "success");
+            } catch (err) {
+                console.warn("Simulator dispatch error:", err);
+                showToast("Simulation Failed", err.message || "Could not complete simulation dispatch.", "error");
+            } finally {
+                if (btnIn) btnIn.disabled = false;
+                if (btnOut) btnOut.disabled = false;
+                if (btnPin && activeSimPinCoords) btnPin.disabled = false;
+            }
+        }
+
+        function renderSimulatorDispatchLogs() {
+            const container = document.getElementById('simulatorDispatchLogsList');
+            if (!container) return;
+
+            if (!simulatorDispatchLogs.length) {
+                container.innerHTML = '<div class="empty-state">No simulated attendance dispatches recorded yet. Use the trigger buttons above to test.</div>';
+                return;
+            }
+
+            container.innerHTML = simulatorDispatchLogs.map((log) => {
+                const isEntry = log.type === 'in';
+                const timeStr = log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : 'Just now';
+                return `
+                    <div class="user-row" style="grid-template-columns: minmax(0, 1.4fr) 1fr 1.2fr 0.9fr auto;">
+                        <div class="user-cell-primary">
+                            <div class="user-avatar" style="background:${isEntry ? 'linear-gradient(135deg, #0f9b67, #10b981)' : 'linear-gradient(135deg, #e11d48, #f43f5e)'}; color:white;">
+                                ${escapeHtml((log.studentName || 'S').charAt(0).toUpperCase())}
+                            </div>
+                            <div>
+                                <div class="row-title">${escapeHtml(log.studentName)}</div>
+                                <div class="row-sub">ID: ${escapeHtml(log.studentId)}</div>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="role-pill ${isEntry ? 'student' : 'staff'}" style="${isEntry ? 'background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;' : 'background:#fff1f2; color:#9f1239; border:1px solid #fecdd3;'}">
+                                <span class="material-symbols-outlined" style="font-size:14px;">${isEntry ? 'login' : 'logout'}</span>
+                                <span>${isEntry ? 'Auto Timed In' : 'Auto Timed Out'}</span>
+                            </span>
+                        </div>
+                        <div>
+                            <div style="font-weight:700; font-size:0.84rem;">${escapeHtml(log.address)}</div>
+                            <div style="font-size:0.75rem; color:var(--muted); font-family:monospace;">${escapeHtml(log.coords)}</div>
+                        </div>
+                        <div style="font-size:0.8rem; color:var(--muted); font-weight:600;">
+                            ${timeStr}
+                        </div>
+                        <div style="text-align:right;">
+                            <span class="capsule" style="background:rgba(90,31,224,0.08); color:var(--primary); font-size:0.72rem; min-height:28px;">
+                                <span class="material-symbols-outlined" style="font-size:14px;">send</span>
+                                <span>Push Notified (${log.guardianCount})</span>
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setupSimulatorControls() {
+            const btnIn = document.getElementById('btnSimulateTimeIn');
+            const btnOut = document.getElementById('btnSimulateTimeOut');
+            const btnPin = document.getElementById('btnDispatchPinAttendance');
+            const btnRefresh = document.getElementById('btnRefreshSimStudents');
+            const btnClear = document.getElementById('btnClearSimLogs');
+            const select = document.getElementById('simulatorStudentSelect');
+
+            if (btnIn && !btnIn.dataset.bound) {
+                btnIn.dataset.bound = 'true';
+                btnIn.addEventListener('click', () => executeSimulatorAttendance('in'));
+            }
+            if (btnOut && !btnOut.dataset.bound) {
+                btnOut.dataset.bound = 'true';
+                btnOut.addEventListener('click', () => executeSimulatorAttendance('out'));
+            }
+            if (btnPin && !btnPin.dataset.bound) {
+                btnPin.dataset.bound = 'true';
+                btnPin.addEventListener('click', () => {
+                    if (!activeSimPinCoords) return;
+                    const action = isSimPinInsideCampus ? 'in' : 'out';
+                    const addr = isSimPinInsideCampus ? 'Inside Campus Perimeter (Pin Dispatch)' : 'Outside Campus Boundary (Pin Dispatch)';
+                    executeSimulatorAttendance(action, activeSimPinCoords[0], activeSimPinCoords[1], addr);
+                });
+            }
+            if (btnRefresh && !btnRefresh.dataset.bound) {
+                btnRefresh.dataset.bound = 'true';
+                btnRefresh.addEventListener('click', () => {
+                    populateSimulatorStudents();
+                    showToast("Directory Refreshed", "Student profiles updated for simulation.", "info");
+                });
+            }
+            if (btnClear && !btnClear.dataset.bound) {
+                btnClear.dataset.bound = 'true';
+                btnClear.addEventListener('click', () => {
+                    simulatorDispatchLogs = [];
+                    renderSimulatorDispatchLogs();
+                });
+            }
+            if (select && !select.dataset.bound) {
+                select.dataset.bound = 'true';
+                select.addEventListener('change', () => updateSimulatorStudentStatus());
+            }
+        }
 
         // (2026-07-13) Verified reporter metadata resolution for SOS logs; was raw uid string
         function getReporterInfo(log) {
@@ -4006,17 +4802,19 @@
             renderThreads(cachedThreads);
         };
 
+        // (2026-07-13) Display date and time in messages; was time only
         function renderAdminMessages(messages) {
             adminChatMessages.innerHTML = "";
             messages.forEach(msg => {
                 const isSent = msg.senderId === ADMIN_ID;
                 const date = msg.timestamp?.toDate?.() || new Date(msg.localTime || Date.now());
+                const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
                 const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
 
                 const msgEl = document.createElement("div");
                 msgEl.className = `admin-msg ${isSent ? 'sent' : 'received'}`;
                 if (msg.isPending) msgEl.style.opacity = "0.7";
-                msgEl.innerHTML = `${msg.text}<span class="msg-time">${timeStr}</span>`;
+                msgEl.innerHTML = `${msg.text}<span class="msg-time">${dateStr} · ${timeStr}</span>`;
                 adminChatMessages.appendChild(msgEl);
             });
             adminChatMessages.scrollTo({ top: adminChatMessages.scrollHeight, behavior: 'smooth' });
@@ -4030,7 +4828,10 @@
             const msgEl = document.createElement("div");
             msgEl.className = "admin-msg sent";
             msgEl.style.opacity = "0.7";
-            msgEl.innerHTML = `${text}<span class="msg-time">${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}</span>`;
+            const now = new Date();
+            const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            msgEl.innerHTML = `${text}<span class="msg-time">${dateStr} · ${timeStr}</span>`;
             adminChatMessages.appendChild(msgEl);
             adminChatMessages.scrollTo({ top: adminChatMessages.scrollHeight, behavior: 'smooth' });
             adminChatInput.value = "";
