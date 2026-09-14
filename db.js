@@ -1928,6 +1928,32 @@ export const notifyGuardiansOfGeofenceEvent = async (studentUid, studentName, ty
                 return null;
             })
         );
+
+        // (2026-07-13) Notify student of geofence time in/out; was guardian only
+        dispatches.push(
+            sendAccountNotification({
+                userId: studentUid,
+                type: isEntry ? 'campus_entry' : 'campus_exit',
+                title: isEntry ? "Campus Entry" : "Campus Exit",
+                message: isEntry
+                    ? "You've entered the campus, successfully timed in."
+                    : "You've exited the campus, successfully timed out.",
+                sourceUserId: studentUid,
+                sourceName: "Campus Safety",
+                studentId: "",
+                metadata: {
+                    type,
+                    lat: location.lat || null,
+                    lng: location.lng || null,
+                    address: location.address || '',
+                    timestamp: new Date().toISOString()
+                }
+            }).catch(err => {
+                console.warn("Failed to notify student of geofence event:", err);
+                return null;
+            })
+        );
+
         return await Promise.all(dispatches);
     } catch (error) {
         console.warn("Error notifying guardians of geofence event:", error);

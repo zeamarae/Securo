@@ -204,6 +204,7 @@
             color: var(--red);
         }
 
+        /* (2026-07-13) Prevent button text line break; was normal wrapping */
         .ghost-btn,
         .primary-btn,
         .danger-btn {
@@ -218,6 +219,8 @@
             cursor: pointer;
             transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
             text-decoration: none;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .ghost-btn {
@@ -237,6 +240,28 @@
             background: linear-gradient(135deg, #eb3a53, #c71d35);
             color: #fff;
             box-shadow: 0 16px 32px rgba(209,31,52,0.22);
+        }
+
+        /* (2026-07-13) Disabled & loader button styling; was unstyled when disabled */
+        .primary-btn:disabled,
+        .danger-btn:disabled,
+        .ghost-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            filter: grayscale(0.7);
+            transform: none !important;
+            box-shadow: none !important;
+            pointer-events: none;
+        }
+
+        .spin-icon {
+            display: inline-block;
+            animation: simBtnSpin 0.75s linear infinite;
+        }
+
+        @keyframes simBtnSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .signal-chip {
@@ -533,12 +558,18 @@
             background: linear-gradient(135deg, var(--primary), #7c5cff);
         }
 
+        /* (2026-07-13) Center accounts head & flex first child; was flex-start */
         .accounts-head {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             gap: 16px;
             flex-wrap: wrap;
+        }
+
+        .accounts-head > div:first-child {
+            flex: 1 1 260px;
+            min-width: 0;
         }
 
         .danger-inline-btn {
@@ -712,11 +743,13 @@
             font-size: 0.8rem;
         }
 
+        /* (2026-07-13) Nowrap section actions in single row; was wrap */
         .section-actions {
             display: flex;
             align-items: center;
             gap: 12px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            flex-shrink: 0;
         }
 
         .eyebrow {
@@ -739,23 +772,19 @@
         }
 
         .announcement-input-shell {
-            border: 1px solid rgba(90,31,224,0.14);
+            border: 1.5px solid rgba(90,31,224,0.18);
             border-radius: 20px;
-            background:
-                linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,245,255,0.9));
-            box-shadow:
-                inset 0 1px 0 rgba(255,255,255,0.9),
-                0 14px 28px rgba(55, 31, 129, 0.06);
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(55, 31, 129, 0.04);
             overflow: hidden;
             transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
         }
 
         .announcement-input-shell:focus-within {
-            border-color: rgba(90,31,224,0.3);
+            border-color: var(--primary);
             box-shadow:
-                inset 0 1px 0 rgba(255,255,255,0.96),
-                0 0 0 4px rgba(90,31,224,0.07),
-                0 18px 32px rgba(55, 31, 129, 0.1);
+                0 0 0 3.5px rgba(90,31,224,0.12),
+                0 12px 28px rgba(55, 31, 129, 0.08);
         }
 
         .announcement-input-meta {
@@ -763,7 +792,9 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            padding: 12px 16px 0;
+            padding: 14px 16px 10px;
+            border-bottom: 1px solid rgba(90,31,224,0.08);
+            background: rgba(90,31,224,0.02);
         }
 
         .announcement-input-label {
@@ -783,22 +814,32 @@
             white-space: nowrap;
         }
 
-        /* (2026-07-13) Compact announcement composer styling; was 190px blank area */
-        .announcement-textarea {
+        /* (2026-07-13) Fix nested textarea border & background; was nested box */
+        .announcement-textarea,
+        .glass-textarea.announcement-textarea {
+            width: 100%;
             min-height: 110px;
             height: 120px;
             padding: 14px 16px 16px;
-            border: none;
-            background: transparent;
-            box-shadow: none;
+            border: none !important;
+            background: transparent !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            outline: none !important;
             resize: vertical;
             line-height: 1.6;
             font-size: 0.95rem;
+            color: var(--ink);
+            font: inherit;
+            display: block;
         }
 
-        .announcement-textarea:focus {
-            border: none;
-            box-shadow: none;
+        .announcement-textarea:focus,
+        .glass-textarea.announcement-textarea:focus {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            outline: none !important;
         }
 
         .announcement-textarea::placeholder {
@@ -992,11 +1033,10 @@
             background: rgba(241,235,255,0.96);
         }
 
+        /* (2026-07-13) Action menu portal: position:fixed escapes overflow containers; was position:absolute z-30 */
         .row-action-menu {
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            min-width: 160px;
+            position: fixed;
+            min-width: 168px;
             padding: 8px;
             border-radius: 16px;
             background: rgba(255,255,255,0.98);
@@ -1004,7 +1044,7 @@
             box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
             display: grid;
             gap: 6px;
-            z-index: 30;
+            z-index: 900;
         }
 
         .row-action-item {
@@ -1039,8 +1079,9 @@
             display: none;
             align-items: center;
             justify-content: center;
+            /* (2026-07-13) Raised z-index above action menus (z-30); was 400 */
             padding: 20px;
-            z-index: 400;
+            z-index: 600;
         }
 
         .modal-overlay.active {
@@ -1049,14 +1090,125 @@
 
         /* (2026-07-13) Modal card border outline; was faint white border */
         .modal-card {
-            width: min(760px, 100%);
-            max-height: min(88vh, 920px);
-            overflow-y: auto;
+            width: min(820px, 100%);
+            /* (2026-07-13) Card no longer scrolls — panels scroll; was overflow-y:auto */
+            max-height: min(92vh, 960px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
             background: #ffffff;
             border: 1.5px solid #e2e8f0;
             border-radius: 28px;
             box-shadow: 0 28px 80px rgba(15, 23, 42, 0.22);
             padding: 24px;
+        }
+
+        /* (2026-07-13) User editor modal tabs; was single flat view */
+        .modal-tabs {
+            display: flex;
+            gap: 4px;
+            padding: 4px;
+            background: #f1f5f9;
+            border-radius: 14px;
+            margin: 14px 0;
+        }
+
+        .modal-tab-btn {
+            flex: 1;
+            min-height: 36px;
+            padding: 0 14px;
+            border-radius: 11px;
+            border: none;
+            background: transparent;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.18s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .modal-tab-btn.active {
+            background: #ffffff;
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(90, 31, 224, 0.1);
+        }
+
+        .modal-tab-panel {
+            display: none;
+        }
+
+        .modal-tab-panel.active {
+            /* (2026-07-13) Panels scroll instead of the card; was display:block only */
+            display: block;
+            overflow-y: auto;
+            max-height: calc(min(92vh, 960px) - 170px);
+            padding-right: 2px;
+        }
+
+        /* (2026-07-13) History log row styling; was absent */
+        .history-log-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            border-radius: 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+
+        .history-log-row + .history-log-row {
+            margin-top: 8px;
+        }
+
+        .history-log-dot {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* (2026-07-13) Link chip delete button; was status text only */
+        .link-chip-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 11px 14px;
+            border-radius: 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+
+        .link-chip-row + .link-chip-row {
+            margin-top: 8px;
+        }
+
+        .link-del-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            border: 1px solid #fecdd3;
+            background: #fff1f2;
+            color: #e11d48;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: background 0.15s, transform 0.12s;
+        }
+
+        .link-del-btn:hover {
+            background: #ffe4e6;
+            transform: scale(1.08);
         }
 
         .modal-head {
@@ -1141,6 +1293,12 @@
             flex-shrink: 0;
         }
 
+        /* (2026-07-13) Red profile avatar for guardians; was purple gradient */
+        .management-avatar.guardian {
+            background: linear-gradient(135deg, #e11d48, #be123c);
+            box-shadow: 0 10px 20px rgba(225, 29, 72, 0.22);
+        }
+
         .management-meta {
             display: grid;
             gap: 10px;
@@ -1164,9 +1322,11 @@
             background: rgba(90,31,224,0.08);
         }
 
+        /* (2026-07-13) Red border outline for guardian role pill; was borderless */
         .role-pill.guardian {
             color: #d1465b;
             background: #fff1f2;
+            border: 1px solid #fecdd3;
         }
 
         .role-pill.admin {
@@ -1520,6 +1680,12 @@
             justify-content: center;
             font-weight: 700;
             flex-shrink: 0;
+        }
+
+        /* (2026-07-13) Red thread avatar for guardians; was purple soft */
+        .thread-avatar.guardian {
+            background: #fff1f2;
+            color: #e11d48;
         }
 
         .thread-info {
@@ -2244,7 +2410,8 @@
                                         <span class="announcement-input-label">Announcement Body</span>
                                         <span class="announcement-input-hint">Clear, short, and official</span>
                                     </div>
-                                    <textarea id="gadPostText" class="glass-textarea announcement-textarea" placeholder="Write the official announcement here..." maxlength="500"></textarea>
+                                    <!-- (2026-07-13) Pure announcement textarea; was nested glass-textarea -->
+                                    <textarea id="gadPostText" class="announcement-textarea" placeholder="Write the official announcement here..." maxlength="500"></textarea>
                                 </div>
                                 <input id="gadImageInput" type="file" accept="image/*" hidden>
                                 <div class="image-preview-card" id="gadImagePreviewCard">
@@ -2378,14 +2545,18 @@
         </div>
     </div>
 
+    <!-- (2026-07-13) Tabbed user editor modal; was single-panel flat editor -->
     <div class="modal-overlay" id="userEditorModal" aria-hidden="true">
         <div class="modal-card">
             <div class="modal-head">
                 <div class="editor-header" style="flex:1; margin:0;">
-                    <div>
-                        <div class="eyebrow" id="userEditorBadge">Profile Editor</div>
-                        <h2 class="chart-title" id="userEditorTitle">Select a user</h2>
-                        <p class="chart-copy" id="userEditorCopy">Choose a saved account to edit its details and linked family information.</p>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div id="userEditorAvatarHead" class="management-avatar" style="width:46px; height:46px; font-size:1.1rem; border-radius:18px;">?</div>
+                        <div>
+                            <div class="eyebrow" id="userEditorBadge">Profile Editor</div>
+                            <h2 class="chart-title" id="userEditorTitle" style="margin-top:2px;">Select a user</h2>
+                            <p class="chart-copy" id="userEditorCopy" style="margin:2px 0 0;">Choose a saved account to edit its details and linked family information.</p>
+                        </div>
                     </div>
                     <span class="role-pill student" id="userEditorRolePill">Student</span>
                 </div>
@@ -2394,48 +2565,94 @@
                 </button>
             </div>
 
-            <div class="editor-grid">
-                <div class="field-block full">
-                    <label for="manageUserId">Record ID</label>
-                    <input id="manageUserId" class="glass-input" type="text" readonly>
+            <!-- (2026-07-13) Modal tab bar; was absent -->
+            <div class="modal-tabs" id="userEditorTabs">
+                <button class="modal-tab-btn active" data-tab="profile" type="button">
+                    <span class="material-symbols-outlined" style="font-size:15px;">person</span>
+                    Profile
+                </button>
+                <button class="modal-tab-btn" data-tab="links" type="button">
+                    <span class="material-symbols-outlined" style="font-size:15px;">family_restroom</span>
+                    Links
+                </button>
+                <button class="modal-tab-btn" data-tab="history" type="button">
+                    <span class="material-symbols-outlined" style="font-size:15px;">history</span>
+                    History
+                </button>
+            </div>
+
+            <!-- TAB: Profile -->
+            <div class="modal-tab-panel active" id="tabPanelProfile">
+                <div class="editor-grid">
+                    <div class="field-block full">
+                        <label for="manageUserId">Record ID</label>
+                        <input id="manageUserId" class="glass-input" type="text" readonly>
+                    </div>
+                    <div class="field-block">
+                        <label for="manageUserName">Full Name</label>
+                        <input id="manageUserName" class="glass-input" type="text" placeholder="Enter full name">
+                    </div>
+                    <div class="field-block">
+                        <label for="manageUserRole">Role</label>
+                        <select id="manageUserRole" class="glass-input">
+                            <option value="student">Student</option>
+                            <option value="guardian">Guardian</option>
+                            <option value="staff">Staff</option>
+                        </select>
+                    </div>
+                    <div class="field-block" id="manageUserEmailBlock">
+                        <label for="manageUserEmail" id="manageUserEmailLabel">Email</label>
+                        <input id="manageUserEmail" class="glass-input" type="email" placeholder="user@example.com">
+                    </div>
+                    <div class="field-block">
+                        <label for="manageUserPassword">Password</label>
+                        <input id="manageUserPassword" class="glass-input" type="password" placeholder="Required for new sign-in accounts">
+                    </div>
+                    <div class="field-block" id="manageUserStudentIdBlock">
+                        <label for="manageUserStudentId" id="manageUserStudentIdLabel">Student ID</label>
+                        <input id="manageUserStudentId" class="glass-input" type="text" placeholder="7-digit student ID">
+                    </div>
                 </div>
-                <div class="field-block">
-                    <label for="manageUserName">Full Name</label>
-                    <input id="manageUserName" class="glass-input" type="text" placeholder="Enter full name">
+
+                <div class="editor-note" id="userEditorMeta">
+                    Parent or guardian relationships will appear here once a saved profile is selected.
                 </div>
-                <div class="field-block">
-                    <label for="manageUserRole">Role</label>
-                    <select id="manageUserRole" class="glass-input">
-                        <option value="student">Student</option>
-                        <option value="guardian">Guardian</option>
-                        <option value="staff">Staff</option>
-                    </select>
-                </div>
-                <div class="field-block" id="manageUserEmailBlock">
-                    <label for="manageUserEmail" id="manageUserEmailLabel">Email</label>
-                    <input id="manageUserEmail" class="glass-input" type="email" placeholder="user@example.com">
-                </div>
-                <div class="field-block">
-                    <label for="manageUserPassword">Password</label>
-                    <input id="manageUserPassword" class="glass-input" type="password" placeholder="Required for new sign-in accounts">
-                </div>
-                <div class="field-block" id="manageUserStudentIdBlock">
-                    <label for="manageUserStudentId" id="manageUserStudentIdLabel">Student ID</label>
-                    <input id="manageUserStudentId" class="glass-input" type="text" placeholder="7-digit student ID">
+
+                <div class="panel-card readable-card" style="padding:16px 18px; margin-top:16px;">
+                    <div class="eyebrow">Location</div>
+                    <h3 class="chart-title" id="userLocationTitle" style="font-size:1rem; margin-top:6px;">No recent location loaded</h3>
+                    <p class="chart-copy" id="userLocationCopy" style="margin-bottom:0;">Select a user to check the latest shared location or evidence area.</p>
                 </div>
             </div>
 
-            <div class="editor-note" id="userEditorMeta">
-                Parent or guardian relationships will appear here once a saved profile is selected.
+            <!-- TAB: Links -->
+            <div class="modal-tab-panel" id="tabPanelLinks">
+                <div id="managementRelationList" style="margin-top:4px;"></div>
+                <!-- (2026-07-13) Add child/guardian link UI; was view-only -->
+                <div id="addLinkSection" style="margin-top:14px; display:none;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                        <span class="eyebrow" id="addLinkLabel">Add Child</span>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:stretch;">
+                        <input id="addLinkStudentIdInput" class="glass-input" type="text" placeholder="Enter Student ID of child to link" style="flex:1; min-height:40px; font-size:0.85rem;">
+                        <button id="addLinkSubmitBtn" class="primary-btn" type="button" style="min-height:40px; padding:0 16px; font-size:0.82rem;">
+                            <span class="material-symbols-outlined" style="font-size:17px;">add_link</span>
+                            <span>Link</span>
+                        </button>
+                    </div>
+                    <div style="font-size:0.73rem; color:var(--muted); margin-top:5px;">This will create an accepted link immediately.</div>
+                </div>
             </div>
 
-            <div class="panel-card readable-card" style="padding:16px 18px; margin-top:16px;">
-                <div class="eyebrow">Location</div>
-                <h3 class="chart-title" id="userLocationTitle" style="font-size:1rem; margin-top:6px;">No recent location loaded</h3>
-                <p class="chart-copy" id="userLocationCopy" style="margin-bottom:0;">Select a user to check the latest shared location or evidence area.</p>
+            <!-- TAB: History -->
+            <div class="modal-tab-panel" id="tabPanelHistory">
+                <div id="userHistoryList" style="margin-top:4px;">
+                    <div class="empty-state" style="padding:24px 0;">
+                        <span class="material-symbols-outlined" style="font-size:32px; opacity:0.25;">history</span>
+                        <p style="margin:8px 0 0; font-size:0.82rem; color:var(--muted);">Select a user and open History to view time-in / time-out records.</p>
+                    </div>
+                </div>
             </div>
-
-            <div class="relation-list" id="managementRelationList"></div>
 
             <div class="editor-actions" style="margin-top:18px;">
                 <div class="inline-fields">
@@ -2533,7 +2750,12 @@
             updateStudentLiveLocation,
             notifyGuardiansOfGeofenceEvent,
             getAttendanceHistory,
-            subscribeToCampusMapConfig
+            subscribeToCampusMapConfig,
+            // (2026-07-13) Import link management for user editor; was absent
+            removeGuardianLink,
+            createGuardianLinkRequest,
+            // (2026-07-13) Import SOS log fetcher for user history tab; was absent
+            getUserSOSLogs
         } from './db.js';
         import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -2822,17 +3044,63 @@
             userEditorModal?.setAttribute('aria-hidden', 'true');
         };
 
-        const toggleUserActionMenu = (userId) => {
-            openUserActionMenuId = openUserActionMenuId === userId ? null : userId;
-            renderManagedUsers();
+        // (2026-07-13) Portal action menu: render at body level with fixed coords; was inline z-30
+        let _portalTriggerRect = null;
+        const _ensurePortal = () => {
+            let el = document.getElementById('userActionPortal');
+            if (!el) {
+                el = document.createElement('div');
+                el.id = 'userActionPortal';
+                el.className = 'row-action-menu';
+                el.style.display = 'none';
+                document.body.appendChild(el);
+            }
+            return el;
+        };
+
+        const toggleUserActionMenu = (userId, triggerEl) => {
+            const portal = _ensurePortal();
+            if (openUserActionMenuId === userId) {
+                // Close
+                openUserActionMenuId = null;
+                portal.style.display = 'none';
+                renderManagedUsers();
+                return;
+            }
+            openUserActionMenuId = userId;
+            renderManagedUsers(); // re-render to update active state on trigger btn
+
+            // Find trigger button position (after re-render)
+            const btn = triggerEl || managementUserList?.querySelector(`[data-user-action-trigger="${userId}"]`);
+            const rect = btn ? btn.getBoundingClientRect() : { bottom: 0, right: 0 };
+
+            const user = getManagedUserById(userId);
+            portal.innerHTML = `
+                <button class="row-action-item" type="button" data-user-action="edit" data-user-id="${escapeHtml(userId)}">
+                    <span class="material-symbols-outlined">edit</span>
+                    <span>Edit User</span>
+                </button>
+                <button class="row-action-item delete" type="button" data-user-action="delete" data-user-id="${escapeHtml(userId)}" data-user-name="${escapeHtml(user?.name || 'this user')}">
+                    <span class="material-symbols-outlined">delete</span>
+                    <span>Delete User</span>
+                </button>
+            `;
+            portal.style.display = 'grid';
+            // Position: right-align below trigger
+            portal.style.top = `${rect.bottom + 8}px`;
+            portal.style.left = 'auto';
+            portal.style.right = `${window.innerWidth - rect.right}px`;
         };
 
         const closeUserActionMenu = () => {
             if (!openUserActionMenuId) return;
             openUserActionMenuId = null;
+            const portal = document.getElementById('userActionPortal');
+            if (portal) portal.style.display = 'none';
             renderManagedUsers();
         };
 
+        // (2026-07-13) Support multiple parent/child links; was raw un-deduped map
         function buildUserRelations(user) {
             if (!user) return [];
 
@@ -2841,16 +3109,25 @@
             const byStudentId = new Map(cachedUsers.filter((entry) => entry.studentId).map((entry) => [String(entry.studentId), entry]));
 
             if (role === 'guardian') {
-                return cachedGuardianLinks
-                    .filter((link) => String(link.guardianId) === String(user.id))
-                    .map((link) => {
-                        const childUser = byId.get(String(link.studentUid || '')) || byStudentId.get(String(link.studentId || ''));
-                        return {
-                            title: childUser?.name || link.studentName || link.studentId || 'Child link',
-                            subtitle: link.studentId ? `Student ID: ${link.studentId}` : 'No student ID',
-                            status: link.status || 'pending'
-                        };
+                const guardianLinks = cachedGuardianLinks.filter((link) => String(link.guardianId) === String(user.id));
+                const seenChildren = new Set();
+                const uniqueRelations = [];
+
+                guardianLinks.forEach((link) => {
+                    const childUser = byId.get(String(link.studentUid || '')) || byStudentId.get(String(link.studentId || ''));
+                    const dedupeKey = childUser?.id || link.studentUid || link.studentId || link.id;
+                    if (dedupeKey && seenChildren.has(dedupeKey)) return;
+                    if (dedupeKey) seenChildren.add(dedupeKey);
+
+                    // (2026-07-13) Include linkId for deletion; was title/subtitle/status only
+                    uniqueRelations.push({
+                        linkId: link.id,
+                        title: childUser?.name || link.studentName || link.studentId || 'Child link',
+                        subtitle: link.studentId ? `Student ID: ${link.studentId}` : (childUser?.email || 'No student ID'),
+                        status: link.status || 'pending'
                     });
+                });
+                return uniqueRelations;
             }
 
             const links = cachedGuardianLinks.filter((link) => {
@@ -2859,44 +3136,97 @@
                 return false;
             });
 
-            return links.map((link) => {
+            const seenGuardians = new Set();
+            const uniqueRelations = [];
+
+            links.forEach((link) => {
                 const guardianUser = byId.get(String(link.guardianId || ''));
-                return {
+                const dedupeKey = guardianUser?.id || link.guardianId || link.guardianEmail || link.id;
+                if (dedupeKey && seenGuardians.has(dedupeKey)) return;
+                if (dedupeKey) seenGuardians.add(dedupeKey);
+
+                // (2026-07-13) Include linkId for deletion; was title/subtitle/status only
+                uniqueRelations.push({
+                    linkId: link.id,
                     title: guardianUser?.name || link.guardianName || link.guardianEmail || 'Guardian link',
                     subtitle: guardianUser?.email || link.guardianEmail || 'No email',
                     status: link.status || 'pending'
-                };
+                });
             });
+
+            return uniqueRelations;
         }
 
+        // (2026-07-13) Show child/parent badge with delete button; was title+status only
         function renderRelationList(user) {
             const relations = buildUserRelations(user);
+            const addLinkSection = document.getElementById('addLinkSection');
+            const addLinkLabel = document.getElementById('addLinkLabel');
             if (!managementRelationList) return;
 
             if (!user) {
                 managementRelationList.innerHTML = '';
+                if (addLinkSection) addLinkSection.style.display = 'none';
                 return;
+            }
+
+            const roleKey = getRoleKey(user);
+            const isGuardian = roleKey === 'guardian';
+
+            // Show add-link section only for guardians (to add children)
+            if (addLinkSection) {
+                addLinkSection.style.display = isGuardian ? '' : 'none';
+                if (addLinkLabel) addLinkLabel.textContent = 'Add Linked Child';
             }
 
             if (!relations.length) {
                 managementRelationList.innerHTML = `
                     <div class="empty-state">
                         <span class="material-symbols-outlined" style="font-size:30px; opacity:0.35;">family_restroom</span>
-                        <p style="margin:8px 0 0;">No parent, guardian, or child links saved for this account.</p>
+                        <p style="margin:8px 0 0;">${isGuardian ? 'No children linked to this guardian.' : 'No guardian links saved for this account.'}</p>
                     </div>
                 `;
                 return;
             }
 
+            // (2026-07-13) Rename parent to guardian with red chip; was teal badge
+            const relationTypeBadge = isGuardian ? 'Linked Child' : 'Linked Guardian';
+            const badgeColor = isGuardian
+                ? 'color:var(--primary); background:rgba(90,31,224,0.08);'
+                : 'color:#d1465b; background:#fff1f2; border:1px solid #fecdd3;';
+
             managementRelationList.innerHTML = relations.map((relation) => `
-                <div class="relation-chip">
+                <div class="link-chip-row">
                     <div>
-                        <div class="row-title">${escapeHtml(relation.title)}</div>
-                        <div class="row-sub">${escapeHtml(relation.subtitle)}</div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; padding:2px 8px; border-radius:6px; ${badgeColor}">${relationTypeBadge}</span>
+                            <span class="row-title" style="font-size:0.9rem;">${escapeHtml(relation.title)}</span>
+                        </div>
+                        <div class="row-sub" style="margin-top:3px;">${escapeHtml(relation.subtitle)} &bull; <span style="text-transform:capitalize;">${escapeHtml(relation.status)}</span></div>
                     </div>
-                    <span class="relation-status">${escapeHtml(relation.status)}</span>
+                    ${relation.linkId ? `<button class="link-del-btn" data-link-id="${escapeHtml(relation.linkId)}" title="Remove link" type="button"><span class="material-symbols-outlined" style="font-size:16px;">link_off</span></button>` : ''}
                 </div>
             `).join('');
+
+            // Attach delete handlers
+            managementRelationList.querySelectorAll('.link-del-btn').forEach((btn) => {
+                btn.addEventListener('click', async (e) => {
+                    const linkId = btn.dataset.linkId;
+                    if (!linkId) return;
+                    if (!confirm('Remove this guardian-child link?')) return;
+                    btn.disabled = true;
+                    try {
+                        await removeGuardianLink(linkId);
+                        // (2026-07-13) Remove from cache and re-render on delete; was full reload
+                        cachedGuardianLinks = cachedGuardianLinks.filter((l) => l.id !== linkId);
+                        showToast('Link removed.', 'success');
+                        renderRelationList(user);
+                    } catch (err) {
+                        showToast('Failed to remove link: ' + (err.message || err), 'error');
+                        btn.disabled = false;
+                    }
+                });
+            });
         }
 
         function setUserEditorState(user = null, options = {}) {
@@ -2931,10 +3261,25 @@
             }
             if (deleteManagedUserBtn) deleteManagedUserBtn.disabled = creating || !user?.id;
 
+            // (2026-07-13) Update avatar in modal header; was absent
+            const avatarEl = document.getElementById('userEditorAvatarHead');
+            if (avatarEl) {
+                const initials = (user?.name || '?').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+                avatarEl.textContent = creating ? '+' : initials;
+                avatarEl.className = 'management-avatar' + (roleKey === 'guardian' ? ' guardian' : '');
+            }
+
+            // (2026-07-13) Reset tab to Profile when a new user is loaded; was persistent
+            switchUserEditorTab('profile');
+            // Reset history panel on user change
+            const histList = document.getElementById('userHistoryList');
+            if (histList) histList.innerHTML = `<div class="empty-state" style="padding:24px 0;"><span class="material-symbols-outlined" style="font-size:32px; opacity:0.25;">history</span><p style="margin:8px 0 0; font-size:0.82rem; color:var(--muted);">Open the History tab to load this user's attendance records.</p></div>`;
+
             renderRelationList(creating ? null : user);
             loadManagedUserLocation(creating ? null : user).catch(() => {});
             updateManagedUserRoleFields(creating ? 'student' : roleKey, { creating });
             renderManagedUsers();
+            setupLinkManagement(user);
         }
 
         function updateManagedUserRoleFields(roleValue = 'student', options = {}) {
@@ -2977,6 +3322,144 @@
             }
         }
 
+        // (2026-07-13) Switch user editor modal tab; was absent
+        function switchUserEditorTab(tabName) {
+            document.querySelectorAll('.modal-tab-btn').forEach((btn) => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
+            document.querySelectorAll('.modal-tab-panel').forEach((panel) => {
+                panel.classList.toggle('active', panel.id === `tabPanel${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
+            });
+            // Load history when that tab is opened
+            if (tabName === 'history') {
+                const currentUser = cachedUsers.find((u) => u.id === selectedManagedUserId) || null;
+                loadUserHistory(currentUser);
+            }
+        }
+
+        // (2026-07-13) Load and render attendance + SOS history for selected user; was attendance only
+        async function loadUserHistory(user) {
+            const histList = document.getElementById('userHistoryList');
+            if (!histList) return;
+            if (!user) {
+                histList.innerHTML = `<div class="empty-state" style="padding:24px 0;"><span class="material-symbols-outlined" style="font-size:32px; opacity:0.25;">history</span><p style="margin:8px 0 0; font-size:0.82rem; color:var(--muted);">Select a user to view their history.</p></div>`;
+                return;
+            }
+            histList.innerHTML = `<div style="display:flex; align-items:center; gap:10px; padding:16px 0; color:var(--muted); font-size:0.82rem;"><span class="material-symbols-outlined" style="font-size:20px; animation:simBtnSpin 1s linear infinite;">progress_activity</span>Loading records…</div>`;
+            try {
+                // (2026-07-13) Parallel fetch of attendance + SOS; was attendance only
+                const [attendanceRecords, sosRecords] = await Promise.all([
+                    getAttendanceHistory(user.id),
+                    getUserSOSLogs(user.id)
+                ]);
+
+                // Normalise attendance records
+                const attRows = attendanceRecords.map((rec) => ({
+                    _ts: rec.timestamp?.seconds || 0,
+                    _kind: 'attendance',
+                    ...rec
+                }));
+
+                // Normalise SOS records
+                const sosRows = sosRecords.map((rec) => ({
+                    _ts: rec.timestamp?.seconds || 0,
+                    _kind: 'sos',
+                    ...rec
+                }));
+
+                const merged = [...attRows, ...sosRows].sort((a, b) => b._ts - a._ts);
+
+                if (!merged.length) {
+                    histList.innerHTML = `<div class="empty-state" style="padding:24px 0;"><span class="material-symbols-outlined" style="font-size:32px; opacity:0.25;">history_toggle_off</span><p style="margin:8px 0 0; font-size:0.82rem; color:var(--muted);">No attendance or SOS records found for this user.</p></div>`;
+                    return;
+                }
+
+                histList.innerHTML = merged.map((rec) => {
+                    const ts = rec._ts ? new Date(rec._ts * 1000) : null;
+                    const timeStr = ts ? ts.toLocaleString() : 'Unknown time';
+
+                    if (rec._kind === 'sos') {
+                        // (2026-07-13) SOS row styling — orange alert; was absent
+                        const locStr = rec.location ? `${(+rec.location.lat || 0).toFixed(5)}, ${(+rec.location.lng || 0).toFixed(5)}` : 'No location';
+                        return `<div class="history-log-row">
+                            <div class="history-log-dot" style="background:#fff7ed; color:#ea580c;">
+                                <span class="material-symbols-outlined" style="font-size:18px;">sos</span>
+                            </div>
+                            <div style="flex:1; min-width:0;">
+                                <div class="row-title" style="font-size:0.88rem; color:#ea580c;">SOS Alert</div>
+                                <div class="row-sub" style="margin-top:2px;">${timeStr}</div>
+                            </div>
+                            <div class="row-sub" style="text-align:right; white-space:nowrap; font-size:0.72rem;">${escapeHtml(locStr)}</div>
+                        </div>`;
+                    }
+
+                    const isIn = rec.type === 'in';
+                    const dotBg = isIn ? 'background:#dcfce7; color:#16a34a;' : 'background:#fee2e2; color:#dc2626;';
+                    const icon = isIn ? 'login' : 'logout';
+                    const label = isIn ? 'Time In' : 'Time Out';
+                    return `<div class="history-log-row">
+                        <div class="history-log-dot" style="${dotBg}">
+                            <span class="material-symbols-outlined" style="font-size:18px;">${icon}</span>
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <div class="row-title" style="font-size:0.88rem;">${label}</div>
+                            <div class="row-sub" style="margin-top:2px;">${timeStr}</div>
+                        </div>
+                        ${rec.locationName ? `<div class="row-sub" style="text-align:right; white-space:nowrap; font-size:0.72rem;">${escapeHtml(rec.locationName)}</div>` : ''}
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                histList.innerHTML = `<div class="empty-state" style="padding:24px 0;"><span class="material-symbols-outlined" style="font-size:32px; opacity:0.25;">error</span><p style="margin:8px 0 0; font-size:0.82rem; color:var(--muted);">Failed to load history.</p></div>`;
+            }
+        }
+
+        // (2026-07-13) Setup add-link form for guardian user; was absent
+        function setupLinkManagement(user) {
+            const addLinkSubmitBtn = document.getElementById('addLinkSubmitBtn');
+            const addLinkStudentIdInput = document.getElementById('addLinkStudentIdInput');
+            if (!addLinkSubmitBtn || !addLinkStudentIdInput) return;
+
+            // Clone to remove old event listeners
+            const newBtn = addLinkSubmitBtn.cloneNode(true);
+            addLinkSubmitBtn.parentNode.replaceChild(newBtn, addLinkSubmitBtn);
+
+            newBtn.addEventListener('click', async () => {
+                if (!user) return;
+                const studentId = addLinkStudentIdInput.value.trim();
+                if (!studentId) { showToast('Enter a student ID.', 'error'); return; }
+                const studentUser = cachedUsers.find((u) => String(u.studentId) === studentId);
+                newBtn.disabled = true;
+                newBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:17px; animation:simBtnSpin 1s linear infinite;">progress_activity</span><span>Linking…</span>`;
+                try {
+                    await createGuardianLinkRequest({
+                        guardianId: user.id,
+                        guardianEmail: user.email || '',
+                        guardianName: user.name || '',
+                        studentId: studentId,
+                        studentUid: studentUser?.id || null,
+                        status: 'accepted'
+                    });
+                    showToast('Child linked successfully.', 'success');
+                    addLinkStudentIdInput.value = '';
+                    // Refresh links cache and re-render
+                    const { getAllGuardianLinksAdmin: refresh } = await import('./db.js');
+                    cachedGuardianLinks = await refresh();
+                    renderRelationList(user);
+                } catch (err) {
+                    showToast((err.message || 'Failed to create link.'), 'error');
+                } finally {
+                    newBtn.disabled = false;
+                    newBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:17px;">add_link</span><span>Link</span>`;
+                }
+            });
+        }
+
+        // (2026-07-13) Initialize modal tab button listeners; was absent
+        document.querySelectorAll('#userEditorTabs .modal-tab-btn').forEach((btn) => {
+            btn.addEventListener('click', () => switchUserEditorTab(btn.dataset.tab));
+        });
+
+        // (2026-07-13) Show linked child/parent details in user rows; was link count
         function renderManagedUsers() {
             if (!managementUserList) return;
             const term = (managementUserSearch?.value || '').trim().toLowerCase();
@@ -2995,16 +3478,46 @@
                 const roleKey = getRoleKey(user);
                 const relations = buildUserRelations(user);
                 const isMenuOpen = openUserActionMenuId === user.id;
-                const relationLabel = roleKey === 'guardian'
-                    ? `${relations.length} child link${relations.length === 1 ? '' : 's'}`
-                    : `${relations.length} parent/guardian link${relations.length === 1 ? '' : 's'}`;
+
+                // (2026-07-13) Support multi-parent & multi-child counts; was single list
+                let relationMarkup = '';
+                if (roleKey === 'guardian') {
+                    relationMarkup = relations.length
+                        ? `<div style="margin-top:4px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+                            ${relations.length > 1 ? `<span style="font-size:0.68rem; font-weight:800; color:var(--muted);">${relations.length} Children:</span>` : ''}
+                            ${relations.map(rel => `
+                                <span style="font-size:0.72rem; font-weight:700; color:var(--primary); background:rgba(90,31,224,0.08); padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
+                                    <span class="material-symbols-outlined" style="font-size:13px;">escalator_warning</span>
+                                    Child: ${escapeHtml(rel.title)}${rel.subtitle && rel.subtitle !== 'No student ID' ? ` (${escapeHtml(rel.subtitle.replace('Student ID: ', ''))})` : ''}
+                                </span>
+                            `).join('')}
+                           </div>`
+                        : `<div class="row-sub" style="font-size:0.73rem; color:var(--muted); margin-top:2px;">No child linked</div>`;
+                // (2026-07-13) Rename parent to guardian with red styling; was teal chip
+                } else if (roleKey === 'student') {
+                    relationMarkup = relations.length
+                        ? `<div style="margin-top:4px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+                            ${relations.length > 1 ? `<span style="font-size:0.68rem; font-weight:800; color:var(--muted);">${relations.length} Guardians:</span>` : ''}
+                            ${relations.map(rel => `
+                                <span style="font-size:0.72rem; font-weight:700; color:#d1465b; background:#fff1f2; border:1px solid #fecdd3; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
+                                    <span class="material-symbols-outlined" style="font-size:13px;">family_restroom</span>
+                                    Guardian: ${escapeHtml(rel.title)}
+                                </span>
+                            `).join('')}
+                           </div>`
+                        : `<div class="row-sub" style="font-size:0.73rem; color:var(--muted); margin-top:2px;">No guardian linked</div>`;
+                } else {
+                    relationMarkup = `<div class="row-sub" style="font-size:0.73rem; color:var(--muted); margin-top:2px;">Staff member</div>`;
+                }
+
                 return `
                     <div class="user-table-row">
                         <div class="user-table-main inline-fields" style="align-items:center;">
-                            <div class="management-avatar">${escapeHtml(getInitials(user.name || user.email || 'U'))}</div>
+                            <!-- (2026-07-13) Set red avatar for guardians; was default purple -->
+                            <div class="management-avatar ${roleKey === 'guardian' ? 'guardian' : ''}">${escapeHtml(getInitials(user.name || user.email || 'U'))}</div>
                             <div>
                                 <div class="row-title">${escapeHtml(user.name || 'Unnamed user')}</div>
-                                <div class="row-sub">${escapeHtml(relationLabel)}</div>
+                                ${relationMarkup}
                             </div>
                         </div>
                         <div>
@@ -3018,18 +3531,6 @@
                             <button class="icon-ghost-btn" type="button" data-user-action-trigger="${escapeHtml(user.id)}" aria-label="More actions for ${escapeHtml(user.name || 'user')}">
                                 <span class="material-symbols-outlined">more_horiz</span>
                             </button>
-                            ${isMenuOpen ? `
-                                <div class="row-action-menu">
-                                    <button class="row-action-item" type="button" data-user-action="edit" data-user-id="${escapeHtml(user.id)}">
-                                        <span class="material-symbols-outlined">edit</span>
-                                        <span>Edit User</span>
-                                    </button>
-                                    <button class="row-action-item delete" type="button" data-user-action="delete" data-user-id="${escapeHtml(user.id)}" data-user-name="${escapeHtml(user.name || 'this user')}">
-                                        <span class="material-symbols-outlined">delete</span>
-                                        <span>Delete User</span>
-                                    </button>
-                                </div>
-                            ` : ''}
                         </div>
                     </div>
                 `;
@@ -4036,15 +4537,38 @@
             const btnOut = document.getElementById('btnSimulateTimeOut');
             const btnPin = document.getElementById('btnDispatchPinAttendance');
 
-            if (btnIn) btnIn.disabled = true;
-            if (btnOut) btnOut.disabled = true;
-            if (btnPin) btnPin.disabled = true;
+            // (2026-07-13) Fast parallel dispatch & button loader; was slow serial
+            const isFromPin = customLat !== null && customLng !== null;
+            const originalPinHtml = btnPin?.innerHTML;
+            const originalInHtml = btnIn?.innerHTML;
+            const originalOutHtml = btnOut?.innerHTML;
+
+            if (btnIn) {
+                btnIn.disabled = true;
+                if (!isFromPin && actionType === 'in') {
+                    btnIn.innerHTML = `<span class="material-symbols-outlined spin-icon" style="font-size:18px;">progress_activity</span><span>Triggering Entry...</span>`;
+                }
+            }
+            if (btnOut) {
+                btnOut.disabled = true;
+                if (!isFromPin && actionType === 'out') {
+                    btnOut.innerHTML = `<span class="material-symbols-outlined spin-icon" style="font-size:18px;">progress_activity</span><span>Triggering Exit...</span>`;
+                }
+            }
+            if (btnPin) {
+                btnPin.disabled = true;
+                if (isFromPin) {
+                    btnPin.innerHTML = `<span class="material-symbols-outlined spin-icon" style="font-size:18px;">progress_activity</span><span>Dispatching...</span>`;
+                }
+            }
 
             try {
                 const locationPayload = { lat, lng, address, simulated: true };
-                await logAttendance(studentId, actionType, locationPayload);
-                await updateStudentLiveLocation(studentId, { lat, lng }).catch(() => {});
-                const notifiedGuardians = await notifyGuardiansOfGeofenceEvent(studentId, studentName, actionType, locationPayload);
+                const [, , notifiedGuardians] = await Promise.all([
+                    logAttendance(studentId, actionType, locationPayload),
+                    updateStudentLiveLocation(studentId, { lat, lng }).catch(() => {}),
+                    notifyGuardiansOfGeofenceEvent(studentId, studentName, actionType, locationPayload).catch(() => [])
+                ]);
 
                 const logItem = {
                     id: Date.now(),
@@ -4059,7 +4583,7 @@
 
                 simulatorDispatchLogs.unshift(logItem);
                 renderSimulatorDispatchLogs();
-                await updateSimulatorStudentStatus();
+                updateSimulatorStudentStatus();
 
                 const actionLabel = actionType === 'in' ? 'Timed IN (Campus Entry)' : 'Timed OUT (Campus Exit)';
                 showToast("Simulation Successful", `${studentName} was ${actionLabel}. Parents notified.`, "success");
@@ -4067,9 +4591,18 @@
                 console.warn("Simulator dispatch error:", err);
                 showToast("Simulation Failed", err.message || "Could not complete simulation dispatch.", "error");
             } finally {
-                if (btnIn) btnIn.disabled = false;
-                if (btnOut) btnOut.disabled = false;
-                if (btnPin && activeSimPinCoords) btnPin.disabled = false;
+                if (btnIn) {
+                    btnIn.disabled = false;
+                    if (originalInHtml) btnIn.innerHTML = originalInHtml;
+                }
+                if (btnOut) {
+                    btnOut.disabled = false;
+                    if (originalOutHtml) btnOut.innerHTML = originalOutHtml;
+                }
+                if (btnPin) {
+                    if (originalPinHtml) btnPin.innerHTML = originalPinHtml;
+                    if (activeSimPinCoords) btnPin.disabled = false;
+                }
             }
         }
 
@@ -4469,30 +5002,41 @@
                 const triggerButton = event.target.closest('[data-user-action-trigger]');
                 if (triggerButton) {
                     event.stopPropagation();
-                    toggleUserActionMenu(triggerButton.dataset.userActionTrigger);
+                    // (2026-07-13) Pass trigger element for portal positioning; was no element
+                    toggleUserActionMenu(triggerButton.dataset.userActionTrigger, triggerButton);
                     return;
                 }
+            });
+        }
 
-                const actionItem = event.target.closest('[data-user-action][data-user-id]');
-                if (!actionItem) return;
+        // (2026-07-13) Portal click delegate for Edit/Delete; was inline in list
+        document.addEventListener('click', (event) => {
+            const portal = document.getElementById('userActionPortal');
+            const actionItem = event.target.closest('[data-user-action][data-user-id]');
+            if (actionItem) {
                 event.stopPropagation();
                 const selectedUser = getManagedUserById(actionItem.dataset.userId);
                 if (!selectedUser) return;
+                openUserActionMenuId = null;
+                if (portal) portal.style.display = 'none';
+                renderManagedUsers();
 
                 if (actionItem.dataset.userAction === 'edit') {
-                    openUserActionMenuId = null;
                     setUserEditorState(selectedUser);
                     openUserEditorModal();
                     return;
                 }
-
                 if (actionItem.dataset.userAction === 'delete') {
-                    openUserActionMenuId = null;
-                    renderManagedUsers();
                     window.handleDeleteUser(actionItem.dataset.userId, actionItem.dataset.userName || selectedUser.name || 'this user');
                 }
-            });
-        }
+                return;
+            }
+            // Close portal on outside click
+            if (portal && portal.style.display !== 'none') {
+                const isInsidePortal = portal.contains(event.target);
+                if (!isInsidePortal) closeUserActionMenu();
+            }
+        });
 
         if (createUserBtn) {
             createUserBtn.addEventListener('click', () => {
@@ -4505,9 +5049,6 @@
         closeUserModalBtn?.addEventListener('click', closeUserEditorModal);
         userEditorModal?.addEventListener('click', (event) => {
             if (event.target === userEditorModal) closeUserEditorModal();
-        });
-        document.addEventListener('click', () => {
-            closeUserActionMenu();
         });
 
         if (resetUserEditorBtn) {
@@ -4725,10 +5266,12 @@
                 const unread = isThreadUnread(thread);
                 const displayName = thread.senderLabel || thread.senderName || 'Anonymous';
                 const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase();
+                // (2026-07-13) Mark guardian thread avatar with red; was unstyled
+                const isGuardian = (cachedUsers.find(u => u.id === otherUserId)?.role === 'guardian') || thread.senderRole === 'guardian';
 
                 return `
                     <div class="thread-item ${isActive ? 'active' : ''} ${unread ? 'unread' : ''}" data-thread-id="${thread.threadId}" data-other-user-id="${otherUserId}" data-other-user-name="${displayName}">
-                        <div class="thread-avatar">${initials}</div>
+                        <div class="thread-avatar ${isGuardian ? 'guardian' : ''}">${initials}</div>
                         <div class="thread-info">
                             <div class="thread-name">${displayName}</div>
                             <div class="thread-preview">${thread.text}</div>
@@ -4788,6 +5331,9 @@
             seenAdminThreads.set(threadId, Date.now());
             activeUserName.textContent = userName || 'User';
             activeUserAvatar.textContent = (userName || 'U').split(" ").map(n => n[0]).join("").toUpperCase();
+            // (2026-07-13) Set red avatar for guardian thread; was purple
+            const activeUserObj = cachedUsers.find(u => u.id === userId);
+            activeUserAvatar.classList.toggle('guardian', activeUserObj?.role === 'guardian' || getRoleKey(activeUserObj) === 'guardian');
             
             adminChatInput.disabled = false;
             adminSendBtn.disabled = false;

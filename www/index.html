@@ -5828,7 +5828,60 @@
             return inside;
         }
 
-        // (2026-07-13) Auto time in/out on campus geofence; was status banner update
+        // (2026-07-13) Add Capacitor permission & student push notifs; was banner only
+        async function ensureCapacitorLocationPermission() {
+            try {
+                if (window.Capacitor) {
+                    const Geolocation = window.Capacitor.Plugins?.Geolocation || window.Capacitor?.Geolocation;
+                    if (Geolocation && typeof Geolocation.requestPermissions === 'function') {
+                        const perm = await Geolocation.requestPermissions();
+                        return perm?.location === 'granted';
+                    }
+                }
+            } catch (e) {
+                console.warn("Capacitor location permission error:", e);
+            }
+            return true;
+        }
+
+        async function triggerDevicePushNotification(title, body) {
+            try {
+                if (window.Capacitor?.Plugins?.LocalNotifications) {
+                    const LocalNotifications = window.Capacitor.Plugins.LocalNotifications;
+                    await LocalNotifications.requestPermissions().catch(() => {});
+                    await LocalNotifications.schedule({
+                        notifications: [
+                            {
+                                title,
+                                body,
+                                id: Math.floor(Date.now() % 100000),
+                                schedule: { at: new Date(Date.now() + 150) },
+                                sound: null,
+                                attachments: null,
+                                actionTypeId: "",
+                                extra: null
+                            }
+                        ]
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.warn("Capacitor local notification failed:", e);
+            }
+
+            if ("Notification" in window) {
+                if (Notification.permission === "granted") {
+                    try { new Notification(title, { body, icon: "logo.png" }); } catch (e) {}
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(perm => {
+                        if (perm === "granted") {
+                            try { new Notification(title, { body, icon: "logo.png" }); } catch (e) {}
+                        }
+                    });
+                }
+            }
+        }
+
         let _autoAttendanceBusy = false;
         let _lastAutoAttendanceTime = 0;
 
@@ -5870,9 +5923,15 @@
                 calculateStats(updatedHistory);
                 updateAttendanceSummary(updatedHistory);
                 syncPendingAttendanceLogs().catch((e) => console.warn("Auto attendance sync failed:", e));
-                // (2026-07-13) Dispatch geofence notice to guardians; was local sync only
                 updateStudentLiveLocation(appState.user.uid, { lat, lng }).catch(() => {});
                 notifyGuardiansOfGeofenceEvent(appState.user.uid, appState.user.name || appState.user.displayName || 'Student', type, location).catch(() => {});
+
+                const notifTitle = type === 'in' ? "Campus Entry" : "Campus Exit";
+                const notifMsg = type === 'in'
+                    ? "You've entered the campus, successfully timed in."
+                    : "You've exited the campus, successfully timed out.";
+                triggerDevicePushNotification(notifTitle, notifMsg);
+
                 if (typeof showToast === 'function') {
                     showToast(type === 'in' ? "Auto Timed In: Entered campus bounds" : "Auto Timed Out: Left campus bounds");
                 }
@@ -7234,7 +7293,10 @@
             return Number.isFinite(date?.getTime?.()) ? date.getTime() : 0;
         }
 
+        // (2026-07-13) Add campus entry/exit icons; was default notifications icon
         function getNotificationIcon(type) {
+            if (type === "campus_entry") return "login";
+            if (type === "campus_exit") return "logout";
             if (type === "guardian_request") return "family_restroom";
             if (type === "location_request") return "location_off";
             if (type === "student_guardian_request") return "family_restroom";
@@ -9098,13 +9160,15 @@
             }
         }
 
-        // (2026-07-13) Fast non-blocking attendance handler with instant modal; was network bottleneck
+        // (2026-07-13) Request Capacitor location & notify student; was browser only
         async function handleAttendance(type) {
             const btn = type === 'in' ? timeInBtn : timeOutBtn;
             if (!btn || btn.classList.contains("is-busy")) return;
             setButtonBusy(btn, true);
 
             try {
+                await ensureCapacitorLocationPermission();
+
                 if (type === 'in' && appState.isTimedIn) {
                     await showStatus("Already Timed In", "You already have an active time-in record.");
                     return;
@@ -9138,6 +9202,13 @@
                 calculateStats(updatedHistory);
                 updateAttendanceSummary(updatedHistory);
                 syncPendingAttendanceLogs().catch((error) => console.warn("Attendance sync trigger failed:", error));
+                
+                const notifTitle = type === 'in' ? "Campus Entry" : "Campus Exit";
+                const notifMsg = type === 'in'
+                    ? "You've entered the campus, successfully timed in."
+                    : "You've exited the campus, successfully timed out.";
+                triggerDevicePushNotification(notifTitle, notifMsg);
+
                 await showStatus(type === 'in' ? "Timed In" : "Timed Out", `Recorded at ${formatTime12(capturedAt)}.`);
             } catch (error) {
                 console.warn("Attendance Error:", error);

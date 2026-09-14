@@ -204,6 +204,7 @@
             color: var(--red);
         }
 
+        /* (2026-07-13) Prevent button text line break; was normal wrapping */
         .ghost-btn,
         .primary-btn,
         .danger-btn {
@@ -218,6 +219,8 @@
             cursor: pointer;
             transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
             text-decoration: none;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .ghost-btn {
@@ -237,6 +240,28 @@
             background: linear-gradient(135deg, #eb3a53, #c71d35);
             color: #fff;
             box-shadow: 0 16px 32px rgba(209,31,52,0.22);
+        }
+
+        /* (2026-07-13) Disabled & loader button styling; was unstyled when disabled */
+        .primary-btn:disabled,
+        .danger-btn:disabled,
+        .ghost-btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            filter: grayscale(0.7);
+            transform: none !important;
+            box-shadow: none !important;
+            pointer-events: none;
+        }
+
+        .spin-icon {
+            display: inline-block;
+            animation: simBtnSpin 0.75s linear infinite;
+        }
+
+        @keyframes simBtnSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .signal-chip {
@@ -533,12 +558,18 @@
             background: linear-gradient(135deg, var(--primary), #7c5cff);
         }
 
+        /* (2026-07-13) Center accounts head & flex first child; was flex-start */
         .accounts-head {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             gap: 16px;
             flex-wrap: wrap;
+        }
+
+        .accounts-head > div:first-child {
+            flex: 1 1 260px;
+            min-width: 0;
         }
 
         .danger-inline-btn {
@@ -712,11 +743,13 @@
             font-size: 0.8rem;
         }
 
+        /* (2026-07-13) Nowrap section actions in single row; was wrap */
         .section-actions {
             display: flex;
             align-items: center;
             gap: 12px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
+            flex-shrink: 0;
         }
 
         .eyebrow {
@@ -739,23 +772,19 @@
         }
 
         .announcement-input-shell {
-            border: 1px solid rgba(90,31,224,0.14);
+            border: 1.5px solid rgba(90,31,224,0.18);
             border-radius: 20px;
-            background:
-                linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,245,255,0.9));
-            box-shadow:
-                inset 0 1px 0 rgba(255,255,255,0.9),
-                0 14px 28px rgba(55, 31, 129, 0.06);
+            background: #ffffff;
+            box-shadow: 0 4px 20px rgba(55, 31, 129, 0.04);
             overflow: hidden;
             transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
         }
 
         .announcement-input-shell:focus-within {
-            border-color: rgba(90,31,224,0.3);
+            border-color: var(--primary);
             box-shadow:
-                inset 0 1px 0 rgba(255,255,255,0.96),
-                0 0 0 4px rgba(90,31,224,0.07),
-                0 18px 32px rgba(55, 31, 129, 0.1);
+                0 0 0 3.5px rgba(90,31,224,0.12),
+                0 12px 28px rgba(55, 31, 129, 0.08);
         }
 
         .announcement-input-meta {
@@ -763,7 +792,9 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            padding: 12px 16px 0;
+            padding: 14px 16px 10px;
+            border-bottom: 1px solid rgba(90,31,224,0.08);
+            background: rgba(90,31,224,0.02);
         }
 
         .announcement-input-label {
@@ -783,22 +814,32 @@
             white-space: nowrap;
         }
 
-        /* (2026-07-13) Compact announcement composer styling; was 190px blank area */
-        .announcement-textarea {
+        /* (2026-07-13) Fix nested textarea border & background; was nested box */
+        .announcement-textarea,
+        .glass-textarea.announcement-textarea {
+            width: 100%;
             min-height: 110px;
             height: 120px;
             padding: 14px 16px 16px;
-            border: none;
-            background: transparent;
-            box-shadow: none;
+            border: none !important;
+            background: transparent !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            outline: none !important;
             resize: vertical;
             line-height: 1.6;
             font-size: 0.95rem;
+            color: var(--ink);
+            font: inherit;
+            display: block;
         }
 
-        .announcement-textarea:focus {
-            border: none;
-            box-shadow: none;
+        .announcement-textarea:focus,
+        .glass-textarea.announcement-textarea:focus {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            outline: none !important;
         }
 
         .announcement-textarea::placeholder {
@@ -1141,6 +1182,12 @@
             flex-shrink: 0;
         }
 
+        /* (2026-07-13) Red profile avatar for guardians; was purple gradient */
+        .management-avatar.guardian {
+            background: linear-gradient(135deg, #e11d48, #be123c);
+            box-shadow: 0 10px 20px rgba(225, 29, 72, 0.22);
+        }
+
         .management-meta {
             display: grid;
             gap: 10px;
@@ -1164,9 +1211,11 @@
             background: rgba(90,31,224,0.08);
         }
 
+        /* (2026-07-13) Red border outline for guardian role pill; was borderless */
         .role-pill.guardian {
             color: #d1465b;
             background: #fff1f2;
+            border: 1px solid #fecdd3;
         }
 
         .role-pill.admin {
@@ -1520,6 +1569,12 @@
             justify-content: center;
             font-weight: 700;
             flex-shrink: 0;
+        }
+
+        /* (2026-07-13) Red thread avatar for guardians; was purple soft */
+        .thread-avatar.guardian {
+            background: #fff1f2;
+            color: #e11d48;
         }
 
         .thread-info {
@@ -2244,7 +2299,8 @@
                                         <span class="announcement-input-label">Announcement Body</span>
                                         <span class="announcement-input-hint">Clear, short, and official</span>
                                     </div>
-                                    <textarea id="gadPostText" class="glass-textarea announcement-textarea" placeholder="Write the official announcement here..." maxlength="500"></textarea>
+                                    <!-- (2026-07-13) Pure announcement textarea; was nested glass-textarea -->
+                                    <textarea id="gadPostText" class="announcement-textarea" placeholder="Write the official announcement here..." maxlength="500"></textarea>
                                 </div>
                                 <input id="gadImageInput" type="file" accept="image/*" hidden>
                                 <div class="image-preview-card" id="gadImagePreviewCard">
@@ -2833,6 +2889,7 @@
             renderManagedUsers();
         };
 
+        // (2026-07-13) Support multiple parent/child links; was raw un-deduped map
         function buildUserRelations(user) {
             if (!user) return [];
 
@@ -2841,16 +2898,23 @@
             const byStudentId = new Map(cachedUsers.filter((entry) => entry.studentId).map((entry) => [String(entry.studentId), entry]));
 
             if (role === 'guardian') {
-                return cachedGuardianLinks
-                    .filter((link) => String(link.guardianId) === String(user.id))
-                    .map((link) => {
-                        const childUser = byId.get(String(link.studentUid || '')) || byStudentId.get(String(link.studentId || ''));
-                        return {
-                            title: childUser?.name || link.studentName || link.studentId || 'Child link',
-                            subtitle: link.studentId ? `Student ID: ${link.studentId}` : 'No student ID',
-                            status: link.status || 'pending'
-                        };
+                const guardianLinks = cachedGuardianLinks.filter((link) => String(link.guardianId) === String(user.id));
+                const seenChildren = new Set();
+                const uniqueRelations = [];
+
+                guardianLinks.forEach((link) => {
+                    const childUser = byId.get(String(link.studentUid || '')) || byStudentId.get(String(link.studentId || ''));
+                    const dedupeKey = childUser?.id || link.studentUid || link.studentId || link.id;
+                    if (dedupeKey && seenChildren.has(dedupeKey)) return;
+                    if (dedupeKey) seenChildren.add(dedupeKey);
+
+                    uniqueRelations.push({
+                        title: childUser?.name || link.studentName || link.studentId || 'Child link',
+                        subtitle: link.studentId ? `Student ID: ${link.studentId}` : (childUser?.email || 'No student ID'),
+                        status: link.status || 'pending'
                     });
+                });
+                return uniqueRelations;
             }
 
             const links = cachedGuardianLinks.filter((link) => {
@@ -2859,16 +2923,26 @@
                 return false;
             });
 
-            return links.map((link) => {
+            const seenGuardians = new Set();
+            const uniqueRelations = [];
+
+            links.forEach((link) => {
                 const guardianUser = byId.get(String(link.guardianId || ''));
-                return {
+                const dedupeKey = guardianUser?.id || link.guardianId || link.guardianEmail || link.id;
+                if (dedupeKey && seenGuardians.has(dedupeKey)) return;
+                if (dedupeKey) seenGuardians.add(dedupeKey);
+
+                uniqueRelations.push({
                     title: guardianUser?.name || link.guardianName || link.guardianEmail || 'Guardian link',
                     subtitle: guardianUser?.email || link.guardianEmail || 'No email',
                     status: link.status || 'pending'
-                };
+                });
             });
+
+            return uniqueRelations;
         }
 
+        // (2026-07-13) Show child/parent badge in modal relations; was title only
         function renderRelationList(user) {
             const relations = buildUserRelations(user);
             if (!managementRelationList) return;
@@ -2888,13 +2962,23 @@
                 return;
             }
 
+            // (2026-07-13) Rename parent to guardian with red chip; was teal badge
+            const roleKey = getRoleKey(user);
+            const relationTypeBadge = roleKey === 'guardian' ? 'Linked Child' : 'Linked Guardian';
+            const badgeColor = roleKey === 'guardian'
+                ? 'color:var(--primary); background:rgba(90,31,224,0.08);'
+                : 'color:#d1465b; background:#fff1f2; border:1px solid #fecdd3;';
+
             managementRelationList.innerHTML = relations.map((relation) => `
-                <div class="relation-chip">
+                <div class="relation-chip" style="display:flex; justify-content:space-between; align-items:center; padding:12px 14px;">
                     <div>
-                        <div class="row-title">${escapeHtml(relation.title)}</div>
-                        <div class="row-sub">${escapeHtml(relation.subtitle)}</div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:0.68rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; padding:2px 8px; border-radius:6px; ${badgeColor}">${relationTypeBadge}</span>
+                            <span class="row-title" style="font-size:0.92rem;">${escapeHtml(relation.title)}</span>
+                        </div>
+                        <div class="row-sub" style="margin-top:3px;">${escapeHtml(relation.subtitle)}</div>
                     </div>
-                    <span class="relation-status">${escapeHtml(relation.status)}</span>
+                    <span class="relation-status" style="font-weight:700; font-size:0.72rem;">${escapeHtml(relation.status)}</span>
                 </div>
             `).join('');
         }
@@ -2977,6 +3061,7 @@
             }
         }
 
+        // (2026-07-13) Show linked child/parent details in user rows; was link count
         function renderManagedUsers() {
             if (!managementUserList) return;
             const term = (managementUserSearch?.value || '').trim().toLowerCase();
@@ -2995,16 +3080,46 @@
                 const roleKey = getRoleKey(user);
                 const relations = buildUserRelations(user);
                 const isMenuOpen = openUserActionMenuId === user.id;
-                const relationLabel = roleKey === 'guardian'
-                    ? `${relations.length} child link${relations.length === 1 ? '' : 's'}`
-                    : `${relations.length} parent/guardian link${relations.length === 1 ? '' : 's'}`;
+
+                // (2026-07-13) Support multi-parent & multi-child counts; was single list
+                let relationMarkup = '';
+                if (roleKey === 'guardian') {
+                    relationMarkup = relations.length
+                        ? `<div style="margin-top:4px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+                            ${relations.length > 1 ? `<span style="font-size:0.68rem; font-weight:800; color:var(--muted);">${relations.length} Children:</span>` : ''}
+                            ${relations.map(rel => `
+                                <span style="font-size:0.72rem; font-weight:700; color:var(--primary); background:rgba(90,31,224,0.08); padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
+                                    <span class="material-symbols-outlined" style="font-size:13px;">escalator_warning</span>
+                                    Child: ${escapeHtml(rel.title)}${rel.subtitle && rel.subtitle !== 'No student ID' ? ` (${escapeHtml(rel.subtitle.replace('Student ID: ', ''))})` : ''}
+                                </span>
+                            `).join('')}
+                           </div>`
+                        : `<div class="row-sub" style="font-size:0.73rem; color:var(--muted); margin-top:2px;">No child linked</div>`;
+                // (2026-07-13) Rename parent to guardian with red styling; was teal chip
+                } else if (roleKey === 'student') {
+                    relationMarkup = relations.length
+                        ? `<div style="margin-top:4px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
+                            ${relations.length > 1 ? `<span style="font-size:0.68rem; font-weight:800; color:var(--muted);">${relations.length} Guardians:</span>` : ''}
+                            ${relations.map(rel => `
+                                <span style="font-size:0.72rem; font-weight:700; color:#d1465b; background:#fff1f2; border:1px solid #fecdd3; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
+                                    <span class="material-symbols-outlined" style="font-size:13px;">family_restroom</span>
+                                    Guardian: ${escapeHtml(rel.title)}
+                                </span>
+                            `).join('')}
+                           </div>`
+                        : `<div class="row-sub" style="font-size:0.73rem; color:var(--muted); margin-top:2px;">No guardian linked</div>`;
+                } else {
+                    relationMarkup = `<div class="row-sub" style="font-size:0.73rem; color:var(--muted); margin-top:2px;">Staff member</div>`;
+                }
+
                 return `
                     <div class="user-table-row">
                         <div class="user-table-main inline-fields" style="align-items:center;">
-                            <div class="management-avatar">${escapeHtml(getInitials(user.name || user.email || 'U'))}</div>
+                            <!-- (2026-07-13) Set red avatar for guardians; was default purple -->
+                            <div class="management-avatar ${roleKey === 'guardian' ? 'guardian' : ''}">${escapeHtml(getInitials(user.name || user.email || 'U'))}</div>
                             <div>
                                 <div class="row-title">${escapeHtml(user.name || 'Unnamed user')}</div>
-                                <div class="row-sub">${escapeHtml(relationLabel)}</div>
+                                ${relationMarkup}
                             </div>
                         </div>
                         <div>
@@ -4036,15 +4151,38 @@
             const btnOut = document.getElementById('btnSimulateTimeOut');
             const btnPin = document.getElementById('btnDispatchPinAttendance');
 
-            if (btnIn) btnIn.disabled = true;
-            if (btnOut) btnOut.disabled = true;
-            if (btnPin) btnPin.disabled = true;
+            // (2026-07-13) Fast parallel dispatch & button loader; was slow serial
+            const isFromPin = customLat !== null && customLng !== null;
+            const originalPinHtml = btnPin?.innerHTML;
+            const originalInHtml = btnIn?.innerHTML;
+            const originalOutHtml = btnOut?.innerHTML;
+
+            if (btnIn) {
+                btnIn.disabled = true;
+                if (!isFromPin && actionType === 'in') {
+                    btnIn.innerHTML = `<span class="material-symbols-outlined spin-icon" style="font-size:18px;">progress_activity</span><span>Triggering Entry...</span>`;
+                }
+            }
+            if (btnOut) {
+                btnOut.disabled = true;
+                if (!isFromPin && actionType === 'out') {
+                    btnOut.innerHTML = `<span class="material-symbols-outlined spin-icon" style="font-size:18px;">progress_activity</span><span>Triggering Exit...</span>`;
+                }
+            }
+            if (btnPin) {
+                btnPin.disabled = true;
+                if (isFromPin) {
+                    btnPin.innerHTML = `<span class="material-symbols-outlined spin-icon" style="font-size:18px;">progress_activity</span><span>Dispatching...</span>`;
+                }
+            }
 
             try {
                 const locationPayload = { lat, lng, address, simulated: true };
-                await logAttendance(studentId, actionType, locationPayload);
-                await updateStudentLiveLocation(studentId, { lat, lng }).catch(() => {});
-                const notifiedGuardians = await notifyGuardiansOfGeofenceEvent(studentId, studentName, actionType, locationPayload);
+                const [, , notifiedGuardians] = await Promise.all([
+                    logAttendance(studentId, actionType, locationPayload),
+                    updateStudentLiveLocation(studentId, { lat, lng }).catch(() => {}),
+                    notifyGuardiansOfGeofenceEvent(studentId, studentName, actionType, locationPayload).catch(() => [])
+                ]);
 
                 const logItem = {
                     id: Date.now(),
@@ -4059,7 +4197,7 @@
 
                 simulatorDispatchLogs.unshift(logItem);
                 renderSimulatorDispatchLogs();
-                await updateSimulatorStudentStatus();
+                updateSimulatorStudentStatus();
 
                 const actionLabel = actionType === 'in' ? 'Timed IN (Campus Entry)' : 'Timed OUT (Campus Exit)';
                 showToast("Simulation Successful", `${studentName} was ${actionLabel}. Parents notified.`, "success");
@@ -4067,9 +4205,18 @@
                 console.warn("Simulator dispatch error:", err);
                 showToast("Simulation Failed", err.message || "Could not complete simulation dispatch.", "error");
             } finally {
-                if (btnIn) btnIn.disabled = false;
-                if (btnOut) btnOut.disabled = false;
-                if (btnPin && activeSimPinCoords) btnPin.disabled = false;
+                if (btnIn) {
+                    btnIn.disabled = false;
+                    if (originalInHtml) btnIn.innerHTML = originalInHtml;
+                }
+                if (btnOut) {
+                    btnOut.disabled = false;
+                    if (originalOutHtml) btnOut.innerHTML = originalOutHtml;
+                }
+                if (btnPin) {
+                    if (originalPinHtml) btnPin.innerHTML = originalPinHtml;
+                    if (activeSimPinCoords) btnPin.disabled = false;
+                }
             }
         }
 
@@ -4725,10 +4872,12 @@
                 const unread = isThreadUnread(thread);
                 const displayName = thread.senderLabel || thread.senderName || 'Anonymous';
                 const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase();
+                // (2026-07-13) Mark guardian thread avatar with red; was unstyled
+                const isGuardian = (cachedUsers.find(u => u.id === otherUserId)?.role === 'guardian') || thread.senderRole === 'guardian';
 
                 return `
                     <div class="thread-item ${isActive ? 'active' : ''} ${unread ? 'unread' : ''}" data-thread-id="${thread.threadId}" data-other-user-id="${otherUserId}" data-other-user-name="${displayName}">
-                        <div class="thread-avatar">${initials}</div>
+                        <div class="thread-avatar ${isGuardian ? 'guardian' : ''}">${initials}</div>
                         <div class="thread-info">
                             <div class="thread-name">${displayName}</div>
                             <div class="thread-preview">${thread.text}</div>
@@ -4788,6 +4937,9 @@
             seenAdminThreads.set(threadId, Date.now());
             activeUserName.textContent = userName || 'User';
             activeUserAvatar.textContent = (userName || 'U').split(" ").map(n => n[0]).join("").toUpperCase();
+            // (2026-07-13) Set red avatar for guardian thread; was purple
+            const activeUserObj = cachedUsers.find(u => u.id === userId);
+            activeUserAvatar.classList.toggle('guardian', activeUserObj?.role === 'guardian' || getRoleKey(activeUserObj) === 'guardian');
             
             adminChatInput.disabled = false;
             adminSendBtn.disabled = false;
