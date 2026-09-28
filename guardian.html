@@ -464,8 +464,8 @@
                 if (name.length < 3) {
                     throw new Error('Please enter your full name.');
                 }
-                if (password.length < 6) {
-                    throw new Error('Password must be at least 6 characters.');
+                if (password.length < 8) {
+                    throw new Error('Password must be at least 8 characters.');
                 }
                 if (password !== confirmPassword) {
                     throw new Error('Passwords do not match.');

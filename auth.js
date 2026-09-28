@@ -34,17 +34,22 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
     const code = String(error?.code || error?.message || "").toLowerCase();
     const role = String(roleLabel || "account").trim().toLowerCase();
 
-    if (code.includes("auth/invalid-credential") || code.includes("auth/wrong-password") || code.includes("auth/user-not-found")) {
-        return `Incorrect ${role} ID or password. Please try again.`;
+    if (code.includes("auth/invalid-credential") || code.includes("auth/user-not-found")) {
+        return mode === "login" 
+            ? `No account found with this ${role} ID. Please register first or check your ID.`
+            : `Incorrect ${role} ID or password.`;
+    }
+    if (code.includes("auth/wrong-password")) {
+        return `Incorrect password. Please try again or use "Forgot Password".`;
     }
     if (code.includes("auth/email-already-in-use")) {
-        return `This ${role} account already exists.`;
+        return `This ${role} account already exists. Please sign in instead.`;
     }
     if (code.includes("auth/invalid-email")) {
         return "Please enter a valid email address.";
     }
     if (code.includes("auth/weak-password")) {
-        return "Password must be at least 6 characters.";
+        return "Password must be at least 8 characters.";
     }
     if (code.includes("auth/missing-password")) {
         return "Please enter your password.";
@@ -53,7 +58,7 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
         return "Please enter your email address.";
     }
     if (code.includes("auth/too-many-requests")) {
-        return "Too many attempts. Please try again in a moment.";
+        return "Too many attempts. Please try again in a few minutes.";
     }
     if (code.includes("auth/network-request-failed")) {
         return "Network error. Please check your internet connection.";
@@ -69,7 +74,7 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
     if (mode === "reset") {
         return "Could not send reset instructions right now.";
     }
-    return "Could not sign in right now.";
+    return "Could not sign in right now. Please try again.";
 };
 
 /**

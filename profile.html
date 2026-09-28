@@ -1759,8 +1759,8 @@
                 return;
             }
 
-            if (newPassword.length < 6) {
-                await showStatus('Weak Password', 'Use at least 6 characters for the new password.', 'error');
+            if (newPassword.length < 8) {
+                await showStatus('Weak Password', 'Use at least 8 characters for the new password.', 'error');
                 return;
             }
 

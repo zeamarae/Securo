@@ -6041,16 +6041,51 @@
                 wheelPxPerZoomLevel: 140
             }).setView(CAMPUS_CENTER, 17);
 
-            // (2026-07-13) Add Google Satellite & view switcher; was OSM tile layer only
+            // Map layers: OpenStreetMap (default, always works) + Esri Satellite + Google Streets
             const baseMapLayers = {
-                "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Terrain": L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
+                "Street View": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '©OpenStreetMap contributors',
+                    crossOrigin: true
+                }),
+                "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    maxZoom: 19,
+                    attribution: 'Tiles ©Esri',
+                    crossOrigin: true
+                })
             };
-            baseMapLayers["Google Hybrid"].addTo(map);
-            L.control.layers(baseMapLayers, null, { position: 'topright' }).addTo(map);
+
+            let activeLayer = baseMapLayers["Street View"];
+            activeLayer.addTo(map);
+
+            // Force tile load after layer is added
+            setTimeout(() => { if (map) map.invalidateSize(); }, 100);
+            setTimeout(() => { if (map) map.invalidateSize(); }, 500);
+
+            // After map is ready, try to upgrade to Google Streets silently
+            map.once('load', () => {
+                const googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                    maxZoom: 20,
+                    attribution: 'Map data ©Google'
+                });
+                let googleLoaded = false;
+                googleStreets.once('tileload', () => {
+                    if (!googleLoaded) {
+                        googleLoaded = true;
+                        map.removeLayer(activeLayer);
+                        googleStreets.addTo(map);
+                        baseMapLayers["Street View"] = googleStreets;
+                        activeLayer = googleStreets;
+                    }
+                });
+                // Add quietly to test — if no tiles load within 3s, it stays on OSM
+                googleStreets.addTo(map);
+                setTimeout(() => {
+                    if (!googleLoaded && map.hasLayer(googleStreets)) {
+                        map.removeLayer(googleStreets);
+                    }
+                }, 3000);
+            });
 
             // Draw geofence polygon with exact admin-saved vertices
             campusGeofencePolygonLayer = L.polygon(currentStudentGeofence, {
@@ -6093,14 +6128,27 @@
                 const layerKeys = Object.keys(baseMapLayers);
                 let currentLayerIdx = 0;
                 mapLayersBtn.onclick = () => {
-                    const prevLayer = baseMapLayers[layerKeys[currentLayerIdx]];
+                    const prevKey = layerKeys[currentLayerIdx];
+                    const prevLayer = baseMapLayers[prevKey];
                     currentLayerIdx = (currentLayerIdx + 1) % layerKeys.length;
                     const nextKey = layerKeys[currentLayerIdx];
                     const nextLayer = baseMapLayers[nextKey];
-                    map.removeLayer(prevLayer);
-                    map.addLayer(nextLayer);
+
+                    // Faster layer switching - remove and add immediately
+                    if (map.hasLayer(prevLayer)) {
+                        map.removeLayer(prevLayer);
+                    }
+                    nextLayer.addTo(map);
+
+                    // Force immediate tile load
+                    map.invalidateSize(false);
+
+                    // Update active layer reference
+                    activeLayer = nextLayer;
+
+                    // Show quick toast notification
                     if (typeof showToast === 'function') {
-                        showToast(`Map View: ${nextKey}`);
+                        showToast(`${nextKey}`, '', 'success');
                     }
                 };
             }

@@ -437,12 +437,18 @@
 
     <script>
         function goBack() {
-            // Check if there's history to go back to
-            if (window.history.length > 1) {
-                window.history.back();
+            // Use the SPA Router
+            if (window.goBack) {
+                window.goBack('login');
+            } else if (window.SPARouter) {
+                window.SPARouter.back('login');
             } else {
-                // Fallback to login page if no history
-                window.location.href = 'login.html';
+                // Fallback
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    window.location.href = 'login.html';
+                }
             }
         }
     </script>

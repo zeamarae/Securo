@@ -5497,8 +5497,8 @@
                     return;
                 }
 
-                if (isCreatingManagedUser && password.length < 6) {
-                    showToast("Missing password", "New sign-in accounts need a password with at least 6 characters.", "error");
+                if (isCreatingManagedUser && password.length < 8) {
+                    showToast("Missing password", "New sign-in accounts need a password with at least 8 characters.", "error");
                     return;
                 }
 
@@ -5529,7 +5529,7 @@
                         : raw.includes('invalid-email')
                         ? 'Please enter a valid email address.'
                         : raw.includes('weak-password')
-                        ? 'Password must be at least 6 characters.'
+                        ? 'Password must be at least 8 characters.'
                         : 'Could not save this user profile.';
                     showToast("Save failed", friendly, "error");
                 } finally {
