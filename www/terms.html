@@ -37,57 +37,107 @@
                 linear-gradient(180deg, rgba(70, 18, 179, 0.92) 0%, rgba(124, 84, 224, 0.3) 18%, rgba(255, 255, 255, 0) 34%),
                 linear-gradient(180deg, #d5c7ff 0%, #f9f7ff 22%, #f9f8fe 100%);
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 0;
+            margin: 0;
             color: var(--ink);
         }
 
+        /* Fixed Header Navigation */
+        .terms-nav {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(90, 31, 224, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+
+        .nav-back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .nav-back-btn:active {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-title {
+            font-family: "Sora", sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: white;
+            margin: 0;
+            flex: 1;
+        }
+
         .terms-container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.72));
-            border: 1px solid rgba(255, 255, 255, 0.58);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: var(--radius-xl);
-            padding: 40px;
-            box-shadow: var(--shadow-glow);
+            max-width: 100%;
+            margin: 0;
+            background: white;
+            border: none;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border-radius: 0;
+            padding: 20px 16px;
+            box-shadow: none;
+            min-height: calc(100vh - 64px);
         }
 
         .terms-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+            padding-top: 10px;
         }
 
         .terms-logo {
-            width: 70px;
+            width: 50px;
             height: auto;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .terms-title {
             font-family: "Sora", sans-serif;
             font-weight: 800;
-            font-size: 2rem;
+            font-size: 1.5rem;
             color: var(--primary);
-            margin: 0 0 10px;
+            margin: 0 0 8px;
+            line-height: 1.2;
         }
 
         .terms-subtitle {
             color: var(--muted);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
+            line-height: 1.4;
         }
 
         .terms-content {
-            line-height: 1.7;
+            line-height: 1.6;
+            font-size: 0.85rem;
         }
 
         .terms-content h2 {
             font-family: "Sora", sans-serif;
             font-weight: 700;
-            font-size: 1.3rem;
+            font-size: 1rem;
             color: var(--ink);
-            margin-top: 30px;
-            margin-bottom: 15px;
+            margin-top: 24px;
+            margin-bottom: 10px;
         }
 
         .terms-content h2:first-child {
@@ -95,24 +145,28 @@
         }
 
         .terms-content p {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             color: var(--ink);
+            font-size: 0.85rem;
         }
 
         .terms-content ul {
-            margin-bottom: 15px;
-            padding-left: 25px;
+            margin-bottom: 12px;
+            padding-left: 20px;
         }
 
         .terms-content li {
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
         }
 
         .back-btn {
-            display: inline-flex;
+            display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
-            padding: 12px 24px;
+            width: 100%;
+            padding: 14px 24px;
             border-radius: var(--radius-md);
             background: linear-gradient(135deg, var(--primary), var(--primary-strong));
             color: white;
@@ -120,26 +174,141 @@
             font-weight: 600;
             font-size: 0.9rem;
             text-decoration: none;
-            margin-top: 30px;
+            margin-top: 24px;
             transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+
+        .back-btn:active {
+            transform: scale(0.98);
         }
 
         .back-btn:hover {
-            transform: translateY(-2px);
             color: white;
         }
 
         .last-updated {
             text-align: center;
             color: var(--muted);
-            font-size: 0.85rem;
-            margin-top: 30px;
-            padding-top: 20px;
+            font-size: 0.75rem;
+            margin-top: 20px;
+            padding-top: 16px;
             border-top: 1px solid rgba(0,0,0,0.06);
+        }
+
+        /* Desktop styles */
+        @media (min-width: 768px) {
+            body {
+                padding: 40px 20px;
+            }
+
+            .terms-nav {
+                position: relative;
+                background: transparent;
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
+                box-shadow: none;
+                padding: 0;
+                margin-bottom: 20px;
+            }
+
+            .nav-back-btn {
+                background: rgba(90, 31, 224, 0.1);
+                color: var(--primary);
+            }
+
+            .nav-back-btn:hover {
+                background: rgba(90, 31, 224, 0.2);
+            }
+
+            .nav-title {
+                color: var(--ink);
+                font-size: 1.3rem;
+            }
+
+            .terms-container {
+                max-width: 800px;
+                margin: 0 auto;
+                background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.72));
+                border: 1px solid rgba(255, 255, 255, 0.58);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border-radius: var(--radius-xl);
+                padding: 40px;
+                box-shadow: var(--shadow-glow);
+                min-height: auto;
+            }
+
+            .terms-header {
+                margin-bottom: 30px;
+            }
+
+            .terms-logo {
+                width: 70px;
+                margin-bottom: 15px;
+            }
+
+            .terms-title {
+                font-size: 2rem;
+                margin: 0 0 10px;
+            }
+
+            .terms-subtitle {
+                font-size: 0.9rem;
+            }
+
+            .terms-content {
+                font-size: 1rem;
+            }
+
+            .terms-content h2 {
+                font-size: 1.3rem;
+                margin-top: 30px;
+                margin-bottom: 15px;
+            }
+
+            .terms-content p {
+                margin-bottom: 15px;
+                font-size: 1rem;
+            }
+
+            .terms-content ul {
+                margin-bottom: 15px;
+                padding-left: 25px;
+            }
+
+            .terms-content li {
+                margin-bottom: 8px;
+                font-size: 1rem;
+            }
+
+            .back-btn {
+                display: inline-flex;
+                width: auto;
+                margin-top: 30px;
+            }
+
+            .back-btn:hover {
+                transform: translateY(-2px);
+            }
+
+            .last-updated {
+                font-size: 0.85rem;
+                margin-top: 30px;
+                padding-top: 20px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Fixed Header Navigation -->
+    <div class="terms-nav">
+        <button class="nav-back-btn" onclick="goBack()">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </button>
+        <h2 class="nav-title">Terms & Conditions</h2>
+    </div>
+
     <div class="terms-container">
         <div class="terms-header">
             <img src="logo.png" alt="Securo Logo" class="terms-logo">
@@ -259,11 +428,23 @@
         </div>
 
         <div style="text-align: center;">
-            <a href="login.html" class="back-btn">
+            <button class="back-btn" onclick="goBack()">
                 <span class="material-symbols-outlined">arrow_back</span>
-                Back to Login
-            </a>
+                Back to Registration
+            </button>
         </div>
     </div>
+
+    <script>
+        function goBack() {
+            // Check if there's history to go back to
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Fallback to login page if no history
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
 </body>
 </html>
