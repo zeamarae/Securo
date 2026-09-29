@@ -4504,19 +4504,22 @@
             }
         }
 
-        /* (2026-07-13) Fullscreen app onboarding centered with 165px camera circle and custom inputs; was basic */
+        /* (2026-07-13) Top progress bar with status/bottom insets; prev: middle container */
         .fullscreen-onboarding-screen {
             position: fixed;
             inset: 0;
             z-index: 99999;
             width: 100vw;
             height: 100vh;
-            background: #ffffff;
+            background: linear-gradient(180deg, #fdfcff 0%, #f6f3ff 100%);
             display: none;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 24px 20px;
+            justify-content: flex-start;
+            padding-top: max(env(safe-area-inset-top, 24px), 24px);
+            padding-bottom: max(env(safe-area-inset-bottom, 24px), 24px);
+            padding-left: 20px;
+            padding-right: 20px;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
             box-sizing: border-box;
@@ -4527,13 +4530,91 @@
             animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
+        /* (2026-07-13) Center onboarding profile slide vertically; prev: top-aligned */
         .fs-onboarding-container {
             width: 100%;
             max-width: 440px;
+            min-height: 100%;
             display: flex;
             flex-direction: column;
-            margin: auto 0;
+            margin: 0 auto;
             position: relative;
+        }
+
+        .fs-progress-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            margin-bottom: 22px;
+            padding: 4px 2px 0;
+            flex-shrink: 0;
+        }
+
+        .fs-progress-steps-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .fs-progress-step-pill {
+            flex: 1;
+            height: 6px;
+            border-radius: 999px;
+            background: rgba(90, 31, 224, 0.12);
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .fs-progress-step-pill.active {
+            background: linear-gradient(90deg, #5a1fe0, #7c3aed);
+            box-shadow: 0 2px 10px rgba(90, 31, 224, 0.4);
+        }
+
+        .fs-slides-viewport {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+            touch-action: pan-y;
+            margin: auto 0;
+        }
+
+        .fs-slides-track {
+            width: 100%;
+            display: flex;
+            transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+            will-change: transform;
+        }
+
+        /* (2026-07-13) Transition spinner on slide completion; prev: immediate exit */
+        .fs-loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.72);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .fs-loading-spinner {
+            width: 38px;
+            height: 38px;
+            border: 3.5px solid rgba(90, 31, 224, 0.15);
+            border-top-color: #5a1fe0;
+            border-radius: 50%;
+            animation: fsSpin 0.7s infinite linear;
+            box-shadow: 0 4px 16px rgba(90, 31, 224, 0.15);
+        }
+
+        .fs-slide-card {
+            width: 100%;
+            flex: 0 0 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
         }
 
         .fs-onboarding-title {
@@ -7624,6 +7705,11 @@
 
         // (2026-07-13) Fullscreen Onboarding Screen Elements & Live Camera in Circle
         const fsOnboardingScreen = document.getElementById("fullscreenOnboardingScreen");
+        // (2026-07-13) Show onboarding before map for new user; prev: flashed map
+        if (sessionStorage.getItem('securo_just_registered') === '1' && fsOnboardingScreen) {
+            fsOnboardingScreen.classList.add("active");
+            if (appView) appView.classList.remove("active");
+        }
         const fsOnboardingForm = document.getElementById("fsOnboardingForm");
         const fsFirstName = document.getElementById("fsFirstName");
         const fsLastName = document.getElementById("fsLastName");
@@ -7633,6 +7719,47 @@
         const fsAvatarCircleWrap = document.getElementById("fsAvatarCircleWrap");
         const fsAvatarPreviewCircle = document.getElementById("fsAvatarPreviewCircle");
         const fsCircleLiveVideo = document.getElementById("fsCircleLiveVideo");
+
+        // Input filters for year, section
+        // (2026-07-13) OTP-like jump to section & backspace to year; prev: no navigation
+        if (fsYearLevel) {
+            fsYearLevel.addEventListener('focus', () => fsYearLevel.select());
+            fsYearLevel.addEventListener('keydown', (e) => {
+                if (/^[1-5]$/.test(e.key)) {
+                    fsYearLevel.value = e.key;
+                    e.preventDefault();
+                    if (fsSection) {
+                        fsSection.focus();
+                        fsSection.select();
+                    }
+                }
+            });
+            fsYearLevel.addEventListener('input', () => {
+                fsYearLevel.value = fsYearLevel.value.replace(/[^1-5]/g, '').slice(0, 1);
+                if (fsYearLevel.value && fsSection) {
+                    fsSection.focus();
+                    fsSection.select();
+                }
+            });
+            fsYearLevel.addEventListener('keypress', (e) => {
+                if (!/[1-5]/.test(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        }
+        if (fsSection) {
+            fsSection.addEventListener('input', () => {
+                fsSection.value = fsSection.value.replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase();
+            });
+            fsSection.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && (!fsSection.value || (fsSection.selectionStart === 0 && fsSection.selectionEnd === 0))) {
+                    if (fsYearLevel) {
+                        fsYearLevel.focus();
+                        fsYearLevel.select();
+                    }
+                }
+            });
+        }
         const fsAvatarPlaceholder = document.getElementById("fsAvatarPlaceholder");
         const fsAvatarInitials = document.getElementById("fsAvatarInitials");
         const fsAvatarImg = document.getElementById("fsAvatarImg");
@@ -7682,6 +7809,59 @@
             }
         }
 
+        // (2026-07-13) Camera shutter sound and capture audio; prev: silent capture
+        function playCameraShutterSound() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                if (ctx.state === 'suspended') ctx.resume();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(900, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.05);
+                gain.gain.setValueAtTime(0.7, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.05);
+
+                const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.04), ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 1200;
+                const ng = ctx.createGain();
+                ng.gain.setValueAtTime(0.5, now);
+                ng.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+                noise.connect(filter);
+                filter.connect(ng);
+                ng.connect(ctx.destination);
+                noise.start(now);
+
+                const t2 = now + 0.06;
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(700, t2);
+                osc2.frequency.exponentialRampToValueAtTime(80, t2 + 0.06);
+                gain2.gain.setValueAtTime(0.8, t2);
+                gain2.gain.exponentialRampToValueAtTime(0.01, t2 + 0.06);
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.start(t2);
+                osc2.stop(t2 + 0.06);
+            } catch (e) {
+                console.warn("Shutter sound error:", e);
+            }
+        }
+
         function snapSelfiePhoto() {
             if (fsCameraStream && fsCircleLiveVideo && fsCircleLiveVideo.videoWidth) {
                 const size = Math.min(fsCircleLiveVideo.videoWidth, fsCircleLiveVideo.videoHeight);
@@ -7694,6 +7874,7 @@
                 const sy = (fsCircleLiveVideo.videoHeight - size) / 2;
                 ctx.drawImage(fsCircleLiveVideo, sx, sy, size, size, 0, 0, 400, 400);
                 fsOnboardingPhotoData = fsCameraCanvas.toDataURL("image/jpeg", 0.9);
+                playCameraShutterSound();
                 stopCircleLiveCamera();
                 updateFsAvatarPreview();
             } else if (fsOnboardingPhotoData) {
@@ -7844,6 +8025,39 @@
             }
         }
 
+        // (2026-07-13) Swipe slides & load app on last slide; prev: display toggle
+        let currentOnboardingSlide = 0;
+        function goToSlide(index) {
+            currentOnboardingSlide = Math.max(0, Math.min(1, index));
+            const track = document.getElementById("fsSlidesTrack");
+            if (track) track.style.transform = `translateX(-${currentOnboardingSlide * 100}%)`;
+            const p1 = document.getElementById("fsProgStep1");
+            const p2 = document.getElementById("fsProgStep2");
+            if (p1) p1.classList.toggle("active", currentOnboardingSlide === 0);
+            if (p2) p2.classList.toggle("active", currentOnboardingSlide === 1);
+            const stepLbl = document.getElementById("fsProgressStepLabel");
+            if (stepLbl) stepLbl.textContent = `Step ${currentOnboardingSlide + 1} of 2`;
+        }
+
+        // (2026-07-13) Show spinner when transitioning into app; prev: immediate exit
+        function finishOnboardingAndEnterApp() {
+            const track = document.getElementById("fsSlidesTrack");
+            if (track) track.style.transform = "translateX(-115%)";
+            const loader = document.getElementById("fsOnboardingLoadingOverlay");
+            if (loader) loader.style.display = "flex";
+            setTimeout(() => {
+                sessionStorage.removeItem('securo_just_registered');
+                if (fsOnboardingScreen) fsOnboardingScreen.classList.remove("active");
+                if (loader) loader.style.display = "none";
+                if (appView) appView.classList.add("active");
+                if (!appState.initialViewDone) {
+                    setActiveView("map");
+                    appState.initialViewDone = true;
+                }
+                if (map) requestAnimationFrame(() => map.invalidateSize());
+            }, 650);
+        }
+
         function triggerFullscreenOnboarding(user, existingProfile) {
             fsCurrentUserContext = { user, profile: existingProfile };
             if (fsOnboardingError) fsOnboardingError.textContent = "";
@@ -7856,8 +8070,16 @@
                 fsSection.value = extractedSec || existingProfile.section.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase();
             }
             updateFsAvatarPreview();
+            const loader = document.getElementById("fsOnboardingLoadingOverlay");
+            if (loader) loader.style.display = "none";
+            fsHasCopiedGuardianLink = false;
+            goToSlide(0);
+            const sId = existingProfile?.studentId || (user?.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1]) || "";
+            const guardianUrl = "https://zeamarae.github.io/Securo/guardian.html" + (sId ? `?ref=${encodeURIComponent(sId)}` : "");
+            const inviteEl = document.getElementById("fsGuardianInviteLink");
+            if (inviteEl) inviteEl.textContent = guardianUrl;
+            if (appView) appView.classList.remove("active");
             if (fsOnboardingScreen) fsOnboardingScreen.classList.add("active");
-            // Automatically prompt and start live camera selfie feed inside circle
             if (!fsOnboardingPhotoData) {
                 startCircleLiveCamera();
             }
@@ -7869,7 +8091,7 @@
                 if (fsOnboardingError) fsOnboardingError.textContent = "";
                 const fn = fsFirstName ? toTitleCase(fsFirstName.value.trim()) : "";
                 const ln = fsLastName ? toTitleCase(fsLastName.value.trim()) : "";
-                const course = fsCourse ? fsCourse.value.trim() : "";
+                const course = fsCourse ? fsCourse.value.trim().toUpperCase() : "";
                 const year = fsYearLevel ? fsYearLevel.value.trim() : "";
                 const rawSec = fsSection ? fsSection.value.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase() : "";
 
@@ -7885,12 +8107,12 @@
                     if (fsOnboardingError) fsOnboardingError.textContent = "Please select your course.";
                     return;
                 }
-                if (!year) {
-                    if (fsOnboardingError) fsOnboardingError.textContent = "Please select your year level.";
+                if (!/^[1-5]$/.test(year)) {
+                    if (fsOnboardingError) fsOnboardingError.textContent = "Year level must be 1–5.";
                     return;
                 }
-                if (!rawSec) {
-                    if (fsOnboardingError) fsOnboardingError.textContent = "Please enter your section letter (e.g. A).";
+                if (!rawSec || rawSec.length < 1 || rawSec.length > 4) {
+                    if (fsOnboardingError) fsOnboardingError.textContent = "Section must be 1–4 letters (e.g. A).";
                     return;
                 }
 
@@ -7899,7 +8121,6 @@
                     snapSelfiePhoto();
                 }
 
-                // (2026-07-13) Show animated spinner on onboarding submit button; was plain opacity
                 if (fsSubmitOnboardingBtn) {
                     fsSubmitOnboardingBtn.disabled = true;
                     fsSubmitOnboardingBtn.style.opacity = "0.85";
@@ -7912,8 +8133,7 @@
                     const derivedRole = user.email?.startsWith("staff.") ? "staff" : "student";
                     const fullName = `${fn} ${ln}`;
                     const initials = (fn[0] + ln[0]).toUpperCase();
-                    const cleanYearNum = year.replace(/[^0-9]/g, '') || year;
-                    const formattedSection = `${course} ${cleanYearNum}-${rawSec}`;
+                    const formattedSection = `${course} ${year}-${rawSec}`;
 
                     const updatedProfile = {
                         studentId: fsCurrentUserContext?.profile?.studentId || derivedId,
@@ -7970,31 +8190,201 @@
                     }
 
                     stopCircleLiveCamera();
-                    if (fsOnboardingScreen) fsOnboardingScreen.classList.remove("active");
-                    if (map) requestAnimationFrame(() => map.invalidateSize());
+                    if (fsSubmitOnboardingBtn) {
+                        fsSubmitOnboardingBtn.disabled = false;
+                        fsSubmitOnboardingBtn.style.opacity = "1";
+                        fsSubmitOnboardingBtn.innerHTML = '<span id="fsSubmitText">Save & Continue</span><span class="material-symbols-outlined" id="fsSubmitIcon">arrow_forward</span>';
+                    }
+                    const studentId = updatedProfile.studentId || "";
+                    const guardianUrl = "https://zeamarae.github.io/Securo/guardian.html" + (studentId ? `?ref=${encodeURIComponent(studentId)}` : "");
+                    const fsGuardianInviteLink = document.getElementById("fsGuardianInviteLink");
+                    if (fsGuardianInviteLink) fsGuardianInviteLink.textContent = guardianUrl;
+                    const fsShareGuardianLinkBtn = document.getElementById("fsShareGuardianLinkBtn");
+                    if (fsShareGuardianLinkBtn && navigator.share) {
+                        fsShareGuardianLinkBtn.style.display = "flex";
+                    }
+                    goToSlide(1);
                 } catch (err) {
                     console.warn("Onboarding submit failed:", err);
                     if (fsOnboardingError) fsOnboardingError.textContent = "Failed to save profile. Please try again.";
                     if (fsSubmitOnboardingBtn) {
                         fsSubmitOnboardingBtn.disabled = false;
                         fsSubmitOnboardingBtn.style.opacity = "1";
-                        fsSubmitOnboardingBtn.innerHTML = '<span id="fsSubmitText">Save & Enter Campus Hub</span><span class="material-symbols-outlined" id="fsSubmitIcon">arrow_forward</span>';
+                        fsSubmitOnboardingBtn.innerHTML = '<span id="fsSubmitText">Save & Continue</span><span class="material-symbols-outlined" id="fsSubmitIcon">arrow_forward</span>';
                     }
                 }
             });
+        }
+
+        // (2026-07-13) Require copying link before finishing app; prev: immediate finish
+        let fsHasCopiedGuardianLink = false;
+        const fsCopyGuardianLinkBtn = document.getElementById("fsCopyGuardianLinkBtn");
+        const fsCopyLinkText = document.getElementById("fsCopyLinkText");
+        const fsShareGuardianLinkBtn = document.getElementById("fsShareGuardianLinkBtn");
+        const fsProceedToAppBtn = document.getElementById("fsProceedToAppBtn");
+
+        function markGuardianLinkCopied() {
+            fsHasCopiedGuardianLink = true;
+            if (fsProceedToAppBtn) {
+                fsProceedToAppBtn.style.opacity = "1";
+                fsProceedToAppBtn.style.borderColor = "#5a1fe0";
+                fsProceedToAppBtn.style.color = "#5a1fe0";
+            }
+            const hintIcon = document.getElementById("fsSwipeHintIcon");
+            const hintText = document.getElementById("fsSwipeHintText");
+            if (hintIcon) {
+                hintIcon.textContent = "swipe_left";
+                hintIcon.style.color = "#0f9b67";
+            }
+            if (hintText) {
+                hintText.textContent = "Link copied! Swipe left or tap to open app";
+                hintText.style.color = "#0f9b67";
+            }
+        }
+
+        if (fsCopyGuardianLinkBtn) {
+            fsCopyGuardianLinkBtn.addEventListener("click", () => {
+                const fsGuardianInviteLink = document.getElementById("fsGuardianInviteLink");
+                const link = fsGuardianInviteLink ? fsGuardianInviteLink.textContent.trim() : "";
+                if (!link) return;
+                const fullTextToCopy = "Dear Parent/Guardian please register here: " + link;
+                const copySuccess = () => {
+                    markGuardianLinkCopied();
+                    if (fsCopyLinkText) fsCopyLinkText.textContent = "Copied to Clipboard!";
+                    fsCopyGuardianLinkBtn.style.background = "linear-gradient(135deg, #0f9b67, #0a7a52)";
+                    setTimeout(() => {
+                        if (fsCopyLinkText) fsCopyLinkText.textContent = "Copy Link";
+                        fsCopyGuardianLinkBtn.style.background = "linear-gradient(135deg, #5a1fe0, #4311c5)";
+                    }, 2500);
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(fullTextToCopy).then(copySuccess).catch(() => {
+                        const el = document.createElement("textarea");
+                        el.value = fullTextToCopy;
+                        document.body.appendChild(el);
+                        el.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(el);
+                        copySuccess();
+                    });
+                } else {
+                    const el = document.createElement("textarea");
+                    el.value = fullTextToCopy;
+                    document.body.appendChild(el);
+                    el.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(el);
+                    copySuccess();
+                }
+            });
+        }
+
+        if (fsShareGuardianLinkBtn) {
+            fsShareGuardianLinkBtn.addEventListener("click", () => {
+                const fsGuardianInviteLink = document.getElementById("fsGuardianInviteLink");
+                const link = fsGuardianInviteLink ? fsGuardianInviteLink.textContent.trim() : "";
+                if (navigator.share && link) {
+                    navigator.share({
+                        title: "Securo - Parent Link",
+                        text: "Dear Parent/Guardian please register here:",
+                        url: link
+                    }).then(() => markGuardianLinkCopied()).catch(() => {});
+                }
+            });
+        }
+
+        if (fsProceedToAppBtn) {
+            fsProceedToAppBtn.addEventListener("click", () => {
+                if (!fsHasCopiedGuardianLink) {
+                    showToast("Please copy the parent link first to continue", "info");
+                    return;
+                }
+                finishOnboardingAndEnterApp();
+            });
+        }
+
+        // Touch swipe handling for 2-slide carousel
+        let fsTouchStartX = 0;
+        let fsTouchStartY = 0;
+        if (fsOnboardingScreen) {
+            fsOnboardingScreen.addEventListener("touchstart", (e) => {
+                if (e.touches && e.touches.length > 0) {
+                    fsTouchStartX = e.touches[0].clientX;
+                    fsTouchStartY = e.touches[0].clientY;
+                }
+            }, { passive: true });
+            fsOnboardingScreen.addEventListener("touchend", (e) => {
+                if (!e.changedTouches || e.changedTouches.length === 0) return;
+                const diffX = e.changedTouches[0].clientX - fsTouchStartX;
+                const diffY = e.changedTouches[0].clientY - fsTouchStartY;
+                // (2026-07-13) Swipe left advances step 1 if fields filled; prev: blocked swipe
+                if (Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY) * 1.3) {
+                    if (diffX < 0) {
+                        // Swipe left
+                        if (currentOnboardingSlide === 0) {
+                            const fn = fsFirstName ? fsFirstName.value.trim() : "";
+                            const ln = fsLastName ? fsLastName.value.trim() : "";
+                            const course = fsCourse ? fsCourse.value.trim() : "";
+                            const year = fsYearLevel ? fsYearLevel.value.trim() : "";
+                            const sec = fsSection ? fsSection.value.trim() : "";
+                            const isFilled = fn.length >= 2 && ln.length >= 2 && Boolean(course) && /^[1-5]$/.test(year) && sec.length >= 1;
+                            if (isFilled) {
+                                if (typeof fsOnboardingForm.requestSubmit === 'function') {
+                                    fsOnboardingForm.requestSubmit();
+                                } else {
+                                    fsOnboardingForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                                }
+                            } else {
+                                if (fsOnboardingError) fsOnboardingError.textContent = "Please complete all fields to continue.";
+                            }
+                            return;
+                        } else if (currentOnboardingSlide === 1) {
+                            if (!fsHasCopiedGuardianLink) {
+                                showToast("Please copy the parent link first to continue", "info");
+                                return;
+                            }
+                            finishOnboardingAndEnterApp();
+                        }
+                    } else if (diffX > 0) {
+                        // Swipe right
+                        if (currentOnboardingSlide === 1) {
+                            goToSlide(0);
+                        }
+                    }
+                }
+            }, { passive: true });
         }
 
         // Listen for auth state changes to update profile (Date: 2026-05-01)
         onAuthStateChanged(auth, async (user) => {
             if (!user) return;
 
-            // --- Step 1: Show the app shell IMMEDIATELY so user never stares at a blank screen ---
+            // (2026-07-13) Prioritize onboarding before map view; prev: flashed map shell
             appState.user.uid = user.uid;
-            appView.classList.add("active");
+            const isJustRegistered = sessionStorage.getItem('securo_just_registered') === '1';
+            let cachedProfile = null;
+            try {
+                const raw = localStorage.getItem("securo_user_directory");
+                const dir = raw ? JSON.parse(raw) : {};
+                cachedProfile = dir[user.uid] || null;
+            } catch (e) {}
+            if (!cachedProfile) {
+                try {
+                    const localUsers = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '[]');
+                    cachedProfile = localUsers.find(u => String(u.id) === String(user.uid));
+                } catch (e) {}
+            }
 
-            if (!appState.initialViewDone) {
-                setActiveView("map");
-                appState.initialViewDone = true;
+            const needsOnboarding = isJustRegistered || !cachedProfile || !cachedProfile.name || cachedProfile.name === 'Student' || !cachedProfile.section || !cachedProfile.onboardingCompleted;
+
+            if (needsOnboarding) {
+                triggerFullscreenOnboarding(user, cachedProfile);
+            } else {
+                appView.classList.add("active");
+                if (!appState.initialViewDone) {
+                    setActiveView("map");
+                    appState.initialViewDone = true;
+                }
             }
 
             // --- Step 2: Load profile & data in the background ---
@@ -8002,10 +8392,18 @@
                 let profile = await getUserProfile(user.uid);
                 const derivedId = user.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1] || "";
 
-                // (2026-07-13) Trigger fullscreen onboarding if profile incomplete; was redirecting to login
                 if (!profile || !profile.name || profile.name === 'Student' || !profile.section || !profile.onboardingCompleted) {
-                    triggerFullscreenOnboarding(user, profile);
+                    triggerFullscreenOnboarding(user, profile || cachedProfile);
                     return;
+                }
+
+                sessionStorage.removeItem('securo_just_registered');
+                if (!fsOnboardingScreen || !fsOnboardingScreen.classList.contains("active")) {
+                    appView.classList.add("active");
+                    if (!appState.initialViewDone) {
+                        setActiveView("map");
+                        appState.initialViewDone = true;
+                    }
                 }
 
                 const derivedRole = user.email?.startsWith('staff.') ? 'staff' : 'student';
@@ -10043,123 +10441,183 @@
         </div>
     </div>
 
-    <!-- (2026-07-13) Fullscreen app onboarding occupying full view; was card modal -->
+    <!-- (2026-07-13) Top segmented bar without text, copy requirement; prev: step labels -->
     <div id="fullscreenOnboardingScreen" class="fullscreen-onboarding-screen">
+        <div id="fsOnboardingLoadingOverlay" class="fs-loading-overlay" style="display: none;">
+            <div class="fs-loading-spinner"></div>
+        </div>
         <div class="fs-onboarding-container">
-            <h1 class="fs-onboarding-title">Set Up Your Profile</h1>
-
-            <!-- Avatar Picker Section with 165px live camera circle -->
-            <div class="fs-avatar-picker-section">
-                <div class="fs-avatar-circle-wrapper" id="fsAvatarCircleWrap" title="Click to snap selfie photo">
-                    <div class="fs-avatar-circle" id="fsAvatarPreviewCircle">
-                        <video id="fsCircleLiveVideo" autoplay playsinline muted></video>
-                        <div class="fs-avatar-placeholder-content" id="fsAvatarPlaceholder">
-                            <span class="material-symbols-outlined">add_a_photo</span>
-                        </div>
-                        <div class="fs-avatar-initials" id="fsAvatarInitials">ST</div>
-                        <img id="fsAvatarImg" class="fs-avatar-img" src="" alt="Profile Photo">
-                    </div>
-                    <div class="fs-avatar-badge-cam" id="fsAvatarBadgeCam">
-                        <span class="material-symbols-outlined">photo_camera</span>
-                    </div>
+            <!-- Progress Bar on Top -->
+            <div class="fs-progress-header">
+                <div class="fs-progress-steps-row">
+                    <div class="fs-progress-step-pill active" id="fsProgStep1"></div>
+                    <div class="fs-progress-step-pill" id="fsProgStep2"></div>
                 </div>
-
-                <div class="fs-avatar-actions-row">
-                    <button type="button" class="fs-action-chip" id="fsSnapSelfieBtn">
-                        <span class="material-symbols-outlined">camera</span>
-                        <span id="fsSnapBtnLabel">Capture Selfie</span>
-                    </button>
-                    <button type="button" class="fs-action-chip secondary" id="fsChooseGalleryBtn">
-                        <span class="material-symbols-outlined">image</span>
-                        <span>From Gallery</span>
-                    </button>
-                </div>
-                <input type="file" id="fsGalleryInput" accept="image/*" style="display:none;">
-                <canvas id="fsCameraCanvas" style="display:none;"></canvas>
             </div>
 
-            <!-- Onboarding Form -->
-            <form id="fsOnboardingForm">
-                <div class="fs-form-row-grid" style="margin-bottom: 12px;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label"
-                            style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">First
-                            Name</label>
-                        <div class="fs-input-field-wrap">
-                            <span class="material-symbols-outlined input-icon">person</span>
-                            <input type="text" id="fsFirstName" placeholder="e.g. Juan" required
-                                autocomplete="given-name">
+            <!-- Viewport for Carousel -->
+            <div class="fs-slides-viewport" id="fsSlidesViewport">
+                <div class="fs-slides-track" id="fsSlidesTrack">
+                    <!-- Slide 1: Profile setup -->
+                    <div class="fs-slide-card" id="fsSlideStep1">
+                        <h1 class="fs-onboarding-title">Set Up Your Profile</h1>
+
+                        <!-- Avatar Picker Section with 165px live camera circle -->
+                        <div class="fs-avatar-picker-section">
+                            <div class="fs-avatar-circle-wrapper" id="fsAvatarCircleWrap" title="Click to snap selfie photo">
+                                <div class="fs-avatar-circle" id="fsAvatarPreviewCircle">
+                                    <video id="fsCircleLiveVideo" autoplay playsinline muted></video>
+                                    <div class="fs-avatar-placeholder-content" id="fsAvatarPlaceholder">
+                                        <span class="material-symbols-outlined">add_a_photo</span>
+                                    </div>
+                                    <div class="fs-avatar-initials" id="fsAvatarInitials">ST</div>
+                                    <img id="fsAvatarImg" class="fs-avatar-img" src="" alt="Profile Photo">
+                                </div>
+                                <div class="fs-avatar-badge-cam" id="fsAvatarBadgeCam">
+                                    <span class="material-symbols-outlined">photo_camera</span>
+                                </div>
+                            </div>
+
+                            <div class="fs-avatar-actions-row">
+                                <button type="button" class="fs-action-chip" id="fsSnapSelfieBtn">
+                                    <span class="material-symbols-outlined">camera</span>
+                                    <span id="fsSnapBtnLabel">Capture Selfie</span>
+                                </button>
+                                <button type="button" class="fs-action-chip secondary" id="fsChooseGalleryBtn">
+                                    <span class="material-symbols-outlined">image</span>
+                                    <span>From Gallery</span>
+                                </button>
+                            </div>
+                            <input type="file" id="fsGalleryInput" accept="image/*" style="display:none;">
+                            <canvas id="fsCameraCanvas" style="display:none;"></canvas>
                         </div>
+
+                        <!-- Onboarding Form -->
+                        <form id="fsOnboardingForm">
+                            <div class="fs-form-row-grid" style="margin-bottom: 12px;">
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label"
+                                        style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">First
+                                        Name</label>
+                                    <div class="fs-input-field-wrap">
+                                        <span class="material-symbols-outlined input-icon">person</span>
+                                        <input type="text" id="fsFirstName" placeholder="e.g. Juan" required
+                                            autocomplete="given-name">
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label"
+                                        style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Last
+                                        Name</label>
+                                    <div class="fs-input-field-wrap">
+                                        <span class="material-symbols-outlined input-icon">badge</span>
+                                        <input type="text" id="fsLastName" placeholder="e.g. Dela Cruz" required
+                                            autocomplete="family-name">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Course (left) and Year · Section (right) side by side -->
+                            <div class="fs-form-row-grid" style="margin-bottom: 20px;">
+                                <!-- Course Dropdown -->
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Course</label>
+                                    <div class="fs-input-field-wrap" style="position: relative;">
+                                        <span class="material-symbols-outlined input-icon">school</span>
+                                        <select id="fsCourse" required style="width: 100%; border: none; background: transparent; outline: none; font-size: 0.92rem; font-weight: 700; color: var(--ink); padding: 0; height: 50px; appearance: none; cursor: pointer;">
+                                            <option value="" disabled selected>Select course</option>
+                                            <option value="BSIT">Bachelor of Science in Information Technology (BSIT)</option>
+                                            <option value="BIT-Comp Tech">Bachelor in Industrial Technology- Major in Computer Technology (BIT-Comp Tech)</option>
+                                            <option value="BIT-Elex">Bachelor in Industrial Technology - Major in Electronics (BIT-Elex)</option>
+                                            <option value="BIT-Automotive">Bachelor in Industrial Technology - Major in Automotive (BIT-Automotive)</option>
+                                            <option value="BSIE">Bachelor of Science in Industrial Engineering (BSIE)</option>
+                                            <option value="BSHM">Bachelor of Science in Hospitality Management (BSHM)</option>
+                                            <option value="BSFi">Bachelor of Science in Fisheries (BSFi)</option>
+                                            <option value="BEEd">Bachelor of Elementary Education (BEEd)</option>
+                                            <option value="BSED-Math">Bachelor of Secondary Education - Major in Mathematics (BSED-Math)</option>
+                                            <option value="BTLEd-HE">Bachelor in Technology Livelihood Education - Major in Home Economics (BTLEd-HE)</option>
+                                        </select>
+                                        <span class="material-symbols-outlined" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted);">arrow_drop_down</span>
+                                    </div>
+                                </div>
+
+                                <!-- Year · Section -->
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Year · Section</label>
+                                    <div class="fs-input-field-wrap" style="display: flex; align-items: center; padding: 0 15px; gap: 8px;">
+                                        <span class="material-symbols-outlined input-icon" style="margin-right: 8px; flex-shrink: 0;">calendar_today</span>
+                                        <input type="text" id="fsYearLevel" placeholder="4" maxlength="1" inputmode="numeric" required autocomplete="off" 
+                                            style="width: 32px; flex: 0 0 32px; border: none; background: transparent; outline: none; font-size: 1rem; font-weight: 700; text-align: center; padding: 0; height: 50px;">
+                                        <span style="color: var(--muted); font-weight: 700; font-size: 1.1rem; user-select: none;">-</span>
+                                        <input type="text" id="fsSection" placeholder="A" maxlength="4" required autocomplete="off" 
+                                            style="flex: 1; border: none; background: transparent; outline: none; font-size: 1rem; font-weight: 700; text-transform: uppercase; padding: 0; height: 50px;">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="fsOnboardingError" class="error-msg"
+                                style="color: #d11f34; font-size: 0.82rem; font-weight: 600; margin-bottom: 12px; text-align: center;">
+                            </div>
+
+                            <button type="submit" class="btn-action" id="fsSubmitOnboardingBtn"
+                                style="width: 100%; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #5a1fe0, #4311c5); color: white; border: none; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 12px 24px rgba(90, 31, 224, 0.25); cursor: pointer; transition: opacity 0.2s ease;">
+                                <span id="fsSubmitText">Save & Continue</span>
+                                <span class="material-symbols-outlined" id="fsSubmitIcon">arrow_forward</span>
+                            </button>
+                        </form>
                     </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label"
-                            style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Last
-                            Name</label>
-                        <div class="fs-input-field-wrap">
-                            <span class="material-symbols-outlined input-icon">badge</span>
-                            <input type="text" id="fsLastName" placeholder="e.g. Dela Cruz" required
-                                autocomplete="family-name">
+
+                    <!-- Slide 2: Parent / Guardian Link -->
+                    <div class="fs-slide-card" id="fsSlideStep2">
+                        <div style="background: linear-gradient(180deg, #ffffff, #faf9ff); border: 1px solid rgba(90, 31, 224, 0.12); border-radius: 28px; padding: 26px 20px; box-shadow: 0 20px 48px -12px rgba(90, 31, 224, 0.12); text-align: center; position: relative;">
+                            
+                            <!-- Badge Icon -->
+                            <div style="width: 72px; height: 72px; border-radius: 22px; background: linear-gradient(135deg, rgba(90, 31, 224, 0.1), rgba(124, 58, 237, 0.18)); color: #5a1fe0; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; box-shadow: 0 10px 22px -6px rgba(90, 31, 224, 0.2); border: 1px solid rgba(90, 31, 224, 0.16);">
+                                <span class="material-symbols-outlined" style="font-size: 36px;">family_restroom</span>
+                            </div>
+
+                            <h2 style="font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--ink); margin: 0 0 8px; letter-spacing: -0.02em;">Link Your Account With Your Parents</h2>
+                            <p style="font-size: 0.88rem; color: var(--muted); line-height: 1.5; margin: 0 auto 20px; max-width: 320px;">
+                                Copy this link to link your account with your parents. Give this link to them to register.
+                            </p>
+
+                            <!-- Link Container -->
+                            <div style="background: white; border: 1.5px solid rgba(90, 31, 224, 0.16); border-radius: 18px; padding: 12px 14px; margin-bottom: 18px; text-align: left; box-shadow: 0 4px 12px rgba(90, 31, 224, 0.04);">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="font-size: 0.72rem; font-weight: 800; color: #5a1fe0; text-transform: uppercase; letter-spacing: 0.6px;">Parent Registration Link</span>
+                                    <span class="material-symbols-outlined" style="font-size: 16px; color: #5a1fe0;">link</span>
+                                </div>
+                                <div id="fsGuardianInviteLink" style="font-size: 0.82rem; color: #1e293b; font-weight: 600; word-break: break-all; line-height: 1.45; font-family: monospace; user-select: all; padding: 2px 0;">https://zeamarae.github.io/Securo/guardian.html</div>
+                            </div>
+
+                            <!-- Action buttons -->
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <!-- (2026-07-13) Shorter copy button label; prev: long prompt label -->
+                                <button type="button" class="btn-action" id="fsCopyGuardianLinkBtn" style="width: 100%; height: 50px; border-radius: 16px; background: linear-gradient(135deg, #5a1fe0, #4311c5); color: white; border: none; font-weight: 800; font-size: 0.96rem; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 12px 24px rgba(90, 31, 224, 0.25); cursor: pointer; transition: all 0.2s ease;">
+                                    <span class="material-symbols-outlined">content_copy</span>
+                                    <span id="fsCopyLinkText">Copy Link</span>
+                                </button>
+
+                                <button type="button" class="btn-action" id="fsShareGuardianLinkBtn" style="width: 100%; height: 46px; border-radius: 16px; background: linear-gradient(135deg, #0f9b67, #0a7a52); color: white; border: none; font-weight: 700; font-size: 0.92rem; display: none; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 18px rgba(15, 155, 103, 0.2); cursor: pointer;">
+                                    <span class="material-symbols-outlined">share</span>
+                                    <span>Share Link</span>
+                                </button>
+
+                                <button type="button" id="fsProceedToAppBtn" style="width: 100%; height: 48px; border-radius: 16px; background: #f8fafc; border: 1.5px solid #e2e8f0; font-weight: 700; font-size: 0.92rem; color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s ease; opacity: 0.6;">
+                                    <span>Proceed to App</span>
+                                    <span class="material-symbols-outlined">arrow_forward</span>
+                                </button>
+                            </div>
+
+                            <!-- Swipe hint -->
+                            <div id="fsSwipeHintBox" style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; color: var(--muted); font-size: 0.75rem; font-weight: 600;">
+                                <span class="material-symbols-outlined" id="fsSwipeHintIcon" style="font-size: 17px; color: #5a1fe0;">lock</span>
+                                <span id="fsSwipeHintText">Copy link above to unlock app</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Course Dropdown -->
-                <div class="form-group" style="margin-bottom: 12px;">
-                    <label class="form-label"
-                        style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Course</label>
-                    <div class="fs-input-field-wrap">
-                        <span class="material-symbols-outlined input-icon">school</span>
-                        <select id="fsCourse" required>
-                            <option value="" disabled selected>Select your course</option>
-                            <option value="BSIT">BSIT - Information Technology</option>
-                            <option value="BIT">BIT - Industrial Technology</option>
-                            <option value="BSHM">BSHM - Hospitality Management</option>
-                            <option value="BSED">BSED - Secondary Education</option>
-                            <option value="BEED">BEED - Elementary Education</option>
-                            <option value="BSIE">BSIE - Industrial Engineering</option>
-                        </select>
-                        <span class="material-symbols-outlined fs-select-arrow">arrow_drop_down</span>
-                    </div>
-                </div>
-
-                <!-- Year Level on Left and Section on Right -->
-                <div class="fs-form-row-grid" style="margin-bottom: 20px;">
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label"
-                            style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Year</label>
-                        <div class="fs-input-field-wrap">
-                            <span class="material-symbols-outlined input-icon">calendar_today</span>
-                            <select id="fsYearLevel" required>
-                                <option value="" disabled selected>Select Year</option>
-                                <option value="1">1st Year</option>
-                                <option value="2">2nd Year</option>
-                                <option value="3">3rd Year</option>
-                                <option value="4">4th Year</option>
-                            </select>
-                            <span class="material-symbols-outlined fs-select-arrow">arrow_drop_down</span>
-                        </div>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 0;">
-                        <label class="form-label"
-                            style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Section</label>
-                        <div class="fs-input-field-wrap">
-                            <span class="material-symbols-outlined input-icon">group</span>
-                            <input type="text" id="fsSection" placeholder="e.g. A" maxlength="4" required
-                                autocomplete="off">
-                        </div>
-                    </div>
-                </div>
-
-                <div id="fsOnboardingError" class="error-msg"
-                    style="color: #d11f34; font-size: 0.82rem; font-weight: 600; margin-bottom: 12px; text-align: center;">
-                </div>
-
-                <button type="submit" class="btn-action" id="fsSubmitOnboardingBtn"
-                    style="width: 100%; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #5a1fe0, #4311c5); color: white; border: none; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 12px 24px rgba(90, 31, 224, 0.25); cursor: pointer; transition: opacity 0.2s ease;">
-                    <span id="fsSubmitText">Save & Enter Campus Hub</span>
-                    <span class="material-symbols-outlined" id="fsSubmitIcon">arrow_forward</span>
-                </button>
-            </form>
+            </div>
         </div>
     </div>
 

@@ -568,6 +568,13 @@
 
         /* Registration Fields Toggle */
         .signup-only { display: none; }
+
+        /* Year-section inline wrapper focus */
+        .year-section-wrapper:focus-within {
+            background: white !important;
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 4px rgba(90, 31, 224, 0.1) !important;
+        }
     </style>
 </head>
 <body>
@@ -735,16 +742,29 @@
                 </div>
 
                 <div class="form-group" style="margin-bottom: 16px;">
-                    <label class="form-label">Year & Section</label>
-                    <div class="input-wrapper" style="gap: 0;">
-                        <span class="material-symbols-outlined input-icon">school</span>
-                        <input type="text" id="onboardingYear" placeholder="4" maxlength="1" inputmode="numeric"
-                            style="width: 40px; flex: 0 0 40px; text-align: center; font-weight: 700; font-size: 1.1rem;" required>
-                        <span style="color: var(--muted); font-weight: 700; font-size: 1.1rem; padding: 0 4px;">—</span>
-                        <input type="text" id="onboardingSection" placeholder="A" maxlength="4"
-                            style="flex: 1; text-transform: uppercase; font-weight: 700; font-size: 1.1rem;" required>
+                    <label class="form-label" style="display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: var(--muted);">Year &amp; Section</label>
+                    <div class="year-section-wrapper" style="display: flex; align-items: center; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.8); border-radius: var(--radius-md); padding: 0 15px; transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;">
+                        <span class="material-symbols-outlined" style="color: var(--muted); margin-right: 12px; font-size: 18px; flex-shrink: 0;">school</span>
+                        <input
+                            type="text"
+                            id="onboardingYear"
+                            placeholder="4"
+                            maxlength="1"
+                            inputmode="numeric"
+                            autocomplete="off"
+                            style="width: 28px; flex: 0 0 28px; border: none; background: transparent; outline: none; font-size: 1rem; font-weight: 700; color: var(--ink); text-align: right; padding: 0; height: 50px;"
+                            required>
+                        <span style="color: var(--muted); font-weight: 700; font-size: 1.1rem; padding: 0 8px; user-select: none;">-</span>
+                        <input
+                            type="text"
+                            id="onboardingSection"
+                            placeholder="A"
+                            maxlength="4"
+                            autocomplete="off"
+                            style="flex: 1; border: none; background: transparent; outline: none; font-size: 1rem; font-weight: 700; color: var(--ink); text-transform: uppercase; padding: 0; height: 50px;"
+                            required>
                     </div>
-                    <div style="font-size: 0.72rem; color: var(--muted); margin-top: 5px; padding-left: 4px;">Year level (1–5) and section (e.g. A, BSIT)</div>
+                    <div style="font-size: 0.72rem; color: var(--muted); margin-top: 5px; padding-left: 4px;">Year 1–5 · Section letters only (e.g. A)</div>
                 </div>
 
                 <div id="onboardingErrorMsg" class="error-msg" style="margin-bottom: 10px;"></div>
@@ -764,8 +784,9 @@
                 <div class="onboarding-badge-icon">
                     <span class="material-symbols-outlined" style="font-size: 28px; color: var(--primary);">family_restroom</span>
                 </div>
-                <h3 class="onboarding-title">Link a Parent or Guardian</h3>
-                <p class="onboarding-subtitle">Share this link with your parent or guardian so they can register and monitor your safety.</p>
+                <!-- (2026-07-13) Update parent invite copy; prev: share link copy -->
+                <h3 class="onboarding-title">Link Your Account With Your Parents</h3>
+                <p class="onboarding-subtitle">Copy this link to link your account with your parents. Give this link to them to register.</p>
             </div>
 
             <!-- Link Display -->
@@ -868,15 +889,41 @@
         const onboardingErrorMsg = document.getElementById('onboardingErrorMsg');
         const onboardingSubmitBtn = document.getElementById('onboardingSubmitBtn');
 
-        // Year input — only allow digits 1-5
-        onboardingYear.addEventListener('input', () => {
-            onboardingYear.value = onboardingYear.value.replace(/[^1-5]/g, '').slice(0, 1);
-        });
+        // (2026-07-13) OTP-like jump to section & backspace to year; prev: no navigation
+        if (onboardingYear) {
+            onboardingYear.addEventListener('focus', () => onboardingYear.select());
+            onboardingYear.addEventListener('keydown', (e) => {
+                if (/^[1-5]$/.test(e.key)) {
+                    onboardingYear.value = e.key;
+                    e.preventDefault();
+                    if (onboardingSection) {
+                        onboardingSection.focus();
+                        onboardingSection.select();
+                    }
+                }
+            });
+            onboardingYear.addEventListener('input', () => {
+                onboardingYear.value = onboardingYear.value.replace(/[^1-5]/g, '').slice(0, 1);
+                if (onboardingYear.value && onboardingSection) {
+                    onboardingSection.focus();
+                    onboardingSection.select();
+                }
+            });
+        }
 
-        // Section input — only allow letters, max 4 chars, auto uppercase
-        onboardingSection.addEventListener('input', () => {
-            onboardingSection.value = onboardingSection.value.replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase();
-        });
+        if (onboardingSection) {
+            onboardingSection.addEventListener('input', () => {
+                onboardingSection.value = onboardingSection.value.replace(/[^a-zA-Z]/g, '').slice(0, 4).toUpperCase();
+            });
+            onboardingSection.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && (!onboardingSection.value || (onboardingSection.selectionStart === 0 && onboardingSection.selectionEnd === 0))) {
+                    if (onboardingYear) {
+                        onboardingYear.focus();
+                        onboardingYear.select();
+                    }
+                }
+            });
+        }
 
         let onboardingUserContext = null;
         let onboardingPhotoData = '';
@@ -1364,7 +1411,8 @@
                     });
 
                     setButtonBusy(submitBtn, false);
-                    // (2026-07-13) Navigate to index.html to launch map and onboarding; was local modal
+                    // (2026-07-13) Flag new registration for instant onboarding; prev: unflagged
+                    sessionStorage.setItem('securo_just_registered', '1');
                     window.location.href = 'index.html';
                 }
             } catch (error) {
