@@ -741,7 +741,8 @@
                     </div>
                 </div>
 
-                <div class="form-group" style="margin-bottom: 16px;">
+                <!-- (2026-07-13) Add id to Year & Section group for role hiding; was bare div -->
+                <div class="form-group" id="onboardingYearSectionGroup" style="margin-bottom: 16px;">
                     <label class="form-label" style="display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: var(--muted);">Year &amp; Section</label>
                     <div class="year-section-wrapper" style="display: flex; align-items: center; background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.8); border-radius: var(--radius-md); padding: 0 15px; transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;">
                         <span class="material-symbols-outlined" style="color: var(--muted); margin-right: 12px; font-size: 18px; flex-shrink: 0;">school</span>
@@ -1177,10 +1178,15 @@
             showToast("Photo captured", "Profile picture updated from camera.", "success");
         });
 
-        // (2026-07-13) Open required onboarding modal flow; was redirecting directly
+        // (2026-07-13) Hide Year & Section for staff onboarding; was always required
         function openOnboardingModal(userContext) {
             onboardingUserContext = userContext;
             onboardingErrorMsg.textContent = '';
+            const isStaff = (userContext?.role || preferredRole) === 'staff';
+            const yearSecGroup = document.getElementById('onboardingYearSectionGroup');
+            if (yearSecGroup) yearSecGroup.style.display = isStaff ? 'none' : 'block';
+            if (onboardingYear) onboardingYear.required = !isStaff;
+            if (onboardingSection) onboardingSection.required = !isStaff;
             updateOnboardingInitials();
             onboardingModal.classList.add('active');
             onboardingFirstName.focus();
@@ -1192,8 +1198,6 @@
             onboardingErrorMsg.textContent = '';
             const firstName = onboardingFirstName.value.trim();
             const lastName = onboardingLastName.value.trim();
-            const year = onboardingYear.value.trim();
-            const sectionLetter = onboardingSection.value.trim().toUpperCase();
 
             if (firstName.length < 2) {
                 onboardingErrorMsg.textContent = "Please enter your valid first name.";
@@ -1203,16 +1207,24 @@
                 onboardingErrorMsg.textContent = "Please enter your valid last name.";
                 return;
             }
-            if (!/^[1-5]$/.test(year)) {
-                onboardingErrorMsg.textContent = "Year level must be a number from 1 to 5.";
-                return;
-            }
-            if (sectionLetter.length < 1 || sectionLetter.length > 4) {
-                onboardingErrorMsg.textContent = "Section must be 1–4 letters (e.g. A, BSIT).";
-                return;
+
+            // (2026-07-13) Set staff default section & bypass student check; was student
+            const isStaff = (onboardingUserContext?.role || preferredRole) === 'staff';
+            let section = 'Staff';
+            if (!isStaff) {
+                const year = onboardingYear.value.trim();
+                const sectionLetter = onboardingSection.value.trim().toUpperCase();
+                if (!/^[1-5]$/.test(year)) {
+                    onboardingErrorMsg.textContent = "Year level must be a number from 1 to 5.";
+                    return;
+                }
+                if (sectionLetter.length < 1 || sectionLetter.length > 4) {
+                    onboardingErrorMsg.textContent = "Section must be 1–4 letters (e.g. A, BSIT).";
+                    return;
+                }
+                section = `${year}-${sectionLetter}`;
             }
 
-            const section = `${year}-${sectionLetter}`;
             const fullName = `${firstName} ${lastName}`;
             const initials = (firstName[0] + lastName[0]).toUpperCase();
             setButtonBusy(onboardingSubmitBtn, true);

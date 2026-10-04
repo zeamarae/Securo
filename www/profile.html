@@ -1459,6 +1459,10 @@
                 connectionsHelper.textContent = state.role === 'admin'
                     ? 'Admin accounts manage the platform and do not have family connections.'
                     : 'Staff accounts keep the same campus tools as students, without family linking.';
+                // (2026-07-13) Hide section and set staff ID label; was student layout
+                if (sectionRow) sectionRow.classList.add('is-hidden');
+                const staffIdLabel = studentIdRow?.querySelector('.info-label');
+                if (staffIdLabel) staffIdLabel.textContent = state.role === 'staff' ? 'Staff ID' : 'Admin ID';
                 heroNote.textContent = state.role === 'admin'
                     ? 'Your admin profile keeps account management simple. Only your display name, photo, and password can be updated here.'
                     : 'Your staff ID stays locked after signup. Only your display name and password can be updated here.';
@@ -1466,6 +1470,9 @@
             } else {
                 document.body.classList.remove('guardian-theme');
                 profileBackBtn.href = 'index.html';
+                const studentIdLabelEl = studentIdRow?.querySelector('.info-label');
+                if (studentIdLabelEl) studentIdLabelEl.textContent = 'Student ID';
+                if (sectionRow) sectionRow.classList.remove('is-hidden');
                 connectionsTitle.textContent = 'Parents / Guardians';
                 connectionsCopy.textContent = 'Pending requests and approved family links appear here.';
                 connectionsHelper.textContent = 'Students can have up to three parents or guardians. Guardian accounts can track one child at a time.';
@@ -1492,9 +1499,10 @@
                 const primary = state.role === 'guardian'
                     ? (link.studentName || link.studentId || 'Pending child link')
                     : (link.guardianName || 'Parent / Guardian');
+                // (2026-07-13) Fix mojibake in email/ID connection meta; was corrupted â€¢
                 const secondary = state.role === 'guardian'
-                    ? `${link.studentId ? `Student ID: ${link.studentId}` : 'Awaiting student match'}${link.studentUid ? '' : ' â€¢ Pending match'}`
-                    : `${link.guardianEmail || 'No email available'}${link.studentId ? ` â€¢ ID: ${link.studentId}` : ''}`;
+                    ? `${link.studentId ? `Student ID: ${link.studentId}` : 'Awaiting student match'}${link.studentUid ? '' : ' &bull; Pending match'}`
+                    : `${link.guardianEmail || 'No email available'}${link.studentId ? ` &bull; ID: ${link.studentId}` : ''}`;
                 const badgeText = status === 'accepted' ? (state.role === 'guardian' ? 'Active Child' : 'Parent Now') : status === 'rejected' ? 'Declined' : 'Pending';
 
                 return `
@@ -1525,7 +1533,7 @@
                 const status = link.status || 'pending';
                 const badgeClass = status === 'accepted' ? 'accepted' : status === 'rejected' ? 'rejected' : 'pending';
                 const primary = link.studentName || link.studentId || 'Pending child link';
-                const secondary = `${link.studentId ? `Student ID: ${link.studentId}` : 'Awaiting student match'}${link.studentUid ? '' : ' â€¢ Pending match'}`;
+                const secondary = `${link.studentId ? `Student ID: ${link.studentId}` : 'Awaiting student match'}${link.studentUid ? '' : ' &bull; Pending match'}`;
                 const badgeText = status === 'accepted' ? 'Active Child' : status === 'rejected' ? 'Declined' : 'Pending';
                 const actionMarkup = (status === 'pending' || status === 'accepted') && link.id
                     ? `

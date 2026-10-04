@@ -1,101 +1,88 @@
 /**
- * Securo Router - Clean URL Handler
- * Handles navigation without .html extensions
- * Works in both web and Capacitor environments
+ * Securo Router
+ * Works on: local dev (127.0.0.1:5508), GitHub Pages (zeamarae.github.io/Securo/)
+ * Strategy: keep .html for navigation but rewrite the visible URL using history.replaceState
  */
 
-(function() {
+(function () {
     'use strict';
 
-    const Router = {
-        /**
-         * Navigate to a page without .html extension
-         * @param {string} path - Path without .html (e.g., 'terms', 'login')
-         */
-        navigate(path) {
-            // Remove leading slash if present
-            path = path.replace(/^\//, '');
-            
-            // Check if we're in a Capacitor/Cordova environment or file protocol
-            const isApp = window.Capacitor || window.cordova || window.location.protocol === 'file:';
-            
-            if (isApp) {
-                // In app environment, use .html extension
-                window.location.href = path + '.html';
-            } else {
-                // In web environment, use clean URL
-                // Check if .html is already in the path
-                if (path.endsWith('.html')) {
-                    path = path.replace('.html', '');
-                }
-                window.location.href = '/' + path;
-            }
-        },
+    // Detect GitHub Pages base path (e.g. /Securo/) vs root (/)
+    const isGitHubPages = window.location.hostname.includes('github.io');
+    const basePath = isGitHubPages
+        ? '/' + window.location.pathname.split('/')[1] + '/'  // e.g. /Securo/
+        : '/';
 
-        /**
-         * Go back to previous page or fallback to a default page
-         * @param {string} fallback - Fallback page without .html (e.g., 'login')
-         */
-        back(fallback = 'login') {
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                this.navigate(fallback);
-            }
-        },
-
-        /**
-         * Get proper href for links based on environment
-         * @param {string} path - Path without .html
-         * @returns {string} - Proper href
-         */
-        getHref(path) {
-            path = path.replace(/^\//, '').replace('.html', '');
-            const isApp = window.Capacitor || window.cordova || window.location.protocol === 'file:';
-            return isApp ? path + '.html' : '/' + path;
-        },
-
-        /**
-         * Initialize router - convert all internal links to use clean URLs
-         */
-        init() {
-            // Update all links on page load
-            document.addEventListener('DOMContentLoaded', () => {
-                this.updateLinks();
-            });
-
-            // Also update if called after DOM is already loaded
-            if (document.readyState === 'complete' || document.readyState === 'interactive') {
-                this.updateLinks();
-            }
-        },
-
-        /**
-         * Update all internal links to use proper URLs
-         */
-        updateLinks() {
-            const isApp = window.Capacitor || window.cordova || window.location.protocol === 'file:';
-            
-            // Don't modify links in app environment (they already have .html)
-            if (isApp) return;
-
-            // Get all internal links
-            const links = document.querySelectorAll('a[href*=".html"]');
-            
-            links.forEach(link => {
-                const href = link.getAttribute('href');
-                if (href && !href.startsWith('http') && !href.startsWith('//')) {
-                    // Remove .html extension for web
-                    const cleanHref = href.replace('.html', '');
-                    link.setAttribute('href', cleanHref);
-                }
-            });
+    /**
+     * Get the clean route name from current URL
+     * e.g. /role-selection.html  →  role-selection
+     *      /Securo/login.html    →  login
+     *      /#/login              →  login
+     */
+    function getCurrentRoute() {
+        // Check hash first
+        if (window.location.hash && window.location.hash.startsWith('#/')) {
+            return window.location.hash.slice(2);
         }
-    };
+        const file = window.location.pathname.split('/').pop().replace('.html', '');
+        return file || 'role-selection';
+    }
 
-    // Make Router globally available
-    window.SecuroRouter = Router;
+    /**
+     * Rewrite the browser URL to a clean hash route without reloading
+     * e.g. /role-selection.html  →  /role-selection.html#/role-selection  (local)
+     *      /Securo/login.html    →  /Securo/#/login  (GitHub Pages)
+     */
+    function cleanURL() {
+        const path = window.location.pathname;
+        const file = path.split('/').pop();
 
-    // Auto-initialize
-    Router.init();
+        if (!file.endsWith('.html')) return; // already clean or not an html page
+        if (window.location.hash.startsWith('#/')) return; // already has clean hash
+
+        const route = file.replace('.html', '');
+
+        if (isGitHubPages) {
+            // On GitHub Pages: /Securo/login.html → /Securo/#/login
+            const cleanPath = basePath + '#/' + route;
+            window.history.replaceState(null, '', cleanPath);
+        } else {
+            // On local dev: /login.html → /login.html#/login  (hides .html visually in address bar after #)
+            window.history.replaceState(null, '', path + '#/' + route);
+        }
+    }
+
+    /**
+     * Navigate to a page — works in all environments
+     */
+    function navigate(page) {
+        page = page.replace('.html', '').replace(/^\//, '');
+
+        if (isGitHubPages) {
+            window.location.href = basePath + page + '.html#/' + page;
+        } else {
+            window.location.href = page + '.html#/' + page;
+        }
+    }
+
+    /**
+     * Go back or fallback to a page
+     */
+    function goBack(fallback = 'login') {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            navigate(fallback);
+        }
+    }
+
+    // Expose globally
+    window.SecuroRouter = { navigate, goBack, getCurrentRoute, cleanURL, basePath, isGitHubPages };
+
+    // Auto clean URL on load
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', cleanURL);
+    } else {
+        cleanURL();
+    }
 })();

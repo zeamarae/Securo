@@ -3564,11 +3564,8 @@
                 if (typeof setupSimulatorControls === 'function') setupSimulatorControls();
                 if (typeof renderSimulatorDispatchLogs === 'function') renderSimulatorDispatchLogs();
             }
-            if (tab === 'messages') {
-                initAdminChat();
-            } else {
-                stopAdminRealtimeThreads();
-            }
+            // (2026-07-13) Keep chat threads listening in background; was disconnected
+            initAdminChat();
         };
 
         tabBtns.forEach((btn) => {
@@ -3733,6 +3730,28 @@
             // (2026-07-13) Save fresh data to local cache; was unpersisted
             saveToLocalCache();
             applyFilters();
+            // (2026-07-13) Subscribe to real-time GAD counseling messages; was uncalled
+            if (!window._gadMessagesUnsub) {
+                window._gadMessagesUnsub = subscribeToGADMessages(null, (messages) => {
+                    const openCount = (messages || []).filter(m => m.status === 'open').length;
+                    const gadTabBtn = document.querySelector('.tab-btn[data-tab="gad"]');
+                    if (gadTabBtn) {
+                        let badge = gadTabBtn.querySelector('.gad-badge');
+                        if (openCount > 0) {
+                            if (!badge) {
+                                badge = document.createElement('span');
+                                badge.className = 'gad-badge';
+                                badge.style.cssText = 'background:#ef4444; color:#fff; font-size:10px; border-radius:10px; margin-left:6px; padding:2px 6px; font-weight:700;';
+                                gadTabBtn.appendChild(badge);
+                            }
+                            badge.textContent = `${openCount}`;
+                        } else if (badge) {
+                            badge.remove();
+                        }
+                    }
+                });
+            }
+
             // (2026-07-13) Sync students with simulator dropdown; was user list only
             if (typeof populateSimulatorStudents === 'function') populateSimulatorStudents();
             if (isCreatingManagedUser) {

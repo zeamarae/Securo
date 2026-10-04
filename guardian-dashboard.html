@@ -1356,6 +1356,20 @@
                             <button class="btn-secondary" id="cancelPendingRequestBtn" type="button" style="margin-top:0;">Cancel Wrong Student ID</button>
                             <button class="btn-secondary" id="editPendingRequestBtn" type="button" style="margin-top:0;">Enter Another Student ID</button>
                         </div>
+                    <!-- (2026-07-13) Add active SOS emergency card; was missing -->
+                    <div class="location-alert-card" id="sosEmergencyCard" style="display:none; background:#fff1f2; border:1px solid #fda4af;">
+                        <div class="location-alert-icon" style="background:#fee2e2; color:#e11d48;">
+                            <span class="material-symbols-outlined">emergency</span>
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <strong style="font-size:0.84rem; color:#9f1239; font-weight:800; display:block;">🚨 EMERGENCY SOS ACTIVE</strong>
+                            <div id="sosEmergencyText" style="font-size:0.75rem; color:#be123c; line-height:1.35; margin-top:1px;">
+                                Your child triggered an emergency alert.
+                            </div>
+                            <button class="btn-primary" id="viewSosLocationBtn" type="button" style="margin-top:6px; background:#e11d48; border-color:#e11d48; padding:6px 12px; min-height:32px; height:32px; font-size:0.75rem; border-radius:10px; width:100%;">
+                                Locate Child on Map
+                            </button>
+                        </div>
                     </div>
                     <!-- (2026-07-13) Slim location alert layout; was bulky stacked card -->
                     <div class="location-alert-card" id="locationAlertCard">
@@ -1552,13 +1566,16 @@
             sendChatMessage,
             subscribeToMessagesByThread,
             sendGuardianLocationReminder,
-            subscribeToCampusMapConfig
+            subscribeToCampusMapConfig,
+            subscribeToStudentSOS
         } from './db.js';
 
         let map, studentMarker, polyline;
         let activeLink = null;
         let attendanceUnsub = null;
         let locationUnsub = null;
+        // (2026-07-13) Add sosUnsub for active SOS listener; was missing
+        let sosUnsub = null;
         let guardianProfile = null;
         let currentSharedVaultItems = [];
         let latestStudentLocation = null;
@@ -2397,6 +2414,7 @@
         function startMonitoring(studentUid) {
             if (locationUnsub) locationUnsub();
             if (attendanceUnsub) attendanceUnsub();
+            if (sosUnsub) sosUnsub();
 
             locationUnsub = subscribeToStudentLocation(studentUid, (loc) => {
                 updateStudentMap(loc);
@@ -2405,6 +2423,26 @@
             attendanceUnsub = subscribeToStudentAttendance(studentUid, (logs) => {
                 monitoredStudentAttendance = Array.isArray(logs) ? logs : [];
                 renderAlerts(logs);
+            });
+
+            // (2026-07-13) Subscribe to active child SOS alerts; was unmonitored
+            sosUnsub = subscribeToStudentSOS(studentUid, (activeSos) => {
+                const card = document.getElementById('sosEmergencyCard');
+                const text = document.getElementById('sosEmergencyText');
+                if (Array.isArray(activeSos) && activeSos.length > 0) {
+                    const alert = activeSos[0];
+                    if (card) card.style.display = 'flex';
+                    if (text) text.textContent = `${activeLink?.studentName || 'Your child'} activated SOS. Status: ACTIVE.`;
+                    const btn = document.getElementById('viewSosLocationBtn');
+                    if (btn && alert.location?.lat && alert.location?.lng) {
+                        btn.onclick = () => {
+                            setActiveNav('tracking');
+                            if (map) map.setView([alert.location.lat, alert.location.lng], 18);
+                        };
+                    }
+                } else {
+                    if (card) card.style.display = 'none';
+                }
             });
         }
 

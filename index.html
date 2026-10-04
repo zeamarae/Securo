@@ -7103,27 +7103,85 @@
             }
         });
 
-        // (2026-07-13) Dynamic nearest school landmark resolver for SOS telemetry; was static string
-        function getNearestLandmark(lat, lng) {
-            if (!lat || !lng) return "CTU Daanbantayan Campus";
+        // (2026-07-13) Add regional landmarks and barangay resolver; was CTU default
+        const REGIONAL_LANDMARKS = [
+            { name: "Brgy. Agujo, Daanbantayan", coords: [11.26850, 124.01020] },
+            { name: "Agujo Elementary School, Daanbantayan", coords: [11.26510, 124.01250] },
+            { name: "Brgy. Poblacion, Daanbantayan (Town Proper)", coords: [11.25550, 124.02450] },
+            { name: "Daanbantayan Municipal Hall & Plaza", coords: [11.25700, 124.02510] },
+            { name: "Santa Rosa de Lima Parish, Daanbantayan", coords: [11.25820, 124.02630] },
+            { name: "Daanbantayan Public Market & Terminal", coords: [11.25620, 124.02320] },
+            { name: "Brgy. Pajo, Daanbantayan", coords: [11.24800, 124.00550] },
+            { name: "Brgy. Bakhawan, Daanbantayan", coords: [11.28250, 124.00210] },
+            { name: "Brgy. Tapilon & Port, Daanbantayan", coords: [11.29850, 124.02820] },
+            { name: "Brgy. Maya & Maya Port, Daanbantayan", coords: [11.31500, 124.04100] },
+            { name: "Brgy. Malbago, Daanbantayan", coords: [11.22850, 123.99820] },
+            { name: "Brgy. Paypay, Daanbantayan", coords: [11.21800, 123.99200] },
+            { name: "Brgy. Bitoon, Daanbantayan", coords: [11.27200, 123.97850] },
+            { name: "Brgy. Calape, Daanbantayan", coords: [11.28900, 123.98500] },
+            { name: "Brgy. Talisay, Daanbantayan", coords: [11.24100, 124.01900] },
+            { name: "Brgy. Tinubdan, Daanbantayan", coords: [11.24500, 123.98700] },
+            { name: "Brgy. Tominjao, Daanbantayan", coords: [11.23500, 124.01500] },
+            { name: "Curva, Medellin, Cebu", coords: [11.17350, 123.97820] },
+            { name: "Poblacion, Medellin, Cebu", coords: [11.12800, 123.96200] },
+            { name: "Bogo City Proper, Cebu", coords: [11.05000, 124.00500] }
+        ];
 
-            let nearest = null;
-            let minDistance = Infinity;
+        async function fetchReverseGeocode(lat, lng) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 2500);
+                const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`;
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (!res.ok) return null;
+                const data = await res.json();
+                const locality = data.locality || data.principalSubdivision || "";
+                const barangay = (data.localityInfo?.informative || []).find(i => /barangay|brgy/i.test(i.name) || i.description?.toLowerCase().includes("barangay"))?.name || "";
+                const city = data.city || data.localityInfo?.administrative?.find(a => a.adminLevel === 6 || a.adminLevel === 7)?.name || "Daanbantayan";
+                
+                if (barangay && city) return `${barangay}, ${city}`;
+                if (locality && city && locality !== city) return `${locality}, ${city}`;
+                if (locality) return locality;
+            } catch (e) {
+                // Offline fallback to local landmark dictionary
+            }
+            return null;
+        }
+
+        function getNearestLandmark(lat, lng) {
+            if (!lat || !lng) return "Location unavailable";
+
+            let nearestBuilding = null;
+            let minBuildingDist = Infinity;
 
             CAMPUS_BUILDINGS.forEach(building => {
                 const [bLat, bLng] = building.coords;
-                const dist = Math.sqrt(Math.pow(lat - bLat, 2) + Math.pow(lng - bLng, 2));
-                if (dist < minDistance) {
-                    minDistance = dist;
-                    nearest = building.name;
+                const dist = Math.hypot(lat - bLat, lng - bLng);
+                if (dist < minBuildingDist) {
+                    minBuildingDist = dist;
+                    nearestBuilding = building.name;
                 }
             });
 
-            if (minDistance < 0.0035 && nearest) {
-                const prefix = nearest.toLowerCase().startsWith("the ") ? "Near " : "Near the ";
-                return `${prefix}${nearest}`;
+            if (minBuildingDist < 0.0035 && nearestBuilding) {
+                const prefix = nearestBuilding.toLowerCase().startsWith("the ") ? "Near " : "Near the ";
+                return `CTU Daanbantayan (${prefix}${nearestBuilding})`;
             }
-            return "CTU Daanbantayan Campus";
+
+            let nearestPlace = null;
+            let minPlaceDist = Infinity;
+
+            REGIONAL_LANDMARKS.forEach(landmark => {
+                const [lLat, lLng] = landmark.coords;
+                const dist = Math.hypot(lat - lLat, lng - lLng);
+                if (dist < minPlaceDist) {
+                    minPlaceDist = dist;
+                    nearestPlace = landmark.name;
+                }
+            });
+
+            return nearestPlace || "Daanbantayan, Cebu";
         }
 
         function updateSosLocationDisplay(lat, lng) {
@@ -7132,7 +7190,7 @@
             if (!titleEl || !subEl) return;
 
             if (!lat || !lng) {
-                titleEl.textContent = "CTU Daanbantayan";
+                titleEl.textContent = "Location Detecting...";
                 subEl.textContent = "Detecting live GPS...";
                 return;
             }
@@ -7140,12 +7198,12 @@
             const isInside = isPointInPolygon([lat, lng], getCampusGeofencePolygon());
             const landmarkName = getNearestLandmark(lat, lng);
 
-            if (isInside || landmarkName.startsWith("Near")) {
+            if (isInside) {
                 titleEl.textContent = landmarkName;
                 subEl.textContent = "CTU Daanbantayan Campus";
             } else {
-                titleEl.textContent = `Lat ${lat.toFixed(4)}, Lng ${lng.toFixed(4)}`;
-                subEl.textContent = "Outside campus bounds";
+                titleEl.textContent = landmarkName;
+                subEl.textContent = "Outside Campus Bounds";
             }
         }
 
@@ -8368,7 +8426,7 @@
         onAuthStateChanged(auth, async (user) => {
             if (!user) return;
 
-            // (2026-07-13) Prioritize onboarding before map view; prev: flashed map shell
+            // (2026-07-13) Role-based auth routing and onboarding gate; was hardcoded
             appState.user.uid = user.uid;
             const isJustRegistered = sessionStorage.getItem('securo_just_registered') === '1';
             let cachedProfile = null;
@@ -8384,11 +8442,12 @@
                 } catch (e) {}
             }
 
-            const needsOnboarding = isJustRegistered || !cachedProfile || !cachedProfile.name || cachedProfile.name === 'Student' || !cachedProfile.section || !cachedProfile.onboardingCompleted;
+            if (cachedProfile?.role === 'guardian' || user.email?.startsWith('guardian.')) {
+                window.location.replace("guardian-dashboard.html");
+                return;
+            }
 
-            if (needsOnboarding) {
-                triggerFullscreenOnboarding(user, cachedProfile);
-            } else {
+            if (cachedProfile && !isJustRegistered && cachedProfile.onboardingCompleted) {
                 appView.classList.add("active");
                 if (!appState.initialViewDone) {
                     setActiveView("map");
@@ -8399,9 +8458,21 @@
             // --- Step 2: Load profile & data in the background ---
             try {
                 let profile = await getUserProfile(user.uid);
-                const derivedId = user.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1] || "";
+                if (profile?.role === 'guardian' && user.email !== ADMIN_EMAIL) {
+                    window.location.replace("guardian-dashboard.html");
+                    return;
+                }
+                if (profile?.role === 'admin' || user.email === ADMIN_EMAIL) {
+                    window.location.replace("admin.html");
+                    return;
+                }
 
-                if (!profile || !profile.name || profile.name === 'Student' || !profile.section || !profile.onboardingCompleted) {
+                const isStaff = profile?.role === 'staff' || user.email?.startsWith('staff.');
+                const incomplete = isStaff
+                    ? (!profile || !profile.name || !profile.onboardingCompleted)
+                    : (!profile || !profile.name || profile.name === 'Student' || !profile.section || !profile.onboardingCompleted);
+
+                if (incomplete && (isJustRegistered || !profile?.onboardingCompleted)) {
                     triggerFullscreenOnboarding(user, profile || cachedProfile);
                     return;
                 }
@@ -8415,18 +8486,14 @@
                     }
                 }
 
+                const derivedId = user.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1] || "";
                 const derivedRole = user.email?.startsWith('staff.') ? 'staff' : 'student';
                 appState.user.studentId = profile?.studentId || derivedId;
-                appState.user.name = profile?.name || user.displayName || "Student";
+                appState.user.name = profile?.name || user.displayName || (isStaff ? "Staff Member" : "Student");
                 appState.user.role = profile?.role || derivedRole;
-                appState.user.section = profile?.section || "";
+                appState.user.section = profile?.section || (isStaff ? "Staff" : "");
                 appState.user.photoURL = profile?.photoURL || profile?.avatar || "";
                 appState.user.initials = profile?.initials || appState.user.name.split(" ").map(n => n[0]).join("").toUpperCase();
-
-                if (profile?.role === 'guardian' && user.email !== ADMIN_EMAIL) {
-                    window.location.replace("guardian-dashboard.html");
-                    return;
-                }
 
                 if (profile?.role === 'student') {
                     syncGuardianLinksForStudent(user.uid, {
@@ -9526,13 +9593,17 @@
             return history;
         }
 
+        // (2026-07-13) Format location with landmark/barangay; was raw lat/lng coords
         function formatAttendanceLocation(location) {
+            if (location?.address && !/^Lat\s*-?\d/i.test(location.address)) {
+                return location.address;
+            }
             if (location?.lat && location?.lng) {
                 const landmark = getNearestLandmark(location.lat, location.lng);
-                return landmark ? `${landmark}` : `Lat ${location.lat.toFixed(5)}, Lng ${location.lng.toFixed(5)}`;
+                return landmark || "Daanbantayan, Cebu";
             }
             if (location?.address) return location.address;
-            return "CTU Daanbantayan Campus";
+            return "Campus Grounds";
         }
 
         let _visibleAttendanceLimit = 10;
@@ -9942,6 +10013,7 @@
             updateTrackingStatusBanner();
         }
 
+        // (2026-07-13) Use real GPS coordinates without fake fallback; was hardcoded
         function getFallbackAttendanceLocation() {
             if (appState.lastLocation?.lat && appState.lastLocation?.lng) {
                 return {
@@ -9952,49 +10024,61 @@
             }
 
             return {
-                lat: 11.26659,
-                lng: 124.00872,
-                address: "CTU Daanbantayan Campus"
+                lat: null,
+                lng: null,
+                address: "Location unavailable"
             };
         }
 
-        // (2026-07-13) Fix syntax error by removing unclosed wrapper; was broken promise
+        // (2026-07-13) Fresh GPS read & barangay/place address resolution; was cached
         async function resolveAttendanceLocation() {
-            if (appState.lastLocation?.lat && appState.lastLocation?.lng) {
-                const landmark = getNearestLandmark(appState.lastLocation.lat, appState.lastLocation.lng);
-                return {
-                    lat: appState.lastLocation.lat,
-                    lng: appState.lastLocation.lng,
-                    address: landmark || `Lat ${appState.lastLocation.lat.toFixed(5)}, Lng ${appState.lastLocation.lng.toFixed(5)}`
-                };
-            }
+            let lat = null;
+            let lng = null;
 
             try {
                 const position = await new Promise((resolve, reject) => {
                     if (!navigator.geolocation) return reject(new Error("No geolocation"));
                     navigator.geolocation.getCurrentPosition(resolve, reject, {
                         enableHighAccuracy: true,
-                        timeout: 2000,
-                        maximumAge: 30000
+                        timeout: 10000,
+                        maximumAge: 0
                     });
                 });
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                const landmark = getNearestLandmark(lat, lng);
-                return {
-                    lat,
-                    lng,
-                    address: landmark || `Lat ${lat.toFixed(5)}, Lng ${lng.toFixed(5)}`
-                };
-            } catch (error) {
-                const fallbackLocation = getFallbackAttendanceLocation();
-                const landmark = getNearestLandmark(fallbackLocation.lat, fallbackLocation.lng);
-                return {
-                    lat: fallbackLocation.lat,
-                    lng: fallbackLocation.lng,
-                    address: landmark || fallbackLocation.address
-                };
+                lat = position.coords.latitude;
+                lng = position.coords.longitude;
+                appState.lastLocation = { lat, lng, timestamp: new Date() };
+            } catch (e) {
+                if (appState.lastLocation?.lat && appState.lastLocation?.lng) {
+                    lat = appState.lastLocation.lat;
+                    lng = appState.lastLocation.lng;
+                }
             }
+
+            if (!lat || !lng) {
+                return getFallbackAttendanceLocation();
+            }
+
+            const isInside = isPointInPolygon([lat, lng], getCampusGeofencePolygon());
+            let address = "";
+
+            if (isInside) {
+                const campusSpot = getNearestLandmark(lat, lng);
+                address = campusSpot.startsWith("CTU") ? campusSpot : `CTU Daanbantayan (${campusSpot})`;
+            } else {
+                const onlinePlace = await fetchReverseGeocode(lat, lng);
+                if (onlinePlace) {
+                    address = `${onlinePlace} (Outside Campus)`;
+                } else {
+                    const fallbackPlace = getNearestLandmark(lat, lng);
+                    address = fallbackPlace.includes("Outside") ? fallbackPlace : `${fallbackPlace} (Outside Campus)`;
+                }
+            }
+
+            return {
+                lat,
+                lng,
+                address
+            };
         }
 
         // Modify startSosHold to log location to DB

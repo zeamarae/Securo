@@ -235,21 +235,44 @@ export const getUserProfile = async (userId) => {
         return localUsers.find((user) => String(user.id) === String(userId)) || null;
     }
 };
-// (2026-07-13) Save reporter metadata with SOS log; was userId only
+// (2026-07-13) Include guardian links and notify in SOS log; was userId only
 export const logSOS = async (userId, location, metadata = {}) => {
     try {
         const localUsers = readLocalUsers();
         const fallback = localUsers.find(u => String(u.id || u.uid || '') === String(userId)) || {};
+        const links = await getLinksForStudent(null, userId).catch(() => []);
+        const guardianUids = (Array.isArray(links) ? links : []).filter(l => l.status === 'accepted' && l.guardianId).map(l => l.guardianId);
+        const name = metadata.userName || fallback.name || "Student";
+        const email = metadata.userEmail || fallback.email || "";
+        const studentId = metadata.studentId || fallback.studentId || "";
+
         await addDoc(collection(db, "sos_logs"), {
             userId,
-            userName: metadata.userName || fallback.name || "",
-            userEmail: metadata.userEmail || fallback.email || "",
-            studentId: metadata.studentId || fallback.studentId || "",
+            studentUid: userId,
+            guardianUids,
+            userName: name,
+            userEmail: email,
+            studentId,
             role: metadata.role || fallback.role || "student",
             location,
+            accuracy: location?.accuracy || null,
+            battery: metadata.battery || null,
+            emergencyType: metadata.emergencyType || "sos",
             timestamp: serverTimestamp(),
             status: "active"
         });
+
+        addDoc(collection(db, "attendance"), {
+            userId,
+            studentUid: userId,
+            studentName: name,
+            studentId,
+            type: "sos",
+            location: location || {},
+            timestamp: serverTimestamp()
+        }).catch(err => console.warn("SOS attendance log sync fallback:", err));
+
+        notifyGuardiansSOS(userId, name, location, metadata).catch(e => console.warn("SOS notify err:", e));
     } catch (error) {
         if (error?.code === "permission-denied" || /permissions/i.test(error?.message)) {
             console.warn("SOS log could not be saved to Firestore due to permission denied. The emergency signal is still active on this device.");
@@ -1100,7 +1123,8 @@ export const getStudentLiveLocationOnce = async (studentUid) => {
 // ========================================================
 
 const MAX_GUARDIANS_PER_STUDENT = 3;
-const MAX_CHILDREN_PER_GUARDIAN = 1;
+// (2026-10-05) Raised from 1→5 to allow multiple children per guardian; was hardcoded 1
+const MAX_CHILDREN_PER_GUARDIAN = 5;
 
 const getGuardianLinkRecords = async (guardianId) => {
     if (!guardianId) return [];
@@ -1960,6 +1984,82 @@ export const notifyGuardiansOfGeofenceEvent = async (studentUid, studentName, ty
         return [];
     }
 };
+// (2026-07-13) Add SOS push notify & student SOS subscription; was missing
+export const notifyGuardiansSOS = async (studentUid, studentName, location = {}, metadata = {}) => {
+    if (!studentUid) return [];
+    try {
+        const links = await getLinksForStudent(null, studentUid);
+        const acceptedLinks = (Array.isArray(links) ? links : []).filter(l => l.status === 'accepted' && l.guardianId);
+        const title = `🚨 SOS Emergency: ${studentName || 'Your Child'}`;
+        const message = `${studentName || 'Your child'} activated an emergency alert at ${location.address || 'Campus Location'}.`;
+
+        const dispatches = acceptedLinks.map(link => 
+            sendAccountNotification({
+                userId: link.guardianId,
+                type: 'sos',
+                title,
+                message,
+                sourceUserId: studentUid,
+                sourceName: studentName || 'Student',
+                studentId: link.studentId || '',
+                metadata: {
+                    type: 'sos',
+                    lat: location.lat || null,
+                    lng: location.lng || null,
+                    address: location.address || '',
+                    timestamp: new Date().toISOString()
+                }
+            }).catch(err => {
+                console.warn("Failed to notify guardian of SOS:", link.guardianId, err);
+                return null;
+            })
+        );
+
+        dispatches.push(
+            sendAccountNotification({
+                userId: 'admin',
+                type: 'sos',
+                title,
+                message: `Active emergency alert triggered by ${studentName || 'Student'}.`,
+                sourceUserId: studentUid,
+                sourceName: studentName || 'Student',
+                studentId: metadata.studentId || '',
+                metadata: {
+                    type: 'sos',
+                    lat: location.lat || null,
+                    lng: location.lng || null,
+                    address: location.address || '',
+                    timestamp: new Date().toISOString()
+                }
+            }).catch(err => {
+                console.warn("Failed to notify admin of SOS:", err);
+                return null;
+            })
+        );
+
+        return await Promise.all(dispatches);
+    } catch (error) {
+        console.warn("Error notifying guardians of SOS:", error);
+        return [];
+    }
+};
+
+export const subscribeToStudentSOS = (studentUid, callback) => {
+    if (!studentUid) return () => {};
+    try {
+        const q = query(collection(db, "sos_logs"), where("userId", "==", studentUid), where("status", "==", "active"));
+        return onSnapshot(q, (snap) => {
+            const logs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            callback(logs);
+        }, (err) => {
+            console.warn("SOS listener error:", err);
+            callback([]);
+        });
+    } catch (e) {
+        return () => {};
+    }
+};
+
 // (2026-07-13) Add GAD messaging and SOS stats query helpers; was end of file
 const LOCAL_GAD_MESSAGES_KEY = "securo_gad_messages_local";
 
@@ -1982,6 +2082,7 @@ const writeLocalGADMessages = (messages) => {
     }
 };
 
+// (2026-07-13) Include location and notify admin on GAD send; was text only
 export const sendGADMessage = async (messageData) => {
     const isAnon = !!messageData.isAnonymous;
     const alias = isAnon ? (messageData.anonymousAlias || `Student-${Math.floor(1000 + Math.random() * 9000)}`) : "";
@@ -1995,6 +2096,7 @@ export const sendGADMessage = async (messageData) => {
         subject: messageData.subject || "General Inquiry",
         category: messageData.category || "counseling",
         message: messageData.message || "",
+        location: messageData.location || null,
         status: "open",
         reply: null,
         repliedAt: null,
@@ -2011,6 +2113,21 @@ export const sendGADMessage = async (messageData) => {
             ...payload,
             createdAt: serverTimestamp()
         });
+
+        sendAccountNotification({
+            userId: 'admin',
+            type: 'gad',
+            title: 'GAD Support Activity',
+            message: isAnon ? 'A new confidential GAD report was submitted.' : `New GAD report from ${messageData.studentName || 'Student'}.`,
+            sourceUserId: messageData.studentUid || '',
+            sourceName: isAnon ? 'Confidential' : (messageData.studentName || 'Student'),
+            metadata: {
+                category: messageData.category || 'counseling',
+                subject: messageData.subject || '',
+                location: messageData.location || null
+            }
+        }).catch(err => console.warn("Failed GAD admin notify:", err));
+
         return { id: docRef.id, ...payload };
     } catch (error) {
         console.warn("Firestore GAD message save fallback to local:", error);
