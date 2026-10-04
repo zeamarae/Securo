@@ -92,9 +92,12 @@
             display: flex;
             flex-direction: column;
             position: relative;
+            /* (2026-07-13) Offset fixed topbar height; was 0 */
+            padding-top: 56px;
+            box-sizing: border-box;
         }
 
-        /* (2026-07-13) Set compact height and permanent sticky topbar for guardian; was tall padding */
+        /* (2026-07-13) Fixed topbar; was sticky broken by overflow-x:hidden on body */
         .topbar {
             padding: 8px 16px;
             min-height: 52px;
@@ -104,12 +107,15 @@
             backdrop-filter: blur(20px) saturate(160%);
             -webkit-backdrop-filter: blur(20px) saturate(160%);
             box-shadow: 0 4px 16px rgba(163, 33, 74, 0.06);
-            position: sticky !important;
-            top: 0 !important;
-            z-index: 1000 !important;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            z-index: 1000;
+            box-sizing: border-box;
             transform: translateZ(0);
             will-change: transform;
-            contain: style;
         }
 
         .topbar-left,
@@ -628,8 +634,7 @@
             opacity: 0.3;
         }
 
-        /* Custom Styles for Guardian Monitor */
-        /* (2026-07-13) Sticky selector bar below topbar; was non-sticky */
+        /* (2026-07-13) Sticky selector bar below fixed topbar; was non-sticky */
         .student-selector-bar {
             padding: 8px 16px;
             background: rgba(255, 244, 247, 0.96);
@@ -640,7 +645,7 @@
             overflow-x: auto;
             border-bottom: 1px solid var(--line);
             position: sticky;
-            top: 56px;
+            top: 0;
             z-index: 900;
         }
 
