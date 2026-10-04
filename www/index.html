@@ -4991,6 +4991,10 @@
                                     <button class="map-btn" id="map-locate" title="My GPS Location">
                                         <span class="material-symbols-outlined">my_location</span>
                                     </button>
+                                    <!-- (2026-07-13) Add share location button; was missing -->
+                                    <button class="map-btn" id="map-share-location" title="Send Live Location to Guardians">
+                                        <span class="material-symbols-outlined">share_location</span>
+                                    </button>
                                     <button class="map-btn" id="map-recenter-campus" title="Center CTU Campus">
                                         <span class="material-symbols-outlined">domain</span>
                                     </button>
@@ -5925,6 +5929,23 @@
             return true;
         }
 
+        // (2026-07-13) Add haptics & vibration for SOS alerts; was absent
+        async function triggerDeviceVibration(duration = 1000) {
+            try {
+                if (window.Capacitor?.Plugins?.Haptics) {
+                    await window.Capacitor.Plugins.Haptics.vibrate({ duration: typeof duration === 'number' ? duration : 1000 }).catch(() => {});
+                    return;
+                }
+            } catch (e) {
+                console.warn("Capacitor haptics error:", e);
+            }
+            try {
+                if (navigator.vibrate) {
+                    navigator.vibrate(duration);
+                }
+            } catch (e) {}
+        }
+
         async function triggerDevicePushNotification(title, body) {
             try {
                 if (window.Capacitor?.Plugins?.LocalNotifications) {
@@ -6397,6 +6418,9 @@
                     appState.lastLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                     updateOwnLocationHighlight(latlng, true);
                     map.flyTo(latlng, 18, { duration: 0.6 });
+                    if (appState.user?.uid) {
+                        updateStudentLiveLocation(appState.user.uid, { lat: pos.coords.latitude, lng: pos.coords.longitude }).catch(() => {});
+                    }
                 },
                 () => {
                     navigator.geolocation.getCurrentPosition(
@@ -6405,6 +6429,9 @@
                             appState.lastLocation = { lat: pos.coords.latitude, lng: pos.coords.longitude };
                             updateOwnLocationHighlight(latlng, true);
                             map.flyTo(latlng, 18, { duration: 0.6 });
+                            if (appState.user?.uid) {
+                                updateStudentLiveLocation(appState.user.uid, { lat: pos.coords.latitude, lng: pos.coords.longitude }).catch(() => {});
+                            }
                         },
                         () => {
                             if (!userMarker && !appState.lastLocation) {
@@ -6417,6 +6444,41 @@
                 { enableHighAccuracy: true, timeout: 4000, maximumAge: 30000 }
             );
         }
+
+        // (2026-07-13) Add shareLiveLocation & sync GPS; was local map centering only
+        async function shareLiveLocation(isInteractive = true) {
+            await ensureCapacitorLocationPermission();
+            startTracking();
+            if (!navigator.geolocation) {
+                if (isInteractive) showStatus("Location Unavailable", "Geolocation is not supported on this device.", "error");
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                async (pos) => {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    appState.lastLocation = { lat, lng };
+                    updateOwnLocationHighlight([lat, lng], true);
+                    if (appState.user?.uid) {
+                        await updateStudentLiveLocation(appState.user.uid, { lat, lng }).catch(() => {});
+                    }
+                    updateTrackingStatusBanner();
+                    if (isInteractive) {
+                        showStatus("Live Location Shared", "Your current location has been shared with your linked guardians.");
+                    }
+                },
+                (err) => {
+                    console.warn("Share location GPS error:", err);
+                    if (isInteractive) {
+                        showStatus("GPS Signal Weak", "Could not capture accurate GPS coordinates. Please ensure device location is enabled.", "error");
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 }
+            );
+        }
+
+        document.getElementById('map-share-location')?.addEventListener('click', () => shareLiveLocation(true));
+        document.getElementById('trackingStatusBanner')?.addEventListener('click', () => shareLiveLocation(true));
 
         // (2026-07-13) Connect geofence check to location highlight; was basic marker update
         function updateOwnLocationHighlight(latlng, centerMap = false) {
@@ -9228,6 +9290,18 @@
                     sosHoldAnimFrame = null;
                 }
                 appState.sosTriggered = true;
+                // (2026-07-13) Trigger haptics, push alert & instant SOS; was delayed state only
+                triggerDeviceVibration([800, 250, 800, 250, 800]);
+                triggerDevicePushNotification("EMERGENCY SOS ACTIVATED", "Your emergency alert and live coordinates have been broadcast to campus security and guardians.");
+                if (!appState.sosLogged && appState.user?.uid) {
+                    appState.sosLogged = true;
+                    logSOS(appState.user.uid, appState.lastLocation || { lat: 0, lng: 0 }, {
+                        userName: appState.user?.name || appState.user?.displayName || "",
+                        userEmail: appState.user?.email || "",
+                        studentId: appState.user?.studentId || "",
+                        role: appState.user?.role || "student"
+                    }).catch(e => console.warn("Instant SOS log failed:", e));
+                }
                 dispatchState.textContent = "Live Dispatch";
                 dispatchState.style.color = "#b6141b";
                 sosCaption.textContent = "Emergency signal secured and sent";
@@ -10030,27 +10104,33 @@
             };
         }
 
-        // (2026-07-13) Fresh GPS read & barangay/place address resolution; was cached
+        // (2026-07-13) Instant attendance GPS & local barangay; was 10s cold GPS wait
         async function resolveAttendanceLocation() {
             let lat = null;
             let lng = null;
 
-            try {
-                const position = await new Promise((resolve, reject) => {
-                    if (!navigator.geolocation) return reject(new Error("No geolocation"));
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
-                        enableHighAccuracy: true,
-                        timeout: 10000,
-                        maximumAge: 0
+            // Instant check: Use active tracked GPS location if available
+            if (appState.lastLocation?.lat && appState.lastLocation?.lng) {
+                lat = appState.lastLocation.lat;
+                lng = appState.lastLocation.lng;
+            } else {
+                try {
+                    const position = await new Promise((resolve, reject) => {
+                        if (!navigator.geolocation) return reject(new Error("No geolocation"));
+                        navigator.geolocation.getCurrentPosition(resolve, reject, {
+                            enableHighAccuracy: true,
+                            timeout: 2500,
+                            maximumAge: 20000
+                        });
                     });
-                });
-                lat = position.coords.latitude;
-                lng = position.coords.longitude;
-                appState.lastLocation = { lat, lng, timestamp: new Date() };
-            } catch (e) {
-                if (appState.lastLocation?.lat && appState.lastLocation?.lng) {
-                    lat = appState.lastLocation.lat;
-                    lng = appState.lastLocation.lng;
+                    lat = position.coords.latitude;
+                    lng = position.coords.longitude;
+                    appState.lastLocation = { lat, lng, timestamp: new Date() };
+                } catch (e) {
+                    if (appState.lastLocation?.lat && appState.lastLocation?.lng) {
+                        lat = appState.lastLocation.lat;
+                        lng = appState.lastLocation.lng;
+                    }
                 }
             }
 
@@ -10065,13 +10145,8 @@
                 const campusSpot = getNearestLandmark(lat, lng);
                 address = campusSpot.startsWith("CTU") ? campusSpot : `CTU Daanbantayan (${campusSpot})`;
             } else {
-                const onlinePlace = await fetchReverseGeocode(lat, lng);
-                if (onlinePlace) {
-                    address = `${onlinePlace} (Outside Campus)`;
-                } else {
-                    const fallbackPlace = getNearestLandmark(lat, lng);
-                    address = fallbackPlace.includes("Outside") ? fallbackPlace : `${fallbackPlace} (Outside Campus)`;
-                }
+                const localPlace = getNearestLandmark(lat, lng);
+                address = localPlace.includes("Outside") ? localPlace : `${localPlace} (Outside Campus)`;
             }
 
             return {

@@ -1024,6 +1024,22 @@
                 <p class="helper-copy">If Firebase asks for a recent login before saving, sign in again and retry.</p>
             </section>
 
+            <!-- (2026-07-13) Add account deletion section & modal; was missing -->
+            <section class="profile-card danger-zone-card" id="dangerZoneCard" style="border: 1.5px solid rgba(209, 31, 52, 0.25); background: rgba(254, 242, 242, 0.45);">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title" style="color: var(--red);">Delete Account</h2>
+                        <p class="card-copy">Permanently erase your account, attendance, and all personal safety data.</p>
+                    </div>
+                </div>
+                <div class="section-actions" style="margin-top: 14px;">
+                    <button id="openDeleteModalBtn" class="btn-danger" type="button" style="background: var(--red); color: white;">
+                        <span class="material-symbols-outlined">delete_forever</span>
+                        <span>Delete My Account</span>
+                    </button>
+                </div>
+            </section>
+
             <div class="footer-actions">
                 <button id="logoutBtn" class="btn-danger" type="button">
                     <span class="material-symbols-outlined">logout</span>
@@ -1044,10 +1060,28 @@
         </div>
     </div>
 
+    <div class="status-modal" id="deleteAccountModal">
+        <div class="status-card" style="max-width: 420px; text-align: left;">
+            <div class="status-icon-wrap error" style="margin: 0 0 16px;">
+                <span class="material-symbols-outlined">warning</span>
+            </div>
+            <h3 class="status-title" style="color: var(--red); margin-bottom: 8px;">Delete Account Permanently</h3>
+            <p class="status-msg" style="margin-bottom: 16px;">This action cannot be undone. All your emergency records, attendance logs, and linked data will be deleted. Enter your password to confirm:</p>
+            <div style="margin-bottom: 18px;">
+                <input id="deletePasswordConfirmInput" class="input-field" type="password" placeholder="Enter current password" style="width: 100%;">
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button id="cancelDeleteBtn" class="btn-secondary" type="button" style="flex: 1; min-height: 48px; border-radius: 14px;">Cancel</button>
+                <button id="confirmDeleteBtn" class="btn-danger" type="button" style="flex: 1; min-height: 48px; border-radius: 14px; background: var(--red); color: white;">Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { auth } from './firebase-config.js';
         import { logout, checkAuth } from './auth.js';
-        import { getUserProfile, updateUserProfile, getLinksForStudent, getAllLinksForGuardian, findStudentUidByStudentId, getAllUsers, getStudentBootstrapProfile, createGuardianLinkFromStudent, findUserByEmail, removeGuardianLink } from './db.js';
+        // (2026-07-13) Import deleteCurrentUserAccount; was omitted
+        import { getUserProfile, updateUserProfile, getLinksForStudent, getAllLinksForGuardian, findStudentUidByStudentId, getAllUsers, getStudentBootstrapProfile, createGuardianLinkFromStudent, findUserByEmail, removeGuardianLink, deleteCurrentUserAccount } from './db.js';
         import { EmailAuthProvider, onAuthStateChanged, reauthenticateWithCredential, updatePassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         checkAuth();
@@ -1918,6 +1952,39 @@
                 );
             } finally {
                 setButtonBusy(actionButton, false);
+            }
+        });
+
+        // (2026-07-13) Wire account deletion modal handlers; was unhandled
+        const deleteModal = document.getElementById('deleteAccountModal');
+        const openDeleteModalBtn = document.getElementById('openDeleteModalBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const deletePasswordInput = document.getElementById('deletePasswordConfirmInput');
+
+        openDeleteModalBtn?.addEventListener('click', () => {
+            if (deletePasswordInput) deletePasswordInput.value = '';
+            if (deleteModal) deleteModal.classList.add('active');
+        });
+
+        cancelDeleteBtn?.addEventListener('click', () => {
+            if (deleteModal) deleteModal.classList.remove('active');
+        });
+
+        confirmDeleteBtn?.addEventListener('click', async () => {
+            const pwd = deletePasswordInput?.value?.trim() || '';
+            setButtonBusy(confirmDeleteBtn, true);
+            try {
+                await deleteCurrentUserAccount(pwd);
+                if (deleteModal) deleteModal.classList.remove('active');
+                await showStatus('Account Deleted', 'Your account has been permanently erased.');
+                setTimeout(() => {
+                    window.location.replace('login.html');
+                }, 1200);
+            } catch (err) {
+                await showStatus('Deletion Failed', err.message || 'Could not delete account. Check password.', 'error');
+            } finally {
+                setButtonBusy(confirmDeleteBtn, false);
             }
         });
 

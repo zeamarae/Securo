@@ -4,7 +4,9 @@
  * Description: Handles Firestore database operations.
  */
 
-import { db } from './firebase-config.js';
+import { db, auth } from './firebase-config.js';
+// (2026-07-13) Import auth & deletion functions; was db only
+import { deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
     collection, 
     addDoc, 
@@ -600,14 +602,39 @@ export const getCampusMarkers = async () => {
  * Save a GAD announcement post
  * @param {object} postData 
  */
+// (2026-07-13) Broadcast GAD post to students & parents; was post only
 export const saveGADPost = async (postData) => {
     try {
-        await addDoc(collection(db, "gad_posts"), {
+        const docRef = await addDoc(collection(db, "gad_posts"), {
             ...postData,
             likes: 0,
             likedBy: [],
             createdAt: serverTimestamp()
         });
+
+        // Broadcast notification to students and guardians
+        try {
+            const allUsers = await getAllUsers().catch(() => []);
+            const targetUsers = allUsers.filter((u) => u.uid && (u.role === 'student' || u.role === 'guardian'));
+            const snippet = String(postData.content || "New GAD announcement published").slice(0, 100);
+            await Promise.all(targetUsers.map((u) =>
+                sendAccountNotification({
+                    userId: u.uid,
+                    type: "gad_bulletin",
+                    title: "GAD Announcement: " + (postData.author || "GAD Office"),
+                    message: snippet + (snippet.length >= 100 ? "..." : ""),
+                    sourceUserId: "gad_office",
+                    sourceName: postData.author || "GAD Office",
+                    metadata: {
+                        postId: docRef.id,
+                        timestamp: new Date().toISOString()
+                    }
+                }).catch(() => null)
+            ));
+        } catch (e) {
+            console.warn("GAD notification broadcast skipped:", e);
+        }
+
         return true;
     } catch (error) {
         console.warn("Error saving GAD post:", error);
@@ -729,6 +756,18 @@ export const getAttendanceHistory = async (userId) => {
             .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
     } catch (error) {
         console.warn("Error getting attendance history:", error);
+        return [];
+    }
+};
+
+// (2026-07-13) Add getAllAttendance for reports; was user-scoped only
+export const getAllAttendance = async () => {
+    try {
+        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        console.warn("Error getting all attendance records:", error);
         return [];
     }
 };
@@ -1104,6 +1143,31 @@ export const deleteUserRecord = async (userId) => {
         console.warn("Error deleting user record:", error);
         throw error;
     }
+};
+
+// (2026-07-13) Delete user auth and database records; was missing
+export const deleteCurrentUserAccount = async (password = "") => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("No authenticated user to delete.");
+
+    if (password && user.email) {
+        const credential = EmailAuthProvider.credential(user.email, password);
+        await reauthenticateWithCredential(user, credential);
+    }
+
+    const uid = user.uid;
+    await deleteUserRecord(uid).catch((err) => {
+        console.warn("deleteUserRecord partial failure during account deletion:", err);
+    });
+
+    await deleteUser(user);
+
+    try {
+        localStorage.clear();
+        sessionStorage.clear();
+    } catch (e) {}
+
+    return true;
 };
 
 export const getStudentLiveLocationOnce = async (studentUid) => {

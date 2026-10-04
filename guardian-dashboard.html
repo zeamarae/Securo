@@ -270,22 +270,25 @@
             letter-spacing: 0.01em;
         }
 
-        /* Main Content Views */
+        /* (2026-07-13) In-flow views for Vault, Safety, GAD; was collapsed absolute */
         .view-container {
-            flex: 1;
+            flex: 1 1 auto;
             position: relative;
-            overflow: visible;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-height: calc(100vh - 56px - 52px - var(--nav-height));
         }
 
         .view {
-            position: absolute;
-            inset: 0;
             display: none;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 20px 16px;
+            padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom, 0px) + 32px);
+            box-sizing: border-box;
             flex-direction: column;
-            padding: 20px;
-            padding-bottom: calc(var(--nav-height) + 20px);
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
         }
 
         .view.active {
@@ -294,12 +297,27 @@
 
         /* Map View Specific */
         #mapView {
+            display: none;
             padding: 0;
-            inset: 0 0 calc(var(--nav-height) + env(safe-area-inset-bottom, 0px)) 0;
+            margin: 0;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* (2026-07-13) In-flow relative mapView layout; was absolute inset 0 */
+        #mapView.active {
+            display: flex;
+            position: relative;
+            width: 100%;
+            height: calc(100dvh - 56px - 52px - var(--nav-height) - env(safe-area-inset-bottom, 0px));
+            min-height: calc(100dvh - 56px - 52px - var(--nav-height) - env(safe-area-inset-bottom, 0px));
+            overflow: hidden;
         }
 
         #map {
             flex: 1;
+            width: 100%;
+            height: 100%;
             z-index: 1;
             background: #eee;
         }
@@ -611,14 +629,19 @@
         }
 
         /* Custom Styles for Guardian Monitor */
+        /* (2026-07-13) Sticky selector bar below topbar; was non-sticky */
         .student-selector-bar {
             padding: 8px 16px;
-            background: rgba(255, 244, 247, 0.92);
+            background: rgba(255, 244, 247, 0.96);
             backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             display: flex;
             gap: 12px;
             overflow-x: auto;
             border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 56px;
+            z-index: 900;
         }
 
         .selector-chip {
@@ -1288,10 +1311,14 @@
                                 <span class="material-symbols-outlined">settings</span>
                                 <span>Settings</span>
                             </a>
-                            <div class="dropdown-divider"></div>
+                            <!-- (2026-07-13) Add delete account button to dropdown; was signout only -->
                             <button class="dropdown-item logout" id="logoutBtn">
                                 <span class="material-symbols-outlined">logout</span>
                                 <span>Sign Out</span>
+                            </button>
+                            <button class="dropdown-item" id="deleteGuardianAccountBtn" style="color:var(--red);">
+                                <span class="material-symbols-outlined">delete_forever</span>
+                                <span>Delete Account</span>
                             </button>
                         </div>
                     </div>
@@ -1356,6 +1383,8 @@
                             <button class="btn-secondary" id="cancelPendingRequestBtn" type="button" style="margin-top:0;">Cancel Wrong Student ID</button>
                             <button class="btn-secondary" id="editPendingRequestBtn" type="button" style="margin-top:0;">Enter Another Student ID</button>
                         </div>
+                    <!-- (2026-07-13) Close pending card container; was unclosed tag -->
+                    </div>
                     <!-- (2026-07-13) Add active SOS emergency card; was missing -->
                     <div class="location-alert-card" id="sosEmergencyCard" style="display:none; background:#fff1f2; border:1px solid #fda4af;">
                         <div class="location-alert-icon" style="background:#fee2e2; color:#e11d48;">
@@ -1521,6 +1550,27 @@
         </div>
     </div>
 
+    <!-- (2026-07-13) Delete Guardian Account confirmation modal; was missing -->
+    <div class="modal-overlay" id="deleteAccountModal">
+        <div class="modal-card" style="border: 1px solid rgba(209, 31, 52, 0.2);">
+            <div class="modal-title" style="color: var(--red); display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined">warning</span>
+                Delete Account
+            </div>
+            <div class="modal-copy">
+                Permanently delete your guardian account and all linked records? This action cannot be undone. Please enter your password to confirm:
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="deleteAccountPassword">Confirm Password</label>
+                <input type="password" id="deleteAccountPassword" class="form-input" placeholder="Enter your current password">
+            </div>
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button class="btn-secondary" type="button" id="cancelDeleteAccountBtn" style="padding:10px 16px; border-radius:12px; border:1px solid var(--line); background:#f1f5f9; font-weight:700;">Cancel</button>
+                <button class="btn-primary" type="button" id="confirmDeleteAccountBtn" style="padding:10px 16px; border-radius:12px; background:var(--red); border:none; color:white; font-weight:700;">Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+
     <div class="chat-overlay" id="guardianChatOverlay">
         <div class="chat-box">
             <div class="chat-header">
@@ -1567,7 +1617,9 @@
             subscribeToMessagesByThread,
             sendGuardianLocationReminder,
             subscribeToCampusMapConfig,
-            subscribeToStudentSOS
+            subscribeToStudentSOS,
+            // (2026-07-13) Import deleteCurrentUserAccount; was missing
+            deleteCurrentUserAccount
         } from './db.js';
 
         let map, studentMarker, polyline;
@@ -1604,11 +1656,18 @@
             });
         });
 
+        // (2026-07-13) Support all view tab refreshes; was map/vault/gad only
         function setActiveView(viewId) {
             navItems.forEach(i => i.classList.toggle('active', i.dataset.nav === viewId));
             views.forEach(v => v.classList.toggle('active', v.id === `${viewId}View`));
-            if (viewId === 'map' && map) setTimeout(() => map.invalidateSize(), 300);
+            if (viewId === 'map') {
+                initMap();
+                if (map) setTimeout(() => map.invalidateSize(), 300);
+            }
+            if (viewId === 'vault' && activeLink?.studentUid) loadSharedVault(activeLink.studentUid);
+            if (viewId === 'alerts' && monitoredStudentAttendance) renderAlerts(monitoredStudentAttendance);
             if (viewId === 'gad') loadGADPosts();
+            window.scrollTo({ top: 0, behavior: 'instant' });
         }
 
         // (2026-07-13) Define CAMPUS_CENTER and geofence polygon for guardian map; was missing
@@ -1958,8 +2017,10 @@
                 renderStudentSelector(links);
 
                 if (links.length > 0) {
-                    if (studentSelectorBar) studentSelectorBar.style.display = 'none';
-                    document.getElementById('addStudentBtn').style.display = 'none';
+                    // (2026-07-13) Show student selector bar & add button up to 5; was hidden
+                    if (studentSelectorBar) studentSelectorBar.style.display = 'flex';
+                    const addBtn = document.getElementById('addStudentBtn');
+                    if (addBtn) addBtn.style.display = links.length < 5 ? 'flex' : 'none';
                     setPendingGuardianState(null);
                     document.getElementById('requestLocationBtn').style.display = 'inline-flex';
                     selectStudent(links[0]);
@@ -1968,6 +2029,8 @@
                     const allLinks = await getAllLinksForGuardian(user.uid);
                     console.log("All Links (inc pending):", allLinks.length);
 
+                    // (2026-07-13) Init campus map for zero-link guardian; was uninitialized
+                    initMap();
                     if (allLinks.length === 0) {
                         console.log("No links found. Triggering modal.");
                         setPendingGuardianState(null);
@@ -2013,6 +2076,38 @@
             await auth.signOut();
             window.location.href = 'login.html';
         };
+
+        // (2026-07-13) Wire guardian account deletion with password; was missing
+        const deleteAccountModal = document.getElementById('deleteAccountModal');
+        const deleteGuardianAccountBtn = document.getElementById('deleteGuardianAccountBtn');
+        const cancelDeleteAccountBtn = document.getElementById('cancelDeleteAccountBtn');
+        const confirmDeleteAccountBtn = document.getElementById('confirmDeleteAccountBtn');
+        const deleteAccountPassword = document.getElementById('deleteAccountPassword');
+
+        deleteGuardianAccountBtn?.addEventListener('click', () => {
+            profileDropdown?.classList.remove('active');
+            if (deleteAccountPassword) deleteAccountPassword.value = '';
+            deleteAccountModal?.classList.add('active');
+        });
+
+        cancelDeleteAccountBtn?.addEventListener('click', () => {
+            deleteAccountModal?.classList.remove('active');
+        });
+
+        confirmDeleteAccountBtn?.addEventListener('click', async () => {
+            const pwd = deleteAccountPassword?.value?.trim() || '';
+            setButtonBusy(confirmDeleteAccountBtn, true);
+            try {
+                await deleteCurrentUserAccount(pwd);
+                showToast("Account deleted successfully.");
+                window.location.href = 'login.html';
+            } catch (err) {
+                console.warn("Guardian account deletion failed:", err);
+                showToast(err.message || "Failed to delete account. Check password.", "error");
+            } finally {
+                setButtonBusy(confirmDeleteAccountBtn, false);
+            }
+        });
 
         // Modal Handlers
         const closeLinkModal = () => document.getElementById('linkModal').classList.remove('active');
@@ -2238,13 +2333,14 @@
             }
         });
 
+        // (2026-07-13) Multi-child selector chips with active status; was unhighlighted
         async function renderStudentSelector(links) {
             const bar = document.getElementById('studentSelector');
             bar.innerHTML = '';
             for (const link of links) {
                 const resolvedName = await resolveChildDisplayName(link);
                 const chip = document.createElement('div');
-                chip.className = 'selector-chip';
+                chip.className = 'selector-chip' + (activeLink?.id === link.id ? ' active' : '');
                 chip.textContent = resolvedName;
                 chip.onclick = () => selectStudent(link, resolvedName);
                 bar.appendChild(chip);
@@ -2425,18 +2521,24 @@
                 renderAlerts(logs);
             });
 
-            // (2026-07-13) Subscribe to active child SOS alerts; was unmonitored
+            // (2026-07-13) Subscribe to child SOS alerts; filter to last 48h; was no time check
             sosUnsub = subscribeToStudentSOS(studentUid, (activeSos) => {
                 const card = document.getElementById('sosEmergencyCard');
                 const text = document.getElementById('sosEmergencyText');
-                if (Array.isArray(activeSos) && activeSos.length > 0) {
-                    const alert = activeSos[0];
+                const FORTY_EIGHT_HOURS = 48 * 60 * 60 * 1000;
+                const recentSos = Array.isArray(activeSos) ? activeSos.filter(s => {
+                    const ts = s.timestamp?.toDate?.() || (s.timestamp ? new Date(s.timestamp) : null);
+                    return ts && (Date.now() - ts.getTime()) <= FORTY_EIGHT_HOURS;
+                }) : [];
+                if (recentSos.length > 0) {
+                    const alert = recentSos[0];
                     if (card) card.style.display = 'flex';
                     if (text) text.textContent = `${activeLink?.studentName || 'Your child'} activated SOS. Status: ACTIVE.`;
                     const btn = document.getElementById('viewSosLocationBtn');
                     if (btn && alert.location?.lat && alert.location?.lng) {
                         btn.onclick = () => {
-                            setActiveNav('tracking');
+                            // (2026-07-13) Fix SOS map view switch; was invalid setActiveNav
+                            setActiveView('map');
                             if (map) map.setView([alert.location.lat, alert.location.lng], 18);
                         };
                     }

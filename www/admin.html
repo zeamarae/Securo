@@ -2006,6 +2006,11 @@
                                 <div style="font-size: 0.68rem; color: var(--muted); font-weight: 700;">ADMIN ACCOUNT</div>
                             </div>
                             <div class="dropdown-divider"></div>
+                            <!-- (2026-07-13) Add settings link in admin dropdown; was logout only -->
+                            <a href="settings.html" class="dropdown-item">
+                                <span class="material-symbols-outlined">settings</span>
+                                <span>Settings</span>
+                            </a>
                             <button class="dropdown-item logout" id="adminLogoutBtn" type="button">
                                 <span class="material-symbols-outlined">logout</span>
                                 <span>Log Out</span>
@@ -2044,6 +2049,11 @@
                             <button class="tab-btn" data-tab="messages">
                                 <span class="material-symbols-outlined">chat</span>
                                 <span>Messages</span>
+                            </button>
+                            <!-- (2026-07-13) Add Reports & Audits tab; was 6 sidebar tabs only -->
+                            <button class="tab-btn" data-tab="reports">
+                                <span class="material-symbols-outlined">assessment</span>
+                                <span>Reports & Audits</span>
                             </button>
                         </div>
                     </div>
@@ -2541,6 +2551,107 @@
                             </div>
                         </div>
                     </section>
+
+                    <!-- (2026-07-13) Add Automated Reports & Audits section; was missing -->
+                    <section class="admin-section" id="sec-reports">
+                        <div class="panel-card" style="margin-bottom: 20px;">
+                            <div class="card-head">
+                                <div>
+                                    <div class="eyebrow">Compliance & Audits</div>
+                                    <h2 class="chart-title">Automated Safety & System Reports</h2>
+                                    <p class="chart-copy">Generate instant CSV audit logs and printable official reports for campus safety compliance.</p>
+                                </div>
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 18px;">
+                                <div style="background: rgba(254, 242, 242, 0.6); border: 1.5px solid rgba(239, 68, 68, 0.25); border-radius: 16px; padding: 18px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <span class="material-symbols-outlined" style="color: #dc2626; font-size: 26px;">crisis_alert</span>
+                                        <h3 style="margin: 0; font-size: 1.02rem; color: #991b1b;">Emergency SOS Incident Report</h3>
+                                    </div>
+                                    <p style="font-size: 0.82rem; color: #7f1d1d; margin-bottom: 16px; line-height: 1.4;">All student emergency activations with coordinates, timestamps, and reporter profiles.</p>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="action-btn" id="btnExportSosCsv" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: #dc2626; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">download</span> CSV
+                                        </button>
+                                        <button class="action-btn" id="btnPrintSosReport" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: white; color: #dc2626; border: 1px solid #fca5a5; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">print</span> Print
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div style="background: rgba(240, 253, 250, 0.6); border: 1.5px solid rgba(20, 184, 166, 0.25); border-radius: 16px; padding: 18px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <span class="material-symbols-outlined" style="color: #0d9488; font-size: 26px;">history_edu</span>
+                                        <h3 style="margin: 0; font-size: 1.02rem; color: #115e59;">Attendance & Geofence Logs</h3>
+                                    </div>
+                                    <p style="font-size: 0.82rem; color: #134e4a; margin-bottom: 16px; line-height: 1.4;">Campus time in, time out, and automatic geofence boundary crossing logs.</p>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="action-btn" id="btnExportAttendanceCsv" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: #0d9488; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">download</span> CSV
+                                        </button>
+                                        <button class="action-btn" id="btnPrintAttendanceReport" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: white; color: #0d9488; border: 1px solid #99f6e4; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">print</span> Print
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div style="background: rgba(245, 243, 255, 0.6); border: 1.5px solid rgba(139, 92, 246, 0.25); border-radius: 16px; padding: 18px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <span class="material-symbols-outlined" style="color: #7c3aed; font-size: 26px;">campaign</span>
+                                        <h3 style="margin: 0; font-size: 1.02rem; color: #5b21b6;">GAD Official Bulletins</h3>
+                                    </div>
+                                    <p style="font-size: 0.82rem; color: #4c1d95; margin-bottom: 16px; line-height: 1.4;">Gender & Development safety posts, announcements, and campus updates.</p>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="action-btn" id="btnExportGadCsv" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: #7c3aed; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">download</span> CSV
+                                        </button>
+                                        <button class="action-btn" id="btnPrintGadReport" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: white; color: #7c3aed; border: 1px solid #ddd6fe; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">print</span> Print
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div style="background: rgba(239, 246, 255, 0.6); border: 1.5px solid rgba(59, 130, 246, 0.25); border-radius: 16px; padding: 18px;">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                        <span class="material-symbols-outlined" style="color: #2563eb; font-size: 26px;">badge</span>
+                                        <h3 style="margin: 0; font-size: 1.02rem; color: #1e40af;">Platform User Roster</h3>
+                                    </div>
+                                    <p style="font-size: 0.82rem; color: #1e3a8a; margin-bottom: 16px; line-height: 1.4;">Full directory of students, guardians, staff, IDs, and link statuses.</p>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button class="action-btn" id="btnExportUsersCsv" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: #2563eb; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">download</span> CSV
+                                        </button>
+                                        <button class="action-btn" id="btnPrintUsersReport" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: white; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                                            <span class="material-symbols-outlined" style="font-size: 16px;">print</span> Print
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-card">
+                            <div class="card-head" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                                <div>
+                                    <h3 class="chart-title">Audit Preview</h3>
+                                    <p class="chart-copy">Live preview of selected dataset.</p>
+                                </div>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <select id="reportPreviewTypeSelect" class="glass-input" style="padding: 7px 12px; font-size: 0.85rem; border-radius: 10px;">
+                                        <option value="sos">Emergency SOS Incidents</option>
+                                        <option value="attendance">Campus Attendance Logs</option>
+                                        <option value="gad">GAD Bulletins</option>
+                                        <option value="users">User Roster</option>
+                                    </select>
+                                    <button class="action-btn" id="btnRefreshReportPreview" type="button" style="padding: 7px 12px; font-size: 0.85rem; border-radius: 10px; background: #f1f5f9; border: 1px solid #cbd5e1; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                        <span class="material-symbols-outlined" style="font-size: 18px;">refresh</span> Refresh
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="reportPreviewContainer" style="overflow-x: auto; margin-top: 14px; max-height: 480px;">
+                                <div style="text-align: center; padding: 30px; color: #94a3b8;">Loading report preview...</div>
+                            </div>
+                        </div>
+                    </section>
                 </main>
             </div>
         </div>
@@ -2751,6 +2862,7 @@
             updateStudentLiveLocation,
             notifyGuardiansOfGeofenceEvent,
             getAttendanceHistory,
+            getAllAttendance,
             subscribeToCampusMapConfig,
             // (2026-07-13) Import link management for user editor; was absent
             removeGuardianLink,
@@ -3564,9 +3676,219 @@
                 if (typeof setupSimulatorControls === 'function') setupSimulatorControls();
                 if (typeof renderSimulatorDispatchLogs === 'function') renderSimulatorDispatchLogs();
             }
+            if (tab === 'reports') {
+                if (typeof renderReportPreview === 'function') renderReportPreview();
+            }
             // (2026-07-13) Keep chat threads listening in background; was disconnected
             initAdminChat();
         };
+
+        // (2026-07-13) Add Automated Reports & Audits handlers; was absent
+        function downloadCSV(filename, rows) {
+            const processRow = (row) => row.map(val => {
+                let text = val === null || val === undefined ? '' : String(val);
+                text = text.replace(/"/g, '""');
+                return `"${text}"`;
+            }).join(',');
+            const csvContent = "data:text/csv;charset=utf-8," + rows.map(processRow).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function printReportTable(title, headers, rows) {
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) {
+                showToast("Print Popup Blocked", "Please allow popups to view printable report.", "error");
+                return;
+            }
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${title}</title>
+                    <style>
+                        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; color: #1e293b; }
+                        h1 { margin-bottom: 4px; font-size: 20px; }
+                        p { margin-top: 0; color: #64748b; font-size: 13px; margin-bottom: 20px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+                        th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
+                        th { background-color: #f1f5f9; font-weight: bold; }
+                        tr:nth-child(even) { background-color: #f8fafc; }
+                        @media print { body { padding: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <h1>${title}</h1>
+                    <p>Generated by Securo Campus Safety System on ${new Date().toLocaleString()}</p>
+                    <table>
+                        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
+                        <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+                    </table>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => { printWindow.print(); }, 400);
+        }
+
+        function getSosReportData() {
+            const headers = ['Incident ID', 'Date & Time', 'Reporter Name', 'Role', 'Student ID', 'Email', 'Latitude', 'Longitude', 'Status'];
+            const rows = (cachedSosLogs || []).map(log => {
+                const user = (cachedUsers || []).find(u => String(u.id) === String(log.userId)) || {};
+                const dateStr = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : new Date(log.timestamp || 0).toLocaleString();
+                return [
+                    log.id || '',
+                    dateStr,
+                    log.userName || user.name || 'Unknown',
+                    user.role || log.role || 'student',
+                    log.studentId || user.studentId || 'N/A',
+                    user.email || '',
+                    log.location?.lat || '',
+                    log.location?.lng || '',
+                    log.status || 'active'
+                ];
+            });
+            return { headers, rows };
+        }
+
+        async function getAttendanceReportData() {
+            const headers = ['Log ID', 'Date & Time', 'Student Name', 'Student ID', 'Event Type', 'Latitude', 'Longitude', 'Campus Location / Address', 'Mode'];
+            let logs = [];
+            try {
+                logs = await getAllAttendance();
+            } catch (e) {
+                logs = [];
+            }
+            const rows = logs.map(entry => {
+                const user = (cachedUsers || []).find(u => String(u.id) === String(entry.userId || entry.studentUid)) || {};
+                const dateStr = entry.timestamp?.toDate ? entry.timestamp.toDate().toLocaleString() : new Date(entry.timestamp || 0).toLocaleString();
+                return [
+                    entry.id || '',
+                    dateStr,
+                    entry.studentName || user.name || 'Student',
+                    entry.studentId || user.studentId || 'N/A',
+                    (entry.type || '').toUpperCase(),
+                    entry.location?.lat || '',
+                    entry.location?.lng || '',
+                    entry.location?.address || 'Campus Bounds',
+                    entry.location?.auto ? 'Automated Geofence' : 'Manual Scan'
+                ];
+            });
+            return { headers, rows };
+        }
+
+        function getGadReportData() {
+            const headers = ['Post ID', 'Date & Time', 'Title', 'Author', 'Category', 'Audience', 'Content'];
+            const rows = (cachedPosts || []).map(post => {
+                const dateStr = post.createdAt?.toDate ? post.createdAt.toDate().toLocaleString() : new Date(post.createdAt || post.timestamp || 0).toLocaleString();
+                return [
+                    post.id || '',
+                    dateStr,
+                    post.title || '',
+                    post.author || 'GAD Office',
+                    post.category || 'General',
+                    post.targetRole || 'All',
+                    (post.content || '').replace(/\n/g, ' ')
+                ];
+            });
+            return { headers, rows };
+        }
+
+        function getUsersReportData() {
+            const headers = ['User UID', 'Full Name', 'Email', 'Assigned Role', 'Student ID', 'Contact Phone', 'Link Count'];
+            const rows = (cachedUsers || []).map(user => [
+                user.id || '',
+                user.name || 'User',
+                user.email || '',
+                user.role || 'student',
+                user.studentId || 'N/A',
+                user.phone || 'N/A',
+                (user.links || []).length
+            ]);
+            return { headers, rows };
+        }
+
+        async function renderReportPreview() {
+            const container = document.getElementById('reportPreviewContainer');
+            const type = document.getElementById('reportPreviewTypeSelect')?.value || 'sos';
+            if (!container) return;
+            container.innerHTML = '<div style="text-align:center; padding:30px; color:#94a3b8;">Loading audit preview...</div>';
+
+            let data;
+            if (type === 'sos') data = getSosReportData();
+            else if (type === 'attendance') data = await getAttendanceReportData();
+            else if (type === 'gad') data = getGadReportData();
+            else data = getUsersReportData();
+
+            if (!data.rows || data.rows.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:30px; color:#94a3b8;">No records found for this dataset.</div>';
+                return;
+            }
+
+            const headerHtml = data.headers.map(h => `<th style="padding:10px 12px; background:#f8fafc; border-bottom:2px solid #e2e8f0; font-size:0.78rem; text-transform:uppercase; color:#475569; text-align:left;">${h}</th>`).join('');
+            const rowsHtml = data.rows.slice(0, 50).map(r => `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    ${r.map(c => `<td style="padding:10px 12px; font-size:0.82rem; color:#1e293b; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c}</td>`).join('')}
+                </tr>
+            `).join('');
+
+            container.innerHTML = `
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead><tr>${headerHtml}</tr></thead>
+                    <tbody>${rowsHtml}</tbody>
+                </table>
+                ${data.rows.length > 50 ? `<div style="text-align:center; padding:12px; font-size:0.78rem; color:#64748b;">Showing first 50 of ${data.rows.length} records. Download CSV to view complete log.</div>` : ''}
+            `;
+        }
+
+        document.getElementById('reportPreviewTypeSelect')?.addEventListener('change', renderReportPreview);
+        document.getElementById('btnRefreshReportPreview')?.addEventListener('click', renderReportPreview);
+
+        document.getElementById('btnExportSosCsv')?.addEventListener('click', () => {
+            const data = getSosReportData();
+            downloadCSV(`securo_emergency_sos_incidents_${Date.now()}.csv`, [data.headers, ...data.rows]);
+            showToast("Report Exported", "SOS incident log downloaded as CSV.", "success");
+        });
+        document.getElementById('btnPrintSosReport')?.addEventListener('click', () => {
+            const data = getSosReportData();
+            printReportTable("Securo - Emergency SOS Incident Audit Report", data.headers, data.rows);
+        });
+
+        document.getElementById('btnExportAttendanceCsv')?.addEventListener('click', async () => {
+            const data = await getAttendanceReportData();
+            downloadCSV(`securo_attendance_audit_${Date.now()}.csv`, [data.headers, ...data.rows]);
+            showToast("Report Exported", "Attendance & geofence log downloaded as CSV.", "success");
+        });
+        document.getElementById('btnPrintAttendanceReport')?.addEventListener('click', async () => {
+            const data = await getAttendanceReportData();
+            printReportTable("Securo - Campus Attendance & Geofence Audit Report", data.headers, data.rows);
+        });
+
+        document.getElementById('btnExportGadCsv')?.addEventListener('click', () => {
+            const data = getGadReportData();
+            downloadCSV(`securo_gad_bulletins_${Date.now()}.csv`, [data.headers, ...data.rows]);
+            showToast("Report Exported", "GAD bulletins log downloaded as CSV.", "success");
+        });
+        document.getElementById('btnPrintGadReport')?.addEventListener('click', () => {
+            const data = getGadReportData();
+            printReportTable("Securo - GAD Official Bulletins Audit Report", data.headers, data.rows);
+        });
+
+        document.getElementById('btnExportUsersCsv')?.addEventListener('click', () => {
+            const data = getUsersReportData();
+            downloadCSV(`securo_user_roster_${Date.now()}.csv`, [data.headers, ...data.rows]);
+            showToast("Report Exported", "User roster downloaded as CSV.", "success");
+        });
+        document.getElementById('btnPrintUsersReport')?.addEventListener('click', () => {
+            const data = getUsersReportData();
+            printReportTable("Securo - Platform User Directory & Roles Report", data.headers, data.rows);
+        });
 
         tabBtns.forEach((btn) => {
             btn.addEventListener('click', () => setTab(btn.dataset.tab));
