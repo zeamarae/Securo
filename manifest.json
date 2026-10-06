@@ -1,0 +1,56 @@
+{
+  "name": "Securo Campus Safety",
+  "short_name": "Securo",
+  "description": "Campus safety companion with emergency SOS, attendance tracking, and guardian monitoring",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#f4f3ff",
+  "theme_color": "#5a1fe0",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "safety", "utilities"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Emergency SOS",
+      "short_name": "SOS",
+      "description": "Activate emergency SOS alert",
+      "url": "/index.html?action=sos",
+      "icons": [
+        {
+          "src": "logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Check In",
+      "short_name": "Check In",
+      "description": "Campus attendance check-in",
+      "url": "/index.html?action=checkin",
+      "icons": [
+        {
+          "src": "logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false
+}

@@ -325,6 +325,15 @@
                     </div>
                 </div>
                 <div class="topbar-actions">
+                    <!-- (2026-07-13) Add print and export buttons; was back link only -->
+                    <button id="btnPrintOfficialReport" class="ghost-btn" type="button" style="border: 1px solid var(--line); background: white; border-radius: 12px; font-weight: 700; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">print</span>
+                        <span>Print Dossier</span>
+                    </button>
+                    <button id="btnExportOfficialJson" class="ghost-btn" type="button" style="border: 1px solid var(--line); background: white; border-radius: 12px; font-weight: 700; padding: 8px 14px; display: inline-flex; align-items: center; gap: 6px;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">data_object</span>
+                        <span>Export JSON</span>
+                    </button>
                     <a href="admin.html" class="ghost-btn">
                         <span class="material-symbols-outlined">arrow_back</span>
                         <span>Back to Admin</span>
@@ -383,6 +392,7 @@
         import { auth } from './firebase-config.js';
         import { getEmergencyPostById, getUserProfile } from './db.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { Logger } from './utils.js';
 
         const ADMIN_STUDENT_ID = '12312312';
         const toastStack = document.getElementById('toastStack');
@@ -487,9 +497,74 @@
 
                 await loadIncidentReport();
             } catch (error) {
-                console.error("Incident report load failed:", error);
+                // (2026-10-07) Replace console.error with Logger; was bare console.error
+                Logger.error("IncidentReport", "Incident report load failed", error);
                 showToast("Load failed", error.message || "Unable to open the incident report right now.", "error");
             }
+        });
+
+        // (2026-10-07) Wire Print Dossier and Export JSON buttons; were orphaned
+        let _cachedReport = null;
+
+        const _origLoad = loadIncidentReport;
+        // Patch loadIncidentReport to cache the loaded report for export
+        loadIncidentReport = async function() {
+            if (!reportId) {
+                incidentTitle.textContent = 'Report not found';
+                incidentCopy.textContent = 'This incident link is missing a report id.';
+                attachmentGrid.innerHTML = '<div class="empty-state">No report id was provided.</div>';
+                return;
+            }
+            const report = await getEmergencyPostById(reportId);
+            if (!report) {
+                incidentTitle.textContent = 'Report not found';
+                incidentCopy.textContent = 'We could not find a matching incident report.';
+                attachmentGrid.innerHTML = '<div class="empty-state">This incident may have been removed or never synced.</div>';
+                return;
+            }
+            _cachedReport = report;
+            incidentTitle.textContent = `${report.userName || 'Guardian User'} Incident Report`;
+            incidentCopy.textContent = `Review report ${report.id} and all submitted emergency evidence.`;
+            incidentId.textContent = report.id || '--';
+            incidentUser.textContent = report.studentId ? `${report.userName || 'Guardian User'} · ID ${report.studentId}` : (report.userName || 'Guardian User');
+            incidentTime.textContent = formatCreatedAt(report.createdAt);
+            incidentStatus.textContent = report.status || 'Posted';
+            incidentLocation.textContent = report.location?.address || 'Location unavailable';
+            renderAttachments(report.attachments || []);
+        };
+
+        document.getElementById('btnPrintOfficialReport')?.addEventListener('click', () => {
+            window.print();
+        });
+
+        document.getElementById('btnExportOfficialJson')?.addEventListener('click', () => {
+            if (!_cachedReport) {
+                showToast('Not Ready', 'Report data is still loading. Please wait a moment.', 'error');
+                return;
+            }
+            const exportData = {
+                reportId: _cachedReport.id || reportId,
+                user: incidentUser.textContent,
+                timestamp: incidentTime.textContent,
+                status: incidentStatus.textContent,
+                location: incidentLocation.textContent,
+                attachments: (_cachedReport.attachments || []).map(a => ({
+                    label: a.label || 'Attachment',
+                    kind: a.kind || 'unknown',
+                    src: a.src || ''
+                })),
+                exportedAt: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `incident_report_${_cachedReport.id || reportId || Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Exported', 'Incident report downloaded as JSON.', 'info');
         });
     </script>
 </body>

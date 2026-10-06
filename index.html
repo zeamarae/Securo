@@ -2079,11 +2079,11 @@
             position: absolute;
             width: 170%;
             height: 3px;
-            background: rgba(223, 193, 97, 0.95);
+            background: rgba(106, 46, 255, 0.85);
             transform: rotate(61deg);
             left: -34%;
             top: 43%;
-            box-shadow: 0 0 0 8px rgba(234, 211, 140, 0.15);
+            box-shadow: 0 0 0 8px rgba(106, 46, 255, 0.15);
         }
 
         .marker {
@@ -2396,6 +2396,12 @@
         .leaflet-container {
             background: #f4f3ff !important;
             font-family: inherit;
+        }
+
+        /* (2026-07-13) Soft purple map theme with distinct colors; was high-sat neon */
+        .leaflet-layer.purple-map-tiles,
+        .purple-map-tiles {
+            filter: sepia(30%) hue-rotate(205deg) saturate(110%) brightness(98%) contrast(108%) !important;
         }
 
         .leaflet-bar {
@@ -4991,10 +4997,7 @@
                                     <button class="map-btn" id="map-locate" title="My GPS Location">
                                         <span class="material-symbols-outlined">my_location</span>
                                     </button>
-                                    <!-- (2026-07-13) Add share location button; was missing -->
-                                    <button class="map-btn" id="map-share-location" title="Send Live Location to Guardians">
-                                        <span class="material-symbols-outlined">share_location</span>
-                                    </button>
+                                    <!-- (2026-07-13) Remove share location button from map; was share button -->
                                     <button class="map-btn" id="map-recenter-campus" title="Center CTU Campus">
                                         <span class="material-symbols-outlined">domain</span>
                                     </button>
@@ -5206,6 +5209,9 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <!-- Emergency Contact Quick-Dial Widget -->
+                                <div id="emergencyContactsWidget"></div>
                             </div>
                         </section>
 
@@ -5479,8 +5485,13 @@
                                             <span style="font-size: 0.76rem; color: var(--muted);">Timestamped presence
                                                 log</span>
                                         </div>
-                                        <span class="material-symbols-outlined"
-                                            style="color: var(--primary); font-size: 22px;">history</span>
+                                        <!-- (2026-07-13) Add export buttons for history tab; was icon only -->
+                                        <div style="display:flex; align-items:center; gap:8px;">
+                                            <button id="btnExportStudentAttendanceCsv" type="button" class="btn btn-sm" title="Export CSV" style="font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:8px; border:1px solid rgba(0,0,0,0.1); background:#f8fafc; color:var(--ink);">CSV</button>
+                                            <button id="btnExportStudentAttendanceJson" type="button" class="btn btn-sm" title="Export JSON" style="font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:8px; border:1px solid rgba(0,0,0,0.1); background:#f8fafc; color:var(--ink);">JSON</button>
+                                            <span class="material-symbols-outlined"
+                                                style="color: var(--primary); font-size: 22px;">history</span>
+                                        </div>
                                     </div>
                                     <div id="attendanceHistoryList">
                                         <div
@@ -5632,9 +5643,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
-
-
-
+        // Core utilities and offline support
+        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './utils.js';
+        import './install-sw.js'; // Initialize service worker for offline support
+        import { renderEmergencyContactWidget } from './emergency-contacts.js'; // Emergency quick-dial
 
         import { checkAuth, logout } from './auth.js';
         import { auth } from './firebase-config.js';
@@ -5924,7 +5936,7 @@
                     }
                 }
             } catch (e) {
-                console.warn("Capacitor location permission error:", e);
+                Logger.warn("Permissions", "Capacitor location permission error", e);
             }
             return true;
         }
@@ -6038,7 +6050,7 @@
                     showToast(type === 'in' ? "Auto Timed In: Entered campus bounds" : "Auto Timed Out: Left campus bounds");
                 }
             } catch (err) {
-                console.warn("Auto attendance failed:", err);
+                Logger.warn("Attendance", "Auto attendance failed", err);
             } finally {
                 _autoAttendanceBusy = false;
             }
@@ -6143,12 +6155,13 @@
                 wheelPxPerZoomLevel: 140
             }).setView(CAMPUS_CENTER, 17);
 
-            // Map layers: OpenStreetMap (default, always works) + Esri Satellite + Google Streets
+            // (2026-07-13) Set purple theme on normal map tile layers; was unstyled
             const baseMapLayers = {
                 "Street View": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: '©OpenStreetMap contributors',
-                    crossOrigin: true
+                    crossOrigin: true,
+                    className: 'purple-map-tiles'
                 }),
                 "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                     maxZoom: 19,
@@ -6168,7 +6181,8 @@
             map.once('load', () => {
                 const googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
                     maxZoom: 20,
-                    attribution: 'Map data ©Google'
+                    attribution: 'Map data ©Google',
+                    className: 'purple-map-tiles'
                 });
                 let googleLoaded = false;
                 googleStreets.once('tileload', () => {
@@ -6792,7 +6806,7 @@
                 try {
                     await logAttendance(appState.user.uid, log.type, log.location);
                 } catch (error) {
-                    console.warn("Attendance sync failed:", error);
+                    Logger.warn("Attendance", "Attendance sync failed", error);
                     remainingLogs.unshift(log);
                 }
             }
@@ -8577,6 +8591,14 @@
                 dropdownId.textContent = appState.user.studentId ? `ID: ${appState.user.studentId}` : "ID: Not linked";
                 dropdownName.textContent = appState.user.name;
 
+                // Initialize emergency contacts widget for SOS page
+                try {
+                    await renderEmergencyContactWidget('emergencyContactsWidget', user.uid);
+                    Logger.info('Index', 'Emergency contacts widget rendered');
+                } catch (error) {
+                    Logger.error('Index', 'Failed to render emergency contacts', error);
+                }
+
                 // Render avatar image if set, else display initials
                 const initialsEl = document.getElementById("userInitials");
                 if (appState.user.photoURL) {
@@ -8634,7 +8656,7 @@
                     });
                 }
             } catch (error) {
-                console.warn("Auth state processing error:", error);
+                Logger.error("Auth", "Auth state processing error", error);
             }
         });
 
@@ -8833,7 +8855,7 @@
                 currentGadPosts = safePosts.map(post => ({ ...post, likedBy: Array.isArray(post.likedBy) ? [...post.likedBy] : [] }));
                 safePosts.forEach(post => renderPost(post));
             } catch (error) {
-                console.warn("Error loading posts:", error);
+                Logger.error("GAD", "Error loading posts", error);
                 gadPostsFeed.innerHTML = "";
                 currentGadPosts = fallbackGadPosts.map(post => ({ ...post, likedBy: Array.isArray(post.likedBy) ? [...post.likedBy] : [] }));
                 fallbackGadPosts.forEach(post => renderPost(post));
@@ -9727,6 +9749,58 @@
             _visibleAttendanceLimit += 10;
             renderAttendanceHistory(_fullAttendanceHistory);
         };
+
+        // (2026-07-13) Add CSV and JSON export for attendance history; was view only
+        document.getElementById('btnExportStudentAttendanceCsv')?.addEventListener('click', () => {
+            if (!_fullAttendanceHistory || !_fullAttendanceHistory.length) {
+                if (typeof showToast === 'function') showToast("No attendance records to export.", "info");
+                return;
+            }
+            const headers = ['Event Type', 'Date & Time', 'Campus Landmark / Address', 'Sync Status'];
+            const rows = _fullAttendanceHistory.map(log => {
+                const date = getAttendanceLogDate(log);
+                return [
+                    (log.type || '').toUpperCase(),
+                    date.toLocaleString(),
+                    formatAttendanceLocation(log.location),
+                    log.pending ? 'Pending Sync' : 'Synced'
+                ];
+            });
+            const csvContent = [headers.join(','), ...rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `attendance_history_${Date.now()}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            if (typeof showToast === 'function') showToast("Attendance history exported as CSV.", "success");
+        });
+
+        document.getElementById('btnExportStudentAttendanceJson')?.addEventListener('click', () => {
+            if (!_fullAttendanceHistory || !_fullAttendanceHistory.length) {
+                if (typeof showToast === 'function') showToast("No attendance records to export.", "info");
+                return;
+            }
+            const data = _fullAttendanceHistory.map(log => ({
+                type: (log.type || '').toUpperCase(),
+                timestamp: getAttendanceLogDate(log).toISOString(),
+                location: formatAttendanceLocation(log.location),
+                status: log.pending ? 'Pending Sync' : 'Synced'
+            }));
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `attendance_history_${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            if (typeof showToast === 'function') showToast("Attendance history exported as JSON.", "success");
+        });
 
         function updateAttendanceSummary(history) {
             const latest = history[0];

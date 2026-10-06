@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Securo - Setup Permissions</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&display=swap" rel="stylesheet">
+    <script src="router.js"></script>
+
+    <style>
+        :root {
+            --bg: #f4f3ff;
+            --surface: rgba(255, 255, 255, 0.9);
+            --ink: #171428;
+            --muted: #6e6a84;
+            --primary: #5a1fe0;
+            --primary-strong: #4311c5;
+            --green: #0f9b67;
+            --red: #d11f34;
+            --amber: #f59e0b;
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: "Outfit", sans-serif;
+            background: linear-gradient(180deg, rgba(90, 31, 224, 0.08) 0%, rgba(255, 255, 255, 0) 30%), 
+                        linear-gradient(180deg, #f7f4ff 0%, #fdfcff 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--ink);
+            margin: 0;
+        }
+
+        .onboarding-container {
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+        }
+
+        .permission-card {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            padding: 40px 32px;
+            box-shadow: 0 30px 60px rgba(49, 30, 105, 0.15);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            display: none;
+            animation: fadeSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .permission-card.active {
+            display: block;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .progress-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+        }
+
+        .progress-dot {
+            flex: 1;
+            height: 4px;
+            border-radius: 999px;
+            background: rgba(90, 31, 224, 0.15);
+            transition: background 0.3s ease;
+        }
+
+        .progress-dot.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+        }
+
+        .permission-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 24px;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            position: relative;
+        }
+
+        .permission-icon.camera {
+            background: linear-gradient(135deg, #a78bfa, #7c3aed);
+            color: white;
+            box-shadow: 0 12px 24px rgba(124, 58, 237, 0.3);
+        }
+
+        .permission-icon.location {
+            background: linear-gradient(135deg, #34d399, #059669);
+            color: white;
+            box-shadow: 0 12px 24px rgba(5, 150, 105, 0.3);
+        }
+
+        .permission-icon.complete {
+            background: linear-gradient(135deg, #60a5fa, #2563eb);
+            color: white;
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.3);
+        }
+
+        .card-title {
+            font-family: "Sora", sans-serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+            text-align: center;
+            margin: 0 0 12px;
+            color: var(--ink);
+        }
+
+        .card-subtitle {
+            text-align: center;
+            color: var(--muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin: 0 0 32px;
+        }
+
+        .feature-list {
+            display: grid;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(90, 31, 224, 0.04);
+            border: 1px solid rgba(90, 31, 224, 0.08);
+        }
+
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 20px;
+        }
+
+        .feature-text {
+            flex: 1;
+        }
+
+        .feature-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin: 0 0 4px;
+            color: var(--ink);
+        }
+
+        .feature-desc {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            min-height: 56px;
+            border: none;
+            border-radius: 18px;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            margin-bottom: 12px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: white;
+            box-shadow: 0 12px 24px rgba(90, 31, 224, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            opacity: 0.95;
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(90, 31, 224, 0.08);
+            color: var(--primary);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(90, 31, 224, 0.12);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin: 0 auto 24px;
+        }
+
+        .status-badge.granted {
+            background: rgba(15, 155, 103, 0.15);
+            color: var(--green);
+        }
+
+        .status-badge.denied {
+            background: rgba(209, 31, 52, 0.15);
+            color: var(--red);
+        }
+
+        .status-badge.pending {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--amber);
+        }
+
+        .warning-box {
+            padding: 16px;
+            border-radius: 18px;
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            margin-bottom: 24px;
+        }
+
+        .warning-box strong {
+            display: block;
+            color: var(--amber);
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .warning-box p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .complete-checklist {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .checklist-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--green);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .skip-link {
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .skip-link button {
+            background: none;
+            border: none;
+            color: var(--muted);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .skip-link button:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="onboarding-container">
+        <!-- Step 1: Camera Permission -->
+        <div class="permission-card active" id="cameraCard">
+            <div class="progress-bar">
+                <div class="progress-dot active"></div>
+                <div class="progress-dot"></div>
+                <div class="progress-dot"></div>
+            </div>
+
+            <div class="permission-icon camera">
+                <span class="material-symbols-outlined">photo_camera</span>
+            </div>
+
+            <h1 class="card-title">Camera Access</h1>
+            <p class="card-subtitle">Securo needs camera access to capture emergency evidence and report incidents effectively.</p>
+
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <span class="material-symbols-outlined">emergency</span>
+                    </div>
+                    <div class="feature-text">
+                        <p class="feature-title">Emergency Documentation</p>
+                        <p class="feature-desc">Capture photo/video evidence during SOS alerts</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <span class="material-symbols-outlined">folder_special</span>
+                    </div>
+                    <div class="feature-text">
+                        <p class="feature-title">Secure Vault Storage</p>
+                        <p class="feature-desc">Store incident media in your private encrypted vault</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <span class="material-symbols-outlined">account_circle</span>
+                    </div>
+                    <div class="feature-text">
+                        <p class="feature-title">Profile Photos</p>
+                        <p class="feature-desc">Take profile pictures and update your avatar</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="cameraStatus"></div>
+
+            <button class="btn-primary" id="grantCameraBtn">
+                <span class="material-symbols-outlined">photo_camera</span>
+                <span>Allow Camera Access</span>
+            </button>
+
+            <div class="skip-link">
+                <button id="skipCameraBtn">Skip for now (not recommended)</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Location Permission -->
+        <div class="permission-card" id="locationCard">
+            <div class="progress-bar">
+                <div class="progress-dot active"></div>
+                <div class="progress-dot active"></div>
+                <div class="progress-dot"></div>
+            </div>
+
+            <div class="permission-icon location">
+                <span class="material-symbols-outlined">location_on</span>
+            </div>
+
+            <h1 class="card-title">Location Services</h1>
+            <p class="card-subtitle">Location access is critical for emergency response, attendance tracking, and guardian monitoring.</p>
+
+            <div class="warning-box">
+                <strong>⚠️ Safety Critical</strong>
+                <p>Without location access, emergency responders cannot find you during SOS alerts. This permission is strongly recommended for your safety.</p>
+            </div>
+
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <span class="material-symbols-outlined">emergency</span>
+                    </div>
+                    <div class="feature-text">
+                        <p class="feature-title">Emergency Response</p>
+                        <p class="feature-desc">Share your exact location during SOS alerts</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <span class="material-symbols-outlined">schedule</span>
+                    </div>
+                    <div class="feature-text">
+                        <p class="feature-title">Auto Attendance</p>
+                        <p class="feature-desc">Automatic check-in/out when entering campus</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <span class="material-symbols-outlined">family_restroom</span>
+                    </div>
+                    <div class="feature-text">
+                        <p class="feature-title">Guardian Monitoring</p>
+                        <p class="feature-desc">Parents can see your live location for safety</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="locationStatus"></div>
+
+            <button class="btn-primary" id="grantLocationBtn">
+                <span class="material-symbols-outlined">location_on</span>
+                <span>Allow Location Access</span>
+            </button>
+
+            <div class="skip-link">
+                <button id="skipLocationBtn">Skip for now (not recommended)</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Complete -->
+        <div class="permission-card" id="completeCard">
+            <div class="progress-bar">
+                <div class="progress-dot active"></div>
+                <div class="progress-dot active"></div>
+                <div class="progress-dot active"></div>
+            </div>
+
+            <div class="permission-icon complete">
+                <span class="material-symbols-outlined">check_circle</span>
+            </div>
+
+            <h1 class="card-title">All Set!</h1>
+            <p class="card-subtitle">Your Securo safety companion is ready. You can now access all emergency features and campus tools.</p>
+
+            <div class="complete-checklist">
+                <div class="checklist-item">
+                    <div class="checklist-icon">
+                        <span class="material-symbols-outlined">check</span>
+                    </div>
+                    <div class="feature-text">
+                        <p class="feature-title" id="cameraCheckText">Camera: Not Granted</p>
+                    </div>
+                </div>
+                <div class="checklist-item">
+                    <div class="checklist-icon">
+                        <span class="material-symbols-outlined">check</span>
+                    </div>
+                    <div class="feature-text">
+                        <p class="feature-title" id="locationCheckText">Location: Not Granted</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-primary" id="finishBtn">
+                <span class="material-symbols-outlined">dashboard</span>
+                <span>Go to Dashboard</span>
+            </button>
+
+            <button class="btn-secondary" id="retryPermissionsBtn" style="display: none;">
+                <span class="material-symbols-outlined">refresh</span>
+                <span>Grant Missing Permissions</span>
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth } from './firebase-config.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        let cameraGranted = false;
+        let locationGranted = false;
+
+        const cameraCard = document.getElementById('cameraCard');
+        const locationCard = document.getElementById('locationCard');
+        const completeCard = document.getElementById('completeCard');
+
+        const grantCameraBtn = document.getElementById('grantCameraBtn');
+        const skipCameraBtn = document.getElementById('skipCameraBtn');
+        const grantLocationBtn = document.getElementById('grantLocationBtn');
+        const skipLocationBtn = document.getElementById('skipLocationBtn');
+        const finishBtn = document.getElementById('finishBtn');
+        const retryPermissionsBtn = document.getElementById('retryPermissionsBtn');
+
+        const cameraStatus = document.getElementById('cameraStatus');
+        const locationStatus = document.getElementById('locationStatus');
+        const cameraCheckText = document.getElementById('cameraCheckText');
+        const locationCheckText = document.getElementById('locationCheckText');
+
+        function bypassToApp() {
+            localStorage.setItem('securo_permissions_completed', 'true');
+            localStorage.setItem('securo_camera_granted', 'true');
+            localStorage.setItem('securo_location_granted', 'true');
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    window.location.replace('index.html');
+                } else {
+                    window.location.replace('login.html?skip_permissions=1');
+                }
+            });
+        }
+
+        // (2026-07-13) Bypass onboarding if camera & location allowed; was show complete
+        async function checkExistingPermissions() {
+            if (localStorage.getItem('securo_permissions_completed') === 'true' ||
+                (localStorage.getItem('securo_camera_granted') === 'true' && localStorage.getItem('securo_location_granted') === 'true')) {
+                bypassToApp();
+                return;
+            }
+
+            try {
+                const cameraPermission = await navigator.permissions.query({ name: 'camera' });
+                cameraGranted = cameraPermission.state === 'granted';
+
+                const locationPermission = await navigator.permissions.query({ name: 'geolocation' });
+                locationGranted = locationPermission.state === 'granted';
+
+                // Skip onboarding screen completely if both already granted
+                if (cameraGranted && locationGranted) {
+                    bypassToApp();
+                    return;
+                }
+            } catch (error) {
+                console.log('Permission API not fully supported, will request manually');
+            }
+        }
+
+        // Request camera permission
+        async function requestCamera() {
+            grantCameraBtn.disabled = true;
+            grantCameraBtn.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span><span>Requesting...</span>';
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream.getTracks().forEach(track => track.stop()); // Stop immediately
+
+                cameraGranted = true;
+                showStatus(cameraStatus, 'Camera access granted!', 'granted');
+                
+                setTimeout(() => {
+                    showLocationCard();
+                }, 1500);
+            } catch (error) {
+                cameraGranted = false;
+                showStatus(cameraStatus, 'Camera access denied. Some features will be limited.', 'denied');
+                grantCameraBtn.disabled = false;
+                grantCameraBtn.innerHTML = '<span class="material-symbols-outlined">photo_camera</span><span>Try Again</span>';
+            }
+        }
+
+        // Request location permission
+        async function requestLocation() {
+            grantLocationBtn.disabled = true;
+            grantLocationBtn.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span><span>Requesting...</span>';
+
+            try {
+                await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    });
+                });
+
+                locationGranted = true;
+                showStatus(locationStatus, 'Location access granted!', 'granted');
+
+                // (2026-07-13) Bypass onboarding screen once allowed; was show complete card
+                setTimeout(() => {
+                    if (cameraGranted) {
+                        bypassToApp();
+                    } else {
+                        showCompleteCard();
+                    }
+                }, 800);
+            } catch (error) {
+                locationGranted = false;
+                showStatus(locationStatus, 'Location access denied. Emergency features will be limited.', 'denied');
+                grantLocationBtn.disabled = false;
+                grantLocationBtn.innerHTML = '<span class="material-symbols-outlined">location_on</span><span>Try Again</span>';
+            }
+        }
+
+        function showStatus(element, message, type) {
+            element.innerHTML = `
+                <div class="status-badge ${type}">
+                    <span class="material-symbols-outlined">${type === 'granted' ? 'check_circle' : 'cancel'}</span>
+                    <span>${message}</span>
+                </div>
+            `;
+        }
+
+        function showLocationCard() {
+            cameraCard.classList.remove('active');
+            locationCard.classList.add('active');
+        }
+
+        function showCompleteCard() {
+            cameraCard.classList.remove('active');
+            locationCard.classList.remove('active');
+            completeCard.classList.add('active');
+
+            cameraCheckText.textContent = cameraGranted ? 'Camera: Granted ✓' : 'Camera: Skipped';
+            locationCheckText.textContent = locationGranted ? 'Location: Granted ✓' : 'Location: Skipped';
+
+            if (!cameraGranted || !locationGranted) {
+                retryPermissionsBtn.style.display = 'flex';
+            }
+
+            // Store permission status
+            localStorage.setItem('securo_permissions_completed', 'true');
+            localStorage.setItem('securo_camera_granted', cameraGranted);
+            localStorage.setItem('securo_location_granted', locationGranted);
+        }
+
+        // Event listeners
+        grantCameraBtn.addEventListener('click', requestCamera);
+        skipCameraBtn.addEventListener('click', showLocationCard);
+        grantLocationBtn.addEventListener('click', requestLocation);
+        skipLocationBtn.addEventListener('click', showCompleteCard);
+
+        finishBtn.addEventListener('click', () => {
+            // Redirect based on role
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    window.location.href = 'index.html';
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+
+        retryPermissionsBtn.addEventListener('click', () => {
+            if (!cameraGranted) {
+                cameraCard.classList.add('active');
+                locationCard.classList.remove('active');
+                completeCard.classList.remove('active');
+            } else if (!locationGranted) {
+                showLocationCard();
+            }
+        });
+
+        // Check on load
+        checkExistingPermissions();
+    </script>
+</body>
+</html>

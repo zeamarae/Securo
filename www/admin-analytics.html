@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Securo - Analytics Dashboard</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&display=swap" rel="stylesheet">
+    <script src="router.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --ink: #181428;
+            --muted: #6f6a86;
+            --primary: #5a1fe0;
+            --green: #0f9b67;
+            --red: #d11f34;
+            --amber: #f59e0b;
+            --cyan: #06b6d4;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Outfit", sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .dashboard-title {
+            font-family: "Sora", sans-serif;
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0;
+        }
+
+        .date-range-selector {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .date-range-selector select,
+        .date-range-selector input {
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            font-weight: 600;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .stat-icon.primary { background: rgba(90, 31, 224, 0.1); color: var(--primary); }
+        .stat-icon.green { background: rgba(15, 155, 103, 0.1); color: var(--green); }
+        .stat-icon.red { background: rgba(209, 31, 52, 0.1); color: var(--red); }
+        .stat-icon.amber { background: rgba(245, 158, 11, 0.1); color: var(--amber); }
+        .stat-icon.cyan { background: rgba(6, 182, 212, 0.1); color: var(--cyan); }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-family: "Sora", sans-serif;
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin: 8px 0;
+            color: var(--ink);
+        }
+
+        .stat-change {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .stat-change.positive { color: var(--green); }
+        .stat-change.negative { color: var(--red); }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .chart-title {
+            font-family: "Sora", sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0 0 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .activity-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 14px;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .activity-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .activity-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin: 0 0 4px;
+        }
+
+        .activity-meta {
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .btn-export {
+            padding: 12px 24px;
+            border-radius: 14px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(90, 31, 224, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="dashboard-header">
+            <div>
+                <h1 class="dashboard-title">Analytics Dashboard</h1>
+                <p style="color: var(--muted); margin: 8px 0 0;">Real-time campus safety insights</p>
+            </div>
+            <div class="date-range-selector">
+                <select id="dateRange">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                    <option value="custom">Custom range</option>
+                </select>
+                <button class="btn-export" id="exportBtn">
+                    <span class="material-symbols-outlined">download</span>
+                    <span>Export</span>
+                </button>
+                <a href="admin.html" class="btn-export" style="background: rgba(90,31,224,0.1); color: var(--primary); text-decoration: none;">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    <span>Back</span>
+                </a>
+            </div>
+        </div>
+
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading analytics data...</p>
+        </div>
+
+        <div id="dashboardContent" style="display: none;">
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <p class="stat-label">Total Users</p>
+                            <h2 class="stat-value" id="statTotalUsers">0</h2>
+                        </div>
+                        <div class="stat-icon primary">
+                            <span class="material-symbols-outlined">people</span>
+                        </div>
+                    </div>
+                    <div class="stat-change positive" id="statUsersChange">
+                        <span class="material-symbols-outlined">trending_up</span>
+                        <span>+0% from last period</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <p class="stat-label">Attendance</p>
+                            <h2 class="stat-value" id="statAttendance">0</h2>
+                        </div>
+                        <div class="stat-icon green">
+                            <span class="material-symbols-outlined">check_circle</span>
+                        </div>
+                    </div>
+                    <div class="stat-change" id="statAttendanceChange">
+                        <span>0 check-ins today</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <p class="stat-label">SOS Alerts</p>
+                            <h2 class="stat-value" id="statSOS">0</h2>
+                        </div>
+                        <div class="stat-icon red">
+                            <span class="material-symbols-outlined">emergency</span>
+                        </div>
+                    </div>
+                    <div class="stat-change" id="statSOSChange">
+                        <span>0 active alerts</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <p class="stat-label">Guardian Links</p>
+                            <h2 class="stat-value" id="statGuardians">0</h2>
+                        </div>
+                        <div class="stat-icon cyan">
+                            <span class="material-symbols-outlined">family_restroom</span>
+                        </div>
+                    </div>
+                    <div class="stat-change" id="statGuardiansChange">
+                        <span>0 pending requests</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <div class="chart-card" style="grid-column: span 2;">
+                    <h3 class="chart-title">Attendance Trends</h3>
+                    <div class="chart-container">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3 class="chart-title">User Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="userDistributionChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3 class="chart-title">SOS Incidents by Type</h3>
+                    <div class="chart-container">
+                        <canvas id="sosTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="chart-card">
+                <h3 class="chart-title">Recent Activity</h3>
+                <div class="activity-list" id="recentActivityList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { checkAuth } from './auth.js';
+        import { 
+            getAllUsers, 
+            getAttendanceStats, 
+            getSOSStats,
+            getAllGuardianLinksAdmin,
+            getAllAuditLogs
+        } from './db.js';
+        import { Logger, Format } from './utils.js';
+
+        checkAuth();
+
+        let attendanceChart, userDistributionChart, sosTypeChart;
+
+        async function loadAnalytics() {
+            try {
+                Logger.info('Analytics', 'Loading dashboard data');
+
+                const [users, attendanceStats, sosStats, guardianLinks, auditLogs] = await Promise.all([
+                    getAllUsers(),
+                    getAttendanceStats(),
+                    getSOSStats(),
+                    getAllGuardianLinksAdmin(),
+                    getAllAuditLogs(50)
+                ]);
+
+                // Update stats
+                document.getElementById('statTotalUsers').textContent = users.length;
+                document.getElementById('statAttendance').textContent = attendanceStats?.totalCheckIns || 0;
+                document.getElementById('statSOS').textContent = sosStats?.total || 0;
+                document.getElementById('statGuardians').textContent = guardianLinks.length;
+
+                // User distribution by role
+                const roleCounts = users.reduce((acc, user) => {
+                    const role = user.role || 'unknown';
+                    acc[role] = (acc[role] || 0) + 1;
+                    return acc;
+                }, {});
+
+                // Create charts
+                createUserDistributionChart(roleCounts);
+                createAttendanceChart(attendanceStats);
+                createSOSTypeChart(sosStats);
+
+                // Recent activity
+                displayRecentActivity(auditLogs);
+
+                // Show content
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'block';
+
+                Logger.info('Analytics', 'Dashboard loaded successfully');
+            } catch (error) {
+                Logger.error('Analytics', 'Failed to load dashboard', error);
+                document.getElementById('loadingState').innerHTML = `
+                    <span class="material-symbols-outlined" style="font-size: 48px; color: var(--red);">error</span>
+                    <p>Failed to load analytics</p>
+                    <button class="btn-export" onclick="window.location.reload()">Retry</button>
+                `;
+            }
+        }
+
+        function createUserDistributionChart(roleCounts) {
+            const ctx = document.getElementById('userDistributionChart').getContext('2d');
+            userDistributionChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(roleCounts).map(r => r.charAt(0).toUpperCase() + r.slice(1)),
+                    datasets: [{
+                        data: Object.values(roleCounts),
+                        backgroundColor: [
+                            'rgba(90, 31, 224, 0.8)',
+                            'rgba(244, 63, 94, 0.8)',
+                            'rgba(15, 155, 103, 0.8)',
+                            'rgba(245, 158, 11, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAttendanceChart(stats) {
+            if (!stats || !stats.byDate) return;
+
+            const dates = Object.keys(stats.byDate).slice(-14);
+            const values = dates.map(d => stats.byDate[d]);
+
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+            attendanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Check-ins',
+                        data: values,
+                        borderColor: 'rgba(90, 31, 224, 1)',
+                        backgroundColor: 'rgba(90, 31, 224, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function createSOSTypeChart(stats) {
+            if (!stats || !stats.byStatus) return;
+
+            const ctx = document.getElementById('sosTypeChart').getContext('2d');
+            sosTypeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(stats.byStatus),
+                    datasets: [{
+                        label: 'Count',
+                        data: Object.values(stats.byStatus),
+                        backgroundColor: 'rgba(209, 31, 52, 0.8)',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function displayRecentActivity(logs) {
+            const list = document.getElementById('recentActivityList');
+            
+            if (!logs || logs.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: var(--muted);">No recent activity</p>';
+                return;
+            }
+
+            list.innerHTML = logs.slice(0, 10).map(log => {
+                const iconMap = {
+                    login: 'login',
+                    logout: 'logout',
+                    signup: 'person_add',
+                    password_change: 'lock_reset',
+                    sos: 'emergency',
+                    attendance: 'schedule'
+                };
+
+                const icon = iconMap[log.action] || 'info';
+                const colorMap = {
+                    login: 'green',
+                    signup: 'cyan',
+                    sos: 'red',
+                    password_change: 'amber'
+                };
+                const color = colorMap[log.action] || 'primary';
+
+                return `
+                    <div class="activity-item">
+                        <div class="activity-icon ${color}">
+                            <span class="material-symbols-outlined">${icon}</span>
+                        </div>
+                        <div class="activity-content">
+                            <p class="activity-title">${log.action.replace('_', ' ').toUpperCase()}</p>
+                            <p class="activity-meta">User: ${log.userId} • ${Format.date(log.timestamp, 'relative')}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Export functionality
+        document.getElementById('exportBtn').addEventListener('click', async () => {
+            try {
+                const data = {
+                    users: await getAllUsers(),
+                    attendance: await getAttendanceStats(),
+                    sos: await getSOSStats(),
+                    exportedAt: new Date().toISOString()
+                };
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `securo-analytics-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                Logger.error('Analytics', 'Export failed', error);
+                alert('Failed to export data');
+            }
+        });
+
+        // Load on mount
+        loadAnalytics();
+    </script>
+</body>
+</html>
