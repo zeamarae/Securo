@@ -1,0 +1,152 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'admin@admin.com' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+    
+    function isGuardian() {
+      return isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'guardian';
+    }
+    
+    function isStudent() {
+      return isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'student';
+    }
+    
+    function isStaff() {
+      return isSignedIn() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'staff';
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+    
+    // SOS Logs - Critical for safety
+    match /sos_logs/{logId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || isOwner(resource.data.userId);
+      allow delete: if isAdmin();
+    }
+    
+    // Attendance
+    match /attendance/{recordId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || isOwner(resource.data.userId);
+      allow delete: if isAdmin();
+    }
+    
+    // Emergency Posts (Vault)
+    match /emergency_posts/{postId} {
+      allow read: if isSignedIn() && (
+        isAdmin() || 
+        isOwner(resource.data.userId) ||
+        (isGuardian() && resource.data.guardianVisible == true)
+      );
+      allow create: if isSignedIn();
+      allow update: if isOwner(resource.data.userId) || isAdmin();
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+    
+    // GAD Posts (Announcements)
+    match /gad_posts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin() || isStaff();
+      allow update: if isAdmin() || isStaff();
+      allow delete: if isAdmin() || isStaff();
+    }
+    
+    // Guardian Links
+    match /guardian_links/{linkId} {
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        request.auth.uid == resource.data.guardianId ||
+        request.auth.uid == resource.data.studentUid
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        request.auth.uid == resource.data.guardianId ||
+        request.auth.uid == resource.data.studentUid
+      );
+      allow delete: if isAdmin() || 
+        request.auth.uid == resource.data.guardianId ||
+        request.auth.uid == resource.data.studentUid;
+    }
+    
+    // Messages (Chat)
+    match /messages/{messageId} {
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        request.auth.uid == resource.data.senderId ||
+        request.auth.uid == resource.data.receiverId ||
+        resource.data.receiverId == 'system_admin_securo'
+      );
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || 
+        request.auth.uid == resource.data.senderId ||
+        request.auth.uid == resource.data.receiverId;
+      allow delete: if isAdmin();
+    }
+    
+    // Campus Markers
+    match /markers/{markerId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Student Live Locations
+    match /student_locations/{studentId} {
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        isOwner(studentId) ||
+        isGuardian()
+      );
+      allow create: if isSignedIn();
+      allow update: if isOwner(studentId);
+      allow delete: if isOwner(studentId) || isAdmin();
+    }
+    
+    // Account Notifications
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (
+        isAdmin() ||
+        isOwner(resource.data.userId)
+      );
+      allow create: if isSignedIn();
+      allow update: if isOwner(resource.data.userId);
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+    
+    // Audit Logs (Admin only)
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

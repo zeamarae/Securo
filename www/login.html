@@ -849,9 +849,22 @@
         import { auth } from './firebase-config.js';
         import { login, signUp, checkAuth, forgotPassword, roleIdToEmail, getPreferredAuthRole, getFriendlyAuthMessage } from './auth.js';
         import { saveUserProfile, saveUserDirectoryMarker, getUserProfile, isStudentIdTaken, getEmailByStudentId } from './db.js';
+        import { Validation, UI, Logger, Permissions } from './utils.js';
+        import './install-sw.js'; // Initialize offline support
 
-        // Check if already logged in (Date: 2026-05-01)
+        // Check if already logged in
         checkAuth(false);
+
+        // (2026-07-13) Bypass onboarding if camera & location allowed; was sync flag only
+        (async () => {
+            if (!Permissions.shouldShowPermissionOnboarding()) return;
+            const hasAll = await Permissions.hasAllPermissionsGranted();
+            if (hasAll) return;
+            const urlParams = new URLSearchParams(window.location.search);
+            if (!urlParams.has('skip_permissions')) {
+                window.location.href = 'permissions-onboarding.html';
+            }
+        })();
 
         const mainAuthForm = document.getElementById('mainAuthForm');
         const loginTab = document.getElementById('loginTab');

@@ -1,7 +1,7 @@
 /**
- * Database Logic
- * Date: 2026-05-01
- * Description: Handles Firestore database operations.
+ * Database Logic v2.0
+ * Date: 2026-10-06
+ * Description: Handles Firestore database operations with improved error handling
  */
 
 import { db, auth } from './firebase-config.js';
@@ -23,6 +23,7 @@ import {
     onSnapshot,
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { Logger } from './utils.js';
 
 const LOCAL_EMERGENCY_POSTS_KEY = "securo_emergency_posts_local";
 const LOCAL_USERS_KEY = "securo_users_local";
@@ -33,7 +34,7 @@ const readLocalEmergencyPosts = () => {
         const parsed = raw ? JSON.parse(raw) : [];
         return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
-        console.warn("Error reading local emergency posts:", error);
+        Logger.warn("DB", "Error reading local emergency posts", error);
         return [];
     }
 };
@@ -42,7 +43,7 @@ const writeLocalEmergencyPosts = (posts) => {
     try {
         localStorage.setItem(LOCAL_EMERGENCY_POSTS_KEY, JSON.stringify(posts));
     } catch (error) {
-        console.warn("Error writing local emergency posts:", error);
+        Logger.warn("DB", "Error writing local emergency posts", error);
     }
 };
 
@@ -52,7 +53,7 @@ const readLocalUsers = () => {
         const parsed = raw ? JSON.parse(raw) : [];
         return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
-        console.warn("Error reading local users:", error);
+        Logger.warn("DB", "Error reading local users", error);
         return [];
     }
 };
@@ -70,7 +71,7 @@ const writeLocalUsers = (users) => {
     try {
         localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
     } catch (error) {
-        console.warn("Error writing local users:", error);
+        Logger.warn("DB", "Error writing local users", error);
     }
 };
 
@@ -1920,28 +1921,39 @@ export const findUserByEmail = async (email) => {
  * Send a persistent account notification
  * @param {object} payload
  */
+// (2026-07-13) Consolidate sendAccountNotification; was duplicate export in file
 export const sendAccountNotification = async (payload) => {
     if (!payload?.userId) {
         throw new Error("Notification recipient is required.");
     }
 
-    const docRef = await addDoc(collection(db, "notifications"), {
-        userId: payload.userId,
-        type: payload.type || "info",
-        title: payload.title || "Notification",
-        message: payload.message || "",
-        sourceUserId: payload.sourceUserId || "",
-        sourceName: payload.sourceName || "",
-        requestId: payload.requestId || "",
-        studentId: payload.studentId || "",
-        metadata: payload.metadata || {},
-        resolvedStatus: payload.resolvedStatus || "",
-        isRead: payload.isRead === true,
-        readAt: payload.isRead === true ? serverTimestamp() : null,
-        createdAt: payload.createdAt || serverTimestamp()
-    });
+    try {
+        const isRead = payload.isRead === true || payload.read === true;
+        const notificationData = {
+            userId: payload.userId,
+            type: payload.type || "info",
+            title: payload.title || "Notification",
+            message: payload.message || "",
+            sourceUserId: payload.sourceUserId || "",
+            sourceName: payload.sourceName || "",
+            requestId: payload.requestId || "",
+            studentId: payload.studentId || "",
+            metadata: payload.metadata || {},
+            actionUrl: payload.actionUrl || null,
+            resolvedStatus: payload.resolvedStatus || "",
+            isRead: isRead,
+            read: isRead,
+            readAt: isRead ? serverTimestamp() : null,
+            createdAt: payload.createdAt || serverTimestamp()
+        };
 
-    return docRef.id;
+        const docRef = await addDoc(collection(db, "notifications"), notificationData);
+        Logger.info("Notifications", "Notification sent", { userId: payload.userId, type: payload.type });
+        return docRef.id;
+    } catch (error) {
+        Logger.error("Notifications", "Failed to send notification", { payload, error });
+        throw error;
+    }
 };
 
 /**
@@ -2455,4 +2467,385 @@ export const fetchLatestCampusMapConfig = async () => {
         };
     } catch (e) {}
     return {};
+};
+
+
+// ========================================================
+// AUDIT LOGGING SYSTEM (Date: 2026-10-06)
+// Tracks all critical user actions for security and compliance
+// ========================================================
+
+/**
+ * Log an audit event
+ * @param {object} event - { userId, action, details, timestamp }
+ */
+export const logAuditEvent = async (event) => {
+    try {
+        const auditEntry = {
+            userId: event.userId || 'unknown',
+            action: event.action || 'unknown_action',
+            details: event.details || {},
+            timestamp: serverTimestamp(),
+            ipAddress: null, // Future: capture from server
+            userAgent: navigator.userAgent || 'unknown',
+            sessionId: sessionStorage.getItem('securo_session_id') || 'no_session'
+        };
+
+        await addDoc(collection(db, "audit_logs"), auditEntry);
+        return true;
+    } catch (error) {
+        Logger.warn("AuditLog", "Failed to log audit event", { event, error });
+        return false;
+    }
+};
+
+/**
+ * Get audit logs for a specific user (Admin only)
+ * @param {string} userId 
+ * @param {number} limitCount 
+ */
+export const getUserAuditLogs = async (userId, limitCount = 50) => {
+    try {
+        const q = query(
+            collection(db, "audit_logs"),
+            where("userId", "==", userId),
+            orderBy("timestamp", "desc"),
+            limit(limitCount)
+        );
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        Logger.error("AuditLog", "Failed to get user audit logs", { userId, error });
+        return [];
+    }
+};
+
+/**
+ * Get all audit logs (Admin only)
+ * @param {number} limitCount 
+ */
+export const getAllAuditLogs = async (limitCount = 100) => {
+    try {
+        const q = query(
+            collection(db, "audit_logs"),
+            orderBy("timestamp", "desc"),
+            limit(limitCount)
+        );
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        Logger.error("AuditLog", "Failed to get all audit logs", error);
+        return [];
+    }
+};
+
+// ========================================================
+// OFFLINE QUEUE SYSTEM (Date: 2026-10-06)
+// Queue operations when offline and sync when back online
+// ========================================================
+
+const OFFLINE_QUEUE_KEY = "securo_offline_queue";
+
+/**
+ * Add operation to offline queue
+ * @param {object} operation - { type, data, timestamp }
+ */
+export const queueOfflineOperation = (operation) => {
+    try {
+        const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
+        queue.push({
+            ...operation,
+            queuedAt: new Date().toISOString(),
+            id: `offline_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+        });
+        localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+        Logger.info("OfflineQueue", "Operation queued", operation);
+        return true;
+    } catch (error) {
+        Logger.error("OfflineQueue", "Failed to queue operation", error);
+        return false;
+    }
+};
+
+/**
+ * Process offline queue when back online
+ */
+export const processOfflineQueue = async () => {
+    try {
+        const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
+        if (queue.length === 0) return { processed: 0, failed: 0 };
+
+        let processed = 0;
+        let failed = 0;
+        const failedOps = [];
+
+        for (const operation of queue) {
+            try {
+                // Process based on operation type
+                switch (operation.type) {
+                    case 'sos_log':
+                        await logSOS(operation.data.userId, operation.data.location, operation.data.metadata);
+                        break;
+                    case 'attendance':
+                        await logAttendance(operation.data.userId, operation.data.type, operation.data.location);
+                        break;
+                    case 'emergency_post':
+                        await saveEmergencyPost(operation.data);
+                        break;
+                    default:
+                        Logger.warn("OfflineQueue", "Unknown operation type", operation);
+                }
+                processed++;
+            } catch (error) {
+                Logger.error("OfflineQueue", "Failed to process operation", { operation, error });
+                failedOps.push(operation);
+                failed++;
+            }
+        }
+
+        // Keep only failed operations in queue
+        localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(failedOps));
+
+        Logger.info("OfflineQueue", "Queue processed", { processed, failed });
+        return { processed, failed };
+    } catch (error) {
+        Logger.error("OfflineQueue", "Queue processing failed", error);
+        return { processed: 0, failed: 0 };
+    }
+};
+
+/**
+ * Get current offline queue size
+ */
+export const getOfflineQueueSize = () => {
+    try {
+        const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
+        return queue.length;
+    } catch {
+        return 0;
+    }
+};
+
+// ========================================================
+// NOTIFICATION SYSTEM (Date: 2026-10-06)
+// In-app notifications for account events
+// ========================================================
+
+// (2026-07-13) Remove duplicate sendAccountNotification; was redefined here
+
+/**
+ * Get user notifications
+ * @param {string} userId 
+ * @param {boolean} unreadOnly 
+ */
+export const getUserNotifications = async (userId, unreadOnly = false) => {
+    try {
+        let q = query(
+            collection(db, "notifications"),
+            where("userId", "==", userId),
+            orderBy("createdAt", "desc"),
+            limit(50)
+        );
+
+        if (unreadOnly) {
+            q = query(
+                collection(db, "notifications"),
+                where("userId", "==", userId),
+                where("read", "==", false),
+                orderBy("createdAt", "desc")
+            );
+        }
+
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (error) {
+        Logger.error("Notifications", "Failed to get notifications", { userId, error });
+        return [];
+    }
+};
+
+/**
+ * Mark notification as read
+ * @param {string} notificationId 
+ */
+export const markNotificationAsRead = async (notificationId) => {
+    try {
+        await updateDoc(doc(db, "notifications", notificationId), {
+            read: true,
+            readAt: serverTimestamp()
+        });
+        return true;
+    } catch (error) {
+        Logger.error("Notifications", "Failed to mark as read", { notificationId, error });
+        return false;
+    }
+};
+
+/**
+ * Mark all notifications as read for a user
+ * @param {string} userId 
+ */
+export const markAllNotificationsAsRead = async (userId) => {
+    try {
+        const q = query(
+            collection(db, "notifications"),
+            where("userId", "==", userId),
+            where("read", "==", false)
+        );
+        const querySnapshot = await getDocs(q);
+        
+        const updates = querySnapshot.docs.map(doc => 
+            updateDoc(doc.ref, { read: true, readAt: serverTimestamp() })
+        );
+        
+        await Promise.all(updates);
+        Logger.info("Notifications", "All notifications marked as read", { userId });
+        return true;
+    } catch (error) {
+        Logger.error("Notifications", "Failed to mark all as read", { userId, error });
+        return false;
+    }
+};
+
+/**
+ * Subscribe to real-time notifications
+ * @param {string} userId 
+ * @param {function} callback 
+ */
+export const subscribeToNotifications = (userId, callback) => {
+    const q = query(
+        collection(db, "notifications"),
+        where("userId", "==", userId),
+        orderBy("createdAt", "desc"),
+        limit(50)
+    );
+
+    return onSnapshot(q, (snapshot) => {
+        const notifications = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        callback(notifications);
+    }, (error) => {
+        Logger.error("Notifications", "Subscription error", error);
+        callback([]);
+    });
+};
+
+/**
+ * Delete a notification
+ * @param {string} notificationId 
+ */
+export const deleteNotification = async (notificationId) => {
+    try {
+        await deleteDoc(doc(db, "notifications", notificationId));
+        return true;
+    } catch (error) {
+        Logger.error("Notifications", "Failed to delete notification", { notificationId, error });
+        return false;
+    }
+};
+
+// ========================================================
+// ANALYTICS & REPORTING (Date: 2026-10-06)
+// Generate usage statistics and reports
+// ========================================================
+
+/**
+ * Get attendance statistics for date range
+ * @param {Date} startDate 
+ * @param {Date} endDate 
+ */
+export const getAttendanceStats = async (startDate, endDate) => {
+    try {
+        const start = startDate ? new Date(startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const end = endDate ? new Date(endDate) : new Date();
+
+        const q = query(
+            collection(db, "attendance"),
+            where("timestamp", ">=", start),
+            where("timestamp", "<=", end)
+        );
+
+        const querySnapshot = await getDocs(q);
+        const records = querySnapshot.docs.map(doc => doc.data());
+
+        const stats = {
+            totalCheckIns: records.filter(r => r.type === 'in').length,
+            totalCheckOuts: records.filter(r => r.type === 'out').length,
+            uniqueUsers: new Set(records.map(r => r.userId)).size,
+            byDate: {},
+            byUser: {}
+        };
+
+        // Group by date
+        records.forEach(record => {
+            const date = new Date(record.timestamp?.seconds * 1000).toLocaleDateString();
+            stats.byDate[date] = (stats.byDate[date] || 0) + 1;
+            
+            stats.byUser[record.userId] = (stats.byUser[record.userId] || 0) + 1;
+        });
+
+        return stats;
+    } catch (error) {
+        Logger.error("Analytics", "Failed to get attendance stats", error);
+        return null;
+    }
+};
+
+/**
+ * Get SOS statistics
+ */
+export const getSOSStats = async () => {
+    try {
+        const querySnapshot = await getDocs(collection(db, "sos_logs"));
+        const logs = querySnapshot.docs.map(doc => doc.data());
+
+        const stats = {
+            total: logs.length,
+            byStatus: {},
+            byUser: {},
+            averageResponseTime: 0,
+            recentAlerts: logs.slice(0, 10).map(log => ({
+                userId: log.userId,
+                timestamp: log.timestamp,
+                location: log.location
+            }))
+        };
+
+        logs.forEach(log => {
+            stats.byStatus[log.status || 'unknown'] = (stats.byStatus[log.status || 'unknown'] || 0) + 1;
+            stats.byUser[log.userId] = (stats.byUser[log.userId] || 0) + 1;
+        });
+
+        return stats;
+    } catch (error) {
+        Logger.error("Analytics", "Failed to get SOS stats", error);
+        return null;
+    }
+};
+
+/**
+ * Get user activity summary
+ * @param {string} userId 
+ */
+export const getUserActivitySummary = async (userId) => {
+    try {
+        const [attendance, sosLogs, emergencyPosts] = await Promise.all([
+            getAttendanceHistory(userId),
+            getUserSOSLogs(userId),
+            getUserEmergencyPosts(userId)
+        ]);
+
+        return {
+            attendanceCount: attendance.length,
+            sosCount: sosLogs.length,
+            emergencyPostsCount: emergencyPosts.length,
+            lastActivity: attendance[0]?.timestamp || null,
+            recentActions: [
+                ...attendance.slice(0, 5).map(a => ({ type: 'attendance', ...a })),
+                ...sosLogs.slice(0, 5).map(s => ({ type: 'sos', ...s }))
+            ].sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0))
+        };
+    } catch (error) {
+        Logger.error("Analytics", "Failed to get user activity", { userId, error });
+        return null;
+    }
 };

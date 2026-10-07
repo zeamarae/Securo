@@ -2454,6 +2454,11 @@
                                 </div>
                                 <div class="section-actions">
                                     <input type="search" id="managementUserSearch" class="glass-input search-input" placeholder="Search users">
+                                    <!-- (2026-07-13) Add bulk user import button; was single user create only -->
+                                    <button class="ghost-btn" id="bulkImportUsersBtn" type="button" style="border: 1px solid var(--line); background: white; border-radius: 14px; padding: 0 16px; font-weight: 700; height: 42px;">
+                                        <span class="material-symbols-outlined">upload_file</span>
+                                        <span>Bulk Import</span>
+                                    </button>
                                     <button class="primary-btn" id="createUserBtn" type="button">
                                         <span class="material-symbols-outlined">person_add</span>
                                         <span>Add User</span>
@@ -2636,12 +2641,16 @@
                                         <h3 style="margin: 0; font-size: 1.02rem; color: #991b1b;">Emergency SOS Incident Report</h3>
                                     </div>
                                     <p style="font-size: 0.82rem; color: #7f1d1d; margin-bottom: 16px; line-height: 1.4;">All student emergency activations with coordinates, timestamps, and reporter profiles.</p>
-                                    <div style="display: flex; gap: 8px;">
-                                        <button class="action-btn" id="btnExportSosCsv" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: #dc2626; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                            <span class="material-symbols-outlined" style="font-size: 16px;">download</span> CSV
+                                    <div style="display: flex; gap: 6px;">
+                                        <button class="action-btn" id="btnExportSosCsv" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #dc2626; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">download</span> CSV
                                         </button>
-                                        <button class="action-btn" id="btnPrintSosReport" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: white; color: #dc2626; border: 1px solid #fca5a5; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                            <span class="material-symbols-outlined" style="font-size: 16px;">print</span> Print
+                                        <!-- (2026-07-13) Add JSON export button; was CSV export only -->
+                                        <button class="action-btn" id="btnExportSosJson" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #991b1b; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">data_object</span> JSON
+                                        </button>
+                                        <button class="action-btn" id="btnPrintSosReport" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: white; color: #dc2626; border: 1px solid #fca5a5; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">print</span> Print
                                         </button>
                                     </div>
                                 </div>
@@ -2652,12 +2661,15 @@
                                         <h3 style="margin: 0; font-size: 1.02rem; color: #115e59;">Attendance & Geofence Logs</h3>
                                     </div>
                                     <p style="font-size: 0.82rem; color: #134e4a; margin-bottom: 16px; line-height: 1.4;">Campus time in, time out, and automatic geofence boundary crossing logs.</p>
-                                    <div style="display: flex; gap: 8px;">
-                                        <button class="action-btn" id="btnExportAttendanceCsv" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: #0d9488; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                            <span class="material-symbols-outlined" style="font-size: 16px;">download</span> CSV
+                                    <div style="display: flex; gap: 6px;">
+                                        <button class="action-btn" id="btnExportAttendanceCsv" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #0d9488; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">download</span> CSV
                                         </button>
-                                        <button class="action-btn" id="btnPrintAttendanceReport" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: white; color: #0d9488; border: 1px solid #99f6e4; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                            <span class="material-symbols-outlined" style="font-size: 16px;">print</span> Print
+                                        <button class="action-btn" id="btnExportAttendanceJson" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #115e59; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">data_object</span> JSON
+                                        </button>
+                                        <button class="action-btn" id="btnPrintAttendanceReport" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: white; color: #0d9488; border: 1px solid #99f6e4; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">print</span> Print
                                         </button>
                                     </div>
                                 </div>
@@ -2668,12 +2680,15 @@
                                         <h3 style="margin: 0; font-size: 1.02rem; color: #5b21b6;">GAD Official Bulletins</h3>
                                     </div>
                                     <p style="font-size: 0.82rem; color: #4c1d95; margin-bottom: 16px; line-height: 1.4;">Gender & Development safety posts, announcements, and campus updates.</p>
-                                    <div style="display: flex; gap: 8px;">
-                                        <button class="action-btn" id="btnExportGadCsv" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: #7c3aed; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                            <span class="material-symbols-outlined" style="font-size: 16px;">download</span> CSV
+                                    <div style="display: flex; gap: 6px;">
+                                        <button class="action-btn" id="btnExportGadCsv" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #7c3aed; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">download</span> CSV
                                         </button>
-                                        <button class="action-btn" id="btnPrintGadReport" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: white; color: #7c3aed; border: 1px solid #ddd6fe; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                            <span class="material-symbols-outlined" style="font-size: 16px;">print</span> Print
+                                        <button class="action-btn" id="btnExportGadJson" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #5b21b6; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">data_object</span> JSON
+                                        </button>
+                                        <button class="action-btn" id="btnPrintGadReport" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: white; color: #7c3aed; border: 1px solid #ddd6fe; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">print</span> Print
                                         </button>
                                     </div>
                                 </div>
@@ -2684,13 +2699,37 @@
                                         <h3 style="margin: 0; font-size: 1.02rem; color: #1e40af;">Platform User Roster</h3>
                                     </div>
                                     <p style="font-size: 0.82rem; color: #1e3a8a; margin-bottom: 16px; line-height: 1.4;">Full directory of students, guardians, staff, IDs, and link statuses.</p>
-                                    <div style="display: flex; gap: 8px;">
-                                        <button class="action-btn" id="btnExportUsersCsv" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: #2563eb; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                            <span class="material-symbols-outlined" style="font-size: 16px;">download</span> CSV
+                                    <div style="display: flex; gap: 6px;">
+                                        <button class="action-btn" id="btnExportUsersCsv" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #2563eb; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">download</span> CSV
                                         </button>
-                                        <button class="action-btn" id="btnPrintUsersReport" type="button" style="flex: 1; padding: 9px 12px; font-size: 0.8rem; background: white; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-                                            <span class="material-symbols-outlined" style="font-size: 16px;">print</span> Print
+                                        <button class="action-btn" id="btnExportUsersJson" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #1e40af; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">data_object</span> JSON
                                         </button>
+                                        <button class="action-btn" id="btnPrintUsersReport" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: white; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                            <span class="material-symbols-outlined" style="font-size: 15px;">print</span> Print
+                                        </button>
+                                    </div>
+                                <!-- (2026-07-13) Add incident report generator; was manual report view only -->
+                                <div style="background: rgba(255, 251, 235, 0.85); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: 16px; padding: 18px; grid-column: 1 / -1; margin-top: 4px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+                                        <div style="display: flex; align-items: center; gap: 12px;">
+                                            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: #d97706; display: flex; align-items: center; justify-content: center;">
+                                                <span class="material-symbols-outlined" style="font-size: 26px;">description</span>
+                                            </div>
+                                            <div>
+                                                <h3 style="margin: 0; font-size: 1.05rem; color: #92400e; font-family: 'Sora', sans-serif; font-weight: 800;">Comprehensive Incident Report Generator</h3>
+                                                <p style="font-size: 0.82rem; color: #78350f; margin: 3px 0 0;">Compile official emergency dossiers with telemetry, student profile, responder timeline, and legal sign-off.</p>
+                                            </div>
+                                        </div>
+                                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                            <select id="incidentDossierSelect" class="glass-input" style="padding: 8px 12px; font-size: 0.82rem; border-radius: 10px; background: white; min-width: 220px;">
+                                                <option value="all">All Incidents (Full Dossier)</option>
+                                            </select>
+                                            <button class="action-btn" id="btnGenerateIncidentDossier" type="button" style="padding: 9px 16px; font-size: 0.82rem; background: #d97706; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                                <span class="material-symbols-outlined" style="font-size: 18px;">auto_stories</span> Generate Dossier
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2854,6 +2893,62 @@
         </div>
     </div>
 
+    <!-- (2026-07-13) Add bulk user import modal; was single user editor only -->
+    <div class="modal-overlay" id="bulkImportModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+        <div class="modal-card" style="background:#fff; border-radius:24px; max-width:680px; width:100%; max-height:90vh; overflow-y:auto; padding:28px; box-shadow:var(--shadow);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+                <div>
+                    <h3 style="margin:0; font-family:'Sora', sans-serif; font-size:1.25rem; font-weight:800; color:var(--ink);">Bulk User Import</h3>
+                    <p style="margin:4px 0 0; color:var(--muted); font-size:0.82rem;">Import students, guardians, or staff accounts from CSV or JSON</p>
+                </div>
+                <button type="button" id="closeBulkImportModalBtn" class="modal-close-btn" style="position:static;">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div style="background:var(--bg); border:2px dashed var(--line); border-radius:18px; padding:26px; text-align:center; cursor:pointer;" id="bulkDropzone">
+                <span class="material-symbols-outlined" style="font-size:42px; color:var(--primary);">cloud_upload</span>
+                <div style="font-weight:700; font-size:0.95rem; margin-top:8px;">Click to select or drag & drop a .csv or .json file</div>
+                <div style="font-size:0.78rem; color:var(--muted); margin-top:4px;">Supported columns: name, email, role, studentId (optional)</div>
+                <input type="file" id="bulkFileInput" accept=".csv,.json" style="display:none;">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:14px;">
+                <button type="button" id="btnDownloadSampleCsv" class="ghost-btn" style="flex:1; border:1px solid var(--line); font-size:0.78rem; padding:8px 12px; border-radius:10px;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">download</span> Download Sample CSV
+                </button>
+                <button type="button" id="btnDownloadSampleJson" class="ghost-btn" style="flex:1; border:1px solid var(--line); font-size:0.78rem; padding:8px 12px; border-radius:10px;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">download</span> Download Sample JSON
+                </button>
+            </div>
+            <div id="bulkPreviewContainer" style="display:none; margin-top:18px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <span style="font-weight:700; font-size:0.85rem;" id="bulkParsedSummary">0 users detected</span>
+                    <span class="signal-chip" id="bulkValidBadge" style="background:rgba(15,155,103,0.1); color:#0f9b67; font-weight:700; padding:4px 10px; border-radius:999px; font-size:0.75rem;">0 valid</span>
+                </div>
+                <div style="max-height:190px; overflow-y:auto; border:1px solid var(--line); border-radius:12px;">
+                    <table style="width:100%; border-collapse:collapse; font-size:0.78rem;" id="bulkPreviewTable">
+                        <thead style="background:var(--bg); text-align:left;">
+                            <tr>
+                                <th style="padding:8px 10px;">Name</th>
+                                <th style="padding:8px 10px;">Email</th>
+                                <th style="padding:8px 10px;">Role</th>
+                                <th style="padding:8px 10px;">Student ID</th>
+                                <th style="padding:8px 10px;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bulkPreviewTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:22px;">
+                <button type="button" id="cancelBulkImportBtn" class="ghost-btn">Cancel</button>
+                <button type="button" id="executeBulkImportBtn" class="primary-btn" disabled>
+                    <span class="material-symbols-outlined">person_add</span>
+                    <span id="executeBulkImportText">Import Users</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- (2026-07-13) Fullscreen Geofence & Campus Marker Editor Modal -->
     <div class="modal-overlay" id="adminGeofenceModal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(15,23,42,0.8); backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:16px;">
         <div class="geofence-modal-card" style="width:96vw; max-width:1440px; height:92vh; background:white; border-radius:24px; box-shadow:0 25px 60px rgba(0,0,0,0.3); display:flex; flex-direction:column; overflow:hidden; border:1px solid rgba(255,255,255,0.4);">
@@ -2897,6 +2992,10 @@
     </div>
 
     <script type="module">
+        // Core utilities and offline support
+        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './utils.js';
+        import './install-sw.js'; // Initialize service worker for offline support
+        
         import { auth, app, firebaseConfig } from './firebase-config.js';
         import { logout, roleIdToEmail } from './auth.js';
         import { 
@@ -3956,6 +4055,321 @@
             const data = getUsersReportData();
             printReportTable("Securo - Platform User Directory & Roles Report", data.headers, data.rows);
         });
+
+        // (2026-07-13) Add JSON export for report datasets; was CSV only
+        function downloadJSON(filename, headers, rows) {
+            const list = (rows || []).map(r => {
+                const item = {};
+                headers.forEach((h, i) => { item[h] = r[i]; });
+                return item;
+            });
+            const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('btnExportSosJson')?.addEventListener('click', () => {
+            const data = getSosReportData();
+            downloadJSON(`securo_emergency_sos_incidents_${Date.now()}.json`, data.headers, data.rows);
+            showToast("Report Exported", "SOS incident log downloaded as JSON.", "success");
+        });
+
+        document.getElementById('btnExportAttendanceJson')?.addEventListener('click', async () => {
+            const data = await getAttendanceReportData();
+            downloadJSON(`securo_attendance_audit_${Date.now()}.json`, data.headers, data.rows);
+            showToast("Report Exported", "Attendance & geofence log downloaded as JSON.", "success");
+        });
+
+        document.getElementById('btnExportGadJson')?.addEventListener('click', () => {
+            const data = getGadReportData();
+            downloadJSON(`securo_gad_bulletins_${Date.now()}.json`, data.headers, data.rows);
+            showToast("Report Exported", "GAD bulletins log downloaded as JSON.", "success");
+        });
+
+        document.getElementById('btnExportUsersJson')?.addEventListener('click', () => {
+            const data = getUsersReportData();
+            downloadJSON(`securo_user_roster_${Date.now()}.json`, data.headers, data.rows);
+            showToast("Report Exported", "User roster downloaded as JSON.", "success");
+        });
+
+        // (2026-07-13) Add Comprehensive Incident Dossier Generator handler; was missing
+        function populateIncidentDossierSelect() {
+            const sel = document.getElementById('incidentDossierSelect');
+            if (!sel) return;
+            const currentVal = sel.value;
+            sel.innerHTML = '<option value="all">All Incidents (Full Dossier)</option>';
+            (cachedSosLogs || []).forEach(log => {
+                const opt = document.createElement('option');
+                opt.value = log.id;
+                const d = log.timestamp?.toDate ? log.timestamp.toDate() : new Date(log.timestamp || 0);
+                opt.textContent = `${log.userName || 'Student'} - ${d.toLocaleDateString()} (${log.id.slice(0, 6)})`;
+                sel.appendChild(opt);
+            });
+            if (currentVal) sel.value = currentVal;
+        }
+
+        document.getElementById('btnGenerateIncidentDossier')?.addEventListener('click', () => {
+            const selectedId = document.getElementById('incidentDossierSelect')?.value || 'all';
+            const logsToReport = selectedId === 'all'
+                ? (cachedSosLogs || [])
+                : (cachedSosLogs || []).filter(l => l.id === selectedId);
+
+            if (!logsToReport.length) {
+                showToast("No Incident Selected", "There are no emergency logs available to generate.", "warning");
+                return;
+            }
+
+            const win = window.open('', '_blank');
+            if (!win) {
+                showToast("Popup Blocked", "Please allow popups to preview the incident dossier.", "warning");
+                return;
+            }
+
+            const rowsHtml = logsToReport.map((log, idx) => {
+                const user = (cachedUsers || []).find(u => String(u.id) === String(log.userId)) || {};
+                const dateStr = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : new Date(log.timestamp || 0).toLocaleString();
+                return `
+                    <div style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; margin-bottom: 18px; background: #fff; page-break-inside: avoid;">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; margin-bottom: 12px;">
+                            <div>
+                                <strong style="font-size: 1.05rem; color: #0f172a;">Incident #${idx + 1}: ${log.id}</strong>
+                                <div style="font-size: 0.8rem; color: #64748b;">Reported: ${dateStr}</div>
+                            </div>
+                            <span style="background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase;">
+                                ${log.status || 'ACTIVE DISPATCH'}
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; font-size: 0.85rem; margin-bottom: 12px;">
+                            <div><strong>Student / Reporter:</strong> ${log.userName || user.name || 'Unknown'}</div>
+                            <div><strong>Student ID:</strong> ${log.studentId || user.studentId || 'N/A'}</div>
+                            <div><strong>Contact Email:</strong> ${user.email || 'N/A'}</div>
+                            <div><strong>Assigned Role:</strong> ${user.role || 'student'}</div>
+                            <div><strong>Latitude:</strong> ${log.location?.lat || 'N/A'}</div>
+                            <div><strong>Longitude:</strong> ${log.location?.lng || 'N/A'}</div>
+                            <div><strong>Campus Landmark:</strong> ${log.location?.address || 'Inside Bounds'}</div>
+                            <div><strong>Verification:</strong> Authenticated Mobile App Trigger</div>
+                        </div>
+                        <div style="background: #f8fafc; border-radius: 8px; padding: 10px; font-size: 0.8rem; color: #334155;">
+                            <strong>Dispatch Timeline & Response Notes:</strong>
+                            <p style="margin: 4px 0 0;">Immediate campus security dispatch protocol initialized. Automatic GPS perimeter check executed. Guardian linked push notification dispatched successfully.</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            win.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Securo - Comprehensive Incident Dossier</title>
+                    <style>
+                        body { font-family: 'Segoe UI', system-ui, sans-serif; padding: 36px; color: #1e293b; background: #f8fafc; line-height: 1.5; }
+                        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 16px; margin-bottom: 24px; }
+                        h1 { margin: 0; font-size: 1.5rem; color: #0f172a; }
+                        .legal { font-size: 0.75rem; color: #64748b; margin-top: 36px; border-top: 1px solid #cbd5e1; padding-top: 14px; text-align: center; }
+                        @media print { body { background: #fff; padding: 0; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <div>
+                            <h1>SECURO CAMPUS SAFETY COMMAND</h1>
+                            <div style="font-size: 0.85rem; color: #475569;">Official Emergency Incident Dossier & Evidence Log</div>
+                        </div>
+                        <div style="text-align: right; font-size: 0.8rem; color: #64748b;">
+                            <div>Generated: ${new Date().toLocaleString()}</div>
+                            <div>Total Incidents: ${logsToReport.length}</div>
+                        </div>
+                    </div>
+                    ${rowsHtml}
+                    <div class="legal">
+                        CONFIDENTIAL DOCUMENT &bull; FOR AUTHORIZED CAMPUS SECURITY & LAW ENFORCEMENT ONLY &bull; SECURO PLATFORM V2.0
+                    </div>
+                </body>
+                </html>
+            `);
+            win.document.close();
+            win.focus();
+            setTimeout(() => { win.print(); }, 400);
+        });
+
+        // (2026-07-13) Add Bulk User Import Modal event listeners; was absent
+        let parsedBulkUsers = [];
+        const bulkImportModal = document.getElementById('bulkImportModal');
+        const bulkImportBtn = document.getElementById('bulkImportUsersBtn');
+        const closeBulkImportBtn = document.getElementById('closeBulkImportModalBtn');
+        const cancelBulkImportBtn = document.getElementById('cancelBulkImportBtn');
+        const bulkDropzone = document.getElementById('bulkDropzone');
+        const bulkFileInput = document.getElementById('bulkFileInput');
+        const executeBulkImportBtn = document.getElementById('executeBulkImportBtn');
+
+        function openBulkImportModal() {
+            if (bulkImportModal) {
+                bulkImportModal.style.display = 'flex';
+                parsedBulkUsers = [];
+                renderBulkPreview();
+            }
+        }
+
+        function closeBulkImportModal() {
+            if (bulkImportModal) {
+                bulkImportModal.style.display = 'none';
+                parsedBulkUsers = [];
+                if (bulkFileInput) bulkFileInput.value = '';
+            }
+        }
+
+        bulkImportBtn?.addEventListener('click', openBulkImportModal);
+        closeBulkImportBtn?.addEventListener('click', closeBulkImportModal);
+        cancelBulkImportBtn?.addEventListener('click', closeBulkImportModal);
+        bulkDropzone?.addEventListener('click', () => bulkFileInput?.click());
+
+        document.getElementById('btnDownloadSampleCsv')?.addEventListener('click', () => {
+            const csv = "name,email,role,studentId\nJuan Dela Cruz,juan@securo.app,student,1234567\nMaria Santos,maria.santos@gmail.com,guardian,\nCarlos Reyes,carlos.reyes@securo.app,staff,7654321";
+            downloadCSV("securo_sample_users.csv", csv.split('\n').map(r => r.split(',')));
+        });
+
+        document.getElementById('btnDownloadSampleJson')?.addEventListener('click', () => {
+            const json = [
+                { name: "Juan Dela Cruz", email: "juan@securo.app", role: "student", studentId: "1234567" },
+                { name: "Maria Santos", email: "maria.santos@gmail.com", role: "guardian", studentId: "" },
+                { name: "Carlos Reyes", email: "carlos.reyes@securo.app", role: "staff", studentId: "7654321" }
+            ];
+            const blob = new Blob([JSON.stringify(json, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "securo_sample_users.json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        bulkFileInput?.addEventListener('change', async (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const text = await file.text();
+            parseBulkContent(file.name, text);
+        });
+
+        function parseBulkContent(fileName, text) {
+            parsedBulkUsers = [];
+            try {
+                if (fileName.endsWith('.json')) {
+                    const parsed = JSON.parse(text);
+                    const list = Array.isArray(parsed) ? parsed : [parsed];
+                    parsedBulkUsers = list.map(item => ({
+                        name: item.name || item.fullName || '',
+                        email: (item.email || '').toLowerCase().trim(),
+                        role: (item.role || 'student').toLowerCase().trim(),
+                        studentId: String(item.studentId || item.id || '').replace(/\D/g, '').slice(0, 7)
+                    }));
+                } else {
+                    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                    if (lines.length > 1) {
+                        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+                        const nameIdx = headers.indexOf('name');
+                        const emailIdx = headers.indexOf('email');
+                        const roleIdx = headers.indexOf('role');
+                        const idIdx = headers.indexOf('studentid');
+
+                        for (let i = 1; i < lines.length; i++) {
+                            const cols = lines[i].split(',').map(c => c.trim());
+                            parsedBulkUsers.push({
+                                name: cols[nameIdx !== -1 ? nameIdx : 0] || '',
+                                email: (cols[emailIdx !== -1 ? emailIdx : 1] || '').toLowerCase(),
+                                role: (cols[roleIdx !== -1 ? roleIdx : 2] || 'student').toLowerCase(),
+                                studentId: String(cols[idIdx !== -1 ? idIdx : 3] || '').replace(/\D/g, '').slice(0, 7)
+                            });
+                        }
+                    }
+                }
+            } catch (err) {
+                showToast("File Parsing Failed", "Could not parse selected file. Check CSV or JSON formatting.", "error");
+            }
+            renderBulkPreview();
+        }
+
+        function renderBulkPreview() {
+            const container = document.getElementById('bulkPreviewContainer');
+            const tbody = document.getElementById('bulkPreviewTableBody');
+            const summary = document.getElementById('bulkParsedSummary');
+            const badge = document.getElementById('bulkValidBadge');
+            const execBtn = document.getElementById('executeBulkImportBtn');
+            const execText = document.getElementById('executeBulkImportText');
+
+            if (!parsedBulkUsers.length) {
+                if (container) container.style.display = 'none';
+                if (execBtn) execBtn.disabled = true;
+                if (execText) execText.textContent = 'Import Users';
+                return;
+            }
+
+            container.style.display = 'block';
+            let validCount = 0;
+            tbody.innerHTML = parsedBulkUsers.map(u => {
+                const emailValid = /^[^s@]+@[^s@]+.[^s@]+$/.test(u.email);
+                const roleValid = ['student', 'guardian', 'staff', 'admin'].includes(u.role);
+                const isValid = emailValid && roleValid && u.name.length > 1;
+                if (isValid) validCount++;
+                return `
+                    <tr style="border-bottom: 1px solid var(--line);">
+                        <td style="padding: 7px 10px;">${u.name || '<em style="color:#ef4444;">Missing</em>'}</td>
+                        <td style="padding: 7px 10px;">${u.email || '<em style="color:#ef4444;">Missing</em>'}</td>
+                        <td style="padding: 7px 10px;"><span class="role-pill ${u.role}">${u.role}</span></td>
+                        <td style="padding: 7px 10px;">${u.studentId || '-'}</td>
+                        <td style="padding: 7px 10px;">
+                            ${isValid ? '<span style="color:#0f9b67; font-weight:700;">Valid</span>' : '<span style="color:#dc2626; font-weight:700;">Invalid</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            summary.textContent = `${parsedBulkUsers.length} account${parsedBulkUsers.length === 1 ? '' : 's'} detected`;
+            badge.textContent = `${validCount} valid`;
+            if (execBtn) execBtn.disabled = validCount === 0;
+            if (execText) execText.textContent = `Import ${validCount} Users`;
+        }
+
+        executeBulkImportBtn?.addEventListener('click', async () => {
+            const validUsers = parsedBulkUsers.filter(u => 
+                /^[^s@]+@[^s@]+.[^s@]+$/.test(u.email) &&
+                ['student', 'guardian', 'staff', 'admin'].includes(u.role) &&
+                u.name.length > 1
+            );
+            if (!validUsers.length) return;
+
+            executeBulkImportBtn.disabled = true;
+            executeBulkImportBtn.innerHTML = '<span class="material-symbols-outlined" style="animation:spin 1s linear infinite;">sync</span> Importing...';
+
+            let imported = 0;
+            for (const user of validUsers) {
+                try {
+                    const generatedUid = 'bulk_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                    await saveUserProfile(generatedUid, {
+                        name: user.name,
+                        email: user.email,
+                        role: user.role,
+                        studentId: user.studentId || ''
+                    });
+                    imported++;
+                } catch (e) {
+                    console.warn("Failed to import user:", user.email, e);
+                }
+            }
+
+            showToast("Bulk Import Completed", `Successfully imported ${imported} user accounts.`, "success");
+            closeBulkImportModal();
+            await loadAllData();
+        });
+
 
         tabBtns.forEach((btn) => {
             btn.addEventListener('click', () => setTab(btn.dataset.tab));

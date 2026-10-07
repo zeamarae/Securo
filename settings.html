@@ -454,6 +454,10 @@
     </div>
 
     <script type="module">
+        // Core utilities and offline support
+        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './utils.js';
+        import './install-sw.js'; // Initialize service worker for offline support
+        
         import { auth } from './firebase-config.js';
         import { checkAuth } from './auth.js';
         // (2026-07-13) Import deleteCurrentUserAccount; was getUserProfile only

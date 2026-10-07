@@ -1,7 +1,7 @@
 /**
- * Authentication Logic
- * Date: 2026-05-01
- * Description: Handles user authentication using Firebase Auth.
+ * Authentication Logic v2.0
+ * Date: 2026-10-06
+ * Description: Handles user authentication using Firebase Auth with unified validation
  */
 
 import { auth } from './firebase-config.js';
@@ -12,22 +12,42 @@ import {
     onAuthStateChanged,
     GoogleAuthProvider,
     signInWithPopup,
-    sendPasswordResetEmail
+    sendPasswordResetEmail,
+    updatePassword,
+    reauthenticateWithCredential,
+    EmailAuthProvider
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-import { getEmailByStudentId } from './db.js';
+import { getEmailByStudentId, logAuditEvent } from './db.js';
+import { Validation, Logger } from './utils.js';
 
 const googleProvider = new GoogleAuthProvider();
 
-export const studentIdToEmail = (studentId) => `student.${studentId}@securo.app`;
-export const staffIdToEmail = (staffId) => `staff.${staffId}@securo.app`;
+// Synthetic email generation for ID-based accounts
+export const studentIdToEmail = (studentId) => {
+    const cleaned = String(studentId).replace(/\D/g, '');
+    return `student.${cleaned}@securo.app`;
+};
+
+export const staffIdToEmail = (staffId) => {
+    const cleaned = String(staffId).replace(/\D/g, '');
+    return `staff.${cleaned}@securo.app`;
+};
+
 export const roleIdToEmail = (idNumber, role = "student") => {
     const normalizedRole = String(role || "student").trim().toLowerCase();
     return normalizedRole === "staff" ? staffIdToEmail(idNumber) : studentIdToEmail(idNumber);
 };
+
 export const getPreferredAuthRole = () => {
     const savedRole = String(localStorage.getItem('securo_preferred_role') || 'student').trim().toLowerCase();
     return savedRole === 'staff' ? 'staff' : 'student';
+};
+
+// Extract student ID from synthetic email
+export const extractStudentIdFromEmail = (email) => {
+    const match = String(email || '').match(/^student\.(\d+)@securo\.app$/);
+    return match ? match[1] : null;
 };
 
 export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "account") => {
@@ -81,26 +101,55 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
  * Login user with either Email or Student ID
  * @param {string} identifier (Email or Student ID)
  * @param {string} password 
+ * @param {string} roleOverride - Optional role override
  */
 export const login = async (identifier, password, roleOverride = getPreferredAuthRole()) => {
     try {
-        let email = identifier;
+        // Validate inputs
+        if (!identifier || !password) {
+            throw new Error("Please enter your ID/email and password");
+        }
+
+        const cleanIdentifier = String(identifier).trim();
+        let email = cleanIdentifier;
         
-        // Check if identifier is a Student ID (supports legacy YYYY-XXXXX or 7-digit format)
-        if (/^\d{7}$/.test(identifier)) {
-            email = roleIdToEmail(identifier, roleOverride);
-        } else if (identifier.includes('-')) {
-            const foundEmail = await getEmailByStudentId(identifier);
-            if (foundEmail) {
-                email = foundEmail;
+        // Detect identifier type and convert to email if needed
+        const studentIdValidation = Validation.studentId(cleanIdentifier);
+        if (studentIdValidation.valid) {
+            // It's a valid student ID - convert to synthetic email
+            const numericId = cleanIdentifier.replace(/\D/g, '');
+            email = roleIdToEmail(numericId, roleOverride);
+            Logger.info('Auth', `Student ID login: ${cleanIdentifier} → ${email}`);
+        } else {
+            // Try as email
+            const emailValidation = Validation.email(cleanIdentifier);
+            if (emailValidation.valid) {
+                email = emailValidation.value;
             } else {
-                throw new Error("Incorrect student ID or password.");
+                // Check if it's a legacy format in database
+                const foundEmail = await getEmailByStudentId(cleanIdentifier).catch(() => null);
+                if (foundEmail) {
+                    email = foundEmail;
+                } else {
+                    throw new Error("Invalid student ID or email format");
+                }
             }
         }
 
+        // Attempt login
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        
+        // Log successful login
+        logAuditEvent({
+            userId: userCredential.user.uid,
+            action: 'login',
+            details: { method: 'password', identifier: cleanIdentifier },
+            timestamp: new Date()
+        }).catch(err => Logger.warn('Auth', 'Audit log failed', err));
+
         return userCredential.user;
     } catch (error) {
+        Logger.error('Auth', 'Login failed', { identifier, error: error.message });
         throw error;
     }
 };
@@ -111,22 +160,64 @@ export const login = async (identifier, password, roleOverride = getPreferredAut
 export const loginWithGoogle = async () => {
     try {
         const result = await signInWithPopup(auth, googleProvider);
+        
+        // Log successful Google login
+        logAuditEvent({
+            userId: result.user.uid,
+            action: 'login',
+            details: { method: 'google', email: result.user.email },
+            timestamp: new Date()
+        }).catch(err => Logger.warn('Auth', 'Audit log failed', err));
+        
         return result.user;
     } catch (error) {
+        Logger.error('Auth', 'Google login failed', error);
         throw error;
     }
 };
 
 /**
- * Register a new user
+ * Register a new user with validation
  * @param {string} email 
  * @param {string} password 
+ * @param {object} options - Additional validation options
  */
-export const signUp = async (email, password) => {
+export const signUp = async (email, password, options = {}) => {
     try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // Validate email
+        const emailValidation = Validation.email(email);
+        if (!emailValidation.valid) {
+            throw new Error(emailValidation.error);
+        }
+
+        // Validate password
+        const passwordValidation = Validation.password(password, { minLength: 8 });
+        if (!passwordValidation.valid) {
+            throw new Error(passwordValidation.error);
+        }
+
+        // Warn on weak passwords
+        if (passwordValidation.strength === 'weak') {
+            Logger.warn('Auth', 'Weak password used during signup');
+        }
+
+        const userCredential = await createUserWithEmailAndPassword(auth, emailValidation.value, password);
+        
+        // Log successful registration
+        logAuditEvent({
+            userId: userCredential.user.uid,
+            action: 'signup',
+            details: { 
+                method: 'email', 
+                email: emailValidation.value,
+                passwordStrength: passwordValidation.strength
+            },
+            timestamp: new Date()
+        }).catch(err => Logger.warn('Auth', 'Audit log failed', err));
+
         return userCredential.user;
     } catch (error) {
+        Logger.error('Auth', 'Signup failed', { email, error: error.message });
         throw error;
     }
 };
@@ -136,8 +227,27 @@ export const signUp = async (email, password) => {
  */
 export const logout = async () => {
     try {
+        const user = auth.currentUser;
+        const userId = user?.uid;
+        
         await signOut(auth);
+        
+        // Log logout
+        if (userId) {
+            logAuditEvent({
+                userId,
+                action: 'logout',
+                details: { timestamp: new Date() },
+                timestamp: new Date()
+            }).catch(err => Logger.warn('Auth', 'Audit log failed', err));
+        }
+        
+        // Clear sensitive data from storage
+        localStorage.removeItem('securo_session_token');
+        
+        Logger.info('Auth', 'User logged out successfully');
     } catch (error) {
+        Logger.error('Auth', 'Logout failed', error);
         throw error;
     }
 };
@@ -157,13 +267,69 @@ export const checkAuth = (redirectIfUnauth = true) => {
 };
 
 /**
- * Send password reset email
+ * Send password reset email with validation
  * @param {string} email 
  */
 export const forgotPassword = async (email) => {
     try {
-        await sendPasswordResetEmail(auth, email);
+        // Validate email first
+        const emailValidation = Validation.email(email);
+        if (!emailValidation.valid) {
+            throw new Error(emailValidation.error);
+        }
+
+        await sendPasswordResetEmail(auth, emailValidation.value);
+        
+        Logger.info('Auth', 'Password reset email sent', { email: emailValidation.value });
     } catch (error) {
+        Logger.error('Auth', 'Password reset failed', { email, error: error.message });
+        throw error;
+    }
+};
+
+/**
+ * Change user password (requires current password)
+ * @param {string} currentPassword 
+ * @param {string} newPassword 
+ */
+export const changePassword = async (currentPassword, newPassword) => {
+    try {
+        const user = auth.currentUser;
+        if (!user || !user.email) {
+            throw new Error("No authenticated user found");
+        }
+
+        // Validate new password
+        const passwordValidation = Validation.password(newPassword, { minLength: 8 });
+        if (!passwordValidation.valid) {
+            throw new Error(passwordValidation.error);
+        }
+
+        // Reauthenticate first
+        const credential = EmailAuthProvider.credential(user.email, currentPassword);
+        await reauthenticateWithCredential(user, credential);
+
+        // Update password
+        await updatePassword(user, newPassword);
+
+        // Log password change
+        logAuditEvent({
+            userId: user.uid,
+            action: 'password_change',
+            details: { 
+                passwordStrength: passwordValidation.strength,
+                timestamp: new Date()
+            },
+            timestamp: new Date()
+        }).catch(err => Logger.warn('Auth', 'Audit log failed', err));
+
+        Logger.info('Auth', 'Password changed successfully');
+    } catch (error) {
+        Logger.error('Auth', 'Password change failed', error);
+        
+        if (error.code === 'auth/wrong-password') {
+            throw new Error('Current password is incorrect');
+        }
         throw error;
     }
 };

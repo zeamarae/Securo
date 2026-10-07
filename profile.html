@@ -1280,6 +1280,10 @@
     </div>
 
     <script type="module">
+        // Core utilities and offline support
+        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './utils.js';
+        import './install-sw.js'; // Initialize service worker for offline support
+        
         import { auth } from './firebase-config.js';
         import { logout, checkAuth } from './auth.js';
         // (2026-07-13) Import deleteCurrentUserAccount; was omitted
@@ -1487,7 +1491,8 @@
                     }))
                     .sort((a, b) => a.name.localeCompare(b.name));
             } catch (error) {
-                console.warn('Guardian directory load failed:', error);
+                // (2026-10-07) Replace console.warn with Logger; was bare console.warn
+                Logger.warn("Profile", "Guardian directory load failed", error);
                 state.guardianDirectory = [];
             }
         }
@@ -1827,7 +1832,8 @@
                     renderConnections([]);
                 }
             } catch (error) {
-                console.warn('Connection load failed:', error);
+                // (2026-10-07) Replace console.warn with Logger; was bare console.warn
+                Logger.warn("Profile", "Connection load failed", error);
                 state.connections = [];
                 connectionsList.innerHTML = '<div class="empty-state">Could not load guardian information right now.</div>';
             }
@@ -1915,7 +1921,8 @@
                 renderProfileAvatar();
                 await showStatus('Profile Updated', 'Your profile picture has been updated.');
             } catch (error) {
-                console.warn('Avatar update failed:', error);
+                // (2026-10-07) Replace console.warn with Logger; was bare console.warn
+                Logger.warn("Profile", "Avatar update failed", error);
                 await showStatus('Update Failed', error.message || 'Could not update your profile picture.', 'error');
             } finally {
                 avatarInput.value = '';
@@ -1945,7 +1952,8 @@
                 setNameEditing(false);
                 await showStatus('Profile Updated', 'Your display name has been updated.');
             } catch (error) {
-                console.warn('Name update failed:', error);
+                // (2026-10-07) Replace console.warn with Logger; was bare console.warn
+                Logger.warn("Profile", "Name update failed", error);
                 await showStatus('Update Failed', error.message || 'Could not update your profile name.', 'error');
             } finally {
                 setButtonBusy(saveNameBtn, false);
@@ -1982,7 +1990,8 @@
                 if (emailDisplayWrap) emailDisplayWrap.style.display = 'flex';
                 await showStatus('Email Saved', 'Your personal email address has been saved.');
             } catch (err) {
-                console.warn('Email save failed:', err);
+                // (2026-10-07) Replace console.warn with Logger; was bare console.warn
+                Logger.warn("Profile", "Email save failed", err);
                 await showStatus('Save Failed', err.message || 'Could not save email right now.', 'error');
             } finally {
                 setButtonBusy(savePersonalEmailBtn, false);
@@ -2030,7 +2039,8 @@
                 setPasswordEditing(false);
                 await showStatus('Password Updated', 'Your password has been changed successfully.');
             } catch (error) {
-                console.warn('Password update failed:', error);
+                // (2026-10-07) Replace console.warn with Logger; was bare console.warn
+                Logger.warn("Profile", "Password update failed", error);
                 const message = error.code === 'auth/wrong-password'
                     ? 'The current password you entered is incorrect.'
                     : error.code === 'auth/invalid-credential'
@@ -2051,7 +2061,8 @@
                 await logout();
                 window.location.href = 'login.html';
             } catch (error) {
-                console.warn('Logout failed:', error);
+                // (2026-10-07) Replace console.warn with Logger; was bare console.warn
+                Logger.warn("Profile", "Logout failed", error);
                 setButtonBusy(logoutBtn, false);
                 await showStatus('Logout Failed', error.message || 'Could not sign out right now.', 'error');
             }
@@ -2267,7 +2278,8 @@
                 await loadGuardianDirectory();
                 await loadConnections();
             } catch (error) {
-                console.warn('Profile load failed:', error);
+                // (2026-10-07) Replace console.warn with Logger; was bare console.warn
+                Logger.warn("Profile", "Profile load failed", error);
                 await showStatus('Profile Error', 'Could not load your profile details right now.', 'error');
             }
         });
