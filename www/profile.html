@@ -1539,37 +1539,9 @@
                     : `${link.guardianEmail || 'No email available'}${link.studentId ? ` &bull; ID: ${link.studentId}` : ''}`;
                 const badgeText = status === 'accepted' ? (state.role === 'guardian' ? 'Active Child' : 'Parent Now') : status === 'rejected' ? 'Declined' : 'Pending';
 
-                return `
-                    <div class="connection-item">
-                        <div class="connection-main">
-                            <span class="connection-name">${primary}</span>
-                            <span class="connection-meta">${secondary}</span>
-                        </div>
-                        <span class="status-badge ${badgeClass}">${badgeText}</span>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function renderConnectionsWithGuardianActions(links = []) {
-            const visibleLinks = links.filter((link) => ['accepted', 'pending', 'rejected'].includes(link.status));
-            if (!visibleLinks.length) {
-                renderConnections(links);
-                return;
-            }
-
-            if (state.role !== 'guardian') {
-                renderConnections(links);
-                return;
-            }
-
-            connectionsList.innerHTML = visibleLinks.map((link) => {
-                const status = link.status || 'pending';
-                const badgeClass = status === 'accepted' ? 'accepted' : status === 'rejected' ? 'rejected' : 'pending';
-                const primary = link.studentName || link.studentId || 'Pending child link';
-                const secondary = `${link.studentId ? `Student ID: ${link.studentId}` : 'Awaiting student match'}${link.studentUid ? '' : ' &bull; Pending match'}`;
-                const badgeText = status === 'accepted' ? 'Active Child' : status === 'rejected' ? 'Declined' : 'Pending';
-                const actionMarkup = (status === 'pending' || status === 'accepted') && link.id
+                // (2026-07-13) Allow both students and guardians to action connections; was split logic
+                const canAction = (state.role === 'student' || state.role === 'guardian');
+                const actionMarkup = canAction && (status === 'pending' || status === 'accepted') && link.id
                     ? `
                         <button
                             class="connection-action-btn"
@@ -1578,7 +1550,7 @@
                             data-link-id="${link.id}"
                         >
                             <span class="material-symbols-outlined" style="font-size:16px;">${status === 'pending' ? 'close' : 'person_remove'}</span>
-                            <span>${status === 'pending' ? 'Cancel Request' : 'Remove Child'}</span>
+                            <span>${status === 'pending' ? 'Cancel Request' : (state.role === 'guardian' ? 'Remove Child' : 'Remove Guardian')}</span>
                         </button>
                     `
                     : '';
@@ -1615,7 +1587,7 @@
                     guardianOfMeta.textContent = primaryLink?.studentId ? `Student ID: ${primaryLink.studentId}` : 'Student ID pending';
                     roleBadge.textContent = `Guardian of ${childLabel}`;
                     state.connections = visibleLinks;
-                    renderConnectionsWithGuardianActions(visibleLinks);
+                    renderConnections(visibleLinks);
                 } else if (state.role === 'student') {
                     const links = await getLinksForStudent(state.studentId, state.uid);
                     state.connections = links;
@@ -1925,29 +1897,38 @@
 
         connectionsList?.addEventListener('click', async (event) => {
             const actionButton = event.target.closest('[data-link-action][data-link-id]');
-            if (!actionButton || state.role !== 'guardian') return;
+            if (!actionButton || (state.role !== 'guardian' && state.role !== 'student')) return;
 
             const linkId = actionButton.dataset.linkId || '';
             const action = actionButton.dataset.linkAction || '';
             if (!linkId || !action) return;
 
             const link = (state.connections || []).find((entry) => String(entry.id) === String(linkId));
-            const childLabel = link?.studentName || link?.studentId || 'this child request';
+            const targetLabel = state.role === 'guardian'
+                ? (link?.studentName || link?.studentId || 'this child request')
+                : (link?.guardianName || 'this guardian request');
 
             setButtonBusy(actionButton, true);
             try {
+                // Remove GuardianLink can be called for either role
                 await removeGuardianLink(linkId);
                 await loadConnections();
+                
+                const removeTerm = state.role === 'guardian' ? 'Child Removed' : 'Guardian Removed';
+                const removeMsg = state.role === 'guardian' 
+                    ? `${targetLabel} has been removed from your guardian profile.`
+                    : `${targetLabel} has been removed from your connections.`;
+
                 await showStatus(
-                    action === 'cancel' ? 'Request Cancelled' : 'Child Removed',
+                    action === 'cancel' ? 'Request Cancelled' : removeTerm,
                     action === 'cancel'
-                        ? `Your request for ${childLabel} has been cancelled.`
-                        : `${childLabel} has been removed from your guardian profile.`
+                        ? `Your request for ${targetLabel} has been cancelled.`
+                        : removeMsg
                 );
             } catch (error) {
                 await showStatus(
                     action === 'cancel' ? 'Cancel Failed' : 'Remove Failed',
-                    error.message || 'Could not update this child link right now.',
+                    error.message || 'Could not update this connection right now.',
                     'error'
                 );
             } finally {

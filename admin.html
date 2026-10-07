@@ -15,21 +15,23 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         :root {
-            --bg: #f8fafc;
-            --surface: rgba(255,255,255,0.96);
-            --surface-strong: rgba(255,255,255,0.98);
-            --ink: #181428;
-            --muted: #6f6a86;
-            --primary: #5a1fe0;
-            --primary-strong: #4311c5;
-            --primary-soft: #f1ebff;
-            --cyan: #6cd7ff;
-            --green: #0f9b67;
-            --red: #d11f34;
-            --amber: #ffb649;
-            --line: rgba(226,232,240,0.9);
-            --shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
-            --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.06);
+            --glass-white: 39, 39, 42; /* Dark glass base instead of white */
+            --bg: #09090b; /* Cosmic dark */
+            --surface: rgba(var(--glass-white), 0.75);
+            --surface-strong: rgba(var(--glass-white), 0.9);
+            --ink: #f8fafc; /* Light text */
+            --muted: #a1a1aa;
+            --primary: #8b5cf6; /* Vibrant Purple */
+            --primary-strong: #a78bfa;
+            --primary-soft: rgba(139, 92, 246, 0.15);
+            --cyan: #06b6d4; /* Neon cyan */
+            --green: #10b981; /* Emerald */
+            --red: #f43f5e; /* Rose red */
+            --red-soft: rgba(244, 63, 94, 0.15);
+            --amber: #f59e0b; /* Amber */
+            --line: rgba(255, 255, 255, 0.1);
+            --shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+            --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.5);
             --radius-xl: 32px;
             --radius-lg: 24px;
             --radius-md: 18px;
@@ -49,7 +51,7 @@
             min-height: 100vh;
             font-family: "Outfit", sans-serif;
             color: var(--ink);
-            background: #f8fafc;
+            background: var(--bg);
             line-height: 1.5;
             height: 100vh;
             overflow: hidden;
@@ -61,7 +63,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            background: #f8fafc;
+            background: var(--bg);
         }
 
         .glass-shell {
@@ -89,7 +91,7 @@
             gap: 20px;
             padding: 18px 22px;
             border-bottom: 1px solid rgba(226,232,240,0.9);
-            background: rgba(255,255,255,0.96);
+            background: rgba(var(--glass-white),0.96);
             flex-shrink: 0;
             z-index: 100;
         }
@@ -109,7 +111,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 12px 24px rgba(90,31,224,0.12);
+            box-shadow: inset 0 1px 0 rgba(var(--glass-white),0.8), 0 12px 24px rgba(90,31,224,0.12);
         }
 
         .brand-wrap h1 {
@@ -136,7 +138,7 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.75);
+            border: 1px solid rgba(var(--glass-white),0.75);
             background: linear-gradient(135deg, var(--primary), var(--primary-strong));
             color: #fff;
             display: inline-flex;
@@ -153,8 +155,8 @@
             top: 58px;
             right: 0;
             width: 240px;
-            background: rgba(255,255,255,0.98);
-            border: 1px solid rgba(255,255,255,0.8);
+            background: rgba(var(--glass-white),0.98);
+            border: 1px solid rgba(var(--glass-white),0.8);
             border-radius: 16px;
             box-shadow: 0 24px 48px rgba(15, 23, 42, 0.16);
             padding: 10px;
@@ -200,11 +202,10 @@
         }
 
         .dropdown-item.logout:hover {
-            background: #fff1f2;
+            background: var(--red-soft);
             color: var(--red);
         }
 
-        /* (2026-07-13) Prevent button text line break; was normal wrapping */
         .ghost-btn,
         .primary-btn,
         .danger-btn {
@@ -219,14 +220,12 @@
             cursor: pointer;
             transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
             text-decoration: none;
-            white-space: nowrap;
-            flex-shrink: 0;
         }
 
         .ghost-btn {
-            background: rgba(255,255,255,0.7);
+            background: rgba(var(--glass-white),0.7);
             color: var(--ink);
-            border: 1px solid rgba(255,255,255,0.7);
+            border: 1px solid rgba(var(--glass-white),0.7);
             box-shadow: var(--shadow-soft);
         }
 
@@ -242,34 +241,12 @@
             box-shadow: 0 16px 32px rgba(209,31,52,0.22);
         }
 
-        /* (2026-07-13) Disabled & loader button styling; was unstyled when disabled */
-        .primary-btn:disabled,
-        .danger-btn:disabled,
-        .ghost-btn:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-            filter: grayscale(0.7);
-            transform: none !important;
-            box-shadow: none !important;
-            pointer-events: none;
-        }
-
-        .spin-icon {
-            display: inline-block;
-            animation: simBtnSpin 0.75s linear infinite;
-        }
-
-        @keyframes simBtnSpin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
         .signal-chip {
             min-height: 48px;
             padding: 0 16px;
             border-radius: 16px;
-            background: rgba(255,255,255,0.72);
-            border: 1px solid rgba(255,255,255,0.74);
+            background: rgba(var(--glass-white),0.72);
+            border: 1px solid rgba(var(--glass-white),0.74);
             box-shadow: var(--shadow-soft);
             display: inline-flex;
             align-items: center;
@@ -305,11 +282,9 @@
             overflow: hidden;
         }
 
-        /* (2026-07-13) Modernize admin sidebar styling; was flat tab buttons */
         .sidebar {
-            border-right: 1px solid rgba(226,232,240,0.85);
-            background: rgba(255,255,255,0.72);
-            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(0,0,0,0.05);
+            background: rgba(var(--glass-white),0.4);
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -325,20 +300,19 @@
             letter-spacing: 0.16em;
             color: var(--muted);
             margin: 0 10px 12px;
-            font-weight: 700;
         }
 
         .nav-stack {
             display: grid;
-            gap: 8px;
+            gap: 10px;
         }
 
         .tab-btn {
             width: 100%;
-            min-height: 50px;
-            padding: 10px 14px;
-            border: 1px solid transparent;
-            border-radius: 14px;
+            min-height: 54px;
+            padding: 11px 13px;
+            border: 0;
+            border-radius: 16px;
             background: transparent;
             color: var(--muted);
             display: flex;
@@ -347,52 +321,31 @@
             text-align: left;
             font-weight: 700;
             font-size: 0.88rem;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            cursor: pointer;
-        }
-
-        .tab-btn:hover {
-            background: rgba(90,31,224,0.06);
-            color: var(--primary);
-            transform: translateX(3px);
         }
 
         .tab-btn .material-symbols-outlined {
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
-            background: rgba(90,31,224,0.08);
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            background: rgba(var(--glass-white),0.62);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             color: var(--primary);
-            transition: all 0.2s ease;
-        }
-
-        .tab-btn:hover .material-symbols-outlined {
-            background: var(--primary);
-            color: white;
         }
 
         .tab-btn.active {
-            background: #ffffff;
-            color: var(--primary);
-            border-color: rgba(90,31,224,0.14);
-            box-shadow: 0 4px 16px rgba(90,31,224,0.12), 0 1px 3px rgba(0,0,0,0.04);
-        }
-
-        .tab-btn.active .material-symbols-outlined {
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 10px rgba(90,31,224,0.3);
+            background: linear-gradient(180deg, rgba(var(--glass-white),0.92), rgba(239,232,255,0.84));
+            color: var(--ink);
+            box-shadow: var(--shadow-soft);
         }
 
         .sidebar-note {
             margin-top: 20px;
             padding: 16px;
             border-radius: 16px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(244,240,255,0.64));
-            border: 1px solid rgba(255,255,255,0.68);
+            background: linear-gradient(180deg, rgba(var(--glass-white),0.74), rgba(244,240,255,0.64));
+            border: 1px solid rgba(var(--glass-white),0.68);
         }
 
         .sidebar-note strong {
@@ -411,7 +364,7 @@
         .main-panel {
             padding: 18px 22px;
             overflow-y: auto;
-            background: rgba(255,255,255,0.2);
+            background: rgba(var(--glass-white),0.2);
             display: flex;
             flex-direction: column;
             gap: 18px;
@@ -469,7 +422,7 @@
             border-radius: 50%;
             background: conic-gradient(var(--primary) 0deg 220deg, #ff7a90 220deg 310deg, #c7b8ff 310deg 360deg);
             position: relative;
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.78), 0 18px 36px rgba(90,31,224,0.1);
+            box-shadow: inset 0 0 0 1px rgba(var(--glass-white),0.78), 0 18px 36px rgba(90,31,224,0.1);
         }
 
         .role-chart::after {
@@ -477,7 +430,7 @@
             position: absolute;
             inset: 28px;
             border-radius: 50%;
-            background: rgba(255,255,255,0.96);
+            background: rgba(var(--glass-white),0.96);
             box-shadow: inset 0 0 0 1px rgba(15,23,42,0.04);
         }
 
@@ -508,8 +461,8 @@
             gap: 12px;
             padding: 10px 12px;
             border-radius: 16px;
-            background: rgba(255,255,255,0.66);
-            border: 1px solid rgba(255,255,255,0.74);
+            background: rgba(var(--glass-white),0.66);
+            border: 1px solid rgba(var(--glass-white),0.74);
         }
 
         .legend-meta {
@@ -558,18 +511,12 @@
             background: linear-gradient(135deg, var(--primary), #7c5cff);
         }
 
-        /* (2026-07-13) Center accounts head & flex first child; was flex-start */
         .accounts-head {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             gap: 16px;
             flex-wrap: wrap;
-        }
-
-        .accounts-head > div:first-child {
-            flex: 1 1 260px;
-            min-width: 0;
         }
 
         .danger-inline-btn {
@@ -577,7 +524,7 @@
             padding: 0 14px;
             border-radius: 12px;
             border: none;
-            background: #fff1f2;
+            background: var(--red-soft);
             color: var(--red);
             font-weight: 800;
             cursor: pointer;
@@ -597,7 +544,7 @@
             background:
                 radial-gradient(circle at top right, rgba(108, 215, 255, 0.24), transparent 28%),
                 radial-gradient(circle at bottom left, rgba(90,31,224,0.16), transparent 30%),
-                linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,243,255,0.74));
+                linear-gradient(180deg, rgba(var(--glass-white),0.92), rgba(247,243,255,0.74));
         }
 
         .overview-copy h2 {
@@ -632,8 +579,8 @@
             min-height: 40px;
             padding: 0 14px;
             border-radius: 999px;
-            background: rgba(255,255,255,0.74);
-            border: 1px solid rgba(255,255,255,0.74);
+            background: rgba(var(--glass-white),0.74);
+            border: 1px solid rgba(var(--glass-white),0.74);
             color: var(--ink);
             font-size: 0.76rem;
             font-weight: 700;
@@ -648,8 +595,8 @@
         .sync-card {
             padding: 18px;
             border-radius: 22px;
-            background: rgba(255,255,255,0.66);
-            border: 1px solid rgba(255,255,255,0.72);
+            background: rgba(var(--glass-white),0.66);
+            border: 1px solid rgba(var(--glass-white),0.72);
         }
 
         .sync-card strong {
@@ -666,60 +613,42 @@
             line-height: 1.55;
         }
 
-        /* (2026-07-13) Modernize panel & metric cards; was flat low-padding card */
         .metric-card,
         .panel-card {
-            background: rgba(255, 255, 255, 0.95);
-            border: 1px solid rgba(226, 232, 240, 0.85);
+            background: linear-gradient(180deg, rgba(var(--glass-white),0.86), rgba(var(--glass-white),0.64));
+            border: 1px solid rgba(var(--glass-white),0.74);
             border-radius: var(--radius-lg);
-            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
-            backdrop-filter: blur(24px);
-            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--shadow-soft);
+            backdrop-filter: blur(20px);
         }
 
         .metric-card {
-            padding: 16px 18px;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .metric-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 28px -4px rgba(90, 31, 224, 0.09), 0 4px 8px -2px rgba(15, 23, 42, 0.03);
-            border-color: rgba(90, 31, 224, 0.2);
+            padding: 10px 12px;
         }
 
         .metric-label {
             color: var(--muted);
-            font-size: 0.68rem;
+            font-size: 0.66rem;
             text-transform: uppercase;
             letter-spacing: 0.14em;
-            font-weight: 700;
             margin-bottom: 8px;
         }
 
         .metric-value {
             font-family: "Sora", sans-serif;
-            font-size: 1.7rem;
-            font-weight: 800;
+            font-size: 1.45rem;
             letter-spacing: -0.05em;
             line-height: 1.05;
-            color: var(--ink);
         }
 
         .metric-sub {
             color: var(--muted);
             font-size: 0.78rem;
-            margin-top: 6px;
-            font-weight: 500;
+            margin-top: 4px;
         }
 
-        /* (2026-07-13) Fix panel-card padding; was cramped 16px */
         .panel-card {
-            padding: 22px 24px;
+            padding: 16px;
         }
 
         .section-head {
@@ -743,13 +672,11 @@
             font-size: 0.8rem;
         }
 
-        /* (2026-07-13) Nowrap section actions in single row; was wrap */
         .section-actions {
             display: flex;
             align-items: center;
             gap: 12px;
-            flex-wrap: nowrap;
-            flex-shrink: 0;
+            flex-wrap: wrap;
         }
 
         .eyebrow {
@@ -772,19 +699,23 @@
         }
 
         .announcement-input-shell {
-            border: 1.5px solid rgba(90,31,224,0.18);
+            border: 1px solid rgba(90,31,224,0.14);
             border-radius: 20px;
-            background: #ffffff;
-            box-shadow: 0 4px 20px rgba(55, 31, 129, 0.04);
+            background:
+                linear-gradient(180deg, rgba(var(--glass-white),0.96), rgba(248,245,255,0.9));
+            box-shadow:
+                inset 0 1px 0 rgba(var(--glass-white),0.9),
+                0 14px 28px rgba(55, 31, 129, 0.06);
             overflow: hidden;
             transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
         }
 
         .announcement-input-shell:focus-within {
-            border-color: var(--primary);
+            border-color: rgba(90,31,224,0.3);
             box-shadow:
-                0 0 0 3.5px rgba(90,31,224,0.12),
-                0 12px 28px rgba(55, 31, 129, 0.08);
+                inset 0 1px 0 rgba(var(--glass-white),0.96),
+                0 0 0 4px rgba(90,31,224,0.07),
+                0 18px 32px rgba(55, 31, 129, 0.1);
         }
 
         .announcement-input-meta {
@@ -792,9 +723,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            padding: 14px 16px 10px;
-            border-bottom: 1px solid rgba(90,31,224,0.08);
-            background: rgba(90,31,224,0.02);
+            padding: 12px 16px 0;
         }
 
         .announcement-input-label {
@@ -814,36 +743,24 @@
             white-space: nowrap;
         }
 
-        /* (2026-07-13) Fix nested textarea border & background; was nested box */
-        .announcement-textarea,
-        .glass-textarea.announcement-textarea {
-            width: 100%;
-            min-height: 110px;
-            height: 120px;
+        .announcement-textarea {
+            min-height: 190px;
             padding: 14px 16px 16px;
-            border: none !important;
-            background: transparent !important;
-            border-radius: 0 !important;
-            box-shadow: none !important;
-            outline: none !important;
+            border: none;
+            background: transparent;
+            box-shadow: none;
             resize: vertical;
-            line-height: 1.6;
+            line-height: 1.65;
             font-size: 0.95rem;
-            color: var(--ink);
-            font: inherit;
-            display: block;
         }
 
-        .announcement-textarea:focus,
-        .glass-textarea.announcement-textarea:focus {
-            border: none !important;
-            background: transparent !important;
-            box-shadow: none !important;
-            outline: none !important;
+        .announcement-textarea:focus {
+            border: none;
+            box-shadow: none;
         }
 
         .announcement-textarea::placeholder {
-            color: rgba(68, 59, 105, 0.6);
+            color: rgba(68, 59, 105, 0.72);
         }
 
         .composer-toolbar {
@@ -852,7 +769,7 @@
             justify-content: space-between;
             gap: 12px;
             flex-wrap: wrap;
-            padding-top: 8px;
+            padding-top: 4px;
         }
 
         .helper-text {
@@ -869,8 +786,8 @@
             min-height: 34px;
             padding: 0 12px;
             border-radius: 999px;
-            background: rgba(255,255,255,0.7);
-            border: 1px solid rgba(255,255,255,0.76);
+            background: rgba(var(--glass-white),0.7);
+            border: 1px solid rgba(var(--glass-white),0.76);
             color: var(--muted);
             font-size: 0.8rem;
             font-weight: 700;
@@ -882,54 +799,26 @@
 
         .counter-pill.limit {
             color: var(--red);
-            background: #fff1f2;
+            background: var(--red-soft);
         }
 
-        /* (2026-07-13) Fix invisible outlines for inputs and rows; was faint white */
         .glass-input,
         .glass-textarea {
             width: 100%;
-            border: 1.5px solid #cbd5e1;
-            background: #ffffff;
-            border-radius: 14px;
-            padding: 11px 14px;
+            border: 1px solid rgba(var(--glass-white),0.86);
+            background: rgba(var(--glass-white),0.72);
+            border-radius: 15px;
+            padding: 11px 13px;
             outline: none;
             font: inherit;
             color: var(--ink);
             font-size: 0.9rem;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-        }
-
-        .glass-input:hover,
-        .glass-textarea:hover {
-            border-color: #94a3b8;
         }
 
         .glass-input:focus,
         .glass-textarea:focus {
-            border-color: var(--primary);
-            background: #ffffff;
-            box-shadow: 0 0 0 3.5px rgba(90, 31, 224, 0.14);
-        }
-
-        .glass-input:read-only,
-        .glass-input:disabled {
-            background: #f1f5f9;
-            border-color: #e2e8f0;
-            color: var(--muted);
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-
-        select.glass-input {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 14px center;
-            background-size: 16px;
-            padding-right: 36px;
+            border-color: rgba(90,31,224,0.3);
+            box-shadow: 0 0 0 4px rgba(90,31,224,0.08);
         }
 
         .glass-textarea {
@@ -954,9 +843,8 @@
             align-items: center;
             padding: 13px 14px;
             border-radius: 16px;
-            background: #ffffff;
-            border: 1.5px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+            background: rgba(var(--glass-white),0.76);
+            border: 1px solid rgba(var(--glass-white),0.74);
         }
 
         .management-grid {
@@ -989,18 +877,10 @@
         }
 
         .user-table-row {
-            padding: 14px 16px;
+            padding: 14px;
             border-radius: 16px;
-            background: #ffffff;
-            border: 1.5px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .user-table-row:hover {
-            border-color: rgba(90, 31, 224, 0.3);
-            box-shadow: 0 4px 12px rgba(90, 31, 224, 0.08);
-            transform: translateY(-1px);
+            background: rgba(var(--glass-white),0.82);
+            border: 1px solid rgba(90,31,224,0.08);
         }
 
         .user-table-main {
@@ -1033,19 +913,19 @@
             background: rgba(241,235,255,0.96);
         }
 
-        /* (2026-07-13) Action menu portal: position:fixed escapes overflow containers; was position:absolute z-30 */
         .row-action-menu {
-            position: fixed;
-            min-width: 168px;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 160px;
             padding: 8px;
             border-radius: 16px;
-            background: rgba(255,255,255,0.98);
+            background: rgba(var(--glass-white),0.98);
             border: 1px solid rgba(90,31,224,0.1);
             box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
             display: grid;
             gap: 6px;
-            /* (2026-07-13) Elevate portal z-index to 9999; was 900 */
-            z-index: 9999;
+            z-index: 30;
         }
 
         .row-action-item {
@@ -1080,136 +960,23 @@
             display: none;
             align-items: center;
             justify-content: center;
-            /* (2026-07-13) Raised z-index above action menus (z-30); was 400 */
             padding: 20px;
-            z-index: 600;
+            z-index: 400;
         }
 
         .modal-overlay.active {
             display: flex;
         }
 
-        /* (2026-07-13) Fix consistent modal height; was variable max-height */
         .modal-card {
-            width: min(820px, 100%);
-            height: min(88vh, 660px);
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            background: #ffffff;
-            border: 1.5px solid #e2e8f0;
+            width: min(760px, 100%);
+            max-height: min(88vh, 920px);
+            overflow-y: auto;
+            background: rgba(var(--glass-white),0.98);
+            border: 1px solid rgba(var(--glass-white),0.9);
             border-radius: 28px;
             box-shadow: 0 28px 80px rgba(15, 23, 42, 0.22);
-            padding: 24px;
-        }
-
-        /* (2026-07-13) User editor modal tabs; was single flat view */
-        .modal-tabs {
-            display: flex;
-            gap: 4px;
-            padding: 4px;
-            background: #f1f5f9;
-            border-radius: 14px;
-            margin: 14px 0;
-        }
-
-        .modal-tab-btn {
-            flex: 1;
-            min-height: 36px;
-            padding: 0 14px;
-            border-radius: 11px;
-            border: none;
-            background: transparent;
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: var(--muted);
-            cursor: pointer;
-            transition: all 0.18s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            white-space: nowrap;
-        }
-
-        .modal-tab-btn.active {
-            background: #ffffff;
-            color: var(--primary);
-            box-shadow: 0 2px 8px rgba(90, 31, 224, 0.1);
-        }
-
-        .modal-tab-panel {
-            display: none;
-        }
-
-        .modal-tab-panel.active {
-            /* (2026-07-13) Flex fill modal body; was max-height calc */
-            display: block;
-            flex: 1;
-            min-height: 0;
-            overflow-y: auto;
-            padding-right: 2px;
-        }
-
-        /* (2026-07-13) History log row styling; was absent */
-        .history-log-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            border-radius: 14px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-        }
-
-        .history-log-row + .history-log-row {
-            margin-top: 8px;
-        }
-
-        .history-log-dot {
-            width: 36px;
-            height: 36px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        /* (2026-07-13) Link chip delete button; was status text only */
-        .link-chip-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 11px 14px;
-            border-radius: 14px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-        }
-
-        .link-chip-row + .link-chip-row {
-            margin-top: 8px;
-        }
-
-        .link-del-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
-            border: 1px solid #fecdd3;
-            background: #fff1f2;
-            color: #e11d48;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            flex-shrink: 0;
-            transition: background 0.15s, transform 0.12s;
-        }
-
-        .link-del-btn:hover {
-            background: #ffe4e6;
-            transform: scale(1.08);
+            padding: 20px;
         }
 
         .modal-head {
@@ -1245,8 +1012,8 @@
         .management-card {
             padding: 13px 14px;
             border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.74);
-            background: rgba(255,255,255,0.78);
+            border: 1px solid rgba(var(--glass-white),0.74);
+            background: rgba(var(--glass-white),0.78);
             cursor: pointer;
             transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
         }
@@ -1294,12 +1061,6 @@
             flex-shrink: 0;
         }
 
-        /* (2026-07-13) Red profile avatar for guardians; was purple gradient */
-        .management-avatar.guardian {
-            background: linear-gradient(135deg, #e11d48, #be123c);
-            box-shadow: 0 10px 20px rgba(225, 29, 72, 0.22);
-        }
-
         .management-meta {
             display: grid;
             gap: 10px;
@@ -1323,11 +1084,9 @@
             background: rgba(90,31,224,0.08);
         }
 
-        /* (2026-07-13) Red border outline for guardian role pill; was borderless */
         .role-pill.guardian {
             color: #d1465b;
-            background: #fff1f2;
-            border: 1px solid #fecdd3;
+            background: var(--red-soft);
         }
 
         .role-pill.admin {
@@ -1359,13 +1118,11 @@
             text-transform: uppercase;
         }
 
-        /* (2026-07-13) Visible border for editor-note; was borderless */
         .editor-note {
             margin: 14px 0 0;
             padding: 11px 13px;
             border-radius: 15px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            background: var(--bg);
             color: var(--muted);
             font-size: 0.8rem;
             line-height: 1.45;
@@ -1429,21 +1186,9 @@
             line-height: 1.4;
         }
 
-        /* (2026-07-13) Fix table-row padding; was broken 2px 0 */
         .table-row {
-            padding: 16px 20px;
-            border-radius: 16px;
-            background: #ffffff;
-            border: 1.5px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
-            align-items: center;
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .table-row:hover {
-            border-color: rgba(90, 31, 224, 0.3);
-            box-shadow: 0 4px 12px rgba(90, 31, 224, 0.08);
-            transform: translateY(-1px);
+            padding: 2px 0;
+            align-items: start;
         }
 
         .search-input {
@@ -1484,7 +1229,7 @@
             letter-spacing: 0.1em;
         }
 
-        .status-pill.emergency { background: #fff1f2; color: var(--red); }
+        .status-pill.emergency { background: var(--red-soft); color: var(--red); }
         .status-pill.gad { background: #f1ebff; color: var(--primary); }
         .status-pill.active { background: #eefdf6; color: var(--green); }
 
@@ -1503,11 +1248,11 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            background: rgba(255,255,255,0.72);
+            background: rgba(var(--glass-white),0.72);
             color: var(--ink);
         }
 
-        .icon-btn.delete { color: var(--red); background: #fff1f2; }
+        .icon-btn.delete { color: var(--red); background: var(--red-soft); }
 
         .incident-row {
             grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr) auto;
@@ -1552,8 +1297,8 @@
             align-items: flex-start;
             padding: 11px 13px;
             border-radius: 15px;
-            background: rgba(255,255,255,0.9);
-            border: 1px solid rgba(255,255,255,0.76);
+            background: rgba(var(--glass-white),0.9);
+            border: 1px solid rgba(var(--glass-white),0.76);
             backdrop-filter: blur(18px);
             box-shadow: var(--shadow-soft);
         }
@@ -1570,7 +1315,7 @@
             flex: 0 0 auto;
         }
 
-        .toast-card.error .toast-icon { background: #fff1f2; color: var(--red); }
+        .toast-card.error .toast-icon { background: var(--red-soft); color: var(--red); }
         .toast-card.success .toast-icon { background: #eefdf6; color: var(--green); }
 
         .toast-copy strong {
@@ -1608,7 +1353,7 @@
 
             .sidebar {
                 border-right: 0;
-                border-bottom: 1px solid rgba(255,255,255,0.5);
+                border-bottom: 1px solid rgba(var(--glass-white),0.5);
             }
 
             .sidebar-inner {
@@ -1683,12 +1428,6 @@
             flex-shrink: 0;
         }
 
-        /* (2026-07-13) Red thread avatar for guardians; was purple soft */
-        .thread-avatar.guardian {
-            background: #fff1f2;
-            color: #e11d48;
-        }
-
         .thread-info {
             flex: 1;
             min-width: 0;
@@ -1753,9 +1492,9 @@
             align-self: flex-start;
             background: white;
             color: #1e293b;
-            border: 1.5px solid #e2e8f0;
+            border: 1px solid rgba(0,0,0,0.05);
             border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
 
         .admin-msg.sent {
@@ -1767,45 +1506,33 @@
         }
 
         .msg-time {
-            font-size: 0.68rem;
-            font-weight: 500;
-            opacity: 0.75;
+            font-size: 0.62rem;
+            opacity: 0.7;
             margin-top: 4px;
             display: block;
         }
 
         .admin-msg.sent .msg-time { 
             text-align: right; 
-            color: rgba(255,255,255,0.8);
-        }
-
-        /* (2026-07-13) Full height messages section; was fixed 68vh height */
-        #sec-messages.active {
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            min-height: 0;
-            height: 100%;
+            color: rgba(var(--glass-white),0.8);
         }
 
         .messages-shell {
             padding: 0 !important;
-            flex: 1;
-            min-height: 0;
-            height: 100%;
+            min-height: 68vh;
+            height: 68vh;
             display: grid;
             grid-template-columns: 340px minmax(0, 1fr);
             overflow: hidden;
-            border: 1.5px solid #e2e8f0;
-            border-radius: var(--radius-lg);
-            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
+            border: 1px solid rgba(90,31,224,0.08);
+            box-shadow: 0 22px 50px rgba(49, 30, 105, 0.08);
         }
 
         .messages-sidebar {
             border-right: 1px solid rgba(15,23,42,0.06);
             display: flex;
             flex-direction: column;
-            background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(248,245,255,0.82));
+            background: linear-gradient(180deg, rgba(var(--glass-white),0.92), rgba(248,245,255,0.82));
             height: 100%;
             min-height: 0;
         }
@@ -1813,7 +1540,7 @@
         .messages-sidebar-head {
             padding: 18px 18px 16px;
             border-bottom: 1px solid rgba(15,23,42,0.06);
-            background: rgba(255,255,255,0.94);
+            background: rgba(var(--glass-white),0.94);
             flex-shrink: 0;
         }
 
@@ -1854,7 +1581,7 @@
             justify-items: center;
             align-items: center;
             gap: 8px;
-            background: rgba(255,255,255,0.96);
+            background: rgba(var(--glass-white),0.96);
             z-index: 10;
             text-align: center;
         }
@@ -1903,7 +1630,7 @@
             border-top: 1px solid rgba(15,23,42,0.06);
             display: flex;
             gap: 12px;
-            background: rgba(255,255,255,0.96);
+            background: rgba(var(--glass-white),0.96);
             z-index: 10;
             align-items: center;
         }
@@ -1943,7 +1670,7 @@
         }
 
         .thread-item:hover {
-            background: rgba(255, 255, 255, 0.5);
+            background: rgba(var(--glass-white), 0.5);
         }
 
         .thread-item.active {
@@ -2033,11 +1760,6 @@
                                 <span class="material-symbols-outlined">crisis_alert</span>
                                 <span>SOS Triggers</span>
                             </button>
-                            <!-- (2026-07-13) Add Geofence Simulator tab; was 5 operation tabs only -->
-                            <button class="tab-btn" data-tab="geofence">
-                                <span class="material-symbols-outlined">share_location</span>
-                                <span>Geofence Simulator</span>
-                            </button>
                             <button class="tab-btn" data-tab="users">
                                 <span class="material-symbols-outlined">manage_accounts</span>
                                 <span>Users</span>
@@ -2061,67 +1783,26 @@
 
                 <main class="main-panel">
                     <section class="admin-section active" id="sec-stats">
-                        <!-- (2026-07-13) Add executive metric cards with icons; was bare text -->
                         <div class="stats-grid">
                             <div class="metric-card">
-                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                    <div>
-                                        <div class="metric-label">Total Users</div>
-                                        <div class="metric-value" id="metricUsers">0</div>
-                                    </div>
-                                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(90,31,224,0.1); color:var(--primary); display:flex; align-items:center; justify-content:center;">
-                                        <span class="material-symbols-outlined" style="font-size:22px;">groups</span>
-                                    </div>
-                                </div>
-                                <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
-                                    <span class="signal-dot" style="background:var(--primary); width:7px; height:7px;"></span>
-                                    <span>All platform accounts</span>
-                                </div>
+                                <div class="metric-label">Total Users</div>
+                                <div class="metric-value" id="metricUsers">0</div>
+                                <div class="metric-sub">Visible accounts</div>
                             </div>
                             <div class="metric-card">
-                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                    <div>
-                                        <div class="metric-label">Students</div>
-                                        <div class="metric-value" id="metricStudents">0</div>
-                                    </div>
-                                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(2,132,199,0.1); color:#0284c7; display:flex; align-items:center; justify-content:center;">
-                                        <span class="material-symbols-outlined" style="font-size:22px;">school</span>
-                                    </div>
-                                </div>
-                                <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
-                                    <span class="signal-dot" style="background:#0284c7; width:7px; height:7px;"></span>
-                                    <span>Active student profiles</span>
-                                </div>
+                                <div class="metric-label">Students</div>
+                                <div class="metric-value" id="metricStudents">0</div>
+                                <div class="metric-sub">Student profiles</div>
                             </div>
                             <div class="metric-card">
-                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                    <div>
-                                        <div class="metric-label">Guardians</div>
-                                        <div class="metric-value" id="metricGuardians">0</div>
-                                    </div>
-                                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(15,155,103,0.1); color:var(--green); display:flex; align-items:center; justify-content:center;">
-                                        <span class="material-symbols-outlined" style="font-size:22px;">family_restroom</span>
-                                    </div>
-                                </div>
-                                <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
-                                    <span class="signal-dot" style="background:var(--green); width:7px; height:7px;"></span>
-                                    <span>Connected guardians</span>
-                                </div>
+                                <div class="metric-label">Guardians</div>
+                                <div class="metric-value" id="metricGuardians">0</div>
+                                <div class="metric-sub">Guardian profiles</div>
                             </div>
                             <div class="metric-card">
-                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                    <div>
-                                        <div class="metric-label">Conversations</div>
-                                        <div class="metric-value" id="metricThreads">0</div>
-                                    </div>
-                                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(124,58,237,0.1); color:#7c3aed; display:flex; align-items:center; justify-content:center;">
-                                        <span class="material-symbols-outlined" style="font-size:22px;">chat</span>
-                                    </div>
-                                </div>
-                                <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
-                                    <span class="signal-dot" style="background:#7c3aed; width:7px; height:7px;"></span>
-                                    <span>Support inquiry channels</span>
-                                </div>
+                                <div class="metric-label">Conversations</div>
+                                <div class="metric-value" id="metricThreads">0</div>
+                                <div class="metric-sub">Support threads</div>
                             </div>
                         </div>
 
@@ -2236,147 +1917,6 @@
                         </div>
                     </section>
 
-                    <!-- (2026-07-13) Add Geofence Simulator section; was no simulator -->
-                    <section class="admin-section" id="sec-geofence">
-                        <div class="panel-card" style="margin-bottom: 20px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
-                                <div>
-                                    <div class="eyebrow" style="color:var(--primary);">ATTENDANCE AUTOMATION</div>
-                                    <h2 class="chart-title" style="margin-top:2px;">Campus Geofence Simulator & Dispatcher</h2>
-                                    <p class="chart-copy">Trigger entry and exit events for testing without physically traveling outside. Automatically writes attendance and pushes notifications to parents.</p>
-                                </div>
-                                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                                    <span class="capsule" style="background:rgba(15,155,103,0.1); color:var(--green); font-weight:800; font-size:0.78rem;">
-                                        <span class="signal-dot"></span>
-                                        <span id="simulatorGeofenceStatus">Geofence Active</span>
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div style="background:rgba(248,250,252,0.9); border:1px solid rgba(226,232,240,0.9); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:12px;">
-                                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-                                    <label for="simulatorStudentSelect" style="font-size:0.84rem; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:6px;">
-                                        <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary);">person_search</span>
-                                        Select Target Student
-                                    </label>
-                                    <button id="btnRefreshSimStudents" type="button" class="ghost-btn" style="min-height:36px; padding:0 12px; font-size:0.76rem; gap:6px;" title="Refresh student directory">
-                                        <span class="material-symbols-outlined" style="font-size:16px;">sync</span>
-                                        <span>Refresh Directory</span>
-                                    </button>
-                                </div>
-                                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                                    <select id="simulatorStudentSelect" class="glass-input" style="flex:1; min-height:44px; font-weight:600; background:white;">
-                                        <option value="">Loading student profiles...</option>
-                                    </select>
-                                    <span id="simulatorStudentStatusBadge" class="capsule" style="min-height:44px; padding:0 14px; background:white; border:1px solid #e2e8f0; color:var(--muted);">
-                                        No student selected
-                                    </span>
-                                </div>
-                                <div id="simulatorStudentMetaText" style="font-size:0.8rem; color:var(--muted); display:flex; align-items:center; gap:6px;">
-                                    <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">info</span>
-                                    <span>Select a student above to trigger automated Time In or Time Out.</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:18px; margin-bottom: 20px;">
-                            <div class="panel-card" style="display:flex; flex-direction:column; justify-content:space-between; gap:14px; border-left: 4px solid var(--green);">
-                                <div>
-                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                                        <div style="width:38px; height:38px; border-radius:12px; background:rgba(15,155,103,0.12); color:var(--green); display:flex; align-items:center; justify-content:center;">
-                                            <span class="material-symbols-outlined" style="font-size:22px;">login</span>
-                                        </div>
-                                        <div>
-                                            <h3 style="margin:0; font-size:1.02rem; font-family:'Sora', sans-serif; font-weight:700;">Simulate Campus Entry</h3>
-                                            <span style="font-size:0.75rem; color:var(--green); font-weight:700;">Action: Time In</span>
-                                        </div>
-                                    </div>
-                                    <p style="margin:0; font-size:0.82rem; color:var(--muted); line-height:1.45;">
-                                        Simulates student walking through campus gates into school perimeter. Writes official Time In log, updates GPS coordinates, and dispatches parent push notification.
-                                    </p>
-                                </div>
-                                <button id="btnSimulateTimeIn" type="button" class="primary-btn" style="background:linear-gradient(135deg, #0f9b67, #0b7c52); width:100%; justify-content:center; box-shadow:0 8px 20px rgba(15,155,103,0.22); min-height:46px;">
-                                    <span class="material-symbols-outlined">login</span>
-                                    <span>Trigger Campus Entry (Time In)</span>
-                                </button>
-                            </div>
-
-                            <div class="panel-card" style="display:flex; flex-direction:column; justify-content:space-between; gap:14px; border-left: 4px solid var(--red);">
-                                <div>
-                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                                        <div style="width:38px; height:38px; border-radius:12px; background:rgba(209,31,52,0.12); color:var(--red); display:flex; align-items:center; justify-content:center;">
-                                            <span class="material-symbols-outlined" style="font-size:22px;">logout</span>
-                                        </div>
-                                        <div>
-                                            <h3 style="margin:0; font-size:1.02rem; font-family:'Sora', sans-serif; font-weight:700;">Simulate Campus Exit</h3>
-                                            <span style="font-size:0.75rem; color:var(--red); font-weight:700;">Action: Time Out</span>
-                                        </div>
-                                    </div>
-                                    <p style="margin:0; font-size:0.82rem; color:var(--muted); line-height:1.45;">
-                                        Simulates student leaving the campus boundary. Writes official Time Out log, updates GPS coordinates, and dispatches departure push notification to parents.
-                                    </p>
-                                </div>
-                                <button id="btnSimulateTimeOut" type="button" class="danger-btn" style="background:linear-gradient(135deg, #eb3a53, #c71d35); width:100%; justify-content:center; box-shadow:0 8px 20px rgba(209,31,52,0.22); min-height:46px;">
-                                    <span class="material-symbols-outlined">logout</span>
-                                    <span>Trigger Campus Exit (Time Out)</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="panel-card chart-card" style="margin-bottom: 20px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-                                <div>
-                                    <div class="eyebrow" style="color:var(--primary);">INTERACTIVE GPS PIN SIMULATOR</div>
-                                    <h2 class="chart-title" style="margin-top:2px;">Custom Map Location Simulator</h2>
-                                    <p class="chart-copy">Click anywhere on the map to drop a test GPS pin. The system detects if the pin is inside or outside the geofence perimeter.</p>
-                                </div>
-                                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                                    <span id="simulatorPinStatusBadge" class="capsule" style="background:rgba(90,31,224,0.1); color:var(--primary); font-weight:800; font-size:0.78rem;">
-                                        <span class="material-symbols-outlined" style="font-size:16px;">pin_drop</span>
-                                        <span id="simulatorPinStatusText">Click Map to Drop Pin</span>
-                                    </span>
-                                    <button id="btnDispatchPinAttendance" type="button" class="primary-btn" style="padding:0 18px; min-height:40px; font-size:0.8rem;" disabled>
-                                        <span class="material-symbols-outlined" style="font-size:18px;">send_to_mobile</span>
-                                        <span>Dispatch At Pin</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div id="adminSimulatorMap" style="width:100%; height:400px; border-radius:18px; overflow:hidden; border:1px solid rgba(15,23,42,0.08); box-shadow:inset 0 2px 6px rgba(0,0,0,0.06); z-index:1;"></div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:10px; font-size:0.78rem; color:var(--muted);">
-                                <div>
-                                    Pin Coordinates: <strong id="simulatorPinCoordsText" style="color:var(--ink); font-family:monospace;">None (Click map)</strong>
-                                </div>
-                                <div id="simulatorPinZoneText" style="font-weight:600;">
-                                    Tip: Inside geofence triggers Time In; outside triggers Time Out.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="panel-card">
-                            <div class="accounts-head">
-                                <div>
-                                    <div class="eyebrow" style="color:var(--primary);">ACTIVITY AUDIT FEED</div>
-                                    <h2 class="chart-title">Recent Geofence Simulation Logs</h2>
-                                    <p class="chart-copy">Audit trail of automated and simulated student attendance events and guardian delivery status.</p>
-                                </div>
-                                <div class="section-actions">
-                                    <button id="btnClearSimLogs" type="button" class="ghost-btn" style="min-height:36px; padding:0 12px; font-size:0.76rem;">
-                                        <span class="material-symbols-outlined" style="font-size:16px;">clear_all</span>
-                                        <span>Clear Feed</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="users-table-head" style="margin-top:16px; grid-template-columns: minmax(0, 1.4fr) 1fr 1.2fr 0.9fr auto;">
-                                <span>Student</span>
-                                <span>Action</span>
-                                <span>Coordinates & Zone</span>
-                                <span>Triggered At</span>
-                                <span style="text-align:right;">Guardian Status</span>
-                            </div>
-                            <div class="table-list" id="simulatorDispatchLogsList" style="margin-top:8px;"></div>
-                        </div>
-                    </section>
-
                     <section class="admin-section" id="sec-users">
                         <div class="panel-card">
                             <div class="accounts-head">
@@ -2421,8 +1961,7 @@
                                         <span class="announcement-input-label">Announcement Body</span>
                                         <span class="announcement-input-hint">Clear, short, and official</span>
                                     </div>
-                                    <!-- (2026-07-13) Pure announcement textarea; was nested glass-textarea -->
-                                    <textarea id="gadPostText" class="announcement-textarea" placeholder="Write the official announcement here..." maxlength="500"></textarea>
+                                    <textarea id="gadPostText" class="glass-textarea announcement-textarea" placeholder="Write the official announcement here..." maxlength="500"></textarea>
                                 </div>
                                 <input id="gadImageInput" type="file" accept="image/*" hidden>
                                 <div class="image-preview-card" id="gadImagePreviewCard">
@@ -2432,26 +1971,20 @@
                                         <span>Remove Image</span>
                                     </button>
                                 </div>
-                                <!-- (2026-07-13) Group composer actions with hints; was wide separate row -->
                                 <div class="composer-toolbar">
-                                    <div style="display:flex; align-items:center; gap:6px; color:var(--muted); font-size:0.76rem;">
-                                        <span class="material-symbols-outlined" style="font-size:16px;">info</span>
-                                        <span>12-500 characters &bull; Official Bulletin</span>
-                                    </div>
-                                    <div style="display:flex; align-items:center; gap:10px;">
-                                        <button class="ghost-btn" id="cancelGadEditBtn" type="button" style="display:none; min-height:42px; padding:0 14px;">
-                                            <span class="material-symbols-outlined">close</span>
-                                            <span>Cancel Edit</span>
-                                        </button>
-                                        <button class="ghost-btn" id="attachGadImageBtn" type="button" style="min-height:42px; padding:0 14px;">
-                                            <span class="material-symbols-outlined">image</span>
-                                            <span>Attach Image</span>
-                                        </button>
-                                        <button class="primary-btn" id="postGadBtn" style="min-height:42px; padding:0 20px;">
-                                            <span class="material-symbols-outlined">send</span>
-                                            <span>Publish</span>
-                                        </button>
-                                    </div>
+                                    <p class="helper-text">12-500 characters.</p>
+                                    <button class="ghost-btn" id="cancelGadEditBtn" type="button" style="display:none;">
+                                        <span class="material-symbols-outlined">close</span>
+                                        <span>Cancel Edit</span>
+                                    </button>
+                                    <button class="ghost-btn" id="attachGadImageBtn" type="button">
+                                        <span class="material-symbols-outlined">image</span>
+                                        <span>Attach Image</span>
+                                    </button>
+                                    <button class="primary-btn" id="postGadBtn">
+                                        <span class="material-symbols-outlined">send</span>
+                                        <span>Publish</span>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -2467,60 +2000,28 @@
                                     <input type="search" id="gadSearch" class="glass-input search-input" placeholder="Search GAD posts">
                                 </div>
                             </div>
-                            <!-- (2026-07-13) Executive GAD analytics cards; was bare text metrics -->
-                            <div class="hero-grid" style="margin-bottom: 18px;">
+                            <div class="hero-grid" style="margin-bottom: 14px;">
                                 <div class="metric-card">
-                                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                        <div>
-                                            <div class="metric-label">Posts</div>
-                                            <div class="metric-value" id="metricPosts">0</div>
-                                        </div>
-                                        <div style="width:40px; height:40px; border-radius:12px; background:rgba(90,31,224,0.1); color:var(--primary); display:flex; align-items:center; justify-content:center;">
-                                            <span class="material-symbols-outlined" style="font-size:20px;">campaign</span>
-                                        </div>
-                                    </div>
-                                    <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
-                                        <span class="signal-dot" style="background:var(--primary); width:6px; height:6px;"></span>
-                                        <span>Published bulletins</span>
-                                    </div>
+                                    <div class="metric-label">Posts</div>
+                                    <div class="metric-value" id="metricPosts">0</div>
+                                    <div class="metric-sub">Published bulletins</div>
                                 </div>
                                 <div class="metric-card">
-                                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                        <div>
-                                            <div class="metric-label">Users Reached</div>
-                                            <div class="metric-value" id="metricGadReach">0</div>
-                                        </div>
-                                        <div style="width:40px; height:40px; border-radius:12px; background:rgba(2,132,199,0.1); color:#0284c7; display:flex; align-items:center; justify-content:center;">
-                                            <span class="material-symbols-outlined" style="font-size:20px;">visibility</span>
-                                        </div>
-                                    </div>
-                                    <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
-                                        <span class="signal-dot" style="background:#0284c7; width:6px; height:6px;"></span>
-                                        <span>Registered audience</span>
-                                    </div>
+                                    <div class="metric-label">Users Reached</div>
+                                    <div class="metric-value" id="metricGadReach">0</div>
+                                    <div class="metric-sub">Registered audience</div>
                                 </div>
                                 <div class="metric-card">
-                                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                                        <div>
-                                            <div class="metric-label">Engaged Users</div>
-                                            <div class="metric-value" id="metricGadEngaged">0</div>
-                                        </div>
-                                        <div style="width:40px; height:40px; border-radius:12px; background:rgba(209,31,52,0.1); color:var(--red); display:flex; align-items:center; justify-content:center;">
-                                            <span class="material-symbols-outlined" style="font-size:20px;">favorite</span>
-                                        </div>
-                                    </div>
-                                    <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
-                                        <span class="signal-dot" style="background:var(--red); width:6px; height:6px;"></span>
-                                        <span>Audience reactions</span>
-                                    </div>
+                                    <div class="metric-label">Engaged Users</div>
+                                    <div class="metric-value" id="metricGadEngaged">0</div>
+                                    <div class="metric-sub">Unique likes recorded</div>
                                 </div>
                             </div>
                             <div class="table-list" id="gadList"></div>
                         </div>
                     </section>
 
-                    <!-- (2026-07-13) Expand messages section to full height; was flex: 0 -->
-                    <section class="admin-section" id="sec-messages">
+                    <section class="admin-section" id="sec-messages" style="flex: 0;">
                         <div class="panel-card chat-panel messages-shell">
                             <div class="messages-sidebar">
                                 <div class="messages-sidebar-head">
@@ -2657,18 +2158,14 @@
         </div>
     </div>
 
-    <!-- (2026-07-13) Tabbed user editor modal; was single-panel flat editor -->
     <div class="modal-overlay" id="userEditorModal" aria-hidden="true">
         <div class="modal-card">
             <div class="modal-head">
                 <div class="editor-header" style="flex:1; margin:0;">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <div id="userEditorAvatarHead" class="management-avatar" style="width:46px; height:46px; font-size:1.1rem; border-radius:18px;">?</div>
-                        <div>
-                            <div class="eyebrow" id="userEditorBadge">Profile Editor</div>
-                            <h2 class="chart-title" id="userEditorTitle" style="margin-top:2px;">Select a user</h2>
-                            <p class="chart-copy" id="userEditorCopy" style="margin:2px 0 0;">Choose a saved account to edit its details and linked family information.</p>
-                        </div>
+                    <div>
+                        <div class="eyebrow" id="userEditorBadge">Profile Editor</div>
+                        <h2 class="chart-title" id="userEditorTitle">Select a user</h2>
+                        <p class="chart-copy" id="userEditorCopy">Choose a saved account to edit its details and linked family information.</p>
                     </div>
                     <span class="role-pill student" id="userEditorRolePill">Student</span>
                 </div>
@@ -2677,94 +2174,48 @@
                 </button>
             </div>
 
-            <!-- (2026-07-13) Modal tab bar; was absent -->
-            <div class="modal-tabs" id="userEditorTabs">
-                <button class="modal-tab-btn active" data-tab="profile" type="button">
-                    <span class="material-symbols-outlined" style="font-size:15px;">person</span>
-                    Profile
-                </button>
-                <button class="modal-tab-btn" data-tab="links" type="button">
-                    <span class="material-symbols-outlined" style="font-size:15px;">family_restroom</span>
-                    Links
-                </button>
-                <button class="modal-tab-btn" data-tab="history" type="button">
-                    <span class="material-symbols-outlined" style="font-size:15px;">history</span>
-                    History
-                </button>
-            </div>
-
-            <!-- TAB: Profile -->
-            <div class="modal-tab-panel active" id="tabPanelProfile">
-                <div class="editor-grid">
-                    <div class="field-block full">
-                        <label for="manageUserId">Record ID</label>
-                        <input id="manageUserId" class="glass-input" type="text" readonly>
-                    </div>
-                    <div class="field-block">
-                        <label for="manageUserName">Full Name</label>
-                        <input id="manageUserName" class="glass-input" type="text" placeholder="Enter full name">
-                    </div>
-                    <div class="field-block">
-                        <label for="manageUserRole">Role</label>
-                        <select id="manageUserRole" class="glass-input">
-                            <option value="student">Student</option>
-                            <option value="guardian">Guardian</option>
-                            <option value="staff">Staff</option>
-                        </select>
-                    </div>
-                    <div class="field-block" id="manageUserEmailBlock">
-                        <label for="manageUserEmail" id="manageUserEmailLabel">Email</label>
-                        <input id="manageUserEmail" class="glass-input" type="email" placeholder="user@example.com">
-                    </div>
-                    <div class="field-block">
-                        <label for="manageUserPassword">Password</label>
-                        <input id="manageUserPassword" class="glass-input" type="password" placeholder="Required for new sign-in accounts">
-                    </div>
-                    <div class="field-block" id="manageUserStudentIdBlock">
-                        <label for="manageUserStudentId" id="manageUserStudentIdLabel">Student ID</label>
-                        <input id="manageUserStudentId" class="glass-input" type="text" placeholder="7-digit student ID">
-                    </div>
+            <div class="editor-grid">
+                <div class="field-block full">
+                    <label for="manageUserId">Record ID</label>
+                    <input id="manageUserId" class="glass-input" type="text" readonly>
                 </div>
-
-                <div class="editor-note" id="userEditorMeta">
-                    Parent or guardian relationships will appear here once a saved profile is selected.
+                <div class="field-block">
+                    <label for="manageUserName">Full Name</label>
+                    <input id="manageUserName" class="glass-input" type="text" placeholder="Enter full name">
                 </div>
-
-                <div class="panel-card readable-card" style="padding:16px 18px; margin-top:16px;">
-                    <div class="eyebrow">Location</div>
-                    <h3 class="chart-title" id="userLocationTitle" style="font-size:1rem; margin-top:6px;">No recent location loaded</h3>
-                    <p class="chart-copy" id="userLocationCopy" style="margin-bottom:0;">Select a user to check the latest shared location or evidence area.</p>
+                <div class="field-block">
+                    <label for="manageUserRole">Role</label>
+                    <select id="manageUserRole" class="glass-input">
+                        <option value="student">Student</option>
+                        <option value="guardian">Guardian</option>
+                        <option value="staff">Staff</option>
+                    </select>
+                </div>
+                <div class="field-block" id="manageUserEmailBlock">
+                    <label for="manageUserEmail" id="manageUserEmailLabel">Email</label>
+                    <input id="manageUserEmail" class="glass-input" type="email" placeholder="user@example.com">
+                </div>
+                <div class="field-block">
+                    <label for="manageUserPassword">Password</label>
+                    <input id="manageUserPassword" class="glass-input" type="password" placeholder="Required for new sign-in accounts">
+                </div>
+                <div class="field-block" id="manageUserStudentIdBlock">
+                    <label for="manageUserStudentId" id="manageUserStudentIdLabel">Student ID</label>
+                    <input id="manageUserStudentId" class="glass-input" type="text" placeholder="7-digit student ID">
                 </div>
             </div>
 
-            <!-- TAB: Links -->
-            <div class="modal-tab-panel" id="tabPanelLinks">
-                <div id="managementRelationList" style="margin-top:4px;"></div>
-                <!-- (2026-07-13) Add child/guardian link UI; was view-only -->
-                <div id="addLinkSection" style="margin-top:14px; display:none;">
-                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-                        <span class="eyebrow" id="addLinkLabel">Add Child</span>
-                    </div>
-                    <div style="display:flex; gap:8px; align-items:stretch;">
-                        <input id="addLinkStudentIdInput" class="glass-input" type="text" placeholder="Enter Student ID of child to link" style="flex:1; min-height:40px; font-size:0.85rem;">
-                        <button id="addLinkSubmitBtn" class="primary-btn" type="button" style="min-height:40px; padding:0 16px; font-size:0.82rem;">
-                            <span class="material-symbols-outlined" style="font-size:17px;">add_link</span>
-                            <span>Link</span>
-                        </button>
-                    </div>
-                    <div style="font-size:0.73rem; color:var(--muted); margin-top:5px;">This will create an accepted link immediately.</div>
-                </div>
+            <div class="editor-note" id="userEditorMeta">
+                Parent or guardian relationships will appear here once a saved profile is selected.
             </div>
 
-            <!-- TAB: History -->
-            <div class="modal-tab-panel" id="tabPanelHistory">
-                <div id="userHistoryList" style="margin-top:4px;">
-                    <div class="empty-state" style="padding:24px 0;">
-                        <span class="material-symbols-outlined" style="font-size:32px; opacity:0.25;">history</span>
-                        <p style="margin:8px 0 0; font-size:0.82rem; color:var(--muted);">Select a user and open History to view time-in / time-out records.</p>
-                    </div>
-                </div>
+            <div class="panel-card readable-card" style="padding:16px 18px; margin-top:16px;">
+                <div class="eyebrow">Location</div>
+                <h3 class="chart-title" id="userLocationTitle" style="font-size:1rem; margin-top:6px;">No recent location loaded</h3>
+                <p class="chart-copy" id="userLocationCopy" style="margin-bottom:0;">Select a user to check the latest shared location or evidence area.</p>
             </div>
+
+            <div class="relation-list" id="managementRelationList"></div>
 
             <div class="editor-actions" style="margin-top:18px;">
                 <div class="inline-fields">
@@ -2789,7 +2240,7 @@
 
     <!-- (2026-07-13) Fullscreen Geofence & Campus Marker Editor Modal -->
     <div class="modal-overlay" id="adminGeofenceModal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(15,23,42,0.8); backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:16px;">
-        <div class="geofence-modal-card" style="width:96vw; max-width:1440px; height:92vh; background:white; border-radius:24px; box-shadow:0 25px 60px rgba(0,0,0,0.3); display:flex; flex-direction:column; overflow:hidden; border:1px solid rgba(255,255,255,0.4);">
+        <div class="geofence-modal-card" style="width:96vw; max-width:1440px; height:92vh; background:white; border-radius:24px; box-shadow:0 25px 60px rgba(0,0,0,0.3); display:flex; flex-direction:column; overflow:hidden; border:1px solid rgba(var(--glass-white),0.4);">
             <div style="padding:16px 24px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:#fbfbfe;">
                 <div>
                     <div style="display:flex; align-items:center; gap:8px;">
@@ -2822,7 +2273,7 @@
             <div style="flex:1; position:relative; width:100%; height:100%; min-height:400px;">
                 <div id="adminGeofenceModalMap" style="position:absolute; inset:0; width:100%; height:100%;"></div>
             </div>
-            <div style="padding:10px 24px; border-top:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; color:#64748b;">
+            <div style="padding:10px 24px; border-top:1px solid #e2e8f0; background: var(--bg); display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; color:#64748b;">
                 <span id="geofenceModalVertexCount">6 Boundary Vertices • 9 Campus Buildings</span>
                 <span style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#10b981;"></span> Real-time Firestore Sync Active</span>
             </div>
@@ -3157,58 +2608,17 @@
             userEditorModal?.setAttribute('aria-hidden', 'true');
         };
 
-        // (2026-07-13) Portal action menu: render at body level with fixed coords; was inline z-30
-        let _portalTriggerRect = null;
-        const _ensurePortal = () => {
-            let el = document.getElementById('userActionPortal');
-            if (!el) {
-                el = document.createElement('div');
-                el.id = 'userActionPortal';
-                el.className = 'row-action-menu';
-                el.style.display = 'none';
-                document.body.appendChild(el);
-            }
-            return el;
-        };
-
-        // (2026-07-13) Fix action menu coords; was detached element zero rect
-        const toggleUserActionMenu = (userId, triggerEl) => {
-            const portal = _ensurePortal();
-            if (openUserActionMenuId === userId) {
-                openUserActionMenuId = null;
-                portal.style.display = 'none';
-                return;
-            }
-            openUserActionMenuId = userId;
-
-            const btn = triggerEl || managementUserList?.querySelector(`[data-user-action-trigger="${userId}"]`);
-            const rect = btn ? btn.getBoundingClientRect() : { bottom: 0, right: 0 };
-
-            const user = getManagedUserById(userId);
-            portal.innerHTML = `
-                <button class="row-action-item" type="button" data-user-action="edit" data-user-id="${escapeHtml(userId)}">
-                    <span class="material-symbols-outlined">edit</span>
-                    <span>Edit User</span>
-                </button>
-                <button class="row-action-item delete" type="button" data-user-action="delete" data-user-id="${escapeHtml(userId)}" data-user-name="${escapeHtml(user?.name || 'this user')}">
-                    <span class="material-symbols-outlined">delete</span>
-                    <span>Delete User</span>
-                </button>
-            `;
-            portal.style.display = 'grid';
-            portal.style.top = `${rect.bottom + 6}px`;
-            portal.style.left = 'auto';
-            portal.style.right = `${Math.max(8, window.innerWidth - rect.right)}px`;
+        const toggleUserActionMenu = (userId) => {
+            openUserActionMenuId = openUserActionMenuId === userId ? null : userId;
+            renderManagedUsers();
         };
 
         const closeUserActionMenu = () => {
             if (!openUserActionMenuId) return;
             openUserActionMenuId = null;
-            const portal = document.getElementById('userActionPortal');
-            if (portal) portal.style.display = 'none';
+            renderManagedUsers();
         };
 
-        // (2026-07-13) Support multiple parent/child links; was raw un-deduped map
         function buildUserRelations(user) {
             if (!user) return [];
 
@@ -3217,25 +2627,16 @@
             const byStudentId = new Map(cachedUsers.filter((entry) => entry.studentId).map((entry) => [String(entry.studentId), entry]));
 
             if (role === 'guardian') {
-                const guardianLinks = cachedGuardianLinks.filter((link) => String(link.guardianId) === String(user.id));
-                const seenChildren = new Set();
-                const uniqueRelations = [];
-
-                guardianLinks.forEach((link) => {
-                    const childUser = byId.get(String(link.studentUid || '')) || byStudentId.get(String(link.studentId || ''));
-                    const dedupeKey = childUser?.id || link.studentUid || link.studentId || link.id;
-                    if (dedupeKey && seenChildren.has(dedupeKey)) return;
-                    if (dedupeKey) seenChildren.add(dedupeKey);
-
-                    // (2026-07-13) Include linkId for deletion; was title/subtitle/status only
-                    uniqueRelations.push({
-                        linkId: link.id,
-                        title: childUser?.name || link.studentName || link.studentId || 'Child link',
-                        subtitle: link.studentId ? `Student ID: ${link.studentId}` : (childUser?.email || 'No student ID'),
-                        status: link.status || 'pending'
+                return cachedGuardianLinks
+                    .filter((link) => String(link.guardianId) === String(user.id))
+                    .map((link) => {
+                        const childUser = byId.get(String(link.studentUid || '')) || byStudentId.get(String(link.studentId || ''));
+                        return {
+                            title: childUser?.name || link.studentName || link.studentId || 'Child link',
+                            subtitle: link.studentId ? `Student ID: ${link.studentId}` : 'No student ID',
+                            status: link.status || 'pending'
+                        };
                     });
-                });
-                return uniqueRelations;
             }
 
             const links = cachedGuardianLinks.filter((link) => {
@@ -3244,97 +2645,44 @@
                 return false;
             });
 
-            const seenGuardians = new Set();
-            const uniqueRelations = [];
-
-            links.forEach((link) => {
+            return links.map((link) => {
                 const guardianUser = byId.get(String(link.guardianId || ''));
-                const dedupeKey = guardianUser?.id || link.guardianId || link.guardianEmail || link.id;
-                if (dedupeKey && seenGuardians.has(dedupeKey)) return;
-                if (dedupeKey) seenGuardians.add(dedupeKey);
-
-                // (2026-07-13) Include linkId for deletion; was title/subtitle/status only
-                uniqueRelations.push({
-                    linkId: link.id,
+                return {
                     title: guardianUser?.name || link.guardianName || link.guardianEmail || 'Guardian link',
                     subtitle: guardianUser?.email || link.guardianEmail || 'No email',
                     status: link.status || 'pending'
-                });
+                };
             });
-
-            return uniqueRelations;
         }
 
-        // (2026-07-13) Show child/parent badge with delete button; was title+status only
         function renderRelationList(user) {
             const relations = buildUserRelations(user);
-            const addLinkSection = document.getElementById('addLinkSection');
-            const addLinkLabel = document.getElementById('addLinkLabel');
             if (!managementRelationList) return;
 
             if (!user) {
                 managementRelationList.innerHTML = '';
-                if (addLinkSection) addLinkSection.style.display = 'none';
                 return;
-            }
-
-            const roleKey = getRoleKey(user);
-            const isGuardian = roleKey === 'guardian';
-
-            // Show add-link section only for guardians (to add children)
-            if (addLinkSection) {
-                addLinkSection.style.display = isGuardian ? '' : 'none';
-                if (addLinkLabel) addLinkLabel.textContent = 'Add Linked Child';
             }
 
             if (!relations.length) {
                 managementRelationList.innerHTML = `
                     <div class="empty-state">
                         <span class="material-symbols-outlined" style="font-size:30px; opacity:0.35;">family_restroom</span>
-                        <p style="margin:8px 0 0;">${isGuardian ? 'No children linked to this guardian.' : 'No guardian links saved for this account.'}</p>
+                        <p style="margin:8px 0 0;">No parent, guardian, or child links saved for this account.</p>
                     </div>
                 `;
                 return;
             }
 
-            // (2026-07-13) Rename parent to guardian with red chip; was teal badge
-            const relationTypeBadge = isGuardian ? 'Linked Child' : 'Linked Guardian';
-            const badgeColor = isGuardian
-                ? 'color:var(--primary); background:rgba(90,31,224,0.08);'
-                : 'color:#d1465b; background:#fff1f2; border:1px solid #fecdd3;';
-
             managementRelationList.innerHTML = relations.map((relation) => `
-                <div class="link-chip-row">
+                <div class="relation-chip">
                     <div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; padding:2px 8px; border-radius:6px; ${badgeColor}">${relationTypeBadge}</span>
-                            <span class="row-title" style="font-size:0.9rem;">${escapeHtml(relation.title)}</span>
-                        </div>
-                        <div class="row-sub" style="margin-top:3px;">${escapeHtml(relation.subtitle)} &bull; <span style="text-transform:capitalize;">${escapeHtml(relation.status)}</span></div>
+                        <div class="row-title">${escapeHtml(relation.title)}</div>
+                        <div class="row-sub">${escapeHtml(relation.subtitle)}</div>
                     </div>
-                    ${relation.linkId ? `<button class="link-del-btn" data-link-id="${escapeHtml(relation.linkId)}" title="Remove link" type="button"><span class="material-symbols-outlined" style="font-size:16px;">link_off</span></button>` : ''}
+                    <span class="relation-status">${escapeHtml(relation.status)}</span>
                 </div>
             `).join('');
-
-            // Attach delete handlers
-            managementRelationList.querySelectorAll('.link-del-btn').forEach((btn) => {
-                btn.addEventListener('click', async (e) => {
-                    const linkId = btn.dataset.linkId;
-                    if (!linkId) return;
-                    if (!confirm('Remove this guardian-child link?')) return;
-                    btn.disabled = true;
-                    try {
-                        await removeGuardianLink(linkId);
-                        // (2026-07-13) Remove from cache and re-render on delete; was full reload
-                        cachedGuardianLinks = cachedGuardianLinks.filter((l) => l.id !== linkId);
-                        showToast('Link removed.', 'success');
-                        renderRelationList(user);
-                    } catch (err) {
-                        showToast('Failed to remove link: ' + (err.message || err), 'error');
-                        btn.disabled = false;
-                    }
-                });
-            });
         }
 
         function setUserEditorState(user = null, options = {}) {
@@ -3369,25 +2717,10 @@
             }
             if (deleteManagedUserBtn) deleteManagedUserBtn.disabled = creating || !user?.id;
 
-            // (2026-07-13) Update avatar in modal header; was absent
-            const avatarEl = document.getElementById('userEditorAvatarHead');
-            if (avatarEl) {
-                const initials = (user?.name || '?').split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-                avatarEl.textContent = creating ? '+' : initials;
-                avatarEl.className = 'management-avatar' + (roleKey === 'guardian' ? ' guardian' : '');
-            }
-
-            // (2026-07-13) Reset tab to Profile when a new user is loaded; was persistent
-            switchUserEditorTab('profile');
-            // Reset history panel on user change
-            const histList = document.getElementById('userHistoryList');
-            if (histList) histList.innerHTML = `<div class="empty-state" style="padding:24px 0;"><span class="material-symbols-outlined" style="font-size:32px; opacity:0.25;">history</span><p style="margin:8px 0 0; font-size:0.82rem; color:var(--muted);">Open the History tab to load this user's attendance records.</p></div>`;
-
             renderRelationList(creating ? null : user);
             loadManagedUserLocation(creating ? null : user).catch(() => {});
             updateManagedUserRoleFields(creating ? 'student' : roleKey, { creating });
             renderManagedUsers();
-            setupLinkManagement(user);
         }
 
         function updateManagedUserRoleFields(roleValue = 'student', options = {}) {
@@ -3430,144 +2763,6 @@
             }
         }
 
-        // (2026-07-13) Switch user editor modal tab; was absent
-        function switchUserEditorTab(tabName) {
-            document.querySelectorAll('.modal-tab-btn').forEach((btn) => {
-                btn.classList.toggle('active', btn.dataset.tab === tabName);
-            });
-            document.querySelectorAll('.modal-tab-panel').forEach((panel) => {
-                panel.classList.toggle('active', panel.id === `tabPanel${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
-            });
-            // Load history when that tab is opened
-            if (tabName === 'history') {
-                const currentUser = cachedUsers.find((u) => u.id === selectedManagedUserId) || null;
-                loadUserHistory(currentUser);
-            }
-        }
-
-        // (2026-07-13) Load and render attendance + SOS history for selected user; was attendance only
-        async function loadUserHistory(user) {
-            const histList = document.getElementById('userHistoryList');
-            if (!histList) return;
-            if (!user) {
-                histList.innerHTML = `<div class="empty-state" style="padding:24px 0;"><span class="material-symbols-outlined" style="font-size:32px; opacity:0.25;">history</span><p style="margin:8px 0 0; font-size:0.82rem; color:var(--muted);">Select a user to view their history.</p></div>`;
-                return;
-            }
-            histList.innerHTML = `<div style="display:flex; align-items:center; gap:10px; padding:16px 0; color:var(--muted); font-size:0.82rem;"><span class="material-symbols-outlined" style="font-size:20px; animation:simBtnSpin 1s linear infinite;">progress_activity</span>Loading records…</div>`;
-            try {
-                // (2026-07-13) Parallel fetch of attendance + SOS; was attendance only
-                const [attendanceRecords, sosRecords] = await Promise.all([
-                    getAttendanceHistory(user.id),
-                    getUserSOSLogs(user.id)
-                ]);
-
-                // Normalise attendance records
-                const attRows = attendanceRecords.map((rec) => ({
-                    _ts: rec.timestamp?.seconds || 0,
-                    _kind: 'attendance',
-                    ...rec
-                }));
-
-                // Normalise SOS records
-                const sosRows = sosRecords.map((rec) => ({
-                    _ts: rec.timestamp?.seconds || 0,
-                    _kind: 'sos',
-                    ...rec
-                }));
-
-                const merged = [...attRows, ...sosRows].sort((a, b) => b._ts - a._ts);
-
-                if (!merged.length) {
-                    histList.innerHTML = `<div class="empty-state" style="padding:24px 0;"><span class="material-symbols-outlined" style="font-size:32px; opacity:0.25;">history_toggle_off</span><p style="margin:8px 0 0; font-size:0.82rem; color:var(--muted);">No attendance or SOS records found for this user.</p></div>`;
-                    return;
-                }
-
-                histList.innerHTML = merged.map((rec) => {
-                    const ts = rec._ts ? new Date(rec._ts * 1000) : null;
-                    const timeStr = ts ? ts.toLocaleString() : 'Unknown time';
-
-                    if (rec._kind === 'sos') {
-                        // (2026-07-13) SOS row styling — orange alert; was absent
-                        const locStr = rec.location ? `${(+rec.location.lat || 0).toFixed(5)}, ${(+rec.location.lng || 0).toFixed(5)}` : 'No location';
-                        return `<div class="history-log-row">
-                            <div class="history-log-dot" style="background:#fff7ed; color:#ea580c;">
-                                <span class="material-symbols-outlined" style="font-size:18px;">sos</span>
-                            </div>
-                            <div style="flex:1; min-width:0;">
-                                <div class="row-title" style="font-size:0.88rem; color:#ea580c;">SOS Alert</div>
-                                <div class="row-sub" style="margin-top:2px;">${timeStr}</div>
-                            </div>
-                            <div class="row-sub" style="text-align:right; white-space:nowrap; font-size:0.72rem;">${escapeHtml(locStr)}</div>
-                        </div>`;
-                    }
-
-                    const isIn = rec.type === 'in';
-                    const dotBg = isIn ? 'background:#dcfce7; color:#16a34a;' : 'background:#fee2e2; color:#dc2626;';
-                    const icon = isIn ? 'login' : 'logout';
-                    const label = isIn ? 'Time In' : 'Time Out';
-                    return `<div class="history-log-row">
-                        <div class="history-log-dot" style="${dotBg}">
-                            <span class="material-symbols-outlined" style="font-size:18px;">${icon}</span>
-                        </div>
-                        <div style="flex:1; min-width:0;">
-                            <div class="row-title" style="font-size:0.88rem;">${label}</div>
-                            <div class="row-sub" style="margin-top:2px;">${timeStr}</div>
-                        </div>
-                        ${rec.locationName ? `<div class="row-sub" style="text-align:right; white-space:nowrap; font-size:0.72rem;">${escapeHtml(rec.locationName)}</div>` : ''}
-                    </div>`;
-                }).join('');
-            } catch (err) {
-                histList.innerHTML = `<div class="empty-state" style="padding:24px 0;"><span class="material-symbols-outlined" style="font-size:32px; opacity:0.25;">error</span><p style="margin:8px 0 0; font-size:0.82rem; color:var(--muted);">Failed to load history.</p></div>`;
-            }
-        }
-
-        // (2026-07-13) Setup add-link form for guardian user; was absent
-        function setupLinkManagement(user) {
-            const addLinkSubmitBtn = document.getElementById('addLinkSubmitBtn');
-            const addLinkStudentIdInput = document.getElementById('addLinkStudentIdInput');
-            if (!addLinkSubmitBtn || !addLinkStudentIdInput) return;
-
-            // Clone to remove old event listeners
-            const newBtn = addLinkSubmitBtn.cloneNode(true);
-            addLinkSubmitBtn.parentNode.replaceChild(newBtn, addLinkSubmitBtn);
-
-            newBtn.addEventListener('click', async () => {
-                if (!user) return;
-                const studentId = addLinkStudentIdInput.value.trim();
-                if (!studentId) { showToast('Enter a student ID.', 'error'); return; }
-                const studentUser = cachedUsers.find((u) => String(u.studentId) === studentId);
-                newBtn.disabled = true;
-                newBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:17px; animation:simBtnSpin 1s linear infinite;">progress_activity</span><span>Linking…</span>`;
-                try {
-                    await createGuardianLinkRequest({
-                        guardianId: user.id,
-                        guardianEmail: user.email || '',
-                        guardianName: user.name || '',
-                        studentId: studentId,
-                        studentUid: studentUser?.id || null,
-                        status: 'accepted'
-                    });
-                    showToast('Child linked successfully.', 'success');
-                    addLinkStudentIdInput.value = '';
-                    // Refresh links cache and re-render
-                    const { getAllGuardianLinksAdmin: refresh } = await import('./db.js');
-                    cachedGuardianLinks = await refresh();
-                    renderRelationList(user);
-                } catch (err) {
-                    showToast((err.message || 'Failed to create link.'), 'error');
-                } finally {
-                    newBtn.disabled = false;
-                    newBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:17px;">add_link</span><span>Link</span>`;
-                }
-            });
-        }
-
-        // (2026-07-13) Initialize modal tab button listeners; was absent
-        document.querySelectorAll('#userEditorTabs .modal-tab-btn').forEach((btn) => {
-            btn.addEventListener('click', () => switchUserEditorTab(btn.dataset.tab));
-        });
-
-        // (2026-07-13) Show linked child/parent details in user rows; was link count
         function renderManagedUsers() {
             if (!managementUserList) return;
             const term = (managementUserSearch?.value || '').trim().toLowerCase();
@@ -3586,46 +2781,16 @@
                 const roleKey = getRoleKey(user);
                 const relations = buildUserRelations(user);
                 const isMenuOpen = openUserActionMenuId === user.id;
-
-                // (2026-07-13) Support multi-parent & multi-child counts; was single list
-                let relationMarkup = '';
-                if (roleKey === 'guardian') {
-                    relationMarkup = relations.length
-                        ? `<div style="margin-top:4px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
-                            ${relations.length > 1 ? `<span style="font-size:0.68rem; font-weight:800; color:var(--muted);">${relations.length} Children:</span>` : ''}
-                            ${relations.map(rel => `
-                                <span style="font-size:0.72rem; font-weight:700; color:var(--primary); background:rgba(90,31,224,0.08); padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
-                                    <span class="material-symbols-outlined" style="font-size:13px;">escalator_warning</span>
-                                    Child: ${escapeHtml(rel.title)}${rel.subtitle && rel.subtitle !== 'No student ID' ? ` (${escapeHtml(rel.subtitle.replace('Student ID: ', ''))})` : ''}
-                                </span>
-                            `).join('')}
-                           </div>`
-                        : `<div class="row-sub" style="font-size:0.73rem; color:var(--muted); margin-top:2px;">No child linked</div>`;
-                // (2026-07-13) Rename parent to guardian with red styling; was teal chip
-                } else if (roleKey === 'student') {
-                    relationMarkup = relations.length
-                        ? `<div style="margin-top:4px; display:flex; flex-wrap:wrap; gap:4px; align-items:center;">
-                            ${relations.length > 1 ? `<span style="font-size:0.68rem; font-weight:800; color:var(--muted);">${relations.length} Guardians:</span>` : ''}
-                            ${relations.map(rel => `
-                                <span style="font-size:0.72rem; font-weight:700; color:#d1465b; background:#fff1f2; border:1px solid #fecdd3; padding:2px 8px; border-radius:6px; display:inline-flex; align-items:center; gap:4px;">
-                                    <span class="material-symbols-outlined" style="font-size:13px;">family_restroom</span>
-                                    Guardian: ${escapeHtml(rel.title)}
-                                </span>
-                            `).join('')}
-                           </div>`
-                        : `<div class="row-sub" style="font-size:0.73rem; color:var(--muted); margin-top:2px;">No guardian linked</div>`;
-                } else {
-                    relationMarkup = `<div class="row-sub" style="font-size:0.73rem; color:var(--muted); margin-top:2px;">Staff member</div>`;
-                }
-
+                const relationLabel = roleKey === 'guardian'
+                    ? `${relations.length} child link${relations.length === 1 ? '' : 's'}`
+                    : `${relations.length} parent/guardian link${relations.length === 1 ? '' : 's'}`;
                 return `
                     <div class="user-table-row">
                         <div class="user-table-main inline-fields" style="align-items:center;">
-                            <!-- (2026-07-13) Set red avatar for guardians; was default purple -->
-                            <div class="management-avatar ${roleKey === 'guardian' ? 'guardian' : ''}">${escapeHtml(getInitials(user.name || user.email || 'U'))}</div>
+                            <div class="management-avatar">${escapeHtml(getInitials(user.name || user.email || 'U'))}</div>
                             <div>
                                 <div class="row-title">${escapeHtml(user.name || 'Unnamed user')}</div>
-                                ${relationMarkup}
+                                <div class="row-sub">${escapeHtml(relationLabel)}</div>
                             </div>
                         </div>
                         <div>
@@ -3639,6 +2804,18 @@
                             <button class="icon-ghost-btn" type="button" data-user-action-trigger="${escapeHtml(user.id)}" aria-label="More actions for ${escapeHtml(user.name || 'user')}">
                                 <span class="material-symbols-outlined">more_horiz</span>
                             </button>
+                            ${isMenuOpen ? `
+                                <div class="row-action-menu">
+                                    <button class="row-action-item" type="button" data-user-action="edit" data-user-id="${escapeHtml(user.id)}">
+                                        <span class="material-symbols-outlined">edit</span>
+                                        <span>Edit User</span>
+                                    </button>
+                                    <button class="row-action-item delete" type="button" data-user-action="delete" data-user-id="${escapeHtml(user.id)}" data-user-name="${escapeHtml(user.name || 'this user')}">
+                                        <span class="material-symbols-outlined">delete</span>
+                                        <span>Delete User</span>
+                                    </button>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                 `;
@@ -3662,11 +2839,10 @@
             window.setTimeout(() => toast.remove(), 3200);
         };
 
-        // (2026-07-13) Persist active tab on reload; was resetting to stats
+// (2026-07-13) Invalidate map size on sos and stats tab switch; was stats only
         const setTab = (tab) => {
             tabBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === tab));
             sections.forEach((section) => section.classList.toggle('active', section.id === `sec-${tab}`));
-            try { localStorage.setItem('securo_admin_active_tab', tab); } catch (e) {}
             if (tab === 'stats' || tab === 'sos') {
                 if (adminSosLeafletMap) setTimeout(() => adminSosLeafletMap.invalidateSize(), 120);
             }
@@ -3894,11 +3070,6 @@
             btn.addEventListener('click', () => setTab(btn.dataset.tab));
         });
 
-        try {
-            const savedTab = localStorage.getItem('securo_admin_active_tab');
-            if (savedTab && document.getElementById(`sec-${savedTab}`)) setTab(savedTab);
-        } catch (e) {}
-
         if (adminProfileChip) {
             adminProfileChip.addEventListener('click', (event) => {
                 event.stopPropagation();
@@ -3923,62 +3094,6 @@
             adminProfileDropdown?.classList.remove('active');
         });
 
-        // (2026-07-13) Add local caching for all data on reload; was network only
-        const SECURO_CACHE_KEY = 'securo_admin_master_cache';
-
-        function saveToLocalCache() {
-            try {
-                const payload = {
-                    posts: cachedPosts,
-                    users: cachedUsers,
-                    threads: cachedThreads,
-                    guardianLinks: cachedGuardianLinks,
-                    sosLogs: cachedSosLogs,
-                    emergencyPosts: cachedEmergencyPosts,
-                    savedAdminName: currentAdminName,
-                    time: Date.now()
-                };
-                localStorage.setItem(SECURO_CACHE_KEY, JSON.stringify(payload));
-            } catch (err) {
-                console.warn("Could not save to local cache:", err);
-            }
-        }
-
-        function loadFromLocalCache() {
-            try {
-                const raw = localStorage.getItem(SECURO_CACHE_KEY);
-                if (!raw) return false;
-                const data = JSON.parse(raw);
-                if (!data) return false;
-                if (Array.isArray(data.posts) && data.posts.length) cachedPosts = data.posts;
-                if (Array.isArray(data.users) && data.users.length) cachedUsers = data.users;
-                if (Array.isArray(data.threads) && data.threads.length) cachedThreads = data.threads;
-                if (Array.isArray(data.guardianLinks)) cachedGuardianLinks = data.guardianLinks;
-                if (Array.isArray(data.sosLogs)) cachedSosLogs = data.sosLogs;
-                if (Array.isArray(data.emergencyPosts)) cachedEmergencyPosts = data.emergencyPosts;
-                if (data.savedAdminName && adminDropdownName) {
-                    adminDropdownName.textContent = data.savedAdminName;
-                    if (adminInitials) {
-                        adminInitials.textContent = data.savedAdminName
-                            .split(/\s+/)
-                            .filter(Boolean)
-                            .slice(0, 2)
-                            .map((p) => p[0])
-                            .join('')
-                            .toUpperCase() || 'AD';
-                    }
-                }
-                applyFilters();
-                if (typeof populateSimulatorStudents === 'function') populateSimulatorStudents();
-                return true;
-            } catch (err) {
-                console.warn("Could not load from local cache:", err);
-                return false;
-            }
-        }
-
-        loadFromLocalCache();
-
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 showToast("Access denied", "Please sign in to the terminal first.", "error");
@@ -3989,15 +3104,15 @@
             }
             // (2026-09-09) store real UID for Firestore-rules-aware queries
             currentAdminUid = user.uid;
+            // (2026-09-30) Reinit chat with real UID if messages tab was pre-loaded with fallback UID
+            stopAdminRealtimeThreads();
+            if (document.querySelector('.tab-btn[data-tab="messages"]')?.classList.contains('active')) {
+                initAdminChat();
+            }
             try {
                 const profile = await getUserProfile(user.uid);
                 const isSpecialAdmin = profile?.role === 'admin';
-                // (2026-07-13) Normalize admin display name; was showing Student
-                let resolvedAdminName = profile?.name || user.displayName || 'Administrator';
-                if (['student', 'user'].includes(resolvedAdminName.toLowerCase().trim())) {
-                    resolvedAdminName = 'Administrator';
-                }
-                currentAdminName = resolvedAdminName;
+                currentAdminName = profile?.name || user.displayName || 'Administrator';
                 if (adminDropdownName) adminDropdownName.textContent = currentAdminName;
                 if (adminInitials) {
                     adminInitials.textContent = currentAdminName
@@ -4020,7 +3135,7 @@
                 await loadAllData();
                 if (unsubscribeAdminNotifications) unsubscribeAdminNotifications();
                 unsubscribeAdminNotifications = subscribeToAccountNotifications(user.uid, renderAdminNotifications);
-                showToast("Command Center Ready", `Session authenticated. Welcome ${currentAdminName}.`, "success");
+                showToast("Admin ready", `Command center synced successfully. Welcome ${currentAdminName}.`, "success");
             } catch (error) {
                 showToast("Sync failed", error.message || "Unable to load admin data right now.", "error");
             }
@@ -4049,8 +3164,6 @@
             cachedGuardianLinks = Array.isArray(guardianLinks) ? guardianLinks : [];
             cachedSosLogs = Array.isArray(sosLogs) ? sosLogs : [];
             cachedEmergencyPosts = Array.isArray(emergencyPosts) ? emergencyPosts : [];
-            // (2026-07-13) Save fresh data to local cache; was unpersisted
-            saveToLocalCache();
             applyFilters();
             // (2026-07-13) Subscribe to real-time GAD counseling messages; was uncalled
             if (!window._gadMessagesUnsub) {
@@ -4157,82 +3270,56 @@
             if (metricGadReach) metricGadReach.textContent = totalUsers;
             if (metricGadEngaged) metricGadEngaged.textContent = gadEngaged;
 
-            // (2026-07-13) Modernize role distribution & activity bars; was plain bars
             if (roleChart) {
                 const studentDeg = totalUsers ? (roleCounts.student / totalUsers) * 360 : 0;
                 const guardianDeg = totalUsers ? (roleCounts.guardian / totalUsers) * 360 : 0;
                 const staffDeg = totalUsers ? (roleCounts.staff / totalUsers) * 360 : 0;
                 roleChart.style.background = `conic-gradient(
-                    #5a1fe0 0deg ${studentDeg}deg,
-                    #ec4899 ${studentDeg}deg ${studentDeg + guardianDeg}deg,
-                    #0284c7 ${studentDeg + guardianDeg}deg ${studentDeg + guardianDeg + staffDeg}deg,
-                    #8b5cf6 ${studentDeg + guardianDeg + staffDeg}deg 360deg
+                    var(--primary) 0deg ${studentDeg}deg,
+                    #ff7a90 ${studentDeg}deg ${studentDeg + guardianDeg}deg,
+                    #9f67ff ${studentDeg + guardianDeg}deg ${studentDeg + guardianDeg + staffDeg}deg,
+                    #c7b8ff ${studentDeg + guardianDeg + staffDeg}deg 360deg
                 )`;
             }
             if (roleChartTotal) roleChartTotal.textContent = totalUsers;
             if (roleLegend) {
-                const studentPct = totalUsers ? Math.round((roleCounts.student / totalUsers) * 100) : 0;
-                const guardianPct = totalUsers ? Math.round((roleCounts.guardian / totalUsers) * 100) : 0;
-                const staffPct = totalUsers ? Math.round((roleCounts.staff / totalUsers) * 100) : 0;
-                const adminPct = totalUsers ? Math.round((roleCounts.admin / totalUsers) * 100) : 0;
-
                 roleLegend.innerHTML = `
-                    <div class="legend-item" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px 14px;">
-                        <div class="legend-meta"><span class="legend-swatch" style="background:#5a1fe0;"></span><span style="font-weight:700;">Students</span></div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-size:0.75rem; color:var(--muted); font-weight:700;">${studentPct}%</span>
-                            <strong style="font-size:0.95rem;">${roleCounts.student}</strong>
-                        </div>
+                    <div class="legend-item">
+                        <div class="legend-meta"><span class="legend-swatch" style="background: var(--primary);"></span><span>Students</span></div>
+                        <strong>${roleCounts.student}</strong>
                     </div>
-                    <div class="legend-item" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px 14px;">
-                        <div class="legend-meta"><span class="legend-swatch" style="background:#ec4899;"></span><span style="font-weight:700;">Guardians</span></div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-size:0.75rem; color:var(--muted); font-weight:700;">${guardianPct}%</span>
-                            <strong style="font-size:0.95rem;">${roleCounts.guardian}</strong>
-                        </div>
+                    <div class="legend-item">
+                        <div class="legend-meta"><span class="legend-swatch" style="background: #ff7a90;"></span><span>Guardians</span></div>
+                        <strong>${roleCounts.guardian}</strong>
                     </div>
-                    <div class="legend-item" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px 14px;">
-                        <div class="legend-meta"><span class="legend-swatch" style="background:#0284c7;"></span><span style="font-weight:700;">Staff</span></div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-size:0.75rem; color:var(--muted); font-weight:700;">${staffPct}%</span>
-                            <strong style="font-size:0.95rem;">${roleCounts.staff}</strong>
-                        </div>
+                    <div class="legend-item">
+                        <div class="legend-meta"><span class="legend-swatch" style="background: #9f67ff;"></span><span>Staff</span></div>
+                        <strong>${roleCounts.staff}</strong>
                     </div>
-                    <div class="legend-item" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:10px 14px;">
-                        <div class="legend-meta"><span class="legend-swatch" style="background:#8b5cf6;"></span><span style="font-weight:700;">Admins</span></div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-size:0.75rem; color:var(--muted); font-weight:700;">${adminPct}%</span>
-                            <strong style="font-size:0.95rem;">${roleCounts.admin}</strong>
-                        </div>
+                    <div class="legend-item">
+                        <div class="legend-meta"><span class="legend-swatch" style="background: #c7b8ff;"></span><span>Admins</span></div>
+                        <strong>${roleCounts.admin}</strong>
                     </div>
                 `;
             }
             if (statsBarList) {
                 const barRows = [
-                    { label: 'Registered Users', value: totalUsers, color: 'linear-gradient(90deg, #4f46e5, #6366f1)', icon: 'groups' },
-                    { label: 'Published GAD Posts', value: cachedPosts.length, color: 'linear-gradient(90deg, #0284c7, #38bdf8)', icon: 'campaign' },
-                    { label: 'Support Conversations', value: cachedThreads.length, color: 'linear-gradient(90deg, #7c3aed, #a855f7)', icon: 'chat' },
-                    { label: 'Engaged Users', value: gadEngaged, color: 'linear-gradient(90deg, #059669, #10b981)', icon: 'favorite' }
+                    { label: 'Registered Users', value: totalUsers },
+                    { label: 'Published GAD Posts', value: cachedPosts.length },
+                    { label: 'Support Conversations', value: cachedThreads.length },
+                    { label: 'Engaged Users', value: gadEngaged }
                 ];
-                statsBarList.innerHTML = barRows.map((row) => {
-                    const pct = Math.min(100, Math.max(8, Math.round((row.value / Math.max(1, maxMetric)) * 100)));
-                    return `
-                    <div class="bar-row" style="margin-bottom:12px;">
+                statsBarList.innerHTML = barRows.map((row) => `
+                    <div class="bar-row">
                         <div class="bar-top">
-                            <span style="display:flex; align-items:center; gap:8px; font-weight:700;">
-                                <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">${row.icon}</span>
-                                <span>${row.label}</span>
-                            </span>
-                            <span style="display:flex; align-items:center; gap:8px;">
-                                <span style="font-size:0.75rem; color:var(--muted); font-weight:700;">${pct}%</span>
-                                <strong style="font-size:0.9rem;">${row.value}</strong>
-                            </span>
+                            <span>${row.label}</span>
+                            <strong>${row.value}</strong>
                         </div>
-                        <div class="bar-track" style="height:10px; background:#f1f5f9; border-radius:999px; overflow:hidden; border:1px solid #e2e8f0;">
-                            <div class="bar-fill" style="width:${pct}%; background:${row.color}; height:100%; border-radius:999px; transition:width 0.6s ease;"></div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width:${Math.max(8, Math.round((row.value / maxMetric) * 100))}%;"></div>
                         </div>
                     </div>
-                `}).join('');
+                `).join('');
             }
 // (2026-07-13) Add interactive Admin SOS Map & Hotspots renderer; was reporter stats only
             renderReporterStats();
@@ -4648,393 +3735,6 @@
             }
         });
 
-        // (2026-07-13) Add Geofence simulator engine & attendance dispatch; was none
-        function isPointInPolygon(point, vs) {
-            if (!point || !Array.isArray(vs) || vs.length < 3) return false;
-            const x = point[0], y = point[1];
-            let inside = false;
-            for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-                const xi = vs[i][0] ?? vs[i].lat, yi = vs[i][1] ?? vs[i].lng;
-                const xj = vs[j][0] ?? vs[j].lat, yj = vs[j][1] ?? vs[j].lng;
-                const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
-                if (intersect) inside = !inside;
-            }
-            return inside;
-        }
-
-        let adminSimulatorLeafletMap = null;
-        let simulatorPinMarker = null;
-        let simulatorPolygonLayer = null;
-        let simulatorBuildingMarkers = [];
-        let activeSimPinCoords = null;
-        let isSimPinInsideCampus = false;
-        let simulatorDispatchLogs = [];
-
-        function populateSimulatorStudents() {
-            const select = document.getElementById('simulatorStudentSelect');
-            if (!select) return;
-            const currentSelected = select.value;
-            const students = (cachedUsers || []).filter((u) => getRoleKey(u) === 'student');
-
-            if (!students.length) {
-                select.innerHTML = '<option value="">No registered student profiles found</option>';
-                updateSimulatorStudentStatus();
-                return;
-            }
-
-            select.innerHTML = '<option value="">-- Choose a Student to Simulate --</option>' + students.map((s) => {
-                const label = `${escapeHtml(s.name || 'Student')} (${escapeHtml(s.studentId || s.email || s.id)})`;
-                return `<option value="${escapeHtml(s.id)}">${label}</option>`;
-            }).join('');
-
-            if (currentSelected && students.some((s) => s.id === currentSelected)) {
-                select.value = currentSelected;
-            } else if (students.length === 1) {
-                select.value = students[0].id;
-            }
-            updateSimulatorStudentStatus();
-        }
-
-        async function updateSimulatorStudentStatus() {
-            const select = document.getElementById('simulatorStudentSelect');
-            const badge = document.getElementById('simulatorStudentStatusBadge');
-            const metaText = document.getElementById('simulatorStudentMetaText');
-            if (!select || !badge || !metaText) return;
-
-            const studentId = select.value;
-            if (!studentId) {
-                badge.textContent = 'No student selected';
-                badge.style.background = 'white';
-                badge.style.color = 'var(--muted)';
-                badge.style.borderColor = '#e2e8f0';
-                metaText.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">info</span><span>Select a student above to trigger automated Time In or Time Out.</span>';
-                return;
-            }
-
-            const student = (cachedUsers || []).find((u) => u.id === studentId);
-            badge.textContent = 'Checking status...';
-
-            try {
-                const history = await getAttendanceHistory(studentId);
-                const latest = history?.[0];
-                if (latest && latest.type === 'in') {
-                    badge.innerHTML = '<span class="signal-dot" style="background:#0f9b67;"></span><span>Timed IN (On Campus)</span>';
-                    badge.style.background = 'rgba(15,155,103,0.1)';
-                    badge.style.color = 'var(--green)';
-                    badge.style.borderColor = 'rgba(15,155,103,0.2)';
-                } else if (latest && latest.type === 'out') {
-                    badge.innerHTML = '<span class="signal-dot" style="background:#d11f34;"></span><span>Timed OUT (Off Campus)</span>';
-                    badge.style.background = 'rgba(209,31,52,0.1)';
-                    badge.style.color = 'var(--red)';
-                    badge.style.borderColor = 'rgba(209,31,52,0.2)';
-                } else {
-                    badge.textContent = 'No attendance logs yet';
-                    badge.style.background = 'rgba(90,31,224,0.06)';
-                    badge.style.color = 'var(--primary)';
-                    badge.style.borderColor = 'rgba(90,31,224,0.15)';
-                }
-
-                metaText.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">verified</span><span>Target: <strong>${escapeHtml(student?.name || 'Student')}</strong> &bull; ID: ${escapeHtml(student?.studentId || 'N/A')} &bull; Email: ${escapeHtml(student?.email || 'N/A')}</span>`;
-            } catch (err) {
-                badge.textContent = 'Status ready';
-            }
-        }
-
-        function renderSimulatorBuildingMarkers() {
-            if (!adminSimulatorLeafletMap) return;
-            simulatorBuildingMarkers.forEach((m) => adminSimulatorLeafletMap.removeLayer(m));
-            simulatorBuildingMarkers = [];
-
-            const buildings = getActiveAdminBuildings();
-            buildings.forEach((b) => {
-                if (!b?.coords || !Array.isArray(b.coords)) return;
-                const bIcon = L.divIcon({
-                    className: 'facility-marker-icon',
-                    html: `<div style="background:#2563eb; color:white; width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid white;"><span class="material-symbols-outlined" style="font-size:16px;">${b.icon || 'location_city'}</span></div>`,
-                    iconSize: [28, 28],
-                    iconAnchor: [14, 14]
-                });
-                const m = L.marker(b.coords, { icon: bIcon }).addTo(adminSimulatorLeafletMap);
-                m.bindTooltip(`<strong>${escapeHtml(b.name || 'Facility')}</strong>`, { direction: 'top', offset: [0, -14] });
-                simulatorBuildingMarkers.push(m);
-            });
-        }
-
-        function initAdminSimulatorMap() {
-            const mapEl = document.getElementById('adminSimulatorMap');
-            if (!mapEl || typeof L === 'undefined') return;
-
-            if (!adminSimulatorLeafletMap) {
-                adminSimulatorLeafletMap = L.map('adminSimulatorMap', {
-                    zoomControl: true,
-                    attributionControl: false,
-                    zoomSnap: 0.25,
-                    zoomDelta: 0.5,
-                    wheelPxPerZoomLevel: 140
-                }).setView(ADMIN_CAMPUS_CENTER, 17);
-
-                const simBaseMaps = {
-                    "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                    "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                    "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                    "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
-                };
-                simBaseMaps["Google Hybrid"].addTo(adminSimulatorLeafletMap);
-                L.control.layers(simBaseMaps, null, { position: 'topright' }).addTo(adminSimulatorLeafletMap);
-
-                const geofence = getActiveAdminGeofencePolygon();
-                simulatorPolygonLayer = L.polygon(geofence, {
-                    color: '#0f9b67',
-                    weight: 3,
-                    dashArray: '6, 6',
-                    fillColor: '#10b981',
-                    fillOpacity: 0.15
-                }).addTo(adminSimulatorLeafletMap);
-
-                renderSimulatorBuildingMarkers();
-
-                adminSimulatorLeafletMap.on('click', (e) => {
-                    const lat = Number(e.latlng.lat);
-                    const lng = Number(e.latlng.lng);
-                    activeSimPinCoords = [lat, lng];
-                    isSimPinInsideCampus = isPointInPolygon([lat, lng], currentAdminGeofence);
-
-                    if (simulatorPinMarker) {
-                        adminSimulatorLeafletMap.removeLayer(simulatorPinMarker);
-                    }
-
-                    const pinColor = isSimPinInsideCampus ? '#0f9b67' : '#d11f34';
-                    const pinIconName = isSimPinInsideCampus ? 'login' : 'logout';
-                    const pinHtml = `<div style="width:34px; height:34px; border-radius:50%; background:${pinColor}; border:3px solid white; box-shadow:0 0 16px ${pinColor}88; display:flex; align-items:center; justify-content:center; color:white;"><span class="material-symbols-outlined" style="font-size:18px;">${pinIconName}</span></div>`;
-
-                    simulatorPinMarker = L.marker([lat, lng], {
-                        icon: L.divIcon({ className: 'sim-pin-icon', html: pinHtml, iconSize: [34, 34], iconAnchor: [17, 17] })
-                    }).addTo(adminSimulatorLeafletMap);
-
-                    const badge = document.getElementById('simulatorPinStatusBadge');
-                    const badgeText = document.getElementById('simulatorPinStatusText');
-                    const coordsText = document.getElementById('simulatorPinCoordsText');
-                    const zoneText = document.getElementById('simulatorPinZoneText');
-                    const dispatchBtn = document.getElementById('btnDispatchPinAttendance');
-
-                    if (coordsText) coordsText.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                    if (badge) {
-                        badge.style.background = isSimPinInsideCampus ? 'rgba(15,155,103,0.12)' : 'rgba(209,31,52,0.12)';
-                        badge.style.color = isSimPinInsideCampus ? 'var(--green)' : 'var(--red)';
-                    }
-                    if (badgeText) {
-                        badgeText.textContent = isSimPinInsideCampus ? 'Inside Campus (Time In)' : 'Outside Campus (Time Out)';
-                    }
-                    if (zoneText) {
-                        zoneText.textContent = isSimPinInsideCampus ? 'Position inside school perimeter. Dispatching will trigger Time In.' : 'Position outside campus boundary. Dispatching will trigger Time Out.';
-                    }
-                    if (dispatchBtn) dispatchBtn.disabled = false;
-                });
-            } else {
-                if (simulatorPolygonLayer) {
-                    simulatorPolygonLayer.setLatLngs(getActiveAdminGeofencePolygon());
-                }
-                renderSimulatorBuildingMarkers();
-            }
-
-            setTimeout(() => {
-                if (adminSimulatorLeafletMap) adminSimulatorLeafletMap.invalidateSize();
-            }, 100);
-        }
-
-        async function executeSimulatorAttendance(actionType, customLat = null, customLng = null, customAddress = '') {
-            const select = document.getElementById('simulatorStudentSelect');
-            const studentId = select?.value;
-
-            if (!studentId) {
-                showToast("Select Student", "Please choose a student profile to simulate.", "error");
-                return;
-            }
-
-            const student = (cachedUsers || []).find((u) => u.id === studentId);
-            const studentName = student?.name || 'Student';
-
-            let lat = customLat;
-            let lng = customLng;
-            let address = customAddress;
-
-            if (lat === null || lng === null) {
-                if (actionType === 'in') {
-                    lat = ADMIN_CAMPUS_CENTER[0];
-                    lng = ADMIN_CAMPUS_CENTER[1];
-                    address = address || 'Campus Main Grounds (Admin Simulator)';
-                } else {
-                    lat = 14.526800;
-                    lng = 120.978500;
-                    address = address || 'Outside Campus Bounds (Admin Simulator)';
-                }
-            }
-
-            const btnIn = document.getElementById('btnSimulateTimeIn');
-            const btnOut = document.getElementById('btnSimulateTimeOut');
-            const btnPin = document.getElementById('btnDispatchPinAttendance');
-
-            // (2026-07-13) Fast parallel dispatch & button loader; was slow serial
-            const isFromPin = customLat !== null && customLng !== null;
-            const originalPinHtml = btnPin?.innerHTML;
-            const originalInHtml = btnIn?.innerHTML;
-            const originalOutHtml = btnOut?.innerHTML;
-
-            if (btnIn) {
-                btnIn.disabled = true;
-                if (!isFromPin && actionType === 'in') {
-                    btnIn.innerHTML = `<span class="material-symbols-outlined spin-icon" style="font-size:18px;">progress_activity</span><span>Triggering Entry...</span>`;
-                }
-            }
-            if (btnOut) {
-                btnOut.disabled = true;
-                if (!isFromPin && actionType === 'out') {
-                    btnOut.innerHTML = `<span class="material-symbols-outlined spin-icon" style="font-size:18px;">progress_activity</span><span>Triggering Exit...</span>`;
-                }
-            }
-            if (btnPin) {
-                btnPin.disabled = true;
-                if (isFromPin) {
-                    btnPin.innerHTML = `<span class="material-symbols-outlined spin-icon" style="font-size:18px;">progress_activity</span><span>Dispatching...</span>`;
-                }
-            }
-
-            try {
-                const locationPayload = { lat, lng, address, simulated: true };
-                const [, , notifiedGuardians] = await Promise.all([
-                    logAttendance(studentId, actionType, locationPayload),
-                    updateStudentLiveLocation(studentId, { lat, lng }).catch(() => {}),
-                    notifyGuardiansOfGeofenceEvent(studentId, studentName, actionType, locationPayload).catch(() => [])
-                ]);
-
-                const logItem = {
-                    id: Date.now(),
-                    studentName,
-                    studentId: student?.studentId || studentId,
-                    type: actionType,
-                    coords: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-                    address,
-                    timestamp: new Date(),
-                    guardianCount: Array.isArray(notifiedGuardians) ? notifiedGuardians.length : 0
-                };
-
-                simulatorDispatchLogs.unshift(logItem);
-                renderSimulatorDispatchLogs();
-                updateSimulatorStudentStatus();
-
-                const actionLabel = actionType === 'in' ? 'Timed IN (Campus Entry)' : 'Timed OUT (Campus Exit)';
-                showToast("Simulation Successful", `${studentName} was ${actionLabel}. Parents notified.`, "success");
-            } catch (err) {
-                console.warn("Simulator dispatch error:", err);
-                showToast("Simulation Failed", err.message || "Could not complete simulation dispatch.", "error");
-            } finally {
-                if (btnIn) {
-                    btnIn.disabled = false;
-                    if (originalInHtml) btnIn.innerHTML = originalInHtml;
-                }
-                if (btnOut) {
-                    btnOut.disabled = false;
-                    if (originalOutHtml) btnOut.innerHTML = originalOutHtml;
-                }
-                if (btnPin) {
-                    if (originalPinHtml) btnPin.innerHTML = originalPinHtml;
-                    if (activeSimPinCoords) btnPin.disabled = false;
-                }
-            }
-        }
-
-        function renderSimulatorDispatchLogs() {
-            const container = document.getElementById('simulatorDispatchLogsList');
-            if (!container) return;
-
-            if (!simulatorDispatchLogs.length) {
-                container.innerHTML = '<div class="empty-state">No simulated attendance dispatches recorded yet. Use the trigger buttons above to test.</div>';
-                return;
-            }
-
-            container.innerHTML = simulatorDispatchLogs.map((log) => {
-                const isEntry = log.type === 'in';
-                const timeStr = log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : 'Just now';
-                return `
-                    <div class="user-row" style="grid-template-columns: minmax(0, 1.4fr) 1fr 1.2fr 0.9fr auto;">
-                        <div class="user-cell-primary">
-                            <div class="user-avatar" style="background:${isEntry ? 'linear-gradient(135deg, #0f9b67, #10b981)' : 'linear-gradient(135deg, #e11d48, #f43f5e)'}; color:white;">
-                                ${escapeHtml((log.studentName || 'S').charAt(0).toUpperCase())}
-                            </div>
-                            <div>
-                                <div class="row-title">${escapeHtml(log.studentName)}</div>
-                                <div class="row-sub">ID: ${escapeHtml(log.studentId)}</div>
-                            </div>
-                        </div>
-                        <div>
-                            <span class="role-pill ${isEntry ? 'student' : 'staff'}" style="${isEntry ? 'background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;' : 'background:#fff1f2; color:#9f1239; border:1px solid #fecdd3;'}">
-                                <span class="material-symbols-outlined" style="font-size:14px;">${isEntry ? 'login' : 'logout'}</span>
-                                <span>${isEntry ? 'Auto Timed In' : 'Auto Timed Out'}</span>
-                            </span>
-                        </div>
-                        <div>
-                            <div style="font-weight:700; font-size:0.84rem;">${escapeHtml(log.address)}</div>
-                            <div style="font-size:0.75rem; color:var(--muted); font-family:monospace;">${escapeHtml(log.coords)}</div>
-                        </div>
-                        <div style="font-size:0.8rem; color:var(--muted); font-weight:600;">
-                            ${timeStr}
-                        </div>
-                        <div style="text-align:right;">
-                            <span class="capsule" style="background:rgba(90,31,224,0.08); color:var(--primary); font-size:0.72rem; min-height:28px;">
-                                <span class="material-symbols-outlined" style="font-size:14px;">send</span>
-                                <span>Push Notified (${log.guardianCount})</span>
-                            </span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function setupSimulatorControls() {
-            const btnIn = document.getElementById('btnSimulateTimeIn');
-            const btnOut = document.getElementById('btnSimulateTimeOut');
-            const btnPin = document.getElementById('btnDispatchPinAttendance');
-            const btnRefresh = document.getElementById('btnRefreshSimStudents');
-            const btnClear = document.getElementById('btnClearSimLogs');
-            const select = document.getElementById('simulatorStudentSelect');
-
-            if (btnIn && !btnIn.dataset.bound) {
-                btnIn.dataset.bound = 'true';
-                btnIn.addEventListener('click', () => executeSimulatorAttendance('in'));
-            }
-            if (btnOut && !btnOut.dataset.bound) {
-                btnOut.dataset.bound = 'true';
-                btnOut.addEventListener('click', () => executeSimulatorAttendance('out'));
-            }
-            if (btnPin && !btnPin.dataset.bound) {
-                btnPin.dataset.bound = 'true';
-                btnPin.addEventListener('click', () => {
-                    if (!activeSimPinCoords) return;
-                    const action = isSimPinInsideCampus ? 'in' : 'out';
-                    const addr = isSimPinInsideCampus ? 'Inside Campus Perimeter (Pin Dispatch)' : 'Outside Campus Boundary (Pin Dispatch)';
-                    executeSimulatorAttendance(action, activeSimPinCoords[0], activeSimPinCoords[1], addr);
-                });
-            }
-            if (btnRefresh && !btnRefresh.dataset.bound) {
-                btnRefresh.dataset.bound = 'true';
-                btnRefresh.addEventListener('click', () => {
-                    populateSimulatorStudents();
-                    showToast("Directory Refreshed", "Student profiles updated for simulation.", "info");
-                });
-            }
-            if (btnClear && !btnClear.dataset.bound) {
-                btnClear.dataset.bound = 'true';
-                btnClear.addEventListener('click', () => {
-                    simulatorDispatchLogs = [];
-                    renderSimulatorDispatchLogs();
-                });
-            }
-            if (select && !select.dataset.bound) {
-                select.dataset.bound = 'true';
-                select.addEventListener('change', () => updateSimulatorStudentStatus());
-            }
-        }
-
         // (2026-07-13) Verified reporter metadata resolution for SOS logs; was raw uid string
         function getReporterInfo(log) {
             const rawUid = String(log?.userId || log?.studentUid || log?.reporterId || '').trim();
@@ -5339,41 +4039,30 @@
                 const triggerButton = event.target.closest('[data-user-action-trigger]');
                 if (triggerButton) {
                     event.stopPropagation();
-                    // (2026-07-13) Pass trigger element for portal positioning; was no element
-                    toggleUserActionMenu(triggerButton.dataset.userActionTrigger, triggerButton);
+                    toggleUserActionMenu(triggerButton.dataset.userActionTrigger);
                     return;
                 }
-            });
-        }
 
-        // (2026-07-13) Portal click delegate for Edit/Delete; was inline in list
-        document.addEventListener('click', (event) => {
-            const portal = document.getElementById('userActionPortal');
-            const actionItem = event.target.closest('[data-user-action][data-user-id]');
-            if (actionItem) {
+                const actionItem = event.target.closest('[data-user-action][data-user-id]');
+                if (!actionItem) return;
                 event.stopPropagation();
                 const selectedUser = getManagedUserById(actionItem.dataset.userId);
                 if (!selectedUser) return;
-                openUserActionMenuId = null;
-                if (portal) portal.style.display = 'none';
-                renderManagedUsers();
 
                 if (actionItem.dataset.userAction === 'edit') {
+                    openUserActionMenuId = null;
                     setUserEditorState(selectedUser);
                     openUserEditorModal();
                     return;
                 }
+
                 if (actionItem.dataset.userAction === 'delete') {
+                    openUserActionMenuId = null;
+                    renderManagedUsers();
                     window.handleDeleteUser(actionItem.dataset.userId, actionItem.dataset.userName || selectedUser.name || 'this user');
                 }
-                return;
-            }
-            // Close portal on outside click
-            if (portal && portal.style.display !== 'none') {
-                const isInsidePortal = portal.contains(event.target);
-                if (!isInsidePortal) closeUserActionMenu();
-            }
-        });
+            });
+        }
 
         if (createUserBtn) {
             createUserBtn.addEventListener('click', () => {
@@ -5386,6 +4075,9 @@
         closeUserModalBtn?.addEventListener('click', closeUserEditorModal);
         userEditorModal?.addEventListener('click', (event) => {
             if (event.target === userEditorModal) closeUserEditorModal();
+        });
+        document.addEventListener('click', () => {
+            closeUserActionMenu();
         });
 
         if (resetUserEditorBtn) {
@@ -5578,6 +4270,7 @@
         }
 
         function initAdminChat() {
+            // (2026-09-30) Allow reinit after auth sets real UID; was blocking on any existing sub
             if (unsubscribeAdminThreads) return;
             // (2026-09-09) pass real adminUid so Firestore rules accept the read
             unsubscribeAdminThreads = getAllChatThreads(currentAdminUid, (threads) => {
@@ -5603,12 +4296,10 @@
                 const unread = isThreadUnread(thread);
                 const displayName = thread.senderLabel || thread.senderName || 'Anonymous';
                 const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase();
-                // (2026-07-13) Mark guardian thread avatar with red; was unstyled
-                const isGuardian = (cachedUsers.find(u => u.id === otherUserId)?.role === 'guardian') || thread.senderRole === 'guardian';
 
                 return `
                     <div class="thread-item ${isActive ? 'active' : ''} ${unread ? 'unread' : ''}" data-thread-id="${thread.threadId}" data-other-user-id="${otherUserId}" data-other-user-name="${displayName}">
-                        <div class="thread-avatar ${isGuardian ? 'guardian' : ''}">${initials}</div>
+                        <div class="thread-avatar">${initials}</div>
                         <div class="thread-info">
                             <div class="thread-name">${displayName}</div>
                             <div class="thread-preview">${thread.text}</div>
@@ -5668,9 +4359,6 @@
             seenAdminThreads.set(threadId, Date.now());
             activeUserName.textContent = userName || 'User';
             activeUserAvatar.textContent = (userName || 'U').split(" ").map(n => n[0]).join("").toUpperCase();
-            // (2026-07-13) Set red avatar for guardian thread; was purple
-            const activeUserObj = cachedUsers.find(u => u.id === userId);
-            activeUserAvatar.classList.toggle('guardian', activeUserObj?.role === 'guardian' || getRoleKey(activeUserObj) === 'guardian');
             
             adminChatInput.disabled = false;
             adminSendBtn.disabled = false;
@@ -5685,19 +4373,17 @@
             renderThreads(cachedThreads);
         };
 
-        // (2026-07-13) Display date and time in messages; was time only
         function renderAdminMessages(messages) {
             adminChatMessages.innerHTML = "";
             messages.forEach(msg => {
                 const isSent = msg.senderId === ADMIN_ID;
                 const date = msg.timestamp?.toDate?.() || new Date(msg.localTime || Date.now());
-                const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
                 const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
 
                 const msgEl = document.createElement("div");
                 msgEl.className = `admin-msg ${isSent ? 'sent' : 'received'}`;
                 if (msg.isPending) msgEl.style.opacity = "0.7";
-                msgEl.innerHTML = `${msg.text}<span class="msg-time">${dateStr} · ${timeStr}</span>`;
+                msgEl.innerHTML = `${msg.text}<span class="msg-time">${timeStr}</span>`;
                 adminChatMessages.appendChild(msgEl);
             });
             adminChatMessages.scrollTo({ top: adminChatMessages.scrollHeight, behavior: 'smooth' });
@@ -5711,10 +4397,7 @@
             const msgEl = document.createElement("div");
             msgEl.className = "admin-msg sent";
             msgEl.style.opacity = "0.7";
-            const now = new Date();
-            const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
-            const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
-            msgEl.innerHTML = `${text}<span class="msg-time">${dateStr} · ${timeStr}</span>`;
+            msgEl.innerHTML = `${text}<span class="msg-time">${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}</span>`;
             adminChatMessages.appendChild(msgEl);
             adminChatMessages.scrollTo({ top: adminChatMessages.scrollHeight, behavior: 'smooth' });
             adminChatInput.value = "";
@@ -5838,8 +4521,8 @@
                     return;
                 }
 
-                if (isCreatingManagedUser && password.length < 8) {
-                    showToast("Missing password", "New sign-in accounts need a password with at least 8 characters.", "error");
+                if (isCreatingManagedUser && password.length < 6) {
+                    showToast("Missing password", "New sign-in accounts need a password with at least 6 characters.", "error");
                     return;
                 }
 
@@ -5870,7 +4553,7 @@
                         : raw.includes('invalid-email')
                         ? 'Please enter a valid email address.'
                         : raw.includes('weak-password')
-                        ? 'Password must be at least 8 characters.'
+                        ? 'Password must be at least 6 characters.'
                         : 'Could not save this user profile.';
                     showToast("Save failed", friendly, "error");
                 } finally {

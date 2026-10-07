@@ -128,16 +128,78 @@
             animation: spin 0.8s linear infinite;
         }
 
+        /* (2026-10-07) Page-load + micro animations; was spin only */
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.88); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes shimmer {
+            0%   { background-position: -200% 0; }
+            100% { background-position:  200% 0; }
+        }
+
+        @keyframes avatarPop {
+            0%   { transform: scale(0.7) rotate(-6deg); opacity: 0; }
+            70%  { transform: scale(1.06) rotate(1deg); opacity: 1; }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        /* (2026-10-07) Page shell + stagger entry animations; was static */
         .page-shell {
             width: 100%;
             max-width: 520px;
             margin: 0 auto;
         }
 
+
+        /* Staggered card fade-up */
+        .profile-stack > * {
+            animation: fadeUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .profile-stack > *:nth-child(1) { animation-delay: 0.05s; }
+        .profile-stack > *:nth-child(2) { animation-delay: 0.12s; }
+        .profile-stack > *:nth-child(3) { animation-delay: 0.19s; }
+        .profile-stack > *:nth-child(4) { animation-delay: 0.26s; }
+        .profile-stack > *:nth-child(5) { animation-delay: 0.33s; }
+
+        /* Avatar pop-in */
+        .profile-avatar {
+            animation: avatarPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s both;
+        }
+
+        /* Hero cover shimmer sweep */
+        .hero-cover::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                105deg,
+                transparent 35%,
+                rgba(255,255,255,0.12) 50%,
+                transparent 65%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 2.8s ease-in-out 0.3s infinite;
+            pointer-events: none;
+        }
+
+        /* (2026-10-07) Topbar: merged layout + slide-in animation; was missing animation */
         .profile-topbar {
             position: sticky;
             top: 0;
@@ -154,6 +216,7 @@
             box-shadow: 0 12px 30px rgba(49, 30, 105, 0.10);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
+            animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
         .profile-topbar-title {
@@ -524,6 +587,37 @@
             color: var(--red);
         }
 
+        .context-menu {
+            position: fixed;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 6px;
+            z-index: 9999;
+            min-width: 180px;
+        }
+
+        .context-menu-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: transparent;
+            border: none;
+            color: var(--red);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .context-menu-btn:hover {
+            background: var(--surface-soft);
+        }
+
         .empty-state {
             padding: 24px 18px;
             border-radius: 18px;
@@ -813,31 +907,122 @@
             font-variation-settings: 'FILL' 1;
         }
 
-        @media (max-width: 520px) {
-            body {
-                padding-inline: 12px;
+        /* (2026-10-07) Expanded media queries; was single 520px breakpoint */
+
+        /* ── Tablet / mid-screen ── */
+        @media (min-width: 521px) and (max-width: 768px) {
+            body { padding-inline: 20px; }
+
+            .hero-cover { height: 140px; }
+
+            .profile-avatar {
+                width: 84px;
+                height: 84px;
+                font-size: 1.7rem;
             }
 
+            .profile-name-input { font-size: 1.5rem; }
+
+            .btn-primary,
+            .btn-secondary,
+            .btn-danger { min-height: 50px; }
+        }
+
+        /* ── Phone (≤ 520px) ── */
+        @media (max-width: 520px) {
+            body { padding-inline: 12px; }
+
             .hero-body,
-            .profile-card {
-                padding-inline: 18px;
-            }
+            .profile-card { padding-inline: 18px; }
 
             .profile-topbar {
                 margin-inline: -16px;
                 padding-inline: 16px;
+                border-radius: 0 0 18px 18px;
             }
+
+            .hero-cover { height: 130px; }
+
+            .profile-avatar {
+                width: 80px;
+                height: 80px;
+                font-size: 1.65rem;
+                border-radius: 24px;
+            }
+
+            .profile-name-input { font-size: 1.4rem; }
 
             .hero-actions,
             .section-actions,
-            .footer-actions {
-                flex-direction: column;
-            }
+            .footer-actions { flex-direction: column; }
 
             .hero-actions > *,
             .section-actions > *,
-            .footer-actions > * {
-                width: 100%;
+            .footer-actions > * { width: 100%; }
+
+            .card-head { flex-wrap: wrap; }
+
+            .id-chip { font-size: 0.78rem; }
+
+            .connection-item { flex-wrap: wrap; }
+            .connection-side { justify-items: start; }
+
+            .status-card {
+                border-radius: 24px;
+                padding: 28px 22px 22px;
+            }
+
+            .sos-fab {
+                right: 16px;
+                bottom: 16px;
+                width: 56px;
+                height: 56px;
+            }
+
+            .sos-fab .material-symbols-outlined { font-size: 28px; }
+        }
+
+        /* ── Small phone (≤ 360px) ── */
+        @media (max-width: 360px) {
+            body { padding-inline: 8px; padding-bottom: 100px; }
+
+            .profile-topbar {
+                margin-inline: -12px;
+                padding-inline: 12px;
+            }
+
+            .hero-body,
+            .profile-card { padding-inline: 14px; }
+
+            .hero-cover { height: 110px; }
+
+            .profile-avatar {
+                width: 70px;
+                height: 70px;
+                font-size: 1.45rem;
+                border-radius: 20px;
+            }
+
+            .profile-name-input { font-size: 1.25rem; }
+
+            .eyebrow { font-size: 0.65rem; padding: 5px 10px; }
+
+            .btn-primary,
+            .btn-secondary,
+            .btn-danger { min-height: 48px; font-size: 0.88rem; }
+
+            .input-field { min-height: 48px; }
+
+            .status-card {
+                border-radius: 20px;
+                padding: 24px 18px 18px;
+            }
+
+            .sos-fab {
+                right: 12px;
+                bottom: 12px;
+                width: 52px;
+                height: 52px;
             }
         }
     </style>
@@ -1046,6 +1231,23 @@
                     <span>Sign Out</span>
                 </button>
             </div>
+        </div>
+
+        <!-- Status Toast -->
+        <div id="statusToast" class="status-toast is-hidden">
+            <span id="statusIcon" class="material-symbols-outlined status-toast-icon">check_circle</span>
+            <div class="status-toast-content">
+                <span id="statusTitle" class="status-toast-title">Success</span>
+                <span id="statusMessage" class="status-toast-message">Action completed successfully.</span>
+            </div>
+        </div>
+
+        <!-- Guardian Context Menu -->
+        <div id="guardianContextMenu" class="context-menu is-hidden">
+            <button id="cancelGuardianBtn" class="context-menu-btn" type="button">
+                <span class="material-symbols-outlined">person_remove</span>
+                <span>Remove Guardian</span>
+            </button>
         </div>
     </main>
 
@@ -1540,7 +1742,7 @@
                 const badgeText = status === 'accepted' ? (state.role === 'guardian' ? 'Active Child' : 'Parent Now') : status === 'rejected' ? 'Declined' : 'Pending';
 
                 return `
-                    <div class="connection-item">
+                    <div class="connection-item" data-link-id="${link.id}" data-link-action="${status === 'pending' ? 'cancel' : 'remove'}">
                         <div class="connection-main">
                             <span class="connection-name">${primary}</span>
                             <span class="connection-meta">${secondary}</span>
@@ -1985,6 +2187,63 @@
                 await showStatus('Deletion Failed', err.message || 'Could not delete account. Check password.', 'error');
             } finally {
                 setButtonBusy(confirmDeleteBtn, false);
+            }
+        });
+
+        // Guardian Context Menu Logic
+        const guardianContextMenu = document.getElementById('guardianContextMenu');
+        const cancelGuardianBtn = document.getElementById('cancelGuardianBtn');
+        let currentContextLinkId = null;
+        let currentContextLinkAction = null;
+
+        document.addEventListener('click', () => {
+            if (guardianContextMenu) guardianContextMenu.classList.add('is-hidden');
+        });
+
+        connectionsList?.addEventListener('contextmenu', (event) => {
+            if (state.role === 'guardian') return; // Guardian has buttons
+            const item = event.target.closest('.connection-item[data-link-id]');
+            if (!item) return;
+
+            event.preventDefault();
+            currentContextLinkId = item.dataset.linkId;
+            currentContextLinkAction = item.dataset.linkAction || 'remove';
+            
+            const btnText = currentContextLinkAction === 'cancel' ? 'Cancel Request' : 'Remove Guardian';
+            cancelGuardianBtn.querySelector('span:last-child').textContent = btnText;
+
+            guardianContextMenu.style.left = `${event.clientX}px`;
+            guardianContextMenu.style.top = `${event.clientY}px`;
+            guardianContextMenu.classList.remove('is-hidden');
+        });
+
+        cancelGuardianBtn?.addEventListener('click', async () => {
+            if (!currentContextLinkId) return;
+            const linkId = currentContextLinkId;
+            const action = currentContextLinkAction;
+            
+            const link = (state.connections || []).find((entry) => String(entry.id) === String(linkId));
+            const label = link?.guardianName || 'this guardian';
+            
+            setButtonBusy(cancelGuardianBtn, true);
+            try {
+                await removeGuardianLink(linkId);
+                await loadConnections();
+                await showStatus(
+                    action === 'cancel' ? 'Request Cancelled' : 'Guardian Removed',
+                    action === 'cancel'
+                        ? `Your request for ${label} has been cancelled.`
+                        : `${label} has been removed from your profile.`
+                );
+            } catch (error) {
+                await showStatus(
+                    action === 'cancel' ? 'Cancel Failed' : 'Remove Failed',
+                    error.message || 'Could not update this guardian link right now.',
+                    'error'
+                );
+            } finally {
+                setButtonBusy(cancelGuardianBtn, false);
+                guardianContextMenu.classList.add('is-hidden');
             }
         });
 

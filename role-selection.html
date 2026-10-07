@@ -204,6 +204,16 @@
             color: var(--muted);
         }
 
+        /* (2026-10-07) Footer links shared style; was only Admin Terminal */
+        .footer-note a {
+            color: inherit;
+            text-decoration: none;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+
+        .footer-note a:hover { opacity: 0.9; }
+
         /* Mobile specific adjustments */
         @media (max-width: 480px) {
             h1 { font-size: 1.75rem; }
@@ -261,7 +271,10 @@
 
         <div class="footer-note">
             <p>&copy; 2026 Securo Campus Safety Systems</p>
-            <a href="admin-login.html" style="color: inherit; text-decoration: none; opacity: 0.5;">Admin Terminal</a>
+            <!-- (2026-10-07) About Securo link above admin; was none -->
+            <a href="about.html">About Securo</a>
+            &nbsp;&middot;&nbsp;
+            <a href="admin-login.html">Admin Terminal</a>
         </div>
     </div>
 

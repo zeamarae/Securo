@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -169,30 +169,30 @@
         }
 
         .notif-dropdown {
-            position: fixed;
-            inset: 0;
-            background: rgba(20, 18, 34, 0.76);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            position: absolute;
+            top: 50px;
+            right: 0;
+            width: 320px;
+            background: transparent;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
             display: none;
-            align-items: stretch;
-            justify-content: stretch;
             z-index: 9000;
-            padding: 0;
+            padding: 10px;
         }
 
         .notif-dropdown.active {
-            display: flex;
+            display: block;
         }
 
         .notif-panel {
             width: 100%;
-            height: 100%;
-            max-height: none;
+            height: auto;
+            max-height: 400px;
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 245, 255, 0.96) 100%);
-            border: none;
-            border-radius: 0;
-            box-shadow: none;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow);
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -4071,7 +4071,24 @@
             .screen-content {
                 padding: 0;
                 padding-bottom: 80px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
+
+            /* Center and bound content pages on desktop, except for the Map */
+            .page:not(#page-map) {
+                width: 100%;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 40px 32px 100px;
+            }
+
+            #page-map {
+                width: 100%;
+                max-width: none;
+            }
+
 
             /* (2026-07-13) Set compact topbar padding on larger screens; was 18px 28px 16px */
             .topbar {
@@ -4859,6 +4876,133 @@
                 padding: 20px 16px 28px;
             }
         }
+
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutUp {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutDown {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes popUp {
+            0% {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+
+            70% {
+                transform: scale(1.05);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .anim-slide-in-down {
+            animation: slideInDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .anim-slide-out-up {
+            animation: slideOutUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .anim-pop-up {
+            animation: popUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .swipe-to-close-element {
+            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        /* Feature switch swiping animation */
+        @keyframes swipeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .page.active {
+            animation: swipeInRight 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        /* Hover and active animations for interactive elements */
+        button,
+        .nav-item,
+        .vault-card,
+        .history-item,
+        .menu-item,
+        .status-btn {
+            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, opacity 0.2s ease !important;
+        }
+
+        button:hover:not(:disabled),
+        .nav-item:hover,
+        .vault-card:hover,
+        .history-item:hover,
+        .menu-item:hover,
+        .status-btn:hover {
+            transform: translateY(-2px) scale(1.02);
+            cursor: pointer;
+        }
+
+        button:active:not(:disabled),
+        .nav-item:active,
+        .vault-card:active,
+        .history-item:active,
+        .menu-item:active,
+        .status-btn:active {
+            transform: translateY(1px) scale(0.97);
+        }
     </style>
 </head>
 
@@ -4992,7 +5136,8 @@
                                         <span class="material-symbols-outlined">my_location</span>
                                     </button>
                                     <!-- (2026-07-13) Add share location button; was missing -->
-                                    <button class="map-btn" id="map-share-location" title="Send Live Location to Guardians">
+                                    <button class="map-btn" id="map-share-location"
+                                        title="Send Live Location to Guardians">
                                         <span class="material-symbols-outlined">share_location</span>
                                     </button>
                                     <button class="map-btn" id="map-recenter-campus" title="Center CTU Campus">
@@ -5211,76 +5356,128 @@
 
                         <!-- (2026-07-13) Upgrade GAD section to full GAD Portal with services and PM; was GAD bulletin -->
                         <section class="page" id="page-gad" data-page="gad">
-                            <!-- (2026-07-13) Remove eyebrow from GAD header; was eyebrow tag -->
-                            <div class="page-header" style="align-items: center; gap: 20px; margin-bottom: 24px;">
-                                <div class="icon-badge"
-                                    style="width: 64px; height: 64px; border-radius: 22px; background: linear-gradient(135deg, #f1ebff, #e4d7ff); color: #5a1fe0; box-shadow: 0 10px 20px rgba(90, 31, 224, 0.12); display:flex; align-items:center; justify-content:center;">
-                                    <span class="material-symbols-outlined" style="font-size: 32px;">diversity_3</span>
+                            <!-- Distinct Portal Theme Wrap -->
+                            <div
+                                style="margin: -16px -16px 20px; padding: 30px 20px 40px; background: linear-gradient(145deg, #2d1368 0%, #5a1fe0 100%); color: white; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; box-shadow: 0 15px 35px rgba(90, 31, 224, 0.2);">
+                                <div class="page-header" style="align-items: center; gap: 16px; margin-bottom: 24px;">
+                                    <div class="icon-badge"
+                                        style="width: 56px; height: 56px; border-radius: 18px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); color: white; display:flex; align-items:center; justify-content:center; box-shadow: 0 8px 16px rgba(0,0,0,0.1);">
+                                        <span class="material-symbols-outlined"
+                                            style="font-size: 28px;">diversity_3</span>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <h1 class="page-title"
+                                            style="margin: 0 0 2px; font-size: 1.8rem; font-family:'Sora', sans-serif; font-weight: 800; color: white;">
+                                            GAD Portal</h1>
+                                        <p
+                                            style="margin: 0; font-size: 0.85rem; color: rgba(255,255,255,0.85); line-height: 1.4;">
+                                            Equality, Inclusion & Safe Spaces</p>
+                                    </div>
                                 </div>
-                                <div style="flex: 1;">
-                                    <h1 class="page-title"
-                                        style="margin: 0 0 4px; font-size: 1.6rem; font-family:'Sora', sans-serif; font-weight: 800; color: var(--ink);">
-                                        GAD Portal</h1>
-                                    <p class="page-copy"
-                                        style="margin: 0; font-size: 0.88rem; color: var(--muted); line-height: 1.4;">
-                                        Campus gender equality, inclusion resources & safe spaces support.</p>
+
+                                <!-- Hero Action -->
+                                <div class="card vault-card"
+                                    style="padding: 20px; background: rgba(255, 255, 255, 0.95); color: var(--ink); border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.25);">
+                                    <div
+                                        style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px;">
+                                        <div>
+                                            <strong
+                                                style="font-size: 1.15rem; display:block; font-family:'Sora', sans-serif; font-weight: 800; color: #4311c5;">Confidential
+                                                GAD Desk</strong>
+                                            <span
+                                                style="font-size: 0.8rem; color: var(--muted); margin-top: 4px; display: block;">Direct
+                                                assistance, guidance, and completely safe reporting.</span>
+                                        </div>
+                                        <div
+                                            style="background: #f1ebff; width: 44px; height: 44px; border-radius: 14px; display:flex; justify-content:center; align-items:center; color: #5a1fe0;">
+                                            <span class="material-symbols-outlined"
+                                                style="font-size: 26px;">verified_user</span>
+                                        </div>
+                                    </div>
+                                    <button class="primary-btn" id="openGadPmBtn" type="button"
+                                        style="width:100%; background: linear-gradient(135deg, #ff4b61, #d71f35); color: white; font-weight: 800; border: none; box-shadow: 0 8px 20px rgba(215,31,53,0.3); min-height: 50px; border-radius: 16px; display:flex; align-items:center; justify-content:center; gap:8px; cursor: pointer;">
+                                        <span class="material-symbols-outlined">shield_person</span>
+                                        <span>Report / Message GAD</span>
+                                    </button>
                                 </div>
                             </div>
 
-                            <div class="section-stack">
-                                <!-- GAD Quick Services Grid -->
-                                <!-- (2026-07-13) Refine modern GAD Desk hero card; was basic card -->
-                                <div class="card"
-                                    style="padding: 18px 20px; background: linear-gradient(135deg, #5a1fe0, #3e0db8); color: white; border-radius: 22px; box-shadow: 0 10px 28px rgba(90, 31, 224, 0.22);">
-                                    <div
-                                        style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                                        <div>
-                                            <strong
-                                                style="font-size: 1.05rem; display:block; font-family:'Sora', sans-serif;">Confidential
-                                                GAD Desk</strong>
-                                            <span style="font-size: 0.78rem; opacity: 0.88;">Direct assistance,
-                                                guidance, and safe reporting</span>
+                            <div class="section-stack" style="padding: 0;">
+                                <h3
+                                    style="font-size: 0.95rem; font-family:'Sora', sans-serif; font-weight: 800; color: var(--ink); margin: 0 0 -4px 4px;">
+                                    Support Services</h3>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div class="card vault-card" onclick="openGadPmModal()"
+                                        style="padding: 16px; border-radius: 20px; border: 1px solid rgba(90,31,224,0.1); cursor: pointer; background: #ffffff; text-align: center;">
+                                        <div
+                                            style="width: 48px; height: 48px; border-radius: 16px; background: #fff0f2; color: #d11f34; display:flex; align-items:center; justify-content:center; margin: 0 auto 10px;">
+                                            <span class="material-symbols-outlined"
+                                                style="font-size: 24px;">gavel</span>
                                         </div>
-                                        <span class="material-symbols-outlined"
-                                            style="font-size: 28px; opacity:0.92;">verified_user</span>
-                                    </div>
-                                    <button class="primary-btn" id="openGadPmBtn" type="button"
-                                        style="width:100%; background: white; color: #5a1fe0; font-weight: 800; border: none; box-shadow: 0 8px 20px rgba(0,0,0,0.16); min-height: 46px; border-radius: 16px; display:flex; align-items:center; justify-content:center; gap:8px; cursor: pointer; transition: transform 0.16s ease;">
-                                        <span class="material-symbols-outlined">chat</span>
-                                        <span>Message GAD (PM / Anonymous)</span>
-                                    </button>
-                                </div>
-
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 2px;">
-                                    <div class="card" onclick="openGadPmModal()"
-                                        style="padding: 14px; border-radius: 18px; border: 1px solid rgba(90,31,224,0.1); cursor: pointer; background: #ffffff; transition: transform 0.16s ease, box-shadow 0.16s ease;">
-                                        <span class="material-symbols-outlined"
-                                            style="color: #5a1fe0; font-size: 24px;">balance</span>
-                                        <strong
-                                            style="display:block; font-size: 0.88rem; margin-top: 6px; color: var(--ink);">COSH
+                                        <strong style="display:block; font-size: 0.9rem; color: var(--ink);">COSH
                                             Office</strong>
                                         <p
-                                            style="font-size: 0.75rem; color: var(--muted); margin: 2px 0 0; line-height: 1.35;">
-                                            Anti-Sexual Harassment desk</p>
+                                            style="font-size: 0.72rem; color: var(--muted); margin: 4px 0 0; line-height: 1.3;">
+                                            Anti-Harassment Desk</p>
                                     </div>
-                                    <div class="card" onclick="openGadPmModal()"
-                                        style="padding: 14px; border-radius: 18px; border: 1px solid rgba(90,31,224,0.1); cursor: pointer; background: #ffffff; transition: transform 0.16s ease, box-shadow 0.16s ease;">
-                                        <span class="material-symbols-outlined"
-                                            style="color: #0f9b67; font-size: 24px;">psychology</span>
+                                    <div class="card vault-card" onclick="openGadPmModal()"
+                                        style="padding: 16px; border-radius: 20px; border: 1px solid rgba(15,155,103,0.1); cursor: pointer; background: #ffffff; text-align: center;">
+                                        <div
+                                            style="width: 48px; height: 48px; border-radius: 16px; background: #eefdf6; color: #0f9b67; display:flex; align-items:center; justify-content:center; margin: 0 auto 10px;">
+                                            <span class="material-symbols-outlined"
+                                                style="font-size: 24px;">psychology</span>
+                                        </div>
                                         <strong
-                                            style="display:block; font-size: 0.88rem; margin-top: 6px; color: var(--ink);">Counseling</strong>
+                                            style="display:block; font-size: 0.9rem; color: var(--ink);">Counseling</strong>
                                         <p
-                                            style="font-size: 0.75rem; color: var(--muted); margin: 2px 0 0; line-height: 1.35;">
-                                            Confidential wellbeing support</p>
+                                            style="font-size: 0.72rem; color: var(--muted); margin: 4px 0 0; line-height: 1.3;">
+                                            Wellbeing Support</p>
                                     </div>
                                 </div>
 
+                                <h3
+                                    style="font-size: 0.95rem; font-family:'Sora', sans-serif; font-weight: 800; color: var(--ink); margin: 12px 0 -4px 4px;">
+                                    Quick Resources</h3>
+                                <div style="display: flex; flex-direction: column; gap: 10px;">
+                                    <div class="card menu-item"
+                                        style="padding: 14px 16px; border-radius: 18px; display: flex; align-items: center; gap: 12px; background: white; border: 1px solid rgba(0,0,0,0.05); cursor: pointer;">
+                                        <div
+                                            style="width: 40px; height: 40px; border-radius: 12px; background: #f4f3ff; color: #5a1fe0; display:flex; justify-content:center; align-items:center;">
+                                            <span class="material-symbols-outlined">menu_book</span>
+                                        </div>
+                                        <div style="flex: 1;">
+                                            <strong style="font-size: 0.9rem; display:block;">Safe Spaces Act</strong>
+                                            <span style="font-size: 0.75rem; color: var(--muted);">Read campus
+                                                policies</span>
+                                        </div>
+                                        <span class="material-symbols-outlined"
+                                            style="color: var(--muted); font-size: 20px;">chevron_right</span>
+                                    </div>
+                                    <div class="card menu-item"
+                                        style="padding: 14px 16px; border-radius: 18px; display: flex; align-items: center; gap: 12px; background: white; border: 1px solid rgba(0,0,0,0.05); cursor: pointer;">
+                                        <div
+                                            style="width: 40px; height: 40px; border-radius: 12px; background: #fff8f0; color: #e07b00; display:flex; justify-content:center; align-items:center;">
+                                            <span class="material-symbols-outlined">contact_phone</span>
+                                        </div>
+                                        <div style="flex: 1;">
+                                            <strong style="font-size: 0.9rem; display:block;">External
+                                                Helplines</strong>
+                                            <span style="font-size: 0.75rem; color: var(--muted);">National emergency
+                                                contacts</span>
+                                        </div>
+                                        <span class="material-symbols-outlined"
+                                            style="color: var(--muted); font-size: 20px;">chevron_right</span>
+                                    </div>
+                                </div>
+
+                                <hr style="border: none; border-top: 1px solid rgba(0,0,0,0.08); margin: 12px 0;">
+
                                 <!-- GAD Sub-Navigation Tabs -->
-                                <div style="display:flex; gap: 8px; margin-top: 8px;">
+                                <div style="display:flex; gap: 8px; margin-top: 4px;">
                                     <button class="history-filter-btn active" id="gadTabAnnouncements" type="button"
-                                        onclick="switchGadTab('announcements')">Announcements</button>
+                                        onclick="switchGadTab('announcements')" style="flex:1;">Announcements</button>
                                     <button class="history-filter-btn" id="gadTabMyMessages" type="button"
-                                        onclick="switchGadTab('messages')">My Inquiries / Replies</button>
+                                        onclick="switchGadTab('messages')" style="flex:1;">My Inquiries</button>
                                 </div>
 
                                 <!-- Announcements Panel -->
@@ -5298,8 +5495,12 @@
                                 <!-- Student Inquiries / Messages Panel -->
                                 <div id="gadMessagesPanel" style="display: none;">
                                     <div id="gadInquiriesList">
-                                        <div style="text-align: center; padding: 30px; color: var(--muted);">No messages
-                                            sent yet. Use "Message GAD" above to start.</div>
+                                        <div
+                                            style="text-align: center; padding: 30px; color: var(--muted); background: white; border-radius: 18px; border: 1px dashed rgba(0,0,0,0.15);">
+                                            <span class="material-symbols-outlined"
+                                                style="font-size: 32px; opacity: 0.3; margin-bottom: 8px; display:block;">forum</span>
+                                            No messages sent yet. Use "Report / Message GAD" above to start.
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -5933,7 +6134,7 @@
         async function triggerDeviceVibration(duration = 1000) {
             try {
                 if (window.Capacitor?.Plugins?.Haptics) {
-                    await window.Capacitor.Plugins.Haptics.vibrate({ duration: typeof duration === 'number' ? duration : 1000 }).catch(() => {});
+                    await window.Capacitor.Plugins.Haptics.vibrate({ duration: typeof duration === 'number' ? duration : 1000 }).catch(() => { });
                     return;
                 }
             } catch (e) {
@@ -5943,14 +6144,14 @@
                 if (navigator.vibrate) {
                     navigator.vibrate(duration);
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
 
         async function triggerDevicePushNotification(title, body) {
             try {
                 if (window.Capacitor?.Plugins?.LocalNotifications) {
                     const LocalNotifications = window.Capacitor.Plugins.LocalNotifications;
-                    await LocalNotifications.requestPermissions().catch(() => {});
+                    await LocalNotifications.requestPermissions().catch(() => { });
                     await LocalNotifications.schedule({
                         notifications: [
                             {
@@ -5973,11 +6174,11 @@
 
             if ("Notification" in window) {
                 if (Notification.permission === "granted") {
-                    try { new Notification(title, { body, icon: "logo.png" }); } catch (e) {}
+                    try { new Notification(title, { body, icon: "logo.png" }); } catch (e) { }
                 } else if (Notification.permission !== "denied") {
                     Notification.requestPermission().then(perm => {
                         if (perm === "granted") {
-                            try { new Notification(title, { body, icon: "logo.png" }); } catch (e) {}
+                            try { new Notification(title, { body, icon: "logo.png" }); } catch (e) { }
                         }
                     });
                 }
@@ -6025,8 +6226,8 @@
                 calculateStats(updatedHistory);
                 updateAttendanceSummary(updatedHistory);
                 syncPendingAttendanceLogs().catch((e) => console.warn("Auto attendance sync failed:", e));
-                updateStudentLiveLocation(appState.user.uid, { lat, lng }).catch(() => {});
-                notifyGuardiansOfGeofenceEvent(appState.user.uid, appState.user.name || appState.user.displayName || 'Student', type, location).catch(() => {});
+                updateStudentLiveLocation(appState.user.uid, { lat, lng }).catch(() => { });
+                notifyGuardiansOfGeofenceEvent(appState.user.uid, appState.user.name || appState.user.displayName || 'Student', type, location).catch(() => { });
 
                 const notifTitle = type === 'in' ? "Campus Entry" : "Campus Exit";
                 const notifMsg = type === 'in'
@@ -6419,7 +6620,7 @@
                     updateOwnLocationHighlight(latlng, true);
                     map.flyTo(latlng, 18, { duration: 0.6 });
                     if (appState.user?.uid) {
-                        updateStudentLiveLocation(appState.user.uid, { lat: pos.coords.latitude, lng: pos.coords.longitude }).catch(() => {});
+                        updateStudentLiveLocation(appState.user.uid, { lat: pos.coords.latitude, lng: pos.coords.longitude }).catch(() => { });
                     }
                 },
                 () => {
@@ -6430,7 +6631,7 @@
                             updateOwnLocationHighlight(latlng, true);
                             map.flyTo(latlng, 18, { duration: 0.6 });
                             if (appState.user?.uid) {
-                                updateStudentLiveLocation(appState.user.uid, { lat: pos.coords.latitude, lng: pos.coords.longitude }).catch(() => {});
+                                updateStudentLiveLocation(appState.user.uid, { lat: pos.coords.latitude, lng: pos.coords.longitude }).catch(() => { });
                             }
                         },
                         () => {
@@ -6460,7 +6661,7 @@
                     appState.lastLocation = { lat, lng };
                     updateOwnLocationHighlight([lat, lng], true);
                     if (appState.user?.uid) {
-                        await updateStudentLiveLocation(appState.user.uid, { lat, lng }).catch(() => {});
+                        await updateStudentLiveLocation(appState.user.uid, { lat, lng }).catch(() => { });
                     }
                     updateTrackingStatusBanner();
                     if (isInteractive) {
@@ -7201,7 +7402,7 @@
                 const locality = data.locality || data.principalSubdivision || "";
                 const barangay = (data.localityInfo?.informative || []).find(i => /barangay|brgy/i.test(i.name) || i.description?.toLowerCase().includes("barangay"))?.name || "";
                 const city = data.city || data.localityInfo?.administrative?.find(a => a.adminLevel === 6 || a.adminLevel === 7)?.name || "Daanbantayan";
-                
+
                 if (barangay && city) return `${barangay}, ${city}`;
                 if (locality && city && locality !== city) return `${locality}, ${city}`;
                 if (locality) return locality;
@@ -8417,7 +8618,7 @@
                         title: "Securo - Parent Link",
                         text: "Dear Parent/Guardian please register here:",
                         url: link
-                    }).then(() => markGuardianLinkCopied()).catch(() => {});
+                    }).then(() => markGuardianLinkCopied()).catch(() => { });
                 }
             });
         }
@@ -8496,12 +8697,12 @@
                 const raw = localStorage.getItem("securo_user_directory");
                 const dir = raw ? JSON.parse(raw) : {};
                 cachedProfile = dir[user.uid] || null;
-            } catch (e) {}
+            } catch (e) { }
             if (!cachedProfile) {
                 try {
                     const localUsers = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '[]');
                     cachedProfile = localUsers.find(u => String(u.id) === String(user.uid));
-                } catch (e) {}
+                } catch (e) { }
             }
 
             if (cachedProfile?.role === 'guardian' || user.email?.startsWith('guardian.')) {
@@ -9802,7 +10003,7 @@
                 calculateStats(updatedHistory);
                 updateAttendanceSummary(updatedHistory);
                 syncPendingAttendanceLogs().catch((error) => console.warn("Attendance sync trigger failed:", error));
-                
+
                 const notifTitle = type === 'in' ? "Campus Entry" : "Campus Exit";
                 const notifMsg = type === 'in'
                     ? "You've entered the campus, successfully timed in."
@@ -10632,7 +10833,8 @@
 
                         <!-- Avatar Picker Section with 165px live camera circle -->
                         <div class="fs-avatar-picker-section">
-                            <div class="fs-avatar-circle-wrapper" id="fsAvatarCircleWrap" title="Click to snap selfie photo">
+                            <div class="fs-avatar-circle-wrapper" id="fsAvatarCircleWrap"
+                                title="Click to snap selfie photo">
                                 <div class="fs-avatar-circle" id="fsAvatarPreviewCircle">
                                     <video id="fsCircleLiveVideo" autoplay playsinline muted></video>
                                     <div class="fs-avatar-placeholder-content" id="fsAvatarPlaceholder">
@@ -10689,40 +10891,58 @@
                             <div class="fs-form-row-grid" style="margin-bottom: 20px;">
                                 <!-- Course Dropdown -->
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Course</label>
+                                    <label class="form-label"
+                                        style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Course</label>
                                     <div class="fs-input-field-wrap" style="position: relative;">
                                         <span class="material-symbols-outlined input-icon">school</span>
-                                        <select id="fsCourse" required style="width: 100%; border: none; background: transparent; outline: none; font-size: 0.92rem; font-weight: 700; color: var(--ink); padding: 0; height: 50px; appearance: none; cursor: pointer;">
+                                        <select id="fsCourse" required
+                                            style="width: 100%; border: none; background: transparent; outline: none; font-size: 0.92rem; font-weight: 700; color: var(--ink); padding: 0; height: 50px; appearance: none; cursor: pointer;">
                                             <option value="" disabled selected>Select course</option>
-                                            <option value="BSIT">Bachelor of Science in Information Technology (BSIT)</option>
-                                            <option value="BIT-Comp Tech">Bachelor in Industrial Technology- Major in Computer Technology (BIT-Comp Tech)</option>
-                                            <option value="BIT-Elex">Bachelor in Industrial Technology - Major in Electronics (BIT-Elex)</option>
-                                            <option value="BIT-Automotive">Bachelor in Industrial Technology - Major in Automotive (BIT-Automotive)</option>
-                                            <option value="BSIE">Bachelor of Science in Industrial Engineering (BSIE)</option>
-                                            <option value="BSHM">Bachelor of Science in Hospitality Management (BSHM)</option>
+                                            <option value="BSIT">Bachelor of Science in Information Technology (BSIT)
+                                            </option>
+                                            <option value="BIT-Comp Tech">Bachelor in Industrial Technology- Major in
+                                                Computer Technology (BIT-Comp Tech)</option>
+                                            <option value="BIT-Elex">Bachelor in Industrial Technology - Major in
+                                                Electronics (BIT-Elex)</option>
+                                            <option value="BIT-Automotive">Bachelor in Industrial Technology - Major in
+                                                Automotive (BIT-Automotive)</option>
+                                            <option value="BSIE">Bachelor of Science in Industrial Engineering (BSIE)
+                                            </option>
+                                            <option value="BSHM">Bachelor of Science in Hospitality Management (BSHM)
+                                            </option>
                                             <option value="BSFi">Bachelor of Science in Fisheries (BSFi)</option>
                                             <option value="BEEd">Bachelor of Elementary Education (BEEd)</option>
-                                            <option value="BSED-Math">Bachelor of Secondary Education - Major in Mathematics (BSED-Math)</option>
-                                            <option value="BTLEd-HE">Bachelor in Technology Livelihood Education - Major in Home Economics (BTLEd-HE)</option>
+                                            <option value="BSED-Math">Bachelor of Secondary Education - Major in
+                                                Mathematics (BSED-Math)</option>
+                                            <option value="BTLEd-HE">Bachelor in Technology Livelihood Education - Major
+                                                in Home Economics (BTLEd-HE)</option>
                                         </select>
-                                        <span class="material-symbols-outlined" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted);">arrow_drop_down</span>
+                                        <span class="material-symbols-outlined"
+                                            style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted);">arrow_drop_down</span>
                                     </div>
                                 </div>
 
                                 <!-- Year · Section -->
                                 <div class="form-group" style="margin-bottom: 0;">
-                                    <label class="form-label" style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Year · Section</label>
-                                    <div class="fs-input-field-wrap" style="display: flex; align-items: center; padding: 0 15px; gap: 8px;">
-                                        <span class="material-symbols-outlined input-icon" style="margin-right: 8px; flex-shrink: 0;">calendar_today</span>
-                                        <input type="text" id="fsYearLevel" placeholder="4" maxlength="1" inputmode="numeric" required autocomplete="off" 
+                                    <label class="form-label"
+                                        style="font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-bottom: 6px; display: block;">Year
+                                        · Section</label>
+                                    <div class="fs-input-field-wrap"
+                                        style="display: flex; align-items: center; padding: 0 15px; gap: 8px;">
+                                        <span class="material-symbols-outlined input-icon"
+                                            style="margin-right: 8px; flex-shrink: 0;">calendar_today</span>
+                                        <input type="text" id="fsYearLevel" placeholder="4" maxlength="1"
+                                            inputmode="numeric" required autocomplete="off"
                                             style="width: 32px; flex: 0 0 32px; border: none; background: transparent; outline: none; font-size: 1rem; font-weight: 700; text-align: center; padding: 0; height: 50px;">
-                                        <span style="color: var(--muted); font-weight: 700; font-size: 1.1rem; user-select: none;">-</span>
-                                        <input type="text" id="fsSection" placeholder="A" maxlength="4" required autocomplete="off" 
+                                        <span
+                                            style="color: var(--muted); font-weight: 700; font-size: 1.1rem; user-select: none;">-</span>
+                                        <input type="text" id="fsSection" placeholder="A" maxlength="4" required
+                                            autocomplete="off"
                                             style="flex: 1; border: none; background: transparent; outline: none; font-size: 1rem; font-weight: 700; text-transform: uppercase; padding: 0; height: 50px;">
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div id="fsOnboardingError" class="error-msg"
                                 style="color: #d11f34; font-size: 0.82rem; font-weight: 600; margin-bottom: 12px; text-align: center;">
                             </div>
@@ -10737,49 +10957,67 @@
 
                     <!-- Slide 2: Parent / Guardian Link -->
                     <div class="fs-slide-card" id="fsSlideStep2">
-                        <div style="background: linear-gradient(180deg, #ffffff, #faf9ff); border: 1px solid rgba(90, 31, 224, 0.12); border-radius: 28px; padding: 26px 20px; box-shadow: 0 20px 48px -12px rgba(90, 31, 224, 0.12); text-align: center; position: relative;">
-                            
+                        <div
+                            style="background: linear-gradient(180deg, #ffffff, #faf9ff); border: 1px solid rgba(90, 31, 224, 0.12); border-radius: 28px; padding: 26px 20px; box-shadow: 0 20px 48px -12px rgba(90, 31, 224, 0.12); text-align: center; position: relative;">
+
                             <!-- Badge Icon -->
-                            <div style="width: 72px; height: 72px; border-radius: 22px; background: linear-gradient(135deg, rgba(90, 31, 224, 0.1), rgba(124, 58, 237, 0.18)); color: #5a1fe0; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; box-shadow: 0 10px 22px -6px rgba(90, 31, 224, 0.2); border: 1px solid rgba(90, 31, 224, 0.16);">
+                            <div
+                                style="width: 72px; height: 72px; border-radius: 22px; background: linear-gradient(135deg, rgba(90, 31, 224, 0.1), rgba(124, 58, 237, 0.18)); color: #5a1fe0; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; box-shadow: 0 10px 22px -6px rgba(90, 31, 224, 0.2); border: 1px solid rgba(90, 31, 224, 0.16);">
                                 <span class="material-symbols-outlined" style="font-size: 36px;">family_restroom</span>
                             </div>
 
-                            <h2 style="font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--ink); margin: 0 0 8px; letter-spacing: -0.02em;">Link Your Account With Your Parents</h2>
-                            <p style="font-size: 0.88rem; color: var(--muted); line-height: 1.5; margin: 0 auto 20px; max-width: 320px;">
-                                Copy this link to link your account with your parents. Give this link to them to register.
+                            <h2
+                                style="font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.4rem; color: var(--ink); margin: 0 0 8px; letter-spacing: -0.02em;">
+                                Link Your Account With Your Parents</h2>
+                            <p
+                                style="font-size: 0.88rem; color: var(--muted); line-height: 1.5; margin: 0 auto 20px; max-width: 320px;">
+                                Copy this link to link your account with your parents. Give this link to them to
+                                register.
                             </p>
 
                             <!-- Link Container -->
-                            <div style="background: white; border: 1.5px solid rgba(90, 31, 224, 0.16); border-radius: 18px; padding: 12px 14px; margin-bottom: 18px; text-align: left; box-shadow: 0 4px 12px rgba(90, 31, 224, 0.04);">
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                                    <span style="font-size: 0.72rem; font-weight: 800; color: #5a1fe0; text-transform: uppercase; letter-spacing: 0.6px;">Parent Registration Link</span>
-                                    <span class="material-symbols-outlined" style="font-size: 16px; color: #5a1fe0;">link</span>
+                            <div
+                                style="background: white; border: 1.5px solid rgba(90, 31, 224, 0.16); border-radius: 18px; padding: 12px 14px; margin-bottom: 18px; text-align: left; box-shadow: 0 4px 12px rgba(90, 31, 224, 0.04);">
+                                <div
+                                    style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                                    <span
+                                        style="font-size: 0.72rem; font-weight: 800; color: #5a1fe0; text-transform: uppercase; letter-spacing: 0.6px;">Parent
+                                        Registration Link</span>
+                                    <span class="material-symbols-outlined"
+                                        style="font-size: 16px; color: #5a1fe0;">link</span>
                                 </div>
-                                <div id="fsGuardianInviteLink" style="font-size: 0.82rem; color: #1e293b; font-weight: 600; word-break: break-all; line-height: 1.45; font-family: monospace; user-select: all; padding: 2px 0;">https://zeamarae.github.io/Securo/guardian.html</div>
+                                <div id="fsGuardianInviteLink"
+                                    style="font-size: 0.82rem; color: #1e293b; font-weight: 600; word-break: break-all; line-height: 1.45; font-family: monospace; user-select: all; padding: 2px 0;">
+                                    https://zeamarae.github.io/Securo/guardian.html</div>
                             </div>
 
                             <!-- Action buttons -->
                             <div style="display: flex; flex-direction: column; gap: 10px;">
                                 <!-- (2026-07-13) Shorter copy button label; prev: long prompt label -->
-                                <button type="button" class="btn-action" id="fsCopyGuardianLinkBtn" style="width: 100%; height: 50px; border-radius: 16px; background: linear-gradient(135deg, #5a1fe0, #4311c5); color: white; border: none; font-weight: 800; font-size: 0.96rem; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 12px 24px rgba(90, 31, 224, 0.25); cursor: pointer; transition: all 0.2s ease;">
+                                <button type="button" class="btn-action" id="fsCopyGuardianLinkBtn"
+                                    style="width: 100%; height: 50px; border-radius: 16px; background: linear-gradient(135deg, #5a1fe0, #4311c5); color: white; border: none; font-weight: 800; font-size: 0.96rem; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 12px 24px rgba(90, 31, 224, 0.25); cursor: pointer; transition: all 0.2s ease;">
                                     <span class="material-symbols-outlined">content_copy</span>
                                     <span id="fsCopyLinkText">Copy Link</span>
                                 </button>
 
-                                <button type="button" class="btn-action" id="fsShareGuardianLinkBtn" style="width: 100%; height: 46px; border-radius: 16px; background: linear-gradient(135deg, #0f9b67, #0a7a52); color: white; border: none; font-weight: 700; font-size: 0.92rem; display: none; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 18px rgba(15, 155, 103, 0.2); cursor: pointer;">
+                                <button type="button" class="btn-action" id="fsShareGuardianLinkBtn"
+                                    style="width: 100%; height: 46px; border-radius: 16px; background: linear-gradient(135deg, #0f9b67, #0a7a52); color: white; border: none; font-weight: 700; font-size: 0.92rem; display: none; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 8px 18px rgba(15, 155, 103, 0.2); cursor: pointer;">
                                     <span class="material-symbols-outlined">share</span>
                                     <span>Share Link</span>
                                 </button>
 
-                                <button type="button" id="fsProceedToAppBtn" style="width: 100%; height: 48px; border-radius: 16px; background: #f8fafc; border: 1.5px solid #e2e8f0; font-weight: 700; font-size: 0.92rem; color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s ease; opacity: 0.6;">
+                                <button type="button" id="fsProceedToAppBtn"
+                                    style="width: 100%; height: 48px; border-radius: 16px; background: #f8fafc; border: 1.5px solid #e2e8f0; font-weight: 700; font-size: 0.92rem; color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s ease; opacity: 0.6;">
                                     <span>Proceed to App</span>
                                     <span class="material-symbols-outlined">arrow_forward</span>
                                 </button>
                             </div>
 
                             <!-- Swipe hint -->
-                            <div id="fsSwipeHintBox" style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; color: var(--muted); font-size: 0.75rem; font-weight: 600;">
-                                <span class="material-symbols-outlined" id="fsSwipeHintIcon" style="font-size: 17px; color: #5a1fe0;">lock</span>
+                            <div id="fsSwipeHintBox"
+                                style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; color: var(--muted); font-size: 0.75rem; font-weight: 600;">
+                                <span class="material-symbols-outlined" id="fsSwipeHintIcon"
+                                    style="font-size: 17px; color: #5a1fe0;">lock</span>
                                 <span id="fsSwipeHintText">Copy link above to unlock app</span>
                             </div>
                         </div>
@@ -10793,6 +11031,68 @@
         <span class="material-symbols-outlined" id="toastIcon">check_circle</span>
         <span id="toastMsg">Success</span>
     </div>
+    <script>
+        // Meta apps style swipe down to close
+        document.addEventListener('DOMContentLoaded', () => {
+            const modals = document.querySelectorAll('.status-modal, .mandatory-modal, .notif-dropdown, .profile-dropdown');
+
+            modals.forEach(modal => {
+                let startY = 0;
+                let currentY = 0;
+                let isDragging = false;
+                const innerCard = modal.querySelector('.status-card, .modal-inner, .notif-panel, .dropdown-item') || modal;
+
+                modal.classList.add('swipe-to-close-element');
+                innerCard.style.transition = 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+                modal.addEventListener('touchstart', (e) => {
+                    startY = e.touches[0].clientY;
+                    isDragging = true;
+                    innerCard.style.transition = 'none';
+                }, { passive: true });
+
+                modal.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    currentY = e.touches[0].clientY;
+                    const deltaY = currentY - startY;
+                    if (deltaY > 0) { // Only allow swipe down
+                        innerCard.style.transform = `translateY(${deltaY}px)`;
+                    }
+                }, { passive: true });
+
+                modal.addEventListener('touchend', (e) => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    const deltaY = currentY - startY;
+                    innerCard.style.transition = 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                    if (deltaY > 100) { // Threshold for closing
+                        // Hide modal (simulate close)
+                        innerCard.style.transform = 'translateY(100vh)';
+                        setTimeout(() => {
+                            modal.classList.remove('active');
+                            modal.style.display = 'none';
+                            innerCard.style.transform = ''; // reset
+                        }, 200);
+                    } else {
+                        // Snap back
+                        innerCard.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+
+            // Add pop up animations to standard buttons and cards
+            const clickableCards = document.querySelectorAll('.vault-card, .menu-item, .history-item');
+            clickableCards.forEach(card => {
+                card.addEventListener('mousedown', () => card.classList.add('anim-pop-up'));
+                card.addEventListener('mouseup', () => card.classList.remove('anim-pop-up'));
+                card.addEventListener('mouseleave', () => card.classList.remove('anim-pop-up'));
+
+                card.addEventListener('touchstart', () => card.classList.add('anim-pop-up'), { passive: true });
+                card.addEventListener('touchend', () => card.classList.remove('anim-pop-up'));
+                card.addEventListener('touchcancel', () => card.classList.remove('anim-pop-up'));
+            });
+        });
+    </script>
 </body>
 
 </html>
