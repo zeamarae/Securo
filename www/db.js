@@ -1011,15 +1011,23 @@ export const subscribeToMessagesByThread = (threadId, callback) => {
 /**
  * Messaging: Send a message with threadId
  */
+// (2026-07-13) Persist senderUid, recipientUid and notify; was senderId only
 export const sendChatMessage = async (senderId, receiverId, text, senderName, options = {}) => {
     const threadId = options.threadId || [senderId, receiverId].sort().join("_");
+    const senderRole = options.senderRole || (senderId === "system_admin_securo" ? "admin" : "student");
+    const recipientRole = options.recipientRole || (receiverId === "system_admin_securo" ? "admin" : "student");
     try {
         await addDoc(collection(db, "messages"), {
             threadId,
             senderId,
             receiverId,
+            senderUid: senderId,
+            recipientUid: receiverId,
             text,
+            message: text,
             senderName: senderName || "User",
+            senderRole,
+            recipientRole,
             supportMode: options.supportMode || "",
             isAnonymous: !!options.isAnonymous,
             senderLabel: options.senderLabel || "",
@@ -1028,12 +1036,28 @@ export const sendChatMessage = async (senderId, receiverId, text, senderName, op
             timestamp: serverTimestamp(),
             read: false
         });
+
+        const targetUid = receiverId === "system_admin_securo" ? "admin" : receiverId;
+        const noteTitle = senderRole === "admin" ? "New message from Admin" : `Message from ${senderName || "Student"}`;
+        sendAccountNotification({
+            userId: targetUid,
+            recipientUid: targetUid,
+            type: "chat_message",
+            title: noteTitle,
+            message: text.length > 70 ? text.substring(0, 67) + "..." : text,
+            relatedId: threadId,
+            sourceUserId: senderId,
+            sourceName: senderName || "User",
+            priority: "normal"
+        }).catch((err) => console.warn("Chat notification trigger skipped:", err));
+
         return true;
     } catch (error) {
         console.warn("Error sending chat message:", error);
         throw error;
     }
 };
+
 
 /**
  * Messaging: Get all chat threads (for Admin)
@@ -1187,9 +1211,9 @@ export const getStudentLiveLocationOnce = async (studentUid) => {
 // Handles parent-student linking with consent workflow
 // ========================================================
 
-const MAX_GUARDIANS_PER_STUDENT = 3;
-// (2026-10-05) Raised from 1→5 to allow multiple children per guardian; was hardcoded 1
-const MAX_CHILDREN_PER_GUARDIAN = 5;
+// (2026-07-13) Set multi-link capacity to 10 for parents and students; was 5/3
+const MAX_GUARDIANS_PER_STUDENT = 10;
+const MAX_CHILDREN_PER_GUARDIAN = 10;
 
 const getGuardianLinkRecords = async (guardianId) => {
     if (!guardianId) return [];
@@ -1257,9 +1281,10 @@ const assertGuardianCapacityForRequest = async ({ guardianId, studentId, current
         (link.status === "accepted" || link.status === "pending")
     );
 
-    const differentStudentActiveLink = activeGuardianLinks.find((link) => String(link.studentId) !== String(studentId));
-    if (differentStudentActiveLink && MAX_CHILDREN_PER_GUARDIAN === 1) {
-        throw new Error("Guardian accounts can only link to one child at a time.");
+    const linkedStudentKeys = new Set(activeGuardianLinks.map(l => String(l.studentId || l.studentUid)).filter(Boolean));
+    if (studentId) linkedStudentKeys.add(String(studentId));
+    if (linkedStudentKeys.size > MAX_CHILDREN_PER_GUARDIAN) {
+        throw new Error(`Guardian accounts can only link up to ${MAX_CHILDREN_PER_GUARDIAN} children.`);
     }
 
     const acceptedStudentLinks = await getAcceptedStudentGuardianLinks(studentId);
@@ -1318,15 +1343,47 @@ export const syncGuardianLinksForStudent = async (studentUid, profileData = {}) 
  * Create a guardian link request (pending consent from student)
  * @param {object} linkData { guardianId, guardianName, guardianEmail, studentId }
  */
+// (2026-07-13) Role validation & multiple linking support; was unvalidated IDs
 export const createGuardianLinkRequest = async (linkData) => {
     try {
-        await assertGuardianCapacityForRequest(linkData);
+        if (!linkData?.guardianId) {
+            throw new Error("Guardian UID is required.");
+        }
+        const guardianProfile = await getUserProfile(linkData.guardianId).catch(() => null);
+        if (guardianProfile && guardianProfile.role && guardianProfile.role !== "guardian") {
+            throw new Error("Only registered Parent or Guardian accounts can send link requests.");
+        }
+
+        const studentRecord = await findStudentUidByStudentId(linkData.studentId).catch(() => null);
+        if (!studentRecord?.uid) {
+            throw new Error("No registered student was found with Student ID " + linkData.studentId + ".");
+        }
+        if (studentRecord.uid === linkData.guardianId) {
+            throw new Error("A user account cannot be linked to itself.");
+        }
+        if (studentRecord.role && studentRecord.role !== "student") {
+            throw new Error("The specified account is not a student account.");
+        }
+
+        const enrichedLinkData = {
+            ...linkData,
+            guardianId: linkData.guardianId,
+            guardianUid: linkData.guardianId,
+            guardianEmail: linkData.guardianEmail || guardianProfile?.email || "",
+            guardianName: linkData.guardianName || guardianProfile?.name || "Parent/Guardian",
+            studentUid: studentRecord.uid,
+            studentName: studentRecord.name || linkData.studentName || "Student",
+            relationshipType: linkData.relationshipType || "parent",
+            permissions: linkData.permissions || { sosAlerts: true, attendanceAlerts: true, liveLocation: true }
+        };
+
+        await assertGuardianCapacityForRequest(enrichedLinkData);
 
         const existingLink = await findExistingGuardianStudentLink({
-            guardianId: linkData.guardianId,
-            guardianEmail: linkData.guardianEmail,
-            studentId: linkData.studentId,
-            studentUid: linkData.studentUid
+            guardianId: enrichedLinkData.guardianId,
+            guardianEmail: enrichedLinkData.guardianEmail,
+            studentId: enrichedLinkData.studentId,
+            studentUid: enrichedLinkData.studentUid
         });
         if (existingLink) {
             const data = existingLink;
@@ -1338,55 +1395,53 @@ export const createGuardianLinkRequest = async (linkData) => {
             }
             // If rejected, allow re-request by updating
             await assertGuardianCapacityForRequest({
-                guardianId: linkData.guardianId,
-                studentId: linkData.studentId,
+                guardianId: enrichedLinkData.guardianId,
+                studentId: enrichedLinkData.studentId,
                 currentLinkId: existingLink.id
             });
             await updateDoc(doc(db, "guardian_links", existingLink.id), {
-                ...linkData,
+                ...enrichedLinkData,
                 status: "pending",
                 createdAt: serverTimestamp(),
+                approvedAt: null,
                 respondedAt: null
             });
-            const studentRecord = await findStudentUidByStudentId(linkData.studentId).catch(() => null);
-            if (studentRecord?.uid) {
-                await sendAccountNotification({
-                    userId: studentRecord.uid,
-                    type: "guardian_request",
-                    title: "Guardian tracking request",
-                    message: `${linkData.guardianName || "A parent or guardian"} wants to link to your account.`,
-                    sourceUserId: linkData.guardianId || "",
-                    sourceName: linkData.guardianName || "",
-                    requestId: existingLink.id,
-                    studentId: linkData.studentId || ""
-                }).catch((error) => {
-                    console.warn("Guardian request notification skipped:", error);
-                });
-            }
+            await sendAccountNotification({
+                userId: studentRecord.uid,
+                recipientUid: studentRecord.uid,
+                type: "guardian_request",
+                title: "Parent / Guardian Link Request",
+                message: `${enrichedLinkData.guardianName || "A parent or guardian"} wants to link to your account.`,
+                sourceUserId: enrichedLinkData.guardianId,
+                sourceName: enrichedLinkData.guardianName,
+                requestId: existingLink.id,
+                studentId: enrichedLinkData.studentId,
+                priority: "normal"
+            }).catch((err) => console.warn("Guardian request notification skipped:", err));
             return existingLink.id;
         }
 
         const docRef = await addDoc(collection(db, "guardian_links"), {
-            ...linkData,
+            ...enrichedLinkData,
             status: "pending",
             createdAt: serverTimestamp(),
+            approvedAt: null,
             respondedAt: null
         });
-        const studentRecord = await findStudentUidByStudentId(linkData.studentId).catch(() => null);
-        if (studentRecord?.uid) {
-            await sendAccountNotification({
-                userId: studentRecord.uid,
-                type: "guardian_request",
-                title: "Guardian tracking request",
-                message: `${linkData.guardianName || "A parent or guardian"} wants to link to your account.`,
-                sourceUserId: linkData.guardianId || "",
-                sourceName: linkData.guardianName || "",
-                requestId: docRef.id,
-                studentId: linkData.studentId || ""
-            }).catch((error) => {
-                console.warn("Guardian request notification skipped:", error);
-            });
-        }
+
+        await sendAccountNotification({
+            userId: studentRecord.uid,
+            recipientUid: studentRecord.uid,
+            type: "guardian_request",
+            title: "Parent / Guardian Link Request",
+            message: `${enrichedLinkData.guardianName || "A parent or guardian"} wants to link to your account.`,
+            sourceUserId: enrichedLinkData.guardianId,
+            sourceName: enrichedLinkData.guardianName,
+            requestId: docRef.id,
+            studentId: enrichedLinkData.studentId,
+            priority: "normal"
+        }).catch((err) => console.warn("Guardian request notification skipped:", err));
+
         return docRef.id;
     } catch (error) {
         console.warn("Error creating guardian link request:", error);
@@ -1394,26 +1449,34 @@ export const createGuardianLinkRequest = async (linkData) => {
     }
 };
 
-/**
- * Student-initiated guardian link using a registered guardian account.
- * This is immediately accepted because the student is the one granting consent.
- * @param {object} requestData { studentUid, studentId, studentName, guardianEmail, guardianName }
- */
+// (2026-07-13) Student ID + Parent Gmail linking with validation; was unverified
 export const createGuardianLinkFromStudent = async (requestData) => {
     try {
+        if (!requestData?.studentUid) {
+            throw new Error("Student authentication is required.");
+        }
+        const studentProfile = await getUserProfile(requestData.studentUid).catch(() => null);
+        if (studentProfile?.role && studentProfile.role !== "student") {
+            throw new Error("Only students can link a parent or guardian from this screen.");
+        }
+
         const guardianRecord = await findUserByEmail(requestData.guardianEmail);
         if (!guardianRecord?.uid) {
             throw new Error("No registered parent or guardian account was found with that email.");
         }
 
         if (inferUserRole(guardianRecord) !== "guardian") {
-            throw new Error("That registered account is not a guardian account.");
+            throw new Error("That registered account is not an authorized guardian account.");
+        }
+
+        if (guardianRecord.uid === requestData.studentUid) {
+            throw new Error("You cannot add your own account as a parent or guardian.");
         }
 
         const existingLink = await findExistingGuardianStudentLink({
             guardianId: guardianRecord.uid,
             guardianEmail: guardianRecord.email || requestData.guardianEmail || "",
-            studentId: requestData.studentId,
+            studentId: requestData.studentId || studentProfile?.studentId,
             studentUid: requestData.studentUid
         });
         if (existingLink) {
@@ -1428,19 +1491,24 @@ export const createGuardianLinkFromStudent = async (requestData) => {
 
         await assertGuardianCapacityForRequest({
             guardianId: guardianRecord.uid,
-            studentId: requestData.studentId,
+            studentId: requestData.studentId || studentProfile?.studentId,
             currentLinkId: existingLink?.id || null
         });
 
         const linkPayload = {
             guardianId: guardianRecord.uid,
+            guardianUid: guardianRecord.uid,
             guardianName: guardianRecord.name || requestData.guardianName || guardianRecord.email || "Guardian",
             guardianEmail: guardianRecord.email || requestData.guardianEmail || "",
-            studentId: requestData.studentId || "",
+            studentId: requestData.studentId || studentProfile?.studentId || "",
             studentUid: requestData.studentUid || "",
-            studentName: requestData.studentName || "",
+            studentName: requestData.studentName || studentProfile?.name || "Student",
             status: "accepted",
+            requestedBy: "student",
+            relationshipType: requestData.relationshipType || "parent",
+            permissions: { sosAlerts: true, attendanceAlerts: true, liveLocation: true },
             createdAt: serverTimestamp(),
+            approvedAt: serverTimestamp(),
             respondedAt: serverTimestamp()
         };
 
@@ -1455,13 +1523,15 @@ export const createGuardianLinkFromStudent = async (requestData) => {
 
         await sendAccountNotification({
             userId: guardianRecord.uid,
+            recipientUid: guardianRecord.uid,
             type: "student_guardian_request",
             title: "Student linked your guardian account",
-            message: `${requestData.studentName || "A student"} added you as their parent or guardian.`,
+            message: `${requestData.studentName || studentProfile?.name || "A student"} connected you as their parent or guardian.`,
             sourceUserId: requestData.studentUid || "",
-            sourceName: requestData.studentName || "",
+            sourceName: requestData.studentName || studentProfile?.name || "Student",
             requestId: linkId,
-            studentId: requestData.studentId || ""
+            studentId: requestData.studentId || studentProfile?.studentId || "",
+            priority: "normal"
         }).catch((error) => {
             console.warn("Student guardian link notification skipped:", error);
         });
@@ -1469,17 +1539,19 @@ export const createGuardianLinkFromStudent = async (requestData) => {
         if (requestData.studentUid) {
             await sendAccountNotification({
                 userId: requestData.studentUid,
+                recipientUid: requestData.studentUid,
                 type: "guardian_request_accepted",
                 title: "Parent or guardian linked",
                 message: `${guardianRecord.name || guardianRecord.email || "Your parent or guardian"} is now connected to your account.`,
                 sourceUserId: guardianRecord.uid || "",
                 sourceName: guardianRecord.name || guardianRecord.email || "",
                 requestId: linkId,
-                studentId: requestData.studentId || "",
+                studentId: requestData.studentId || studentProfile?.studentId || "",
                 metadata: {
                     linkOrigin: "student_request",
                     resolvedStatus: "accepted"
-                }
+                },
+                priority: "normal"
             }).catch((error) => {
                 console.warn("Student accepted-link notification skipped:", error);
             });
@@ -1531,12 +1603,7 @@ export const subscribeToGuardianRequests = (studentId, callback) => {
     }, () => callback([]));
 };
 
-/**
- * Respond to a guardian link request (accept or reject)
- * @param {string} linkId
- * @param {string} response - "accepted" or "rejected"
- * @param {string} studentUid - The student's Firebase UID
- */
+// (2026-07-13) Dispatch persistent approval notifications; was userId only
 export const respondToGuardianLink = async (linkId, response, studentUid, studentProfileData = {}) => {
     try {
         const linkRef = doc(db, "guardian_links", linkId);
@@ -1561,19 +1628,24 @@ export const respondToGuardianLink = async (linkId, response, studentUid, studen
             }
             : {};
 
+        const guardianUid = linkData.guardianUid || linkData.guardianId;
+
         await updateDoc(linkRef, {
             status: response,
             studentUid: studentUid || null,
+            guardianUid: guardianUid,
             ...(response === "accepted" ? {
+                approvedAt: serverTimestamp(),
                 studentId: resolvedStudentProfile.studentId || linkData.studentId || "",
                 studentName: resolvedStudentProfile.studentName || linkData.studentName || ""
             } : {}),
             respondedAt: serverTimestamp()
         });
 
-        if (linkData.guardianId) {
+        if (guardianUid) {
             await sendAccountNotification({
-                userId: linkData.guardianId,
+                userId: guardianUid,
+                recipientUid: guardianUid,
                 type: response === "accepted" ? "guardian_request_accepted" : "guardian_request_declined",
                 title: response === "accepted" ? "Child link accepted" : "Child link declined",
                 message: response === "accepted"
@@ -1582,7 +1654,8 @@ export const respondToGuardianLink = async (linkId, response, studentUid, studen
                 sourceUserId: studentUid || "",
                 sourceName: studentProfileData?.name || linkData.studentName || "",
                 requestId: linkId,
-                studentId: studentProfileData?.studentId || linkData.studentId || ""
+                studentId: studentProfileData?.studentId || linkData.studentId || "",
+                priority: "normal"
             }).catch((error) => {
                 console.warn("Guardian response notification skipped:", error);
             });
@@ -1591,19 +1664,21 @@ export const respondToGuardianLink = async (linkId, response, studentUid, studen
         if (studentUid) {
             await sendAccountNotification({
                 userId: studentUid,
+                recipientUid: studentUid,
                 type: response === "accepted" ? "guardian_request_accepted" : "guardian_request_declined",
                 title: response === "accepted" ? "Parent or guardian linked" : "Parent or guardian request declined",
                 message: response === "accepted"
                     ? `${linkData.guardianName || "A parent or guardian"} is now connected to your account.`
                     : `${linkData.guardianName || "A parent or guardian"} request was declined.`,
-                sourceUserId: linkData.guardianId || "",
+                sourceUserId: guardianUid || "",
                 sourceName: linkData.guardianName || "",
                 requestId: linkId,
                 studentId: studentProfileData?.studentId || linkData.studentId || "",
                 metadata: {
                     resolvedStatus: response,
                     linkOrigin: "guardian_request"
-                }
+                },
+                priority: "normal"
             }).catch((error) => {
                 console.warn("Student response notification skipped:", error);
             });
@@ -1921,22 +1996,27 @@ export const findUserByEmail = async (email) => {
  * Send a persistent account notification
  * @param {object} payload
  */
-// (2026-07-13) Consolidate sendAccountNotification; was duplicate export in file
+// (2026-07-13) Persist recipientUid, priority, status in notifs; was userId only
 export const sendAccountNotification = async (payload) => {
-    if (!payload?.userId) {
+    const targetUid = payload?.recipientUid || payload?.userId;
+    if (!targetUid) {
         throw new Error("Notification recipient is required.");
     }
 
     try {
         const isRead = payload.isRead === true || payload.read === true;
         const notificationData = {
-            userId: payload.userId,
+            recipientUid: targetUid,
+            userId: targetUid,
             type: payload.type || "info",
             title: payload.title || "Notification",
             message: payload.message || "",
+            priority: payload.priority || (payload.type?.includes("sos") ? "urgent" : "normal"),
+            status: payload.status || "active",
+            relatedId: payload.relatedId || payload.requestId || payload.incidentId || "",
             sourceUserId: payload.sourceUserId || "",
             sourceName: payload.sourceName || "",
-            requestId: payload.requestId || "",
+            requestId: payload.requestId || payload.relatedId || "",
             studentId: payload.studentId || "",
             metadata: payload.metadata || {},
             actionUrl: payload.actionUrl || null,
@@ -1948,7 +2028,7 @@ export const sendAccountNotification = async (payload) => {
         };
 
         const docRef = await addDoc(collection(db, "notifications"), notificationData);
-        Logger.info("Notifications", "Notification sent", { userId: payload.userId, type: payload.type });
+        Logger.info("Notifications", "Notification sent", { recipientUid: targetUid, type: payload.type });
         return docRef.id;
     } catch (error) {
         Logger.error("Notifications", "Failed to send notification", { payload, error });
@@ -1970,25 +2050,41 @@ export const markAccountNotificationRead = async (notificationId, extraUpdates =
     });
 };
 
-// (2026-07-13) Add subscribeToAccountNotifications for real-time notifications; was missing export
+// (2026-07-13) Query without composite index to prevent disappearing alerts; was order
 export const subscribeToAccountNotifications = (userId, callback) => {
     if (!userId) return () => {};
 
     try {
-        const q = query(
-            collection(db, "notifications"),
-            where("userId", "==", userId),
-            orderBy("createdAt", "desc"),
-            limit(40)
-        );
+        const mergeNotifications = (snap1, snap2) => {
+            const map = new Map();
+            if (snap1?.docs) {
+                snap1.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
+            }
+            if (snap2?.docs) {
+                snap2.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
+            }
+            const list = Array.from(map.values()).sort((a, b) => {
+                const timeA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+                const timeB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+                return timeB - timeA;
+            });
+            return list.slice(0, 50);
+        };
 
-        return onSnapshot(q, (snapshot) => {
-            const notifications = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            callback(notifications);
-        }, (error) => {
-            console.warn("Firestore notification subscription error:", error);
-            callback([]);
-        });
+        let s1 = null, s2 = null;
+        const emit = () => {
+            if (s1 !== null || s2 !== null) {
+                callback(mergeNotifications(s1, s2));
+            }
+        };
+
+        const q1 = query(collection(db, "notifications"), where("userId", "==", userId), limit(50));
+        const q2 = query(collection(db, "notifications"), where("recipientUid", "==", userId), limit(50));
+
+        const unsub1 = onSnapshot(q1, (snap) => { s1 = snap; emit(); }, (err) => { console.warn("Notif q1 warn:", err); s1 = { docs: [] }; emit(); });
+        const unsub2 = onSnapshot(q2, (snap) => { s2 = snap; emit(); }, (err) => { console.warn("Notif q2 warn:", err); s2 = { docs: [] }; emit(); });
+
+        return () => { unsub1(); unsub2(); };
     } catch (e) {
         console.warn("Notification subscription fallback:", e);
         callback([]);
@@ -2060,21 +2156,24 @@ export const notifyGuardiansOfGeofenceEvent = async (studentUid, studentName, ty
         return [];
     }
 };
-// (2026-07-13) Add SOS push notify & student SOS subscription; was missing
+// (2026-07-13) Dispatch persistent SOS alerts to all guardians; was guardianId only
 export const notifyGuardiansSOS = async (studentUid, studentName, location = {}, metadata = {}) => {
     if (!studentUid) return [];
     try {
         const links = await getLinksForStudent(null, studentUid);
-        const acceptedLinks = (Array.isArray(links) ? links : []).filter(l => l.status === 'accepted' && l.guardianId);
-        const title = `🚨 SOS Emergency: ${studentName || 'Your Child'}`;
-        const message = `${studentName || 'Your child'} activated an emergency alert at ${location.address || 'Campus Location'}.`;
+        const acceptedLinks = (Array.isArray(links) ? links : []).filter(l => l.status === 'accepted' && (l.guardianId || l.guardianUid));
+        const title = "SECuro Emergency Alert";
+        const message = `${studentName || 'Your linked student'} has triggered an SOS emergency. Open Securo to view the emergency information.`;
 
-        const dispatches = acceptedLinks.map(link => 
-            sendAccountNotification({
-                userId: link.guardianId,
+        const dispatches = acceptedLinks.map(link => {
+            const gUid = link.guardianUid || link.guardianId;
+            return sendAccountNotification({
+                recipientUid: gUid,
+                userId: gUid,
                 type: 'sos',
                 title,
                 message,
+                priority: 'urgent',
                 sourceUserId: studentUid,
                 sourceName: studentName || 'Student',
                 studentId: link.studentId || '',
@@ -2086,17 +2185,19 @@ export const notifyGuardiansSOS = async (studentUid, studentName, location = {},
                     timestamp: new Date().toISOString()
                 }
             }).catch(err => {
-                console.warn("Failed to notify guardian of SOS:", link.guardianId, err);
+                console.warn("Failed to notify guardian of SOS:", gUid, err);
                 return null;
-            })
-        );
+            });
+        });
 
         dispatches.push(
             sendAccountNotification({
+                recipientUid: 'admin',
                 userId: 'admin',
                 type: 'sos',
-                title,
-                message: `Active emergency alert triggered by ${studentName || 'Student'}.`,
+                title: `🚨 Emergency SOS: ${studentName || 'Student'}`,
+                message: `Active emergency alert triggered by ${studentName || 'Student'} at ${location.address || 'Campus bounds'}.`,
+                priority: 'urgent',
                 sourceUserId: studentUid,
                 sourceName: studentName || 'Student',
                 studentId: metadata.studentId || '',

@@ -24,6 +24,11 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+    <!-- (2026-07-13) Dramatic intro preloader styles and GSAP; was no preloader -->
+    <link rel="stylesheet" href="preloader.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="preloader.js"></script>
+
     <style>
         :root {
             --bg: #f4f3ff;
@@ -1683,7 +1688,17 @@
             display: none;
         }
 
-        /* (2026-07-13) Redesign tracking banner into ultra-compact pill and split top/bottom controls; was large card */
+        /* (2026-07-13) Disable dragging for images & update pill; was draggable */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
         .tracking-status-pill {
             display: inline-flex;
             align-items: center;
@@ -1699,10 +1714,10 @@
             font-size: 0.72rem;
             font-weight: 700;
             color: var(--ink);
-            cursor: default;
+            cursor: pointer;
             transition: all 0.2s ease;
             white-space: nowrap;
-            max-width: 260px;
+            max-width: min(92vw, 420px);
             overflow: hidden;
             text-overflow: ellipsis;
             z-index: 1005;
@@ -1714,10 +1729,28 @@
             color: #0c7e54;
         }
 
-        .tracking-status-pill.is-off {
-            background: rgba(255, 245, 247, 0.96);
-            border-color: rgba(209, 31, 52, 0.25);
-            color: #c4181d;
+        .tracking-status-pill.is-inside {
+            background: rgba(240, 255, 249, 0.96) !important;
+            border-color: rgba(15, 155, 103, 0.35) !important;
+            color: #0c7e54 !important;
+        }
+
+        .tracking-status-pill.is-inside .pulse-status-dot {
+            background: #0f9b67 !important;
+            box-shadow: 0 0 0 2px rgba(15, 155, 103, 0.25) !important;
+        }
+
+        .tracking-status-pill.is-off,
+        .tracking-status-pill.is-outside {
+            background: rgba(255, 245, 247, 0.96) !important;
+            border-color: rgba(209, 31, 52, 0.3) !important;
+            color: #c4181d !important;
+        }
+
+        .tracking-status-pill.is-off .pulse-status-dot,
+        .tracking-status-pill.is-outside .pulse-status-dot {
+            background: #d11f34 !important;
+            box-shadow: 0 0 0 2px rgba(209, 31, 52, 0.25) !important;
         }
 
         .pulse-status-dot {
@@ -1727,11 +1760,6 @@
             background: #0f9b67;
             flex-shrink: 0;
             box-shadow: 0 0 0 2px rgba(15, 155, 103, 0.25);
-        }
-
-        .tracking-status-pill.is-off .pulse-status-dot {
-            background: #d11f34;
-            box-shadow: 0 0 0 2px rgba(209, 31, 52, 0.25);
         }
 
         .tracking-status-icon {
@@ -2398,11 +2426,7 @@
             font-family: inherit;
         }
 
-        /* (2026-07-13) Soft purple map theme with distinct colors; was high-sat neon */
-        .leaflet-layer.purple-map-tiles,
-        .purple-map-tiles {
-            filter: sepia(30%) hue-rotate(205deg) saturate(110%) brightness(98%) contrast(108%) !important;
-        }
+        /* (2026-07-13) Restore original map tiles; was purple filter */
 
         .leaflet-bar {
             border: none !important;
@@ -4870,6 +4894,23 @@
 
 <body>
 
+    <!-- (2026-07-13) Dramatic intro preloader with logo; was immediate page view -->
+    <div id="securo-preloader-overlay">
+        <div class="securo-preloader-bg"></div>
+        <div class="securo-preloader-content">
+            <div class="securo-preloader-logo-wrap">
+                <img src="logo with text.png" alt="Securo" class="securo-preloader-logo">
+                <div class="securo-preloader-shimmer"></div>
+            </div>
+            <div class="securo-preloader-indicator">
+                <div class="securo-preloader-progress-track">
+                    <div class="securo-preloader-progress-bar"></div>
+                </div>
+                <span class="securo-preloader-status-text">INITIALIZING SECURE SYSTEMS</span>
+            </div>
+        </div>
+    </div>
+
     <div class="device-shell mx-auto">
         <div class="screen">
             <!-- [REMOVED] Embedded Login Screen (Date: 2026-05-01) - Now handled by login.html -->
@@ -4879,11 +4920,15 @@
                 <div class="app-shell">
                     <header class="topbar navbar navbar-expand border-0">
                         <div class="container-fluid px-0 content-frame">
-                            <!-- (2026-07-13) Topbar branding using logo with text.png; was icon + dynamic text -->
+                            <!-- (2026-07-13) Topbar logo redirects to map homepage; was static header -->
                             <div class="topbar-left navbar-brand mb-0"
-                                style="display:flex; align-items:center; gap:8px;">
+                                id="topbarHomeBrand"
+                                onclick="if(window.setActiveView){window.setActiveView('map');}else{window.location.href='index.html';}"
+                                style="display:flex; align-items:center; gap:8px; cursor:pointer;"
+                                title="Go to Map Homepage">
                                 <img src="logo with text.png" alt="Securo" class="topbar-brand-logo"
-                                    style="height: 30px; max-height: 30px; max-width: 165px; object-fit: contain; display: block;">
+                                    style="height: 30px; max-height: 30px; max-width: 165px; object-fit: contain; display: block;"
+                                    draggable="false">
                                 <div style="display:none;" aria-hidden="true">
                                     <div class="surface-icon" id="headerLeadingIcon"></div>
                                     <div class="topbar-title" id="headerTitle">Securo</div>
@@ -4938,6 +4983,11 @@
                                         <a href="settings.html" class="dropdown-item">
                                             <span class="material-symbols-outlined">settings</span>
                                             <span>Settings</span>
+                                        </a>
+                                        <!-- (2026-07-13) Add About Us link to student dropdown; was settings only -->
+                                        <a href="about.html" class="dropdown-item">
+                                            <span class="material-symbols-outlined">info</span>
+                                            <span>About Us</span>
                                         </a>
                                         <a href="admin.html" class="dropdown-item" id="adminLink"
                                             style="display: none; color: var(--primary); font-weight: 700;">
@@ -5256,30 +5306,7 @@
                                         <span>Message GAD (PM / Anonymous)</span>
                                     </button>
                                 </div>
-
-                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 2px;">
-                                    <div class="card" onclick="openGadPmModal()"
-                                        style="padding: 14px; border-radius: 18px; border: 1px solid rgba(90,31,224,0.1); cursor: pointer; background: #ffffff; transition: transform 0.16s ease, box-shadow 0.16s ease;">
-                                        <span class="material-symbols-outlined"
-                                            style="color: #5a1fe0; font-size: 24px;">balance</span>
-                                        <strong
-                                            style="display:block; font-size: 0.88rem; margin-top: 6px; color: var(--ink);">COSH
-                                            Office</strong>
-                                        <p
-                                            style="font-size: 0.75rem; color: var(--muted); margin: 2px 0 0; line-height: 1.35;">
-                                            Anti-Sexual Harassment desk</p>
-                                    </div>
-                                    <div class="card" onclick="openGadPmModal()"
-                                        style="padding: 14px; border-radius: 18px; border: 1px solid rgba(90,31,224,0.1); cursor: pointer; background: #ffffff; transition: transform 0.16s ease, box-shadow 0.16s ease;">
-                                        <span class="material-symbols-outlined"
-                                            style="color: #0f9b67; font-size: 24px;">psychology</span>
-                                        <strong
-                                            style="display:block; font-size: 0.88rem; margin-top: 6px; color: var(--ink);">Counseling</strong>
-                                        <p
-                                            style="font-size: 0.75rem; color: var(--muted); margin: 2px 0 0; line-height: 1.35;">
-                                            Confidential wellbeing support</p>
-                                    </div>
-                                </div>
+                                <!-- (2026-07-13) Removed COSH Office and Counseling cards; was 2-col grid -->
 
                                 <!-- GAD Sub-Navigation Tabs -->
                                 <div style="display:flex; gap: 8px; margin-top: 8px;">
@@ -6056,35 +6083,38 @@
             }
         }
 
+        // (2026-07-13) Track personal campus entry/exit timestamps; was duration only
         function checkCampusGeofence(lat, lng) {
             const isInside = isPointInPolygon([lat, lng], getCampusGeofencePolygon());
             const storedExitTime = localStorage.getItem("securo_campus_exit_ts");
+            const storedEntryTime = localStorage.getItem("securo_campus_entry_ts");
 
             if (isInside) {
                 if (storedExitTime) {
                     localStorage.removeItem("securo_campus_exit_ts");
                 }
+                let entryTs = storedEntryTime ? parseInt(storedEntryTime, 10) : null;
+                if (!entryTs || isNaN(entryTs)) {
+                    entryTs = Date.now();
+                    localStorage.setItem("securo_campus_entry_ts", String(entryTs));
+                }
                 appState.isInsideCampus = true;
+                appState.campusEntryTs = entryTs;
+                appState.campusExitTs = null;
                 appState.campusExitDuration = "";
                 processAutoAttendance('in', lat, lng);
             } else {
+                if (storedEntryTime) {
+                    localStorage.removeItem("securo_campus_entry_ts");
+                }
                 appState.isInsideCampus = false;
                 let exitTs = storedExitTime ? parseInt(storedExitTime, 10) : null;
                 if (!exitTs || isNaN(exitTs)) {
                     exitTs = Date.now();
                     localStorage.setItem("securo_campus_exit_ts", String(exitTs));
                 }
-                const diffMs = Math.max(0, Date.now() - exitTs);
-                const diffMins = Math.floor(diffMs / 60000);
-                const diffHours = Math.floor(diffMins / 60);
-
-                if (diffHours >= 1) {
-                    appState.campusExitDuration = `Student left the campus ${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-                } else if (diffMins >= 1) {
-                    appState.campusExitDuration = `Student left the campus ${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
-                } else {
-                    appState.campusExitDuration = `Student just left the campus bounds`;
-                }
+                appState.campusExitTs = exitTs;
+                appState.campusEntryTs = null;
                 processAutoAttendance('out', lat, lng);
             }
             updateTrackingStatusBanner();
@@ -6155,13 +6185,12 @@
                 wheelPxPerZoomLevel: 140
             }).setView(CAMPUS_CENTER, 17);
 
-            // (2026-07-13) Set purple theme on normal map tile layers; was unstyled
+            // (2026-07-13) Restore original map tiles; was purple-map-tiles
             const baseMapLayers = {
                 "Street View": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: '©OpenStreetMap contributors',
-                    crossOrigin: true,
-                    className: 'purple-map-tiles'
+                    crossOrigin: true
                 }),
                 "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
                     maxZoom: 19,
@@ -6181,8 +6210,7 @@
             map.once('load', () => {
                 const googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
                     maxZoom: 20,
-                    attribution: 'Map data ©Google',
-                    className: 'purple-map-tiles'
+                    attribution: 'Map data ©Google'
                 });
                 let googleLoaded = false;
                 googleStreets.once('tileload', () => {
@@ -8005,7 +8033,28 @@
             }
         }
 
-        function snapSelfiePhoto() {
+        // (2026-07-13) Native Capacitor Camera selfie with fallback; was webview only
+        async function snapSelfiePhoto() {
+            if (window.Capacitor?.isNativePlatform?.() && window.Capacitor?.Plugins?.Camera) {
+                try {
+                    const photo = await window.Capacitor.Plugins.Camera.getPhoto({
+                        quality: 85,
+                        allowEditing: false,
+                        resultType: 'dataUrl',
+                        source: 'CAMERA',
+                        direction: 'FRONT'
+                    });
+                    if (photo?.dataUrl) {
+                        fsOnboardingPhotoData = photo.dataUrl;
+                        playCameraShutterSound();
+                        stopCircleLiveCamera();
+                        updateFsAvatarPreview();
+                        return;
+                    }
+                } catch (e) {
+                    console.warn("Capacitor selfie camera error or cancel:", e);
+                }
+            }
             if (fsCameraStream && fsCircleLiveVideo && fsCircleLiveVideo.videoWidth) {
                 const size = Math.min(fsCircleLiveVideo.videoWidth, fsCircleLiveVideo.videoHeight);
                 fsCameraCanvas.width = 400;
@@ -8520,6 +8569,14 @@
 
             if (cachedProfile?.role === 'guardian' || user.email?.startsWith('guardian.')) {
                 window.location.replace("guardian-dashboard.html");
+                return;
+            }
+
+            // (2026-07-13) Block student app access if permissions missing; was allow entry
+            const camAllowed = localStorage.getItem('securo_camera_granted') === 'true';
+            const locAllowed = localStorage.getItem('securo_location_granted') === 'true';
+            if (!camAllowed || !locAllowed) {
+                window.location.replace('permissions-onboarding.html');
                 return;
             }
 
@@ -9458,7 +9515,31 @@
             isHolding = false;
         }
 
+        // (2026-07-13) Native Capacitor Camera capture with fallback; was canvas only
         async function takePhotoAndPost() {
+            if (window.Capacitor?.isNativePlatform?.() && window.Capacitor?.Plugins?.Camera) {
+                try {
+                    const photo = await window.Capacitor.Plugins.Camera.getPhoto({
+                        quality: 80,
+                        allowEditing: false,
+                        resultType: 'dataUrl',
+                        source: 'CAMERA'
+                    });
+                    if (photo?.dataUrl) {
+                        const nativeItem = {
+                            kind: "image",
+                            src: photo.dataUrl,
+                            mimeType: "image/jpeg",
+                            label: "Emergency camera capture"
+                        };
+                        await autoPostCapture(nativeItem);
+                        return;
+                    }
+                } catch (nativeErr) {
+                    console.warn("Capacitor camera capture cancelled or failed, falling back:", nativeErr);
+                }
+            }
+
             if (!cameraPreview.videoWidth) return;
             captureCanvas.width = cameraPreview.videoWidth;
             captureCanvas.height = cameraPreview.videoHeight;
@@ -9653,25 +9734,58 @@
             updateTrackingStatusBanner();
         }
 
+        function formatCampusEventTime(ts) {
+            if (!ts) ts = Date.now();
+            const d = new Date(ts);
+            const now = new Date();
+
+            let hours = d.getHours();
+            const minutes = d.getMinutes();
+            const ampm = hours >= 12 ? 'pm' : 'am';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const minStr = minutes > 0 ? `:${minutes < 10 ? '0' : ''}${minutes}` : '';
+            const timeStr = `${hours}${minStr}${ampm}`;
+
+            const dDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const diffDays = Math.round((nowDate - dDate) / (1000 * 60 * 60 * 24));
+
+            let dayStr = 'today';
+            if (diffDays === 1) {
+                dayStr = 'yesterday';
+            } else if (diffDays > 1) {
+                dayStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            }
+            return `${timeStr} ${dayStr}`;
+        }
+
+        // (2026-07-13) Format personal campus update with time/day & color; was generic
         function updateTrackingStatusBanner() {
             if (!trackingStatusBanner || !trackingStatusIcon || !trackingStatusCopy) return;
 
             const isTrackingOn = !!appState.isLocationTrackingActive;
-            const exitNotice = appState.campusExitDuration || "";
             const isInside = appState.isInsideCampus !== false;
 
             trackingStatusBanner.classList.toggle("is-on", isTrackingOn);
             trackingStatusBanner.classList.toggle("is-off", !isTrackingOn);
+            trackingStatusBanner.classList.toggle("is-inside", isTrackingOn && isInside);
+            trackingStatusBanner.classList.toggle("is-outside", isTrackingOn && !isInside);
 
             if (isTrackingOn) {
-                trackingStatusIcon.textContent = isInside ? "my_location" : "wrong_location";
-                if (!isInside && exitNotice) {
-                    trackingStatusCopy.textContent = exitNotice;
-                    trackingStatusBanner.title = `${exitNotice}. Live campus boundary tracking is active.`;
-                    return;
+                if (isInside) {
+                    trackingStatusIcon.textContent = "login";
+                    const entryTs = appState.campusEntryTs || parseInt(localStorage.getItem("securo_campus_entry_ts") || String(Date.now()), 10);
+                    const formatted = `You went inside the campus at ${formatCampusEventTime(entryTs)}`;
+                    trackingStatusCopy.textContent = formatted;
+                    trackingStatusBanner.title = `${formatted}. Live campus tracking is active.`;
+                } else {
+                    trackingStatusIcon.textContent = "logout";
+                    const exitTs = appState.campusExitTs || parseInt(localStorage.getItem("securo_campus_exit_ts") || String(Date.now()), 10);
+                    const formatted = `You went out the campus at ${formatCampusEventTime(exitTs)}`;
+                    trackingStatusCopy.textContent = formatted;
+                    trackingStatusBanner.title = `${formatted}. Live campus tracking is active.`;
                 }
-                trackingStatusCopy.textContent = "Inside Campus (Live)";
-                trackingStatusBanner.title = "Location is on. Inside CTU Daanbantayan Campus bounds.";
                 return;
             }
 
@@ -10440,11 +10554,12 @@
         if (chatOverlay) chatOverlay.addEventListener("click", (e) => {
             if (e.target === chatOverlay) closeChat();
         });
-        window.addEventListener("resize", syncChatViewport);
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener("resize", syncChatViewport);
-            window.visualViewport.addEventListener("scroll", syncChatViewport);
-        }
+        // (2026-07-13) Prevent image drag across entire application; was draggable
+        window.addEventListener('dragstart', (e) => {
+            if (e.target && e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        }, false);
     </script>
     <!-- Status/Success Modal (Date: 2026-05-01) -->
     <div class="status-modal" id="statusModal">

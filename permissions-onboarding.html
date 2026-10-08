@@ -42,6 +42,17 @@
             margin: 0;
         }
 
+        /* (2026-07-13) Disable dragging for all images; was default draggable */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
         .onboarding-container {
             width: 100%;
             max-width: 480px;
@@ -298,23 +309,22 @@
             font-size: 16px;
         }
 
-        .skip-link {
-            text-align: center;
-            margin-top: 12px;
-        }
-
-        .skip-link button {
-            background: none;
-            border: none;
-            color: var(--muted);
-            font-size: 0.88rem;
+        /* (2026-07-13) Mandatory requirement notice styles; was skip-link styles */
+        .permission-requirement-notice {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 0.85rem;
             font-weight: 600;
-            cursor: pointer;
-            text-decoration: underline;
+            color: var(--muted);
+            margin-top: 14px;
+            text-align: center;
         }
 
-        .skip-link button:hover {
-            color: var(--primary);
+        .permission-requirement-notice .material-symbols-outlined {
+            font-size: 18px;
+            color: var(--amber);
         }
     </style>
 </head>
@@ -372,8 +382,10 @@
                 <span>Allow Camera Access</span>
             </button>
 
-            <div class="skip-link">
-                <button id="skipCameraBtn">Skip for now (not recommended)</button>
+            <!-- (2026-07-13) Block access without camera; was skip button -->
+            <div class="permission-requirement-notice">
+                <span class="material-symbols-outlined">lock</span>
+                <span>Camera access is strictly required to unlock Securo</span>
             </div>
         </div>
 
@@ -434,8 +446,10 @@
                 <span>Allow Location Access</span>
             </button>
 
-            <div class="skip-link">
-                <button id="skipLocationBtn">Skip for now (not recommended)</button>
+            <!-- (2026-07-13) Block access without location; was skip button -->
+            <div class="permission-requirement-notice">
+                <span class="material-symbols-outlined">lock</span>
+                <span>Location access is strictly required to unlock Securo</span>
             </div>
         </div>
 
@@ -497,9 +511,7 @@
         const completeCard = document.getElementById('completeCard');
 
         const grantCameraBtn = document.getElementById('grantCameraBtn');
-        const skipCameraBtn = document.getElementById('skipCameraBtn');
         const grantLocationBtn = document.getElementById('grantLocationBtn');
-        const skipLocationBtn = document.getElementById('skipLocationBtn');
         const finishBtn = document.getElementById('finishBtn');
         const retryPermissionsBtn = document.getElementById('retryPermissionsBtn');
 
@@ -509,6 +521,7 @@
         const locationCheckText = document.getElementById('locationCheckText');
 
         function bypassToApp() {
+            if (!cameraGranted || !locationGranted) return;
             localStorage.setItem('securo_permissions_completed', 'true');
             localStorage.setItem('securo_camera_granted', 'true');
             localStorage.setItem('securo_location_granted', 'true');
@@ -521,28 +534,42 @@
             });
         }
 
-        // (2026-07-13) Bypass onboarding if camera & location allowed; was show complete
+        // (2026-07-13) Block app access unless permissions allowed; was allow skip
         async function checkExistingPermissions() {
-            if (localStorage.getItem('securo_permissions_completed') === 'true' ||
-                (localStorage.getItem('securo_camera_granted') === 'true' && localStorage.getItem('securo_location_granted') === 'true')) {
+            const camStored = localStorage.getItem('securo_camera_granted') === 'true';
+            const locStored = localStorage.getItem('securo_location_granted') === 'true';
+
+            let camActive = camStored;
+            let locActive = locStored;
+
+            try {
+                if (navigator.permissions && navigator.permissions.query) {
+                    const [camQ, locQ] = await Promise.all([
+                        navigator.permissions.query({ name: 'camera' }).catch(() => null),
+                        navigator.permissions.query({ name: 'geolocation' }).catch(() => null)
+                    ]);
+                    if (camQ) camActive = (camQ.state === 'granted');
+                    if (locQ) locActive = (locQ.state === 'granted');
+                }
+            } catch (error) {
+                console.log('Permission API query not fully supported, checking status');
+            }
+
+            cameraGranted = camActive;
+            locationGranted = locActive;
+
+            if (cameraGranted && locationGranted) {
                 bypassToApp();
                 return;
             }
 
-            try {
-                const cameraPermission = await navigator.permissions.query({ name: 'camera' });
-                cameraGranted = cameraPermission.state === 'granted';
+            // Strictly clear completion flag if any permission is missing
+            localStorage.removeItem('securo_permissions_completed');
+            if (!cameraGranted) localStorage.setItem('securo_camera_granted', 'false');
+            if (!locationGranted) localStorage.setItem('securo_location_granted', 'false');
 
-                const locationPermission = await navigator.permissions.query({ name: 'geolocation' });
-                locationGranted = locationPermission.state === 'granted';
-
-                // Skip onboarding screen completely if both already granted
-                if (cameraGranted && locationGranted) {
-                    bypassToApp();
-                    return;
-                }
-            } catch (error) {
-                console.log('Permission API not fully supported, will request manually');
+            if (cameraGranted && !locationGranted) {
+                showLocationCard();
             }
         }
 
@@ -556,14 +583,17 @@
                 stream.getTracks().forEach(track => track.stop()); // Stop immediately
 
                 cameraGranted = true;
+                localStorage.setItem('securo_camera_granted', 'true');
                 showStatus(cameraStatus, 'Camera access granted!', 'granted');
                 
                 setTimeout(() => {
                     showLocationCard();
-                }, 1500);
+                }, 1200);
             } catch (error) {
                 cameraGranted = false;
-                showStatus(cameraStatus, 'Camera access denied. Some features will be limited.', 'denied');
+                localStorage.setItem('securo_camera_granted', 'false');
+                localStorage.removeItem('securo_permissions_completed');
+                showStatus(cameraStatus, 'Camera access denied. Camera is mandatory to unlock Securo.', 'denied');
                 grantCameraBtn.disabled = false;
                 grantCameraBtn.innerHTML = '<span class="material-symbols-outlined">photo_camera</span><span>Try Again</span>';
             }
@@ -584,11 +614,11 @@
                 });
 
                 locationGranted = true;
+                localStorage.setItem('securo_location_granted', 'true');
                 showStatus(locationStatus, 'Location access granted!', 'granted');
 
-                // (2026-07-13) Bypass onboarding screen once allowed; was show complete card
                 setTimeout(() => {
-                    if (cameraGranted) {
+                    if (cameraGranted && locationGranted) {
                         bypassToApp();
                     } else {
                         showCompleteCard();
@@ -596,7 +626,9 @@
                 }, 800);
             } catch (error) {
                 locationGranted = false;
-                showStatus(locationStatus, 'Location access denied. Emergency features will be limited.', 'denied');
+                localStorage.setItem('securo_location_granted', 'false');
+                localStorage.removeItem('securo_permissions_completed');
+                showStatus(locationStatus, 'Location access denied. Location is mandatory to unlock Securo.', 'denied');
                 grantLocationBtn.disabled = false;
                 grantLocationBtn.innerHTML = '<span class="material-symbols-outlined">location_on</span><span>Try Again</span>';
             }
@@ -621,27 +653,48 @@
             locationCard.classList.remove('active');
             completeCard.classList.add('active');
 
-            cameraCheckText.textContent = cameraGranted ? 'Camera: Granted ✓' : 'Camera: Skipped';
-            locationCheckText.textContent = locationGranted ? 'Location: Granted ✓' : 'Location: Skipped';
+            const completeTitle = completeCard.querySelector('.card-title');
+            const completeSubtitle = completeCard.querySelector('.card-subtitle');
+            const iconWrap = completeCard.querySelector('.permission-icon');
 
-            if (!cameraGranted || !locationGranted) {
+            cameraCheckText.textContent = cameraGranted ? 'Camera: Granted ✓' : 'Camera: Access Denied / Required ✕';
+            locationCheckText.textContent = locationGranted ? 'Location: Granted ✓' : 'Location: Access Denied / Required ✕';
+
+            if (cameraGranted && locationGranted) {
+                localStorage.setItem('securo_permissions_completed', 'true');
+                localStorage.setItem('securo_camera_granted', 'true');
+                localStorage.setItem('securo_location_granted', 'true');
+                if (completeTitle) completeTitle.textContent = 'All Set!';
+                if (completeSubtitle) completeSubtitle.textContent = 'Your Securo safety companion is ready. You can now access all emergency features and campus tools.';
+                if (iconWrap) {
+                    iconWrap.className = 'permission-icon complete';
+                    iconWrap.innerHTML = '<span class="material-symbols-outlined">check_circle</span>';
+                }
+                finishBtn.style.display = 'flex';
+                retryPermissionsBtn.style.display = 'none';
+            } else {
+                localStorage.removeItem('securo_permissions_completed');
+                if (completeTitle) completeTitle.textContent = 'Access Blocked';
+                if (completeSubtitle) completeSubtitle.textContent = 'Securo requires both Camera and Location to protect your safety. You must grant both permissions to enter the app.';
+                if (iconWrap) {
+                    iconWrap.className = 'permission-icon denied';
+                    iconWrap.innerHTML = '<span class="material-symbols-outlined">lock</span>';
+                }
+                finishBtn.style.display = 'none';
                 retryPermissionsBtn.style.display = 'flex';
             }
-
-            // Store permission status
-            localStorage.setItem('securo_permissions_completed', 'true');
-            localStorage.setItem('securo_camera_granted', cameraGranted);
-            localStorage.setItem('securo_location_granted', locationGranted);
         }
 
         // Event listeners
         grantCameraBtn.addEventListener('click', requestCamera);
-        skipCameraBtn.addEventListener('click', showLocationCard);
         grantLocationBtn.addEventListener('click', requestLocation);
-        skipLocationBtn.addEventListener('click', showCompleteCard);
 
         finishBtn.addEventListener('click', () => {
-            // Redirect based on role
+            if (!cameraGranted || !locationGranted) {
+                alert('Access blocked: Both Camera and Location permissions must be granted to continue.');
+                showCompleteCard();
+                return;
+            }
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     window.location.href = 'index.html';
@@ -658,11 +711,19 @@
                 completeCard.classList.remove('active');
             } else if (!locationGranted) {
                 showLocationCard();
+                completeCard.classList.remove('active');
             }
         });
 
         // Check on load
         checkExistingPermissions();
+
+        // (2026-07-13) Prevent image drag across entire application; was draggable
+        window.addEventListener('dragstart', (e) => {
+            if (e.target && e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        }, false);
     </script>
 </body>
 </html>

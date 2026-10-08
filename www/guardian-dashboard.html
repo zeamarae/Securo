@@ -1286,11 +1286,7 @@
             flex: 0 0 auto;
         }
 
-        /* (2026-07-13) Soft purple map theme with distinct colors; was high-sat neon */
-        .leaflet-layer.purple-map-tiles,
-        .purple-map-tiles {
-            filter: sepia(30%) hue-rotate(205deg) saturate(110%) brightness(98%) contrast(108%) !important;
-        }
+        /* (2026-07-13) Restore original map tiles; was purple filter */
 
         .map-controls-custom {
             position: absolute;
@@ -1336,6 +1332,83 @@
             font-size: 24px;
             font-variation-settings: 'FILL' 0, 'wght' 600;
         }
+
+        /* (2026-07-13) Add child presence chip styles & disable img drag; was none */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .tracking-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: 999px;
+            box-shadow: 0 4px 14px rgba(23, 20, 40, 0.1);
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--ink);
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            max-width: min(92vw, 420px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            z-index: 1005;
+        }
+
+        .tracking-status-pill.is-inside {
+            background: rgba(240, 255, 249, 0.96) !important;
+            border-color: rgba(15, 155, 103, 0.35) !important;
+            color: #0c7e54 !important;
+        }
+
+        .tracking-status-pill.is-inside .pulse-status-dot {
+            background: #0f9b67 !important;
+            box-shadow: 0 0 0 2px rgba(15, 155, 103, 0.25) !important;
+        }
+
+        .tracking-status-pill.is-outside {
+            background: rgba(255, 245, 247, 0.96) !important;
+            border-color: rgba(209, 31, 52, 0.3) !important;
+            color: #c4181d !important;
+        }
+
+        .tracking-status-pill.is-outside .pulse-status-dot {
+            background: #d11f34 !important;
+            box-shadow: 0 0 0 2px rgba(209, 31, 52, 0.25) !important;
+        }
+
+        .pulse-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #0f9b67;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 2px rgba(15, 155, 103, 0.25);
+        }
+
+        .tracking-status-icon {
+            font-size: 15px !important;
+        }
+
+        .tracking-status-label-text {
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
 </head>
 
@@ -1343,10 +1416,12 @@
     <div class="app-shell">
         <header class="topbar">
             <div class="content-frame" style="display:flex; align-items:center; justify-content:space-between;">
-                <!-- (2026-07-13) Topbar brand using logo with text.png; was icon box -->
-                <div class="topbar-left">
+                <!-- (2026-07-13) Topbar logo redirects to map homepage; was static header -->
+                <div class="topbar-left" id="guardianHomeBrand"
+                    onclick="document.querySelector('.nav-item[data-nav=\'map\']')?.click();"
+                    style="cursor:pointer;" title="Go to Map Homepage">
                     <div class="logo-wrap" style="display:flex; align-items:center; gap:10px;">
-                        <img src="logo with text.png" alt="Securo" style="height: 28px; max-height: 28px; max-width: 155px; object-fit: contain; display: block;">
+                        <img src="logo with text.png" alt="Securo" style="height: 28px; max-height: 28px; max-width: 155px; object-fit: contain; display: block;" draggable="false">
                         <div class="portal-title" style="font-size:0.75rem; font-weight:800; padding:3px 8px; border-radius:6px; background:rgba(225,29,72,0.1); color:var(--primary); letter-spacing:0.04em;">Guardian</div>
                     </div>
                 </div>
@@ -1367,7 +1442,11 @@
                                 <span class="material-symbols-outlined">settings</span>
                                 <span>Settings</span>
                             </a>
-                            <!-- (2026-07-13) Move delete account to settings; was in profile dropdown -->
+                            <!-- (2026-07-13) Add About Us link to guardian dropdown; was settings only -->
+                            <a href="about.html" class="dropdown-item">
+                                <span class="material-symbols-outlined">info</span>
+                                <span>About Us</span>
+                            </a>
                             <button class="dropdown-item logout" id="logoutBtn">
                                 <span class="material-symbols-outlined">logout</span>
                                 <span>Sign Out</span>
@@ -1391,8 +1470,17 @@
 
         <div class="view-container">
             <!-- Map View -->
-            <div class="view active" id="mapView">
+            <div class="view active" id="mapView" style="position:relative;">
                 <div id="map"></div>
+
+                <!-- (2026-07-13) Child campus presence floating chip; was none -->
+                <div class="guardian-map-chip-container" style="position:absolute; top:16px; left:16px; z-index:1005; pointer-events:auto;">
+                    <div class="tracking-status-pill is-on is-inside" id="guardianTrackingStatusBanner" style="display:none; cursor:default;">
+                        <span class="pulse-status-dot" id="guardianTrackingStatusDot"></span>
+                        <span class="material-symbols-outlined tracking-status-icon" id="guardianTrackingStatusIcon">login</span>
+                        <span class="tracking-status-label-text" id="guardianTrackingStatusCopy">Child Campus Status</span>
+                    </div>
+                </div>
                 <!-- (2026-07-13) Map controls matching student view; was missing control buttons -->
                 <div class="map-controls-custom map-controls-top">
                     <button class="map-btn" id="map-layers-btn"
@@ -1879,13 +1967,13 @@
                 zoomDelta: 0.5,
                 wheelPxPerZoomLevel: 140
             }).setView(CAMPUS_CENTER, 17);
-            // (2026-07-13) Purple theme on normal map tiles; was unstyled
+            // (2026-07-13) Restore original map tiles; was purple-map-tiles
             const baseMapLayers = {
                 "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
                 "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20, className: 'purple-map-tiles' }),
+                "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
                 "Google Terrain": L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, className: 'purple-map-tiles' })
+                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
             };
             baseMapLayers["Google Hybrid"].addTo(map);
 
@@ -2129,6 +2217,78 @@
         }
 
         // --- Data Loading ---
+        let linkedChildrenData = [];
+        let activeChildStatusIndex = 0;
+        let childStatusRotationTimer = null;
+
+        function formatChildCampusEventTime(ts) {
+            if (!ts) ts = Date.now();
+            const d = new Date(ts);
+            const now = new Date();
+
+            let hours = d.getHours();
+            const minutes = d.getMinutes();
+            const ampm = hours >= 12 ? 'pm' : 'am';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            const minStr = minutes > 0 ? `:${minutes < 10 ? '0' : ''}${minutes}` : '';
+            const timeStr = `${hours}${minStr}${ampm}`;
+
+            const dDate = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const diffDays = Math.round((nowDate - dDate) / (1000 * 60 * 60 * 24));
+
+            let dayStr = 'today';
+            if (diffDays === 1) {
+                dayStr = 'yesterday';
+            } else if (diffDays > 1) {
+                dayStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            }
+            return `${timeStr} ${dayStr}`;
+        }
+
+        function updateGuardianTrackingChip() {
+            const banner = document.getElementById('guardianTrackingStatusBanner');
+            const icon = document.getElementById('guardianTrackingStatusIcon');
+            const copy = document.getElementById('guardianTrackingStatusCopy');
+            if (!banner || !icon || !copy) return;
+
+            if (!linkedChildrenData || linkedChildrenData.length === 0) {
+                banner.style.display = 'none';
+                return;
+            }
+
+            banner.style.display = 'inline-flex';
+            const currentChild = linkedChildrenData[activeChildStatusIndex % linkedChildrenData.length];
+            if (!currentChild) return;
+
+            const isInside = currentChild.isInside !== false;
+            banner.classList.toggle('is-inside', isInside);
+            banner.classList.toggle('is-outside', !isInside);
+            icon.textContent = isInside ? 'login' : 'logout';
+
+            const timeFormatted = formatChildCampusEventTime(currentChild.timestamp);
+            const text = isInside
+                ? `${currentChild.name} went inside the campus at ${timeFormatted}`
+                : `${currentChild.name} went out the campus at ${timeFormatted}`;
+            copy.textContent = text;
+            banner.title = `${text}. Campus geofence status.`;
+        }
+
+        function setupChildStatusRotation() {
+            if (childStatusRotationTimer) {
+                clearInterval(childStatusRotationTimer);
+                childStatusRotationTimer = null;
+            }
+            if (linkedChildrenData.length > 1) {
+                childStatusRotationTimer = setInterval(() => {
+                    activeChildStatusIndex = (activeChildStatusIndex + 1) % linkedChildrenData.length;
+                    updateGuardianTrackingChip();
+                }, 10 * 60 * 1000);
+            }
+        }
+
+        // (2026-07-13) Child status chip rotation without auto modal; was auto modal
         async function initDashboard(user) {
             console.log("Initializing dashboard for:", user.email);
             try {
@@ -2149,25 +2309,50 @@
                 renderStudentSelector(links);
 
                 if (links.length > 0) {
-                    // (2026-07-13) Show student selector bar & add button up to 5; was hidden
                     if (studentSelectorBar) studentSelectorBar.style.display = 'flex';
                     const addBtn = document.getElementById('addStudentBtn');
                     if (addBtn) addBtn.style.display = links.length < 5 ? 'flex' : 'none';
                     setPendingGuardianState(null);
                     document.getElementById('requestLocationBtn').style.display = 'inline-flex';
                     selectStudent(links[0]);
+
+                    linkedChildrenData = await Promise.all(links.map(async (link) => {
+                        const name = await resolveChildDisplayName(link);
+                        let isInside = true;
+                        let ts = Date.now();
+                        try {
+                            const hist = await getAttendanceHistory(link.studentUid);
+                            if (hist && hist.length > 0) {
+                                const latest = hist[0];
+                                isInside = latest.type === 'in';
+                                if (latest.timestamp?.toDate) {
+                                    ts = latest.timestamp.toDate().getTime();
+                                } else if (latest.timestamp) {
+                                    ts = new Date(latest.timestamp).getTime();
+                                }
+                            }
+                        } catch (e) {}
+                        return {
+                            id: link.studentUid,
+                            name: name,
+                            isInside: isInside,
+                            timestamp: ts
+                        };
+                    }));
+                    updateGuardianTrackingChip();
+                    setupChildStatusRotation();
                 } else {
                     if (studentSelectorBar) studentSelectorBar.style.display = 'flex';
                     const allLinks = await getAllLinksForGuardian(user.uid);
                     console.log("All Links (inc pending):", allLinks.length);
 
-                    // (2026-07-13) Init campus map for zero-link guardian; was uninitialized
                     initMap();
+                    const banner = document.getElementById('guardianTrackingStatusBanner');
+                    if (banner) banner.style.display = 'none';
+
                     if (allLinks.length === 0) {
-                        console.log("No links found. Triggering modal.");
                         setPendingGuardianState(null);
                         document.getElementById('addStudentBtn').style.display = 'flex';
-                        document.getElementById('linkModal').classList.add('active');
                     } else {
                         document.getElementById('addStudentBtn').style.display = 'none';
                         showToast("Waiting for child approval...");
@@ -2184,10 +2369,10 @@
             } catch (err) {
                 console.warn("Dashboard init failed:", err);
                 showToast("Failed to load data. Please refresh.", "error");
-                // Even on error, if we're sure it's a new user, show modal
                 if (studentSelectorBar) studentSelectorBar.style.display = 'flex';
                 document.getElementById('addStudentBtn').style.display = 'flex';
-                document.getElementById('linkModal').classList.add('active');
+                const banner = document.getElementById('guardianTrackingStatusBanner');
+                if (banner) banner.style.display = 'none';
             }
         }
 
@@ -2653,7 +2838,7 @@
                 renderAlerts(logs);
             });
 
-            // (2026-07-13) Subscribe to child SOS alerts; filter to last 48h; was no time check
+            // (2026-07-13) Render full student SOS details on alert; was basic status line
             sosUnsub = subscribeToStudentSOS(studentUid, (activeSos) => {
                 const card = document.getElementById('sosEmergencyCard');
                 const text = document.getElementById('sosEmergencyText');
@@ -2665,11 +2850,16 @@
                 if (recentSos.length > 0) {
                     const alert = recentSos[0];
                     if (card) card.style.display = 'flex';
-                    if (text) text.textContent = `${activeLink?.studentName || 'Your child'} activated SOS. Status: ACTIVE.`;
+                    const sName = activeLink?.studentName || alert.userName || alert.studentName || 'Your child';
+                    const sTime = alert.timestamp?.toDate?.() ? alert.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active now';
+                    const sLoc = alert.location?.address || (alert.location?.lat ? `${alert.location.lat.toFixed(4)}, ${alert.location.lng.toFixed(4)}` : 'Campus Grounds');
+                    const sType = (alert.emergencyType || 'SOS Emergency').toUpperCase();
+                    if (text) {
+                        text.innerHTML = `<strong>${sName}</strong> · <strong>Status:</strong> ${alert.status?.toUpperCase() || 'ACTIVE'}<br><strong>Time:</strong> ${sTime} · <strong>Type:</strong> ${sType}<br><strong>Location:</strong> ${sLoc}`;
+                    }
                     const btn = document.getElementById('viewSosLocationBtn');
                     if (btn && alert.location?.lat && alert.location?.lng) {
                         btn.onclick = () => {
-                            // (2026-07-13) Fix SOS map view switch; was invalid setActiveNav
                             setActiveView('map');
                             if (map) map.setView([alert.location.lat, alert.location.lng], 18);
                         };
@@ -2699,8 +2889,15 @@
 // (2026-07-13) Check point-in-polygon for child location; was radius check
             const isInside = isPointInPolygon([loc.lat, loc.lng], CAMPUS_GEOFENCE_POLYGON);
 
+            // (2026-07-13) Update child chip status and color live; was card only
             if (activeLink?.studentUid) {
                 processChildAutoAttendance(activeLink.studentUid, loc, isInside);
+                const currentChild = linkedChildrenData.find(c => c.id === activeLink.studentUid);
+                if (currentChild) {
+                    currentChild.isInside = isInside;
+                    currentChild.timestamp = loc.updatedAt?.toDate ? loc.updatedAt.toDate().getTime() : Date.now();
+                    updateGuardianTrackingChip();
+                }
             }
 
             if (!studentMarker) {
@@ -2992,11 +3189,15 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 initDashboard(user);
-            } else {
-                window.location.href = 'guardian.html';
             }
         });
 
+        // (2026-07-13) Prevent image drag across entire application; was draggable
+        window.addEventListener('dragstart', (e) => {
+            if (e.target && e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        }, false);
     </script>
 </body>
 

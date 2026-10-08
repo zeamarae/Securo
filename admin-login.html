@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Securo - Admin Login</title>
     <link rel="icon" type="image/png" href="logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -25,8 +25,10 @@
 
         * { box-sizing: border-box; }
 
+        /* (2026-07-13) Remove body padding & make mobile responsive; was padding 20px */
         body {
             margin: 0;
+            padding: 0;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -37,7 +39,17 @@
                 radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
             font-family: "Outfit", sans-serif;
             color: var(--text);
-            padding: 20px;
+        }
+
+        /* (2026-07-13) Disable dragging for all images; was default draggable */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .login-container {
@@ -49,6 +61,40 @@
             padding: 48px 40px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
             animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            margin: auto;
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 16px 12px;
+            }
+            .login-container {
+                padding: 32px 20px;
+                border-radius: 24px;
+            }
+            h1 {
+                font-size: 1.45rem;
+            }
+            .subtitle {
+                font-size: 0.88rem;
+            }
+            .header {
+                margin-bottom: 24px;
+            }
+            .form-group {
+                margin-bottom: 16px;
+            }
+            input {
+                padding: 12px 14px 12px 42px;
+                font-size: 0.95rem;
+                border-radius: 14px;
+            }
+            .login-btn {
+                padding: 14px;
+                font-size: 0.95rem;
+                border-radius: 14px;
+                margin-top: 22px;
+            }
         }
 
         @keyframes slideUp {
@@ -239,39 +285,30 @@
             </div>
 
             <button type="submit" id="submitBtn" class="login-btn">
-                <span id="submitBtnText">Access Terminal</span>
+                <span id="submitBtnText">Access Command Center</span>
                 <div class="spinner" id="spinner"></div>
             </button>
         </form>
 
-        <div style="text-align: center; margin-top: 24px; font-size: 0.9rem;">
-            <span id="toggleText" style="color: var(--text-muted);">New administrator?</span>
-            <a href="#" id="toggleAuthMode" style="color: var(--primary); text-decoration: none; font-weight: 600; margin-left: 5px;">Register Account</a>
-        </div>
-
+        <!-- (2026-07-13) Remove public admin registration; was toggle register account -->
         <a href="index.html" class="back-link">Return to Student Application</a>
     </div>
 
     <script type="module">
-        import { login, signUp } from './auth.js';
+        import { login } from './auth.js';
         import { auth } from './firebase-config.js';
-        import { getUserProfile, saveUserProfile, saveUserDirectoryMarker } from './db.js';
+        import { getUserProfile } from './db.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const ADMIN_EMAIL = 'admin@admin.com';
         const ADMIN_PASSWORD = 'admin123';
-        const ADMIN_NAME = 'Administrator';
         const loginForm = document.getElementById('adminLoginForm');
         const adminEmailInput = document.getElementById('adminEmail');
         const passwordInput = document.getElementById('password');
         const submitBtn = document.getElementById('submitBtn');
-        const submitBtnText = document.getElementById('submitBtnText');
         const spinner = document.getElementById('spinner');
         const errorMessage = document.getElementById('errorMessage');
-        const toggleAuthMode = document.getElementById('toggleAuthMode');
-        const toggleText = document.getElementById('toggleText');
 
-        let isLoginMode = true;
         adminEmailInput.value = ADMIN_EMAIL;
 
         const showError = (msg) => {
@@ -281,21 +318,6 @@
                 errorMessage.style.display = 'none';
             }, 5000);
         };
-
-        toggleAuthMode.addEventListener('click', (e) => {
-            e.preventDefault();
-            isLoginMode = !isLoginMode;
-            
-            if (isLoginMode) {
-                submitBtnText.textContent = "Access Terminal";
-                toggleText.textContent = "New administrator?";
-                toggleAuthMode.textContent = "Register Account";
-            } else {
-                submitBtnText.textContent = "Initialize Admin";
-                toggleText.textContent = "Already have access?";
-                toggleAuthMode.textContent = "Sign In Instead";
-            }
-        });
 
         // Redirect if already logged in as admin
         onAuthStateChanged(auth, async (user) => {
@@ -320,22 +342,7 @@
                     throw new Error(`Use the static admin credentials: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
                 }
 
-                let user;
-                if (isLoginMode) {
-                    user = await login(email, pass);
-                } else {
-                    user = await signUp(email, pass);
-                    await saveUserProfile(user.uid, {
-                        email: ADMIN_EMAIL,
-                        name: ADMIN_NAME,
-                        role: 'admin'
-                    });
-                    await saveUserDirectoryMarker(user.uid, {
-                        email: ADMIN_EMAIL,
-                        name: ADMIN_NAME,
-                        role: 'admin'
-                    });
-                }
+                const user = await login(email, pass);
                 const profile = await getUserProfile(user.uid);
 
                 if (user.email !== ADMIN_EMAIL && profile?.role !== 'admin') {
@@ -357,6 +364,13 @@
                 spinner.style.display = 'none';
             }
         });
+
+        // (2026-07-13) Prevent image drag across entire application; was draggable
+        window.addEventListener('dragstart', (e) => {
+            if (e.target && e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        }, false);
     </script>
 </body>
 </html>

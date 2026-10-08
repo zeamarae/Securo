@@ -109,9 +109,11 @@ export const Permissions = {
         });
     },
 
+    // (2026-07-13) Verify both camera & location allowed; was check single flag
     async hasAllPermissionsGranted() {
-        if (localStorage.getItem('securo_permissions_completed') === 'true') return true;
-        if (localStorage.getItem('securo_camera_granted') === 'true' && localStorage.getItem('securo_location_granted') === 'true') {
+        const camOk = localStorage.getItem('securo_camera_granted') === 'true';
+        const locOk = localStorage.getItem('securo_location_granted') === 'true';
+        if (camOk && locOk) {
             localStorage.setItem('securo_permissions_completed', 'true');
             return true;
         }
@@ -129,14 +131,15 @@ export const Permissions = {
         } catch {
             // ignore
         }
+        localStorage.removeItem('securo_permissions_completed');
         return false;
     },
 
-    // (2026-07-13) Bypass onboarding when permissions allowed; was manual flag
+    // (2026-07-13) Show onboarding unless both permissions allowed; was flag check
     shouldShowPermissionOnboarding() {
-        if (localStorage.getItem('securo_permissions_completed') === 'true') return false;
-        if (localStorage.getItem('securo_camera_granted') === 'true' && localStorage.getItem('securo_location_granted') === 'true') {
-            localStorage.setItem('securo_permissions_completed', 'true');
+        const camOk = localStorage.getItem('securo_camera_granted') === 'true';
+        const locOk = localStorage.getItem('securo_location_granted') === 'true';
+        if (camOk && locOk) {
             return false;
         }
         return true;
@@ -567,3 +570,13 @@ export default {
     throttle,
     Device
 };
+
+// (2026-07-13) Prevent image drag across entire application; was draggable
+if (typeof window !== 'undefined') {
+    window.addEventListener('dragstart', (e) => {
+        if (e.target && e.target.tagName === 'IMG') {
+            e.preventDefault();
+        }
+    }, false);
+}
+

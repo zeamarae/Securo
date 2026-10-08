@@ -15,6 +15,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="logo.png">
     <script src="router.js"></script>
+    <!-- (2026-07-13) Dramatic intro preloader styles and GSAP; was no preloader -->
+    <link rel="stylesheet" href="preloader.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="preloader.js"></script>
 
     <style>
         /* Design System Tokens */
@@ -35,6 +39,17 @@
             --radius-xl: 32px;
             --radius-lg: 24px;
             --radius-md: 18px;
+        }
+
+        /* (2026-07-13) Disable dragging for all images; was default draggable */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         /* Base Styles */
@@ -579,6 +594,23 @@
 </head>
 <body>
 
+    <!-- (2026-07-13) Dramatic intro preloader with logo; was immediate page view -->
+    <div id="securo-preloader-overlay">
+        <div class="securo-preloader-bg"></div>
+        <div class="securo-preloader-content">
+            <div class="securo-preloader-logo-wrap">
+                <img src="logo with text.png" alt="Securo" class="securo-preloader-logo">
+                <div class="securo-preloader-shimmer"></div>
+            </div>
+            <div class="securo-preloader-indicator">
+                <div class="securo-preloader-progress-track">
+                    <div class="securo-preloader-progress-bar"></div>
+                </div>
+                <span class="securo-preloader-status-text">INITIALIZING SECURE SYSTEMS</span>
+            </div>
+        </div>
+    </div>
+
     <div class="toast-stack" id="toastStack" aria-live="polite"></div>
 
     <!-- Main Auth Card (loginHub) -->
@@ -657,8 +689,13 @@
                 <span class="material-symbols-outlined">login</span>
             </button>
 
-            <div style="text-align: center;">
-                <a href="role-selection.html" style="color: var(--muted); text-decoration: none; font-size: 0.85rem; font-weight: 600;">Not a Student? Change Role</a>
+            <!-- (2026-07-13) Add About Us link to login footer; was role selection only -->
+            <div style="text-align: center; display: flex; justify-content: center; gap: 14px; margin-top: 14px; flex-wrap: wrap;">
+                <a href="role-selection.html" style="color: var(--muted); text-decoration: none; font-size: 0.85rem; font-weight: 600;">Change Role</a>
+                <span style="color: var(--muted);">&bull;</span>
+                <a href="about.html" style="color: var(--primary); text-decoration: none; font-size: 0.85rem; font-weight: 600;">About Us</a>
+                <span style="color: var(--muted);">&bull;</span>
+                <a href="terms.html" style="color: var(--muted); text-decoration: none; font-size: 0.85rem; font-weight: 600;">Terms</a>
             </div>
         </form>
     </div>
@@ -855,15 +892,12 @@
         // Check if already logged in
         checkAuth(false);
 
-        // (2026-07-13) Bypass onboarding if camera & location allowed; was sync flag only
+        // (2026-07-13) Block login until both permissions granted; was skippable
         (async () => {
             if (!Permissions.shouldShowPermissionOnboarding()) return;
             const hasAll = await Permissions.hasAllPermissionsGranted();
             if (hasAll) return;
-            const urlParams = new URLSearchParams(window.location.search);
-            if (!urlParams.has('skip_permissions')) {
-                window.location.href = 'permissions-onboarding.html';
-            }
+            window.location.href = 'permissions-onboarding.html';
         })();
 
         const mainAuthForm = document.getElementById('mainAuthForm');
@@ -1447,6 +1481,13 @@
                 setButtonBusy(submitBtn, false);
             }
         });
+
+        // (2026-07-13) Prevent image drag across entire application; was draggable
+        window.addEventListener('dragstart', (e) => {
+            if (e.target && e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        }, false);
     </script>
 </body>
 </html>

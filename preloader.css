@@ -1,0 +1,118 @@
+/* (2026-07-13) Dramatic preloader styles with white bg; was no preloader */
+#securo-preloader-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 999999 !important;
+    background-color: #ffffff !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    overflow: hidden !important;
+    contain: layout style paint;
+    isolation: isolate;
+    will-change: opacity, transform;
+    pointer-events: auto;
+}
+
+/* (2026-07-13) Pure white preloader bg without glow; was radial-gradient */
+.securo-preloader-bg {
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+    z-index: 1;
+    will-change: opacity;
+}
+
+.securo-preloader-content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    max-width: 90vw;
+}
+
+.securo-preloader-logo-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    overflow: hidden;
+    border-radius: 20px;
+    padding: 10px 16px;
+}
+
+.securo-preloader-logo {
+    width: clamp(230px, 62vw, 390px);
+    height: auto;
+    object-fit: contain;
+    display: block;
+    filter: none !important;
+    will-change: transform, opacity;
+    -webkit-user-drag: none;
+    user-drag: none;
+    user-select: none;
+}
+
+.securo-preloader-shimmer {
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.65) 50%,
+        transparent 100%
+    );
+    transform: skewX(-25deg);
+    pointer-events: none;
+    z-index: 3;
+}
+
+.securo-preloader-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    will-change: opacity, transform;
+}
+
+.securo-preloader-progress-track {
+    width: 140px;
+    height: 3px;
+    background: rgba(90, 31, 224, 0.1);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+}
+
+/* (2026-07-13) Remove progress bar glow shadow; was 10px purple box-shadow */
+.securo-preloader-progress-bar {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #5a1fe0, #7c3aed);
+    border-radius: 999px;
+    box-shadow: none;
+    will-change: width;
+}
+
+.securo-preloader-status-text {
+    font-family: 'Sora', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    color: #6e6a84;
+    text-transform: uppercase;
+}
+
+body[data-preloader-active="true"] {
+    overflow: hidden !important;
+}

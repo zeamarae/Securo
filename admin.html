@@ -10,9 +10,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
-    <!-- (2026-07-13) Add Leaflet stylesheet and script for SOS map; was standard head links -->
+    <!-- (2026-07-13) Add Leaflet and SheetJS for reports; was Leaflet only -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --bg: #f8fafc;
@@ -42,6 +43,17 @@
             -moz-user-select: text;
             -ms-user-select: text;
             user-select: text;
+        }
+
+        /* (2026-07-13) Disable dragging for all images; was default draggable */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         body {
@@ -1318,21 +1330,29 @@
             text-transform: uppercase;
         }
 
+        /* (2026-07-13) Add role pill color classification; was basic pills */
         .role-pill.student {
-            color: var(--primary);
-            background: rgba(90,31,224,0.08);
+            color: #5a1fe0;
+            background: #f3e8ff;
+            border: 1px solid #d8b4fe;
         }
 
-        /* (2026-07-13) Red border outline for guardian role pill; was borderless */
         .role-pill.guardian {
-            color: #d1465b;
-            background: #fff1f2;
-            border: 1px solid #fecdd3;
+            color: #b45309;
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+        }
+
+        .role-pill.staff {
+            color: #0369a1;
+            background: #e0f2fe;
+            border: 1px solid #bae6fd;
         }
 
         .role-pill.admin {
-            color: #0f766e;
-            background: #ecfeff;
+            color: #047857;
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
         }
 
         .editor-grid {
@@ -1847,36 +1867,180 @@
             overflow: hidden;
         }
 
+        /* (2026-07-13) Modern dispatch messaging styles; was centered vertical header */
         .messages-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid rgba(15,23,42,0.06);
-            display: grid;
-            justify-items: center;
+            padding: 14px 22px;
+            border-bottom: 1px solid rgba(15,23,42,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            background: #ffffff;
+            z-index: 10;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+
+        .messages-header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .messages-header-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        .messages-header-title-row {
+            display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(255,255,255,0.96);
-            z-index: 10;
-            text-align: center;
+            flex-wrap: wrap;
+        }
+
+        .messages-header-name {
+            font-weight: 800;
+            font-size: 1.05rem;
+            color: var(--ink);
+            line-height: 1.2;
+            letter-spacing: -0.02em;
+        }
+
+        .messages-header-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.76rem;
+            color: var(--muted);
+        }
+
+        .messages-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
         }
 
         .messages-header .thread-avatar {
             width: 44px;
             height: 44px;
             border-radius: 14px;
-            font-size: 0.92rem;
+            font-size: 0.95rem;
+            flex-shrink: 0;
         }
 
-        .messages-header-name {
-            font-weight: 800;
-            font-size: 0.98rem;
+        .messages-search-box {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .messages-search-box input {
+            width: 100%;
+            padding: 8px 12px 8px 34px;
+            font-size: 0.82rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            background: #f8fafc;
             color: var(--ink);
-            line-height: 1.2;
+            outline: none;
+            transition: all 0.2s;
+            box-sizing: border-box;
         }
 
-        .messages-header-status {
+        .messages-search-box input:focus {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(90,31,224,0.1);
+        }
+
+        .messages-filter-chips {
+            display: flex;
+            gap: 6px;
+            margin-top: 10px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+
+        .msg-filter-chip {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: var(--muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+
+        .msg-filter-chip:hover,
+        .msg-filter-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .messages-canned-bar {
+            padding: 8px 18px;
+            background: #f8fafc;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .canned-chip {
+            padding: 5px 11px;
+            border-radius: 8px;
             font-size: 0.74rem;
-            color: var(--green);
-            line-height: 1.2;
+            font-weight: 600;
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: #334155;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.15s;
+        }
+
+        .canned-chip:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: rgba(90,31,224,0.04);
+        }
+
+        .chat-date-separator {
+            align-self: center;
+            margin: 12px 0 6px;
+            padding: 4px 14px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            color: #475569;
+            font-size: 0.69rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .msg-sender-tag {
+            font-size: 0.68rem;
+            font-weight: 700;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .admin-msg.received .msg-sender-tag {
+            color: #6366f1;
+        }
+        .admin-msg.sent .msg-sender-tag {
+            color: rgba(255,255,255,0.85);
         }
 
         .messages-body {
@@ -1884,7 +2048,7 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 8px;
             background: linear-gradient(180deg, #fcfcff 0%, #f7f7fb 100%);
             min-height: 0;
         }
@@ -1899,7 +2063,7 @@
         }
 
         .messages-composer {
-            padding: 16px 18px;
+            padding: 14px 18px;
             border-top: 1px solid rgba(15,23,42,0.06);
             display: flex;
             gap: 12px;
@@ -1913,15 +2077,17 @@
         }
 
         .messages-composer #adminSendBtn {
-            min-width: 54px;
+            min-width: 50px;
+            height: 46px;
             padding: 0 16px;
             justify-content: center;
+            border-radius: 12px;
         }
 
         @media (max-width: 980px) {
             .messages-shell {
                 grid-template-columns: 1fr;
-                grid-template-rows: 260px minmax(0, 1fr);
+                grid-template-rows: 290px minmax(0, 1fr);
                 min-height: 76vh;
                 height: 76vh;
             }
@@ -1933,27 +2099,29 @@
         }
 
         .thread-item {
-            padding: 12px 14px;
+            padding: 10px 12px;
             display: flex;
             align-items: center;
             gap: 12px;
             cursor: pointer;
             transition: all 0.2s;
             border-left: 4px solid transparent;
+            border-radius: 12px;
+            margin-bottom: 3px;
         }
 
         .thread-item:hover {
-            background: rgba(255, 255, 255, 0.5);
+            background: rgba(241, 245, 249, 0.8);
         }
 
         .thread-item.active {
-            background: rgba(99, 102, 241, 0.08);
+            background: rgba(90, 31, 224, 0.08);
             border-left-color: var(--primary);
         }
 
         .thread-avatar {
-            width: 38px;
-            height: 38px;
+            width: 40px;
+            height: 40px;
             border-radius: 12px;
             background: var(--primary);
             color: white;
@@ -1964,13 +2132,71 @@
             flex-shrink: 0;
         }
 
+        .thread-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .thread-name {
+            font-weight: 700;
+            font-size: 0.88rem;
+            color: var(--ink);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .thread-preview {
+            font-size: 0.76rem;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-top: 2px;
+        }
+
+        .thread-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .thread-time {
+            font-size: 0.68rem;
+            color: var(--muted);
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .thread-delete-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 2px 4px;
+            border-radius: 6px;
+            cursor: pointer;
+            opacity: 0;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .thread-item:hover .thread-delete-btn {
+            opacity: 1;
+        }
+
+        .thread-delete-btn:hover {
+            color: #ef4444;
+            background: #fee2e2;
+        }
+
         @media (max-width: 960px) {
             .management-grid,
             .chat-panel {
                 grid-template-columns: 1fr !important;
             }
             #threadList {
-                max-height: 200px;
+                max-height: 220px;
             }
         }
     </style>
@@ -1990,23 +2216,39 @@
                     </div>
                 </div>
                 <div class="topbar-actions">
+                    <!-- (2026-07-13) Command Center status & logout header; was static live chip -->
+                    <div id="topbarSosAlertBadge" class="capsule" style="background:#fee2e2; border:1px solid #fca5a5; color:#b91c1c; font-weight:800; font-size:0.78rem; display:none; align-items:center; gap:6px;">
+                        <span class="signal-dot" style="background:#dc2626; animation:pulse 1.2s infinite;"></span>
+                        <span id="topbarSosCountText">0 Critical SOS</span>
+                    </div>
                     <div class="signal-chip">
                         <span class="signal-dot"></span>
-                        <span>Live</span>
+                        <span>Terminal Live</span>
                     </div>
-                    <a href="index.html" class="ghost-btn">
+                    <a href="about.html" class="ghost-btn" style="text-decoration:none;">
+                        <span class="material-symbols-outlined">info</span>
+                        <span>About Us</span>
+                    </a>
+                    <a href="index.html" class="ghost-btn" style="text-decoration:none;">
                         <span class="material-symbols-outlined">arrow_back</span>
                         <span>Back to App</span>
                     </a>
+                    <button class="action-btn" id="topbarDirectLogoutBtn" type="button" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecdd3; padding:8px 14px; border-radius:12px; font-weight:700; font-size:0.82rem; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Sign out of command center">
+                        <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
+                        <span>Log Out</span>
+                    </button>
                     <div class="profile-chip" id="adminProfileChip" aria-label="Admin menu">
                         <span id="adminInitials">AD</span>
                         <div class="profile-dropdown" id="adminProfileDropdown">
                             <div style="padding: 10px 14px;">
                                 <div id="adminDropdownName" style="font-weight: 800; color: var(--ink);">Administrator</div>
-                                <div style="font-size: 0.68rem; color: var(--muted); font-weight: 700;">ADMIN ACCOUNT</div>
+                                <div style="font-size: 0.68rem; color: var(--muted); font-weight: 700;">ADMIN COMMAND ACCOUNT</div>
                             </div>
                             <div class="dropdown-divider"></div>
-                            <!-- (2026-07-13) Add settings link in admin dropdown; was logout only -->
+                            <a href="about.html" class="dropdown-item">
+                                <span class="material-symbols-outlined">info</span>
+                                <span>About Securo</span>
+                            </a>
                             <a href="settings.html" class="dropdown-item">
                                 <span class="material-symbols-outlined">settings</span>
                                 <span>Settings</span>
@@ -2023,37 +2265,45 @@
             <div class="dashboard-grid">
                 <aside class="sidebar">
                     <div class="sidebar-inner">
+                        <!-- (2026-07-13) Command Center sidebar navigation; was simulator tab -->
                         <div class="sidebar-label">Operations</div>
                         <div class="nav-stack">
                             <button class="tab-btn active" data-tab="stats">
                                 <span class="material-symbols-outlined">monitoring</span>
-                                <span>Statistics</span>
+                                <span>Command Stats</span>
                             </button>
                             <button class="tab-btn" data-tab="sos">
                                 <span class="material-symbols-outlined">crisis_alert</span>
-                                <span>SOS Triggers</span>
+                                <span>Live SOS Queue</span>
+                                <span id="sidebarSosCounter" class="capsule" style="margin-left:auto; font-size:0.68rem; padding:2px 7px; background:#fee2e2; color:#dc2626; font-weight:800; display:none;">0</span>
                             </button>
-                            <!-- (2026-07-13) Add Geofence Simulator tab; was 5 operation tabs only -->
-                            <button class="tab-btn" data-tab="geofence">
-                                <span class="material-symbols-outlined">share_location</span>
-                                <span>Geofence Simulator</span>
+                            <button class="tab-btn" data-tab="reports">
+                                <span class="material-symbols-outlined">assessment</span>
+                                <span>Reports & Export</span>
                             </button>
+                        </div>
+
+                        <div class="sidebar-label" style="margin-top:16px;">Safety Desk</div>
+                        <div class="nav-stack">
                             <button class="tab-btn" data-tab="users">
                                 <span class="material-symbols-outlined">manage_accounts</span>
-                                <span>Users</span>
+                                <span>User Directory</span>
                             </button>
                             <button class="tab-btn" data-tab="gad">
                                 <span class="material-symbols-outlined">campaign</span>
-                                <span>GAD</span>
+                                <span>GAD Bulletins</span>
                             </button>
                             <button class="tab-btn" data-tab="messages">
                                 <span class="material-symbols-outlined">chat</span>
-                                <span>Messages</span>
+                                <span>Student Messaging</span>
+                                <span id="sidebarMsgCounter" class="capsule" style="margin-left:auto; font-size:0.68rem; padding:2px 7px; background:rgba(90,31,224,0.12); color:var(--primary); font-weight:800; display:none;">0</span>
                             </button>
-                            <!-- (2026-07-13) Add Reports & Audits tab; was 6 sidebar tabs only -->
-                            <button class="tab-btn" data-tab="reports">
-                                <span class="material-symbols-outlined">assessment</span>
-                                <span>Reports & Audits</span>
+                        </div>
+
+                        <div style="margin-top: auto; padding-top: 18px; border-top: 1px solid var(--line);">
+                            <button id="sidebarLogoutBtn" class="tab-btn" type="button" style="color: #dc2626; width: 100%;">
+                                <span class="material-symbols-outlined" style="color: #dc2626;">logout</span>
+                                <span>Exit Command Center</span>
                             </button>
                         </div>
                     </div>
@@ -2236,147 +2486,7 @@
                         </div>
                     </section>
 
-                    <!-- (2026-07-13) Add Geofence Simulator section; was no simulator -->
-                    <section class="admin-section" id="sec-geofence">
-                        <div class="panel-card" style="margin-bottom: 20px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
-                                <div>
-                                    <div class="eyebrow" style="color:var(--primary);">ATTENDANCE AUTOMATION</div>
-                                    <h2 class="chart-title" style="margin-top:2px;">Campus Geofence Simulator & Dispatcher</h2>
-                                    <p class="chart-copy">Trigger entry and exit events for testing without physically traveling outside. Automatically writes attendance and pushes notifications to parents.</p>
-                                </div>
-                                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                                    <span class="capsule" style="background:rgba(15,155,103,0.1); color:var(--green); font-weight:800; font-size:0.78rem;">
-                                        <span class="signal-dot"></span>
-                                        <span id="simulatorGeofenceStatus">Geofence Active</span>
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div style="background:rgba(248,250,252,0.9); border:1px solid rgba(226,232,240,0.9); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:12px;">
-                                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-                                    <label for="simulatorStudentSelect" style="font-size:0.84rem; font-weight:700; color:var(--ink); display:flex; align-items:center; gap:6px;">
-                                        <span class="material-symbols-outlined" style="font-size:18px; color:var(--primary);">person_search</span>
-                                        Select Target Student
-                                    </label>
-                                    <button id="btnRefreshSimStudents" type="button" class="ghost-btn" style="min-height:36px; padding:0 12px; font-size:0.76rem; gap:6px;" title="Refresh student directory">
-                                        <span class="material-symbols-outlined" style="font-size:16px;">sync</span>
-                                        <span>Refresh Directory</span>
-                                    </button>
-                                </div>
-                                <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                                    <select id="simulatorStudentSelect" class="glass-input" style="flex:1; min-height:44px; font-weight:600; background:white;">
-                                        <option value="">Loading student profiles...</option>
-                                    </select>
-                                    <span id="simulatorStudentStatusBadge" class="capsule" style="min-height:44px; padding:0 14px; background:white; border:1px solid #e2e8f0; color:var(--muted);">
-                                        No student selected
-                                    </span>
-                                </div>
-                                <div id="simulatorStudentMetaText" style="font-size:0.8rem; color:var(--muted); display:flex; align-items:center; gap:6px;">
-                                    <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">info</span>
-                                    <span>Select a student above to trigger automated Time In or Time Out.</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:18px; margin-bottom: 20px;">
-                            <div class="panel-card" style="display:flex; flex-direction:column; justify-content:space-between; gap:14px; border-left: 4px solid var(--green);">
-                                <div>
-                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                                        <div style="width:38px; height:38px; border-radius:12px; background:rgba(15,155,103,0.12); color:var(--green); display:flex; align-items:center; justify-content:center;">
-                                            <span class="material-symbols-outlined" style="font-size:22px;">login</span>
-                                        </div>
-                                        <div>
-                                            <h3 style="margin:0; font-size:1.02rem; font-family:'Sora', sans-serif; font-weight:700;">Simulate Campus Entry</h3>
-                                            <span style="font-size:0.75rem; color:var(--green); font-weight:700;">Action: Time In</span>
-                                        </div>
-                                    </div>
-                                    <p style="margin:0; font-size:0.82rem; color:var(--muted); line-height:1.45;">
-                                        Simulates student walking through campus gates into school perimeter. Writes official Time In log, updates GPS coordinates, and dispatches parent push notification.
-                                    </p>
-                                </div>
-                                <button id="btnSimulateTimeIn" type="button" class="primary-btn" style="background:linear-gradient(135deg, #0f9b67, #0b7c52); width:100%; justify-content:center; box-shadow:0 8px 20px rgba(15,155,103,0.22); min-height:46px;">
-                                    <span class="material-symbols-outlined">login</span>
-                                    <span>Trigger Campus Entry (Time In)</span>
-                                </button>
-                            </div>
-
-                            <div class="panel-card" style="display:flex; flex-direction:column; justify-content:space-between; gap:14px; border-left: 4px solid var(--red);">
-                                <div>
-                                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-                                        <div style="width:38px; height:38px; border-radius:12px; background:rgba(209,31,52,0.12); color:var(--red); display:flex; align-items:center; justify-content:center;">
-                                            <span class="material-symbols-outlined" style="font-size:22px;">logout</span>
-                                        </div>
-                                        <div>
-                                            <h3 style="margin:0; font-size:1.02rem; font-family:'Sora', sans-serif; font-weight:700;">Simulate Campus Exit</h3>
-                                            <span style="font-size:0.75rem; color:var(--red); font-weight:700;">Action: Time Out</span>
-                                        </div>
-                                    </div>
-                                    <p style="margin:0; font-size:0.82rem; color:var(--muted); line-height:1.45;">
-                                        Simulates student leaving the campus boundary. Writes official Time Out log, updates GPS coordinates, and dispatches departure push notification to parents.
-                                    </p>
-                                </div>
-                                <button id="btnSimulateTimeOut" type="button" class="danger-btn" style="background:linear-gradient(135deg, #eb3a53, #c71d35); width:100%; justify-content:center; box-shadow:0 8px 20px rgba(209,31,52,0.22); min-height:46px;">
-                                    <span class="material-symbols-outlined">logout</span>
-                                    <span>Trigger Campus Exit (Time Out)</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="panel-card chart-card" style="margin-bottom: 20px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
-                                <div>
-                                    <div class="eyebrow" style="color:var(--primary);">INTERACTIVE GPS PIN SIMULATOR</div>
-                                    <h2 class="chart-title" style="margin-top:2px;">Custom Map Location Simulator</h2>
-                                    <p class="chart-copy">Click anywhere on the map to drop a test GPS pin. The system detects if the pin is inside or outside the geofence perimeter.</p>
-                                </div>
-                                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                                    <span id="simulatorPinStatusBadge" class="capsule" style="background:rgba(90,31,224,0.1); color:var(--primary); font-weight:800; font-size:0.78rem;">
-                                        <span class="material-symbols-outlined" style="font-size:16px;">pin_drop</span>
-                                        <span id="simulatorPinStatusText">Click Map to Drop Pin</span>
-                                    </span>
-                                    <button id="btnDispatchPinAttendance" type="button" class="primary-btn" style="padding:0 18px; min-height:40px; font-size:0.8rem;" disabled>
-                                        <span class="material-symbols-outlined" style="font-size:18px;">send_to_mobile</span>
-                                        <span>Dispatch At Pin</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div id="adminSimulatorMap" style="width:100%; height:400px; border-radius:18px; overflow:hidden; border:1px solid rgba(15,23,42,0.08); box-shadow:inset 0 2px 6px rgba(0,0,0,0.06); z-index:1;"></div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-top:10px; font-size:0.78rem; color:var(--muted);">
-                                <div>
-                                    Pin Coordinates: <strong id="simulatorPinCoordsText" style="color:var(--ink); font-family:monospace;">None (Click map)</strong>
-                                </div>
-                                <div id="simulatorPinZoneText" style="font-weight:600;">
-                                    Tip: Inside geofence triggers Time In; outside triggers Time Out.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="panel-card">
-                            <div class="accounts-head">
-                                <div>
-                                    <div class="eyebrow" style="color:var(--primary);">ACTIVITY AUDIT FEED</div>
-                                    <h2 class="chart-title">Recent Geofence Simulation Logs</h2>
-                                    <p class="chart-copy">Audit trail of automated and simulated student attendance events and guardian delivery status.</p>
-                                </div>
-                                <div class="section-actions">
-                                    <button id="btnClearSimLogs" type="button" class="ghost-btn" style="min-height:36px; padding:0 12px; font-size:0.76rem;">
-                                        <span class="material-symbols-outlined" style="font-size:16px;">clear_all</span>
-                                        <span>Clear Feed</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="users-table-head" style="margin-top:16px; grid-template-columns: minmax(0, 1.4fr) 1fr 1.2fr 0.9fr auto;">
-                                <span>Student</span>
-                                <span>Action</span>
-                                <span>Coordinates & Zone</span>
-                                <span>Triggered At</span>
-                                <span style="text-align:right;">Guardian Status</span>
-                            </div>
-                            <div class="table-list" id="simulatorDispatchLogsList" style="margin-top:8px;"></div>
-                        </div>
-                    </section>
-
+                    <!-- (2026-07-13) Remove simulator section; was geofence simulator panel -->
                     <section class="admin-section" id="sec-users">
                         <div class="panel-card">
                             <div class="accounts-head">
@@ -2524,32 +2634,116 @@
                         </div>
                     </section>
 
-                    <!-- (2026-07-13) Expand messages section to full height; was flex: 0 -->
+                    <!-- (2026-07-13) Dispatch messaging shell & controls; was plain flat list -->
                     <section class="admin-section" id="sec-messages">
                         <div class="panel-card chat-panel messages-shell">
                             <div class="messages-sidebar">
                                 <div class="messages-sidebar-head">
-                                    <h3>Messages</h3>
-                                    <p class="thread-hint">Long press a conversation to delete it.</p>
+                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                        <div>
+                                            <h3 style="font-family:'Sora',sans-serif; font-size:1.02rem; margin:0; display:flex; align-items:center; gap:8px;">
+                                                <span>Inquiries & Chats</span>
+                                                <span id="threadCountBadge" class="capsule" style="font-size:0.7rem; padding:2px 8px; background:rgba(90,31,224,0.1); color:var(--primary); font-weight:800;">0</span>
+                                            </h3>
+                                            <p class="thread-hint" style="margin:2px 0 0; font-size:0.73rem;">Direct safety & counseling channels</p>
+                                        </div>
+                                        <button id="btnRefreshThreads" class="icon-btn" type="button" title="Refresh conversations" style="width:32px; height:32px;">
+                                            <span class="material-symbols-outlined" style="font-size:18px;">refresh</span>
+                                        </button>
+                                    </div>
+                                    <div class="messages-search-box">
+                                        <span class="material-symbols-outlined" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:17px; color:var(--muted);">search</span>
+                                        <input type="text" id="threadSearchInput" placeholder="Search by student or message...">
+                                    </div>
+                                    <div class="messages-filter-chips">
+                                        <button type="button" class="msg-filter-chip active" data-msg-filter="all">All</button>
+                                        <button type="button" class="msg-filter-chip" data-msg-filter="unread">Unread</button>
+                                        <button type="button" class="msg-filter-chip" data-msg-filter="student">Students</button>
+                                        <button type="button" class="msg-filter-chip" data-msg-filter="guardian">Guardians</button>
+                                    </div>
                                 </div>
                                 <div id="threadList" class="messages-thread-list">
                                 </div>
                             </div>
                             <div class="messages-main">
                                 <div id="chatHeader" class="messages-header">
-                                    <div id="activeUserAvatar" class="thread-avatar">?</div>
-                                    <div id="activeUserName" class="messages-header-name">Select a conversation</div>
-                                    <div id="activeUserStatus" class="messages-header-status">Ready to assist</div>
-                                </div>
-                                <div id="adminChatMessages" class="messages-body">
-                                    <div class="messages-empty">
-                                        <span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.2;">chat_bubble</span>
-                                        <p>Select a user to start messaging</p>
+                                    <div class="messages-header-left">
+                                        <div id="activeUserAvatar" class="thread-avatar" style="position:relative;">
+                                            ?
+                                            <span id="activeUserBeacon" style="position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%; background:#10b981; border:2px solid #fff; display:none;"></span>
+                                        </div>
+                                        <div class="messages-header-info">
+                                            <div class="messages-header-title-row">
+                                                <span id="activeUserName" class="messages-header-name">Select a conversation</span>
+                                                <span id="activeUserRoleBadge" class="role-pill student" style="display:none; font-size:0.68rem; padding:2px 8px;">Student</span>
+                                                <span id="activeUserIdTag" style="font-size:0.75rem; color:var(--muted); font-weight:700; display:none;"></span>
+                                            </div>
+                                            <div class="messages-header-meta">
+                                                <span id="activeUserStatus" class="messages-header-status" style="display:flex; align-items:center; gap:5px;">
+                                                    <span class="signal-dot" style="width:6px; height:6px; background:#10b981;"></span>
+                                                    <span>Dispatch Channel Ready</span>
+                                                </span>
+                                                <span id="activeUserEmailText" style="display:none; color:var(--muted);"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="messages-header-actions" id="chatHeaderActions" style="display:none;">
+                                        <button id="btnToggleStudentDossier" class="action-btn" type="button" title="View Student Dossier & Info" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; padding:7px 12px; border-radius:10px; font-size:0.78rem; font-weight:700; display:flex; align-items:center; gap:5px; cursor:pointer;">
+                                            <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">badge</span>
+                                            <span>User Info</span>
+                                        </button>
+                                        <button id="btnHeaderDeleteThread" class="action-btn" type="button" title="Delete this conversation" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecdd3; padding:7px 11px; border-radius:10px; font-size:0.78rem; font-weight:700; display:flex; align-items:center; gap:5px; cursor:pointer;">
+                                            <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
+                                            <span>Delete</span>
+                                        </button>
                                     </div>
                                 </div>
+
+                                <!-- Student Quick Dossier Drawer / Info Strip -->
+                                <div id="activeUserDossierPanel" style="display:none; background:#f8fafc; border-bottom:1px solid #e2e8f0; padding:12px 20px; font-size:0.8rem;">
+                                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px;">
+                                        <div>
+                                            <span style="color:var(--muted); font-size:0.7rem; font-weight:700; text-transform:uppercase;">Student / Account ID</span>
+                                            <div id="dossierStudentId" style="font-weight:800; color:var(--ink); margin-top:2px;">-</div>
+                                        </div>
+                                        <div>
+                                            <span style="color:var(--muted); font-size:0.7rem; font-weight:700; text-transform:uppercase;">Email Address</span>
+                                            <div id="dossierEmail" style="font-weight:800; color:var(--ink); margin-top:2px; word-break:break-all;">-</div>
+                                        </div>
+                                        <div>
+                                            <span style="color:var(--muted); font-size:0.7rem; font-weight:700; text-transform:uppercase;">Emergency SOS Reports</span>
+                                            <div id="dossierSosCount" style="font-weight:800; color:#b91c1c; margin-top:2px;">0 logged</div>
+                                        </div>
+                                        <div>
+                                            <span style="color:var(--muted); font-size:0.7rem; font-weight:700; text-transform:uppercase;">Linked Guardian(s)</span>
+                                            <div id="dossierGuardianInfo" style="font-weight:800; color:var(--ink); margin-top:2px;">None linked</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="adminChatMessages" class="messages-body">
+                                    <div class="messages-empty" id="chatEmptyPlaceholder" style="padding:40px 20px;">
+                                        <div style="width:68px; height:68px; border-radius:20px; background:rgba(90,31,224,0.08); color:var(--primary); display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                                            <span class="material-symbols-outlined" style="font-size:36px;">chat_bubble</span>
+                                        </div>
+                                        <h4 style="margin:0; font-family:'Sora',sans-serif; color:var(--ink); font-size:1.05rem;">Direct Dispatch Messaging</h4>
+                                        <p style="margin:4px 0 0; max-width:320px; font-size:0.82rem; color:var(--muted); line-height:1.4;">Select a student or guardian from the conversation directory to initiate secure safety communications.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Quick Canned Dispatch Templates -->
+                                <div class="messages-canned-bar" id="cannedResponseBar" style="display:none;">
+                                    <span style="font-size:0.7rem; font-weight:800; color:var(--muted); text-transform:uppercase; margin-right:4px;">Quick Dispatch:</span>
+                                    <button type="button" class="canned-chip" data-canned="Campus Security personnel have been dispatched to your reported coordinates. Please stay where you are.">🚨 Unit Dispatched</button>
+                                    <button type="button" class="canned-chip" data-canned="Please share your current building, floor, or nearby landmark so responders can reach you immediately.">📍 Send Coordinates</button>
+                                    <button type="button" class="canned-chip" data-canned="Please remain in a secure, well-lit location and lock the entrance if possible until officers arrive.">🛡️ Secure In Place</button>
+                                    <button type="button" class="canned-chip" data-canned="Our command team received your report. Can you confirm if anyone is currently injured or in immediate danger?">⚠️ Confirm Danger Status</button>
+                                    <button type="button" class="canned-chip" data-canned="Thank you for confirming your safety. This support inquiry has been verified and marked resolved.">✅ Incident Resolved</button>
+                                </div>
+
                                 <div class="messages-composer">
-                                    <input type="text" id="adminChatInput" class="glass-input" placeholder="Type a reply..." disabled>
-                                    <button id="adminSendBtn" class="primary-btn" disabled>
+                                    <input type="text" id="adminChatInput" class="glass-input" placeholder="Type a message or click a quick dispatch template... (Press Enter to send)" disabled style="border-radius:12px;">
+                                    <button id="adminSendBtn" class="primary-btn" disabled style="border-radius:12px; height:46px; min-width:50px;">
                                         <span class="material-symbols-outlined">send</span>
                                     </button>
                                 </div>
@@ -2557,137 +2751,91 @@
                         </div>
                     </section>
 
-                    <!-- (2026-07-13) Add Automated Reports & Audits section; was missing -->
+                    <!-- (2026-07-13) Add Daily Reports & Excel generation; was basic audit view -->
                     <section class="admin-section" id="sec-reports">
                         <div class="panel-card" style="margin-bottom: 20px;">
-                            <div class="card-head">
+                            <div class="card-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
                                 <div>
-                                    <div class="eyebrow">Compliance & Audits</div>
-                                    <h2 class="chart-title">Automated Safety & System Reports</h2>
-                                    <p class="chart-copy">Generate instant CSV audit logs and printable official reports for campus safety compliance.</p>
+                                    <div class="eyebrow" style="color:var(--primary); font-weight:800;">Command Center Audits & Compliance</div>
+                                    <h2 class="chart-title" style="margin:2px 0 4px; font-family:'Sora',sans-serif;">Daily Safety & Incident Reports</h2>
+                                    <p class="chart-copy" style="margin:0;">Generate official daily reports and downloadable Excel (.xlsx) workbooks from live Firebase records.</p>
+                                </div>
+                                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                                    <button class="action-btn" id="btnDownloadExcelReport" type="button" style="background:#16a34a; color:white; border:none; padding:10px 18px; border-radius:12px; font-weight:800; font-size:0.84rem; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(22,163,74,0.25);">
+                                        <span class="material-symbols-outlined" style="font-size:20px;">table_view</span>
+                                        <span>Download Excel (.xlsx)</span>
+                                    </button>
+                                    <button class="action-btn" id="btnDownloadCsvReport" type="button" style="background:#0f766e; color:white; border:none; padding:10px 16px; border-radius:12px; font-weight:700; font-size:0.84rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                                        <span class="material-symbols-outlined" style="font-size:18px;">download</span>
+                                        <span>Export CSV</span>
+                                    </button>
+                                    <button class="action-btn" id="btnPrintDailyReport" type="button" style="background:white; color:var(--ink); border:1px solid #cbd5e1; padding:10px 16px; border-radius:12px; font-weight:700; font-size:0.84rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                                        <span class="material-symbols-outlined" style="font-size:18px;">print</span>
+                                        <span>Print</span>
+                                    </button>
                                 </div>
                             </div>
-                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 18px;">
-                                <div style="background: rgba(254, 242, 242, 0.6); border: 1.5px solid rgba(239, 68, 68, 0.25); border-radius: 16px; padding: 18px;">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                                        <span class="material-symbols-outlined" style="color: #dc2626; font-size: 26px;">crisis_alert</span>
-                                        <h3 style="margin: 0; font-size: 1.02rem; color: #991b1b;">Emergency SOS Incident Report</h3>
-                                    </div>
-                                    <p style="font-size: 0.82rem; color: #7f1d1d; margin-bottom: 16px; line-height: 1.4;">All student emergency activations with coordinates, timestamps, and reporter profiles.</p>
-                                    <div style="display: flex; gap: 6px;">
-                                        <button class="action-btn" id="btnExportSosCsv" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #dc2626; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                            <span class="material-symbols-outlined" style="font-size: 15px;">download</span> CSV
-                                        </button>
-                                        <!-- (2026-07-13) Add JSON export button; was CSV export only -->
-                                        <button class="action-btn" id="btnExportSosJson" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #991b1b; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                            <span class="material-symbols-outlined" style="font-size: 15px;">data_object</span> JSON
-                                        </button>
-                                        <button class="action-btn" id="btnPrintSosReport" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: white; color: #dc2626; border: 1px solid #fca5a5; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                            <span class="material-symbols-outlined" style="font-size: 15px;">print</span> Print
-                                        </button>
+
+                            <!-- Date Filter, Search and Category Filter Toolbar -->
+                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-top:20px; background:#f8fafc; padding:16px; border-radius:16px; border:1px solid var(--line);">
+                                <div>
+                                    <label for="reportDatePicker" style="display:block; font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--muted); margin-bottom:6px;">Select Report Date</label>
+                                    <input type="date" id="reportDatePicker" class="glass-input" style="width:100%; padding:9px 12px; border-radius:10px; font-weight:700; background:white; font-size:0.86rem;">
+                                </div>
+                                <div>
+                                    <label for="reportCategoryFilter" style="display:block; font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--muted); margin-bottom:6px;">Record Category</label>
+                                    <select id="reportCategoryFilter" class="glass-input" style="width:100%; padding:9px 12px; border-radius:10px; font-weight:600; background:white; font-size:0.86rem;">
+                                        <option value="all">All Records (Comprehensive Daily)</option>
+                                        <option value="sos">Emergency SOS Incidents</option>
+                                        <option value="attendance">Campus Attendance Logs</option>
+                                        <option value="gad">GAD Safety Posts</option>
+                                    </select>
+                                </div>
+                                <div style="grid-column: span 2;">
+                                    <label for="reportSearchInput" style="display:block; font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--muted); margin-bottom:6px;">Search Daily Records</label>
+                                    <div style="position:relative;">
+                                        <span class="material-symbols-outlined" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--muted);">search</span>
+                                        <input type="text" id="reportSearchInput" class="glass-input" placeholder="Search by Student ID, Student Name, Location, or Status..." style="width:100%; padding:9px 12px 9px 38px; border-radius:10px; font-size:0.86rem; background:white;">
                                     </div>
                                 </div>
+                            </div>
 
-                                <div style="background: rgba(240, 253, 250, 0.6); border: 1.5px solid rgba(20, 184, 166, 0.25); border-radius: 16px; padding: 18px;">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                                        <span class="material-symbols-outlined" style="color: #0d9488; font-size: 26px;">history_edu</span>
-                                        <h3 style="margin: 0; font-size: 1.02rem; color: #115e59;">Attendance & Geofence Logs</h3>
-                                    </div>
-                                    <p style="font-size: 0.82rem; color: #134e4a; margin-bottom: 16px; line-height: 1.4;">Campus time in, time out, and automatic geofence boundary crossing logs.</p>
-                                    <div style="display: flex; gap: 6px;">
-                                        <button class="action-btn" id="btnExportAttendanceCsv" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #0d9488; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                            <span class="material-symbols-outlined" style="font-size: 15px;">download</span> CSV
-                                        </button>
-                                        <button class="action-btn" id="btnExportAttendanceJson" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #115e59; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                            <span class="material-symbols-outlined" style="font-size: 15px;">data_object</span> JSON
-                                        </button>
-                                        <button class="action-btn" id="btnPrintAttendanceReport" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: white; color: #0d9488; border: 1px solid #99f6e4; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                            <span class="material-symbols-outlined" style="font-size: 15px;">print</span> Print
-                                        </button>
-                                    </div>
+                            <!-- Daily Summary Metrics Cards -->
+                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-top:18px;">
+                                <div style="background:rgba(90,31,224,0.05); border:1px solid rgba(90,31,224,0.18); border-radius:14px; padding:14px 16px;">
+                                    <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--primary); letter-spacing:0.06em;">Total Daily Records</div>
+                                    <div id="metricDailyTotal" style="font-size:1.6rem; font-weight:800; color:var(--ink); margin-top:4px;">0</div>
                                 </div>
-
-                                <div style="background: rgba(245, 243, 255, 0.6); border: 1.5px solid rgba(139, 92, 246, 0.25); border-radius: 16px; padding: 18px;">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                                        <span class="material-symbols-outlined" style="color: #7c3aed; font-size: 26px;">campaign</span>
-                                        <h3 style="margin: 0; font-size: 1.02rem; color: #5b21b6;">GAD Official Bulletins</h3>
-                                    </div>
-                                    <p style="font-size: 0.82rem; color: #4c1d95; margin-bottom: 16px; line-height: 1.4;">Gender & Development safety posts, announcements, and campus updates.</p>
-                                    <div style="display: flex; gap: 6px;">
-                                        <button class="action-btn" id="btnExportGadCsv" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #7c3aed; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                            <span class="material-symbols-outlined" style="font-size: 15px;">download</span> CSV
-                                        </button>
-                                        <button class="action-btn" id="btnExportGadJson" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #5b21b6; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                            <span class="material-symbols-outlined" style="font-size: 15px;">data_object</span> JSON
-                                        </button>
-                                        <button class="action-btn" id="btnPrintGadReport" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: white; color: #7c3aed; border: 1px solid #ddd6fe; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                            <span class="material-symbols-outlined" style="font-size: 15px;">print</span> Print
-                                        </button>
-                                    </div>
+                                <div style="background:rgba(220,38,38,0.05); border:1px solid rgba(220,38,38,0.18); border-radius:14px; padding:14px 16px;">
+                                    <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:#b91c1c; letter-spacing:0.06em;">SOS Emergencies</div>
+                                    <div id="metricDailySos" style="font-size:1.6rem; font-weight:800; color:#b91c1c; margin-top:4px;">0</div>
                                 </div>
-
-                                <div style="background: rgba(239, 246, 255, 0.6); border: 1.5px solid rgba(59, 130, 246, 0.25); border-radius: 16px; padding: 18px;">
-                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
-                                        <span class="material-symbols-outlined" style="color: #2563eb; font-size: 26px;">badge</span>
-                                        <h3 style="margin: 0; font-size: 1.02rem; color: #1e40af;">Platform User Roster</h3>
-                                    </div>
-                                    <p style="font-size: 0.82rem; color: #1e3a8a; margin-bottom: 16px; line-height: 1.4;">Full directory of students, guardians, staff, IDs, and link statuses.</p>
-                                    <div style="display: flex; gap: 6px;">
-                                        <button class="action-btn" id="btnExportUsersCsv" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #2563eb; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                            <span class="material-symbols-outlined" style="font-size: 15px;">download</span> CSV
-                                        </button>
-                                        <button class="action-btn" id="btnExportUsersJson" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: #1e40af; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                            <span class="material-symbols-outlined" style="font-size: 15px;">data_object</span> JSON
-                                        </button>
-                                        <button class="action-btn" id="btnPrintUsersReport" type="button" style="flex: 1; padding: 9px 8px; font-size: 0.78rem; background: white; color: #2563eb; border: 1px solid #bfdbfe; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
-                                            <span class="material-symbols-outlined" style="font-size: 15px;">print</span> Print
-                                        </button>
-                                    </div>
-                                <!-- (2026-07-13) Add incident report generator; was manual report view only -->
-                                <div style="background: rgba(255, 251, 235, 0.85); border: 1.5px solid rgba(245, 158, 11, 0.35); border-radius: 16px; padding: 18px; grid-column: 1 / -1; margin-top: 4px;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
-                                        <div style="display: flex; align-items: center; gap: 12px;">
-                                            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: #d97706; display: flex; align-items: center; justify-content: center;">
-                                                <span class="material-symbols-outlined" style="font-size: 26px;">description</span>
-                                            </div>
-                                            <div>
-                                                <h3 style="margin: 0; font-size: 1.05rem; color: #92400e; font-family: 'Sora', sans-serif; font-weight: 800;">Comprehensive Incident Report Generator</h3>
-                                                <p style="font-size: 0.82rem; color: #78350f; margin: 3px 0 0;">Compile official emergency dossiers with telemetry, student profile, responder timeline, and legal sign-off.</p>
-                                            </div>
-                                        </div>
-                                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                            <select id="incidentDossierSelect" class="glass-input" style="padding: 8px 12px; font-size: 0.82rem; border-radius: 10px; background: white; min-width: 220px;">
-                                                <option value="all">All Incidents (Full Dossier)</option>
-                                            </select>
-                                            <button class="action-btn" id="btnGenerateIncidentDossier" type="button" style="padding: 9px 16px; font-size: 0.82rem; background: #d97706; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                                                <span class="material-symbols-outlined" style="font-size: 18px;">auto_stories</span> Generate Dossier
-                                            </button>
-                                        </div>
-                                    </div>
+                                <div style="background:rgba(15,118,110,0.05); border:1px solid rgba(15,118,110,0.18); border-radius:14px; padding:14px 16px;">
+                                    <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:#0f766e; letter-spacing:0.06em;">Attendance Logs</div>
+                                    <div id="metricDailyAttendance" style="font-size:1.6rem; font-weight:800; color:#0f766e; margin-top:4px;">0</div>
+                                </div>
+                                <div style="background:rgba(124,58,237,0.05); border:1px solid rgba(124,58,237,0.18); border-radius:14px; padding:14px 16px;">
+                                    <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:#6d28d9; letter-spacing:0.06em;">Active / Pending</div>
+                                    <div id="metricDailyActive" style="font-size:1.6rem; font-weight:800; color:#6d28d9; margin-top:4px;">0</div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Daily Separated Record Dossier Panel -->
                         <div class="panel-card">
-                            <div class="card-head" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                            <div class="card-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
                                 <div>
-                                    <h3 class="chart-title">Audit Preview</h3>
-                                    <p class="chart-copy">Live preview of selected dataset.</p>
+                                    <h3 id="dailyReportTitle" class="chart-title" style="font-family:'Sora',sans-serif; margin:0;">Daily Safety Dossier</h3>
+                                    <p id="dailyReportSubtitle" class="chart-copy" style="margin:2px 0 0;">Official breakdown for selected date.</p>
                                 </div>
-                                <div style="display: flex; gap: 10px; align-items: center;">
-                                    <select id="reportPreviewTypeSelect" class="glass-input" style="padding: 7px 12px; font-size: 0.85rem; border-radius: 10px;">
-                                        <option value="sos">Emergency SOS Incidents</option>
-                                        <option value="attendance">Campus Attendance Logs</option>
-                                        <option value="gad">GAD Bulletins</option>
-                                        <option value="users">User Roster</option>
-                                    </select>
-                                    <button class="action-btn" id="btnRefreshReportPreview" type="button" style="padding: 7px 12px; font-size: 0.85rem; border-radius: 10px; background: #f1f5f9; border: 1px solid #cbd5e1; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                                        <span class="material-symbols-outlined" style="font-size: 18px;">refresh</span> Refresh
+                                <div style="display:flex; gap:8px;">
+                                    <button class="action-btn" id="btnRefreshDailyReport" type="button" style="padding:7px 12px; font-size:0.82rem; border-radius:10px; background:#f1f5f9; border:1px solid #cbd5e1; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                                        <span class="material-symbols-outlined" style="font-size:16px;">refresh</span> Refresh
                                     </button>
                                 </div>
                             </div>
-                            <div id="reportPreviewContainer" style="overflow-x: auto; margin-top: 14px; max-height: 480px;">
-                                <div style="text-align: center; padding: 30px; color: #94a3b8;">Loading report preview...</div>
+                            <div id="dailyReportTableContainer" style="overflow-x:auto; margin-top:16px; min-height:260px;">
+                                <div style="text-align:center; padding:40px; color:#94a3b8;">Loading records from Firebase...</div>
                             </div>
                         </div>
                     </section>
@@ -2971,9 +3119,15 @@
         } from './db.js';
         import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        // (2026-07-13) Support multiple admin accounts in admin panel; was single email
+        // (2026-07-13) Add isAdminEmail & hoist admin state; was undefined helper
         const ADMIN_EMAILS = ['admin@admin.com', 'zearamil9@gmail.com'];
-        const isAdminEmail = (email) => ADMIN_EMAILS.includes(String(email || '').toLowerCase().trim());
+        const ADMIN_ID = "system_admin_securo";
+        let currentAdminUid = "system_admin_securo";
+        let unsubscribeAdminThreads = null;
+        const isAdminEmail = (email) => {
+            const norm = String(email || '').trim().toLowerCase();
+            return ADMIN_EMAILS.includes(norm) || norm === 'admin@admin.com' || norm.startsWith('admin@');
+        };
         const toastStack = document.getElementById('toastStack');
         const tabBtns = document.querySelectorAll('.tab-btn');
         const sections = document.querySelectorAll('.admin-section');
@@ -3769,14 +3923,9 @@
             if (tab === 'stats' || tab === 'sos') {
                 if (adminSosLeafletMap) setTimeout(() => adminSosLeafletMap.invalidateSize(), 120);
             }
-            if (tab === 'geofence') {
-                if (typeof initAdminSimulatorMap === 'function') initAdminSimulatorMap();
-                if (typeof populateSimulatorStudents === 'function') populateSimulatorStudents();
-                if (typeof setupSimulatorControls === 'function') setupSimulatorControls();
-                if (typeof renderSimulatorDispatchLogs === 'function') renderSimulatorDispatchLogs();
-            }
+            // (2026-07-13) Daily report load on reports tab; was geofence simulator check
             if (tab === 'reports') {
-                if (typeof renderReportPreview === 'function') renderReportPreview();
+                if (typeof renderDailyReport === 'function') renderDailyReport();
             }
             // (2026-07-13) Keep chat threads listening in background; was disconnected
             initAdminChat();
@@ -3799,237 +3948,352 @@
             document.body.removeChild(link);
         }
 
+        // (2026-07-13) Safe printable report document writer; was unescaped tags
         function printReportTable(title, headers, rows) {
             const printWindow = window.open('', '_blank');
             if (!printWindow) {
                 showToast("Print Popup Blocked", "Please allow popups to view printable report.", "error");
                 return;
             }
-            printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>${title}</title>
-                    <style>
-                        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 24px; color: #1e293b; }
-                        h1 { margin-bottom: 4px; font-size: 20px; }
-                        p { margin-top: 0; color: #64748b; font-size: 13px; margin-bottom: 20px; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-                        th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; }
-                        th { background-color: #f1f5f9; font-weight: bold; }
-                        tr:nth-child(even) { background-color: #f8fafc; }
-                        @media print { body { padding: 0; } }
-                    </style>
-                </head>
-                <body>
-                    <h1>${title}</h1>
-                    <p>Generated by Securo Campus Safety System on ${new Date().toLocaleString()}</p>
-                    <table>
-                        <thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead>
-                        <tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
-                    </table>
-                </body>
-                </html>
-            `);
+            const headerCells = headers.map(h => '<th>' + h + '</th>').join('');
+            const bodyRows = rows.map(r => '<tr>' + r.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('');
+            const html = [
+                '<!DOCTYPE html>',
+                '<html><head><title>' + title + '</title>',
+                '<style>',
+                'body{font-family:sans-serif;padding:24px;color:#1e293b;}',
+                'h1{font-size:20px;margin-bottom:4px;}',
+                'p{color:#64748b;font-size:13px;margin:0 0 20px;}',
+                'table{width:100%;border-collapse:collapse;font-size:12px;}',
+                'th,td{border:1px solid #cbd5e1;padding:8px 10px;text-align:left;}',
+                'th{background:#f1f5f9;font-weight:bold;}',
+                'tr:nth-child(even){background:#f8fafc;}',
+                '@media print{body{padding:0;}}',
+                '</style>',
+                // (2026-07-13) Prevent live-reload injection; was raw body closing tags
+                '<' + '/head><body>',
+                '<h1>' + title + '</h1>',
+                '<p>Generated by Securo Campus Safety System on ' + new Date().toLocaleString() + '</p>',
+                '<table><thead><tr>' + headerCells + '</tr></thead>',
+                '<tbody>' + bodyRows + '</tbody></table>',
+                '<' + '/body><' + '/html>'
+            ].join('\n');
+            printWindow.document.write(html);
             printWindow.document.close();
             printWindow.focus();
             setTimeout(() => { printWindow.print(); }, 400);
         }
 
-        function getSosReportData() {
-            const headers = ['Incident ID', 'Date & Time', 'Reporter Name', 'Role', 'Student ID', 'Email', 'Latitude', 'Longitude', 'Status'];
-            const rows = (cachedSosLogs || []).map(log => {
-                const user = (cachedUsers || []).find(u => String(u.id) === String(log.userId)) || {};
-                const dateStr = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : new Date(log.timestamp || 0).toLocaleString();
-                return [
-                    log.id || '',
-                    dateStr,
-                    log.userName || user.name || 'Unknown',
-                    user.role || log.role || 'student',
-                    log.studentId || user.studentId || 'N/A',
-                    user.email || '',
-                    log.location?.lat || '',
-                    log.location?.lng || '',
-                    log.status || 'active'
-                ];
-            });
-            return { headers, rows };
+        // (2026-07-13) Add Daily Reports & Excel (.xlsx) export; was basic preview
+        let cachedDailyReportRecords = [];
+
+        function getLocalDateString(dateObj) {
+            if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) return '';
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
         }
 
-        async function getAttendanceReportData() {
-            const headers = ['Log ID', 'Date & Time', 'Student Name', 'Student ID', 'Event Type', 'Latitude', 'Longitude', 'Campus Location / Address', 'Mode'];
-            let logs = [];
+        async function fetchAllSafetyRecords() {
+            const records = [];
+            let counter = 1;
+
+            // 1. SOS Emergency Logs
+            (cachedSosLogs || []).forEach(log => {
+                const dateObj = log.timestamp?.toDate ? log.timestamp.toDate() : (log.timestamp ? new Date(log.timestamp) : new Date());
+                const dateStr = getLocalDateString(dateObj);
+                const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                const user = (cachedUsers || []).find(u => String(u.id) === String(log.userId || log.studentUid)) || {};
+                const reportNo = `SEC-${dateStr.replace(/-/g, '')}-${String(counter++).padStart(4, '0')}`;
+                
+                let locationStr = 'Campus Grounds';
+                if (log.location?.address) locationStr = log.location.address;
+                else if (log.location?.lat && log.location?.lng) locationStr = `${Number(log.location.lat).toFixed(5)}, ${Number(log.location.lng).toFixed(5)}`;
+
+                records.push({
+                    reportNo,
+                    studentId: log.studentId || user.studentId || log.userId || 'N/A',
+                    studentName: log.userName || user.name || 'Student',
+                    location: locationStr,
+                    status: (log.status || 'ACTIVE').toUpperCase(),
+                    date: dateStr,
+                    time: timeStr,
+                    reportType: 'Emergency SOS Alert',
+                    category: 'sos',
+                    rawTimestamp: dateObj.getTime()
+                });
+            });
+
+            // 2. Attendance & Geofence Logs
+            let attendanceLogs = [];
             try {
-                logs = await getAllAttendance();
+                attendanceLogs = await getAllAttendance();
             } catch (e) {
-                logs = [];
+                attendanceLogs = [];
             }
-            const rows = logs.map(entry => {
-                const user = (cachedUsers || []).find(u => String(u.id) === String(entry.userId || entry.studentUid)) || {};
-                const dateStr = entry.timestamp?.toDate ? entry.timestamp.toDate().toLocaleString() : new Date(entry.timestamp || 0).toLocaleString();
-                return [
-                    entry.id || '',
-                    dateStr,
-                    entry.studentName || user.name || 'Student',
-                    entry.studentId || user.studentId || 'N/A',
-                    (entry.type || '').toUpperCase(),
-                    entry.location?.lat || '',
-                    entry.location?.lng || '',
-                    entry.location?.address || 'Campus Bounds',
-                    entry.location?.auto ? 'Automated Geofence' : 'Manual Scan'
-                ];
+            (attendanceLogs || []).forEach(att => {
+                const dateObj = att.timestamp?.toDate ? att.timestamp.toDate() : (att.timestamp ? new Date(att.timestamp) : new Date());
+                const dateStr = getLocalDateString(dateObj);
+                const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                const user = (cachedUsers || []).find(u => String(u.id) === String(att.userId || att.studentUid)) || {};
+                const reportNo = `SEC-${dateStr.replace(/-/g, '')}-${String(counter++).padStart(4, '0')}`;
+                
+                let locationStr = att.location?.address || 'Campus Perimeter';
+                if (!att.location?.address && att.location?.lat) locationStr = `${Number(att.location.lat).toFixed(5)}, ${Number(att.location.lng).toFixed(5)}`;
+
+                const eventType = String(att.type || '').toLowerCase();
+                const typeLabel = eventType === 'in' ? 'Attendance Check-in (Entry)' : (eventType === 'out' ? 'Attendance Check-out (Exit)' : 'Attendance Log');
+
+                records.push({
+                    reportNo,
+                    studentId: att.studentId || user.studentId || att.userId || 'N/A',
+                    studentName: att.studentName || user.name || 'Student',
+                    location: locationStr,
+                    status: 'VERIFIED',
+                    date: dateStr,
+                    time: timeStr,
+                    reportType: typeLabel,
+                    category: 'attendance',
+                    rawTimestamp: dateObj.getTime()
+                });
             });
-            return { headers, rows };
-        }
 
-        function getGadReportData() {
-            const headers = ['Post ID', 'Date & Time', 'Title', 'Author', 'Category', 'Audience', 'Content'];
-            const rows = (cachedPosts || []).map(post => {
-                const dateStr = post.createdAt?.toDate ? post.createdAt.toDate().toLocaleString() : new Date(post.createdAt || post.timestamp || 0).toLocaleString();
-                return [
-                    post.id || '',
-                    dateStr,
-                    post.title || '',
-                    post.author || 'GAD Office',
-                    post.category || 'General',
-                    post.targetRole || 'All',
-                    (post.content || '').replace(/\n/g, ' ')
-                ];
+            // 3. GAD Safety Posts
+            (cachedPosts || []).forEach(post => {
+                const dateObj = post.createdAt?.toDate ? post.createdAt.toDate() : (post.createdAt || post.timestamp ? new Date(post.createdAt || post.timestamp) : new Date());
+                const dateStr = getLocalDateString(dateObj);
+                const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                const reportNo = `SEC-${dateStr.replace(/-/g, '')}-${String(counter++).padStart(4, '0')}`;
+
+                records.push({
+                    reportNo,
+                    studentId: 'STAFF/OFFICE',
+                    studentName: post.author || 'GAD Safety Desk',
+                    location: 'Campus Bulletin',
+                    status: 'PUBLISHED',
+                    date: dateStr,
+                    time: timeStr,
+                    reportType: `GAD Post: ${post.title || post.category || 'Announcement'}`,
+                    category: 'gad',
+                    rawTimestamp: dateObj.getTime()
+                });
             });
-            return { headers, rows };
+
+            records.sort((a, b) => b.rawTimestamp - a.rawTimestamp);
+            return records;
         }
 
-        function getUsersReportData() {
-            const headers = ['User UID', 'Full Name', 'Email', 'Assigned Role', 'Student ID', 'Contact Phone', 'Link Count'];
-            const rows = (cachedUsers || []).map(user => [
-                user.id || '',
-                user.name || 'User',
-                user.email || '',
-                user.role || 'student',
-                user.studentId || 'N/A',
-                user.phone || 'N/A',
-                (user.links || []).length
-            ]);
-            return { headers, rows };
-        }
+        async function renderDailyReport() {
+            const datePicker = document.getElementById('reportDatePicker');
+            const categoryFilter = document.getElementById('reportCategoryFilter')?.value || 'all';
+            const searchFilter = (document.getElementById('reportSearchInput')?.value || '').trim().toLowerCase();
+            const container = document.getElementById('dailyReportTableContainer');
 
-        async function renderReportPreview() {
-            const container = document.getElementById('reportPreviewContainer');
-            const type = document.getElementById('reportPreviewTypeSelect')?.value || 'sos';
+            if (!datePicker) return;
+            if (!datePicker.value) {
+                datePicker.value = getLocalDateString(new Date());
+            }
+            const selectedDate = datePicker.value;
+
+            if (container) {
+                container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><p style="margin:8px 0 0; font-size:0.85rem;">Retrieving Firebase records for ' + selectedDate + '...</p></div>';
+            }
+
+            const allRecords = await fetchAllSafetyRecords();
+            cachedDailyReportRecords = allRecords;
+
+            // Filter by date
+            let filtered = allRecords.filter(r => r.date === selectedDate);
+
+            // Filter by category
+            if (categoryFilter !== 'all') {
+                filtered = filtered.filter(r => r.category === categoryFilter);
+            }
+
+            // Filter by search query
+            if (searchFilter) {
+                filtered = filtered.filter(r => 
+                    r.reportNo.toLowerCase().includes(searchFilter) ||
+                    r.studentId.toLowerCase().includes(searchFilter) ||
+                    r.studentName.toLowerCase().includes(searchFilter) ||
+                    r.location.toLowerCase().includes(searchFilter) ||
+                    r.reportType.toLowerCase().includes(searchFilter) ||
+                    r.status.toLowerCase().includes(searchFilter)
+                );
+            }
+
+            // Update Metric Counters
+            const totalCount = filtered.length;
+            const sosCount = filtered.filter(r => r.category === 'sos').length;
+            const attCount = filtered.filter(r => r.category === 'attendance').length;
+            const activeCount = filtered.filter(r => r.status === 'ACTIVE').length;
+
+            const mTotal = document.getElementById('metricDailyTotal');
+            const mSos = document.getElementById('metricDailySos');
+            const mAtt = document.getElementById('metricDailyAttendance');
+            const mAct = document.getElementById('metricDailyActive');
+            if (mTotal) mTotal.textContent = totalCount;
+            if (mSos) mSos.textContent = sosCount;
+            if (mAtt) mAtt.textContent = attCount;
+            if (mAct) mAct.textContent = activeCount;
+
+            const subTitle = document.getElementById('dailyReportSubtitle');
+            if (subTitle) {
+                const datePretty = new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                subTitle.textContent = `Official records for ${datePretty} — ${totalCount} records indexed.`;
+            }
+
             if (!container) return;
-            container.innerHTML = '<div style="text-align:center; padding:30px; color:#94a3b8;">Loading audit preview...</div>';
 
-            let data;
-            if (type === 'sos') data = getSosReportData();
-            else if (type === 'attendance') data = await getAttendanceReportData();
-            else if (type === 'gad') data = getGadReportData();
-            else data = getUsersReportData();
-
-            if (!data.rows || data.rows.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:30px; color:#94a3b8;">No records found for this dataset.</div>';
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:50px 20px; color:#94a3b8;">
+                        <span class="material-symbols-outlined" style="font-size:42px; opacity:0.3;">event_busy</span>
+                        <h4 style="margin:8px 0 4px; color:#475569; font-size:1rem;">No Records Found for ${selectedDate}</h4>
+                        <p style="margin:0; font-size:0.82rem;">No emergency SOS, attendance, or safety entries matched the selected filters for this day.</p>
+                    </div>
+                `;
                 return;
             }
 
-            const headerHtml = data.headers.map(h => `<th style="padding:10px 12px; background:#f8fafc; border-bottom:2px solid #e2e8f0; font-size:0.78rem; text-transform:uppercase; color:#475569; text-align:left;">${h}</th>`).join('');
-            const rowsHtml = data.rows.slice(0, 50).map(r => `
-                <tr style="border-bottom:1px solid #f1f5f9;">
-                    ${r.map(c => `<td style="padding:10px 12px; font-size:0.82rem; color:#1e293b; max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c}</td>`).join('')}
-                </tr>
-            `).join('');
+            const rowsHtml = filtered.map(row => {
+                let statusBadge = `<span class="status-pill active" style="font-size:0.7rem; padding:3px 9px;">${escapeHtml(row.status)}</span>`;
+                if (row.status === 'ACTIVE') {
+                    statusBadge = `<span class="status-pill emergency" style="font-size:0.7rem; padding:3px 9px; animation:pulse 1.2s infinite;">${escapeHtml(row.status)}</span>`;
+                } else if (row.status === 'VERIFIED') {
+                    statusBadge = `<span class="status-pill active" style="font-size:0.7rem; padding:3px 9px; background:rgba(15,155,103,0.1); color:var(--green); border:1px solid rgba(15,155,103,0.25);">${escapeHtml(row.status)}</span>`;
+                }
+
+                return `
+                    <tr style="border-bottom:1px solid #f1f5f9;">
+                        <td style="padding:12px 14px; font-weight:800; font-family:monospace; color:var(--primary); font-size:0.82rem;">${escapeHtml(row.reportNo)}</td>
+                        <td style="padding:12px 14px; font-weight:700; color:#334155; font-size:0.84rem;">${escapeHtml(row.studentId)}</td>
+                        <td style="padding:12px 14px; font-weight:800; color:var(--ink); font-size:0.86rem;">${escapeHtml(row.studentName)}</td>
+                        <td style="padding:12px 14px; color:#475569; font-size:0.82rem; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(row.location)}">${escapeHtml(row.location)}</td>
+                        <td style="padding:12px 14px;">${statusBadge}</td>
+                        <td style="padding:12px 14px; color:#475569; font-size:0.82rem; white-space:nowrap;">${escapeHtml(row.date)}</td>
+                        <td style="padding:12px 14px; color:#475569; font-size:0.82rem; white-space:nowrap;">${escapeHtml(row.time)}</td>
+                        <td style="padding:12px 14px; font-weight:700; color:#1e293b; font-size:0.82rem;">${escapeHtml(row.reportType)}</td>
+                    </tr>
+                `;
+            }).join('');
 
             container.innerHTML = `
-                <table style="width:100%; border-collapse:collapse;">
-                    <thead><tr>${headerHtml}</tr></thead>
+                <table style="width:100%; border-collapse:collapse; text-align:left;">
+                    <thead>
+                        <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
+                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Report No.</th>
+                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Student ID</th>
+                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Student Name</th>
+                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Location</th>
+                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Status</th>
+                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Date</th>
+                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Time</th>
+                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Report/Incident Type</th>
+                        </tr>
+                    </thead>
                     <tbody>${rowsHtml}</tbody>
                 </table>
-                ${data.rows.length > 50 ? `<div style="text-align:center; padding:12px; font-size:0.78rem; color:#64748b;">Showing first 50 of ${data.rows.length} records. Download CSV to view complete log.</div>` : ''}
             `;
         }
 
-        document.getElementById('reportPreviewTypeSelect')?.addEventListener('change', renderReportPreview);
-        document.getElementById('btnRefreshReportPreview')?.addEventListener('click', renderReportPreview);
+        function downloadDailyExcelReport() {
+            const datePicker = document.getElementById('reportDatePicker');
+            const selectedDate = datePicker?.value || getLocalDateString(new Date());
+            const categoryFilter = document.getElementById('reportCategoryFilter')?.value || 'all';
+            const searchFilter = (document.getElementById('reportSearchInput')?.value || '').trim().toLowerCase();
 
-        document.getElementById('btnExportSosCsv')?.addEventListener('click', () => {
-            const data = getSosReportData();
-            downloadCSV(`securo_emergency_sos_incidents_${Date.now()}.csv`, [data.headers, ...data.rows]);
-            showToast("Report Exported", "SOS incident log downloaded as CSV.", "success");
-        });
-        document.getElementById('btnPrintSosReport')?.addEventListener('click', () => {
-            const data = getSosReportData();
-            printReportTable("Securo - Emergency SOS Incident Audit Report", data.headers, data.rows);
-        });
+            let records = (cachedDailyReportRecords || []).filter(r => r.date === selectedDate);
+            if (categoryFilter !== 'all') records = records.filter(r => r.category === categoryFilter);
+            if (searchFilter) {
+                records = records.filter(r => 
+                    r.reportNo.toLowerCase().includes(searchFilter) ||
+                    r.studentId.toLowerCase().includes(searchFilter) ||
+                    r.studentName.toLowerCase().includes(searchFilter) ||
+                    r.location.toLowerCase().includes(searchFilter) ||
+                    r.reportType.toLowerCase().includes(searchFilter)
+                );
+            }
 
-        document.getElementById('btnExportAttendanceCsv')?.addEventListener('click', async () => {
-            const data = await getAttendanceReportData();
-            downloadCSV(`securo_attendance_audit_${Date.now()}.csv`, [data.headers, ...data.rows]);
-            showToast("Report Exported", "Attendance & geofence log downloaded as CSV.", "success");
-        });
-        document.getElementById('btnPrintAttendanceReport')?.addEventListener('click', async () => {
-            const data = await getAttendanceReportData();
-            printReportTable("Securo - Campus Attendance & Geofence Audit Report", data.headers, data.rows);
-        });
+            if (!records.length) {
+                showToast("No Records to Export", "There are no records for " + selectedDate + " to generate an Excel file.", "warning");
+                return;
+            }
 
-        document.getElementById('btnExportGadCsv')?.addEventListener('click', () => {
-            const data = getGadReportData();
-            downloadCSV(`securo_gad_bulletins_${Date.now()}.csv`, [data.headers, ...data.rows]);
-            showToast("Report Exported", "GAD bulletins log downloaded as CSV.", "success");
-        });
-        document.getElementById('btnPrintGadReport')?.addEventListener('click', () => {
-            const data = getGadReportData();
-            printReportTable("Securo - GAD Official Bulletins Audit Report", data.headers, data.rows);
-        });
+            const filename = `Securo_Report_${selectedDate}.xlsx`;
 
-        document.getElementById('btnExportUsersCsv')?.addEventListener('click', () => {
-            const data = getUsersReportData();
-            downloadCSV(`securo_user_roster_${Date.now()}.csv`, [data.headers, ...data.rows]);
-            showToast("Report Exported", "User roster downloaded as CSV.", "success");
-        });
-        document.getElementById('btnPrintUsersReport')?.addEventListener('click', () => {
-            const data = getUsersReportData();
-            printReportTable("Securo - Platform User Directory & Roles Report", data.headers, data.rows);
-        });
-
-        // (2026-07-13) Add JSON export for report datasets; was CSV only
-        function downloadJSON(filename, headers, rows) {
-            const list = (rows || []).map(r => {
-                const item = {};
-                headers.forEach((h, i) => { item[h] = r[i]; });
-                return item;
-            });
-            const blob = new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            if (typeof XLSX !== 'undefined') {
+                const wsData = [
+                    ["Report No.", "Student ID", "Student Name", "Location", "Status", "Date", "Time", "Report/Incident Type"],
+                    ...records.map(r => [
+                        r.reportNo,
+                        r.studentId,
+                        r.studentName,
+                        r.location,
+                        r.status,
+                        r.date,
+                        r.time,
+                        r.reportType
+                    ])
+                ];
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                ws['!cols'] = [
+                    { wch: 22 },
+                    { wch: 14 },
+                    { wch: 24 },
+                    { wch: 34 },
+                    { wch: 14 },
+                    { wch: 14 },
+                    { wch: 14 },
+                    { wch: 30 }
+                ];
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Daily Safety Report");
+                XLSX.writeFile(wb, filename);
+                showToast("Excel Export Complete", `Generated ${filename} with ${records.length} records.`, "success");
+            } else {
+                const headers = ["Report No.", "Student ID", "Student Name", "Location", "Status", "Date", "Time", "Report/Incident Type"];
+                const rows = records.map(r => [r.reportNo, r.studentId, r.studentName, r.location, r.status, r.date, r.time, r.reportType]);
+                downloadCSV(filename.replace('.xlsx', '.csv'), [headers, ...rows]);
+                showToast("Report Exported", `Downloaded CSV for ${selectedDate}.`, "success");
+            }
         }
 
-        document.getElementById('btnExportSosJson')?.addEventListener('click', () => {
-            const data = getSosReportData();
-            downloadJSON(`securo_emergency_sos_incidents_${Date.now()}.json`, data.headers, data.rows);
-            showToast("Report Exported", "SOS incident log downloaded as JSON.", "success");
-        });
+        function downloadDailyCsvReport() {
+            const datePicker = document.getElementById('reportDatePicker');
+            const selectedDate = datePicker?.value || getLocalDateString(new Date());
+            const records = (cachedDailyReportRecords || []).filter(r => r.date === selectedDate);
+            if (!records.length) {
+                showToast("No Records to Export", "No records found for " + selectedDate, "warning");
+                return;
+            }
+            const headers = ["Report No.", "Student ID", "Student Name", "Location", "Status", "Date", "Time", "Report/Incident Type"];
+            const rows = records.map(r => [r.reportNo, r.studentId, r.studentName, r.location, r.status, r.date, r.time, r.reportType]);
+            downloadCSV(`Securo_Report_${selectedDate}.csv`, [headers, ...rows]);
+            showToast("CSV Exported", `Downloaded CSV for ${selectedDate}.`, "success");
+        }
 
-        document.getElementById('btnExportAttendanceJson')?.addEventListener('click', async () => {
-            const data = await getAttendanceReportData();
-            downloadJSON(`securo_attendance_audit_${Date.now()}.json`, data.headers, data.rows);
-            showToast("Report Exported", "Attendance & geofence log downloaded as JSON.", "success");
-        });
+        function printDailyReportWindow() {
+            const datePicker = document.getElementById('reportDatePicker');
+            const selectedDate = datePicker?.value || getLocalDateString(new Date());
+            const records = (cachedDailyReportRecords || []).filter(r => r.date === selectedDate);
+            if (!records.length) {
+                showToast("No Records to Print", "No records found for " + selectedDate, "warning");
+                return;
+            }
+            const headers = ["Report No.", "Student ID", "Student Name", "Location", "Status", "Date", "Time", "Report/Incident Type"];
+            const rows = records.map(r => [r.reportNo, r.studentId, r.studentName, r.location, r.status, r.date, r.time, r.reportType]);
+            printReportTable(`Securo Campus Safety Daily Report (${selectedDate})`, headers, rows);
+        }
 
-        document.getElementById('btnExportGadJson')?.addEventListener('click', () => {
-            const data = getGadReportData();
-            downloadJSON(`securo_gad_bulletins_${Date.now()}.json`, data.headers, data.rows);
-            showToast("Report Exported", "GAD bulletins log downloaded as JSON.", "success");
-        });
-
-        document.getElementById('btnExportUsersJson')?.addEventListener('click', () => {
-            const data = getUsersReportData();
-            downloadJSON(`securo_user_roster_${Date.now()}.json`, data.headers, data.rows);
-            showToast("Report Exported", "User roster downloaded as JSON.", "success");
-        });
+        document.getElementById('reportDatePicker')?.addEventListener('change', renderDailyReport);
+        document.getElementById('reportCategoryFilter')?.addEventListener('change', renderDailyReport);
+        document.getElementById('reportSearchInput')?.addEventListener('input', renderDailyReport);
+        document.getElementById('btnRefreshDailyReport')?.addEventListener('click', renderDailyReport);
+        document.getElementById('btnDownloadExcelReport')?.addEventListener('click', downloadDailyExcelReport);
+        document.getElementById('btnDownloadCsvReport')?.addEventListener('click', downloadDailyCsvReport);
+        document.getElementById('btnPrintDailyReport')?.addEventListener('click', printDailyReportWindow);
 
         // (2026-07-13) Add Comprehensive Incident Dossier Generator handler; was missing
         function populateIncidentDossierSelect() {
@@ -4096,6 +4360,7 @@
                 `;
             }).join('');
 
+            // (2026-07-13) Escape HTML tags in dossier print; was raw body closing tags
             win.document.write(`
                 <!DOCTYPE html>
                 <html>
@@ -4108,8 +4373,8 @@
                         .legal { font-size: 0.75rem; color: #64748b; margin-top: 36px; border-top: 1px solid #cbd5e1; padding-top: 14px; text-align: center; }
                         @media print { body { background: #fff; padding: 0; } }
                     </style>
-                </head>
-                <body>
+                    ${'<' + '/head>'}
+                    <body>
                     <div class="header">
                         <div>
                             <h1>SECURO CAMPUS SAFETY COMMAND</h1>
@@ -4124,8 +4389,8 @@
                     <div class="legal">
                         CONFIDENTIAL DOCUMENT &bull; FOR AUTHORIZED CAMPUS SECURITY & LAW ENFORCEMENT ONLY &bull; SECURO PLATFORM V2.0
                     </div>
-                </body>
-                </html>
+                    ${'<' + '/body>'}
+                    ${'<' + '/html>'}
             `);
             win.document.close();
             win.focus();
@@ -4320,18 +4585,51 @@
             });
         }
 
-        if (adminLogoutBtn) {
-            adminLogoutBtn.addEventListener('click', async () => {
-                adminLogoutBtn.disabled = true;
-                try {
-                    await logout();
-                    window.location.href = 'admin-login.html';
-                } catch (error) {
-                    showToast("Logout failed", error.message || "Could not sign out right now.", "error");
-                    adminLogoutBtn.disabled = false;
-                }
+        // (2026-07-13) Complete admin logout flow with listener stops; was redirect only
+        async function executeAdminLogout() {
+            const allLogoutBtns = [
+                document.getElementById('adminLogoutBtn'),
+                document.getElementById('topbarDirectLogoutBtn'),
+                document.getElementById('sidebarLogoutBtn')
+            ].filter(Boolean);
+
+            allLogoutBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.style.opacity = '0.6';
             });
+
+            try {
+                // 1. Terminate realtime listeners
+                if (typeof stopAdminRealtimeThreads === 'function') stopAdminRealtimeThreads();
+                if (unsubscribeAdminNotifications) {
+                    unsubscribeAdminNotifications();
+                    unsubscribeAdminNotifications = null;
+                }
+                // 2. Clear sensitive cache and storage
+                try {
+                    localStorage.removeItem(SECURO_CACHE_KEY);
+                    localStorage.removeItem('securo_session_token');
+                    sessionStorage.clear();
+                } catch (e) {}
+
+                // 3. Sign out of Firebase Auth
+                await logout();
+
+                // 4. Replace window location to prevent browser back navigation
+                window.location.replace('admin-login.html');
+            } catch (error) {
+                console.warn("Admin logout failed:", error);
+                showToast("Logout failed", error.message || "Could not sign out right now.", "error");
+                allLogoutBtns.forEach(btn => {
+                    btn.disabled = false;
+                    btn.style.opacity = '1';
+                });
+            }
         }
+
+        document.getElementById('adminLogoutBtn')?.addEventListener('click', executeAdminLogout);
+        document.getElementById('topbarDirectLogoutBtn')?.addEventListener('click', executeAdminLogout);
+        document.getElementById('sidebarLogoutBtn')?.addEventListener('click', executeAdminLogout);
 
         document.addEventListener('click', () => {
             adminProfileDropdown?.classList.remove('active');
@@ -4383,7 +4681,6 @@
                     }
                 }
                 applyFilters();
-                if (typeof populateSimulatorStudents === 'function') populateSimulatorStudents();
                 return true;
             } catch (err) {
                 console.warn("Could not load from local cache:", err);
@@ -4391,7 +4688,7 @@
             }
         }
 
-        loadFromLocalCache();
+        // (2026-07-13) Defer local cache load after declarations; was TDZ reference
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
@@ -4440,15 +4737,15 @@
             }
         });
 
+        // (2026-07-13) Safe parallel fetch with fallbacks; was failing entire sync
         async function loadAllData() {
             const [posts, users, threads, guardianLinks, sosLogs, emergencyPosts] = await Promise.all([
-                getGADPosts(),
-                getAllUsers(),
-                // (2026-09-09) pass real adminUid so Firestore rules accept the read
-                getAllChatThreadsOnce(currentAdminUid),
-                getAllGuardianLinksAdmin(),
-                getAllSOSLogs(),
-                getAllEmergencyPosts()
+                getGADPosts().catch(err => { console.warn("getGADPosts fallback:", err); return []; }),
+                getAllUsers().catch(err => { console.warn("getAllUsers fallback:", err); return []; }),
+                getAllChatThreadsOnce(currentAdminUid).catch(err => { console.warn("getAllChatThreadsOnce fallback:", err); return []; }),
+                getAllGuardianLinksAdmin().catch(err => { console.warn("getAllGuardianLinksAdmin fallback:", err); return []; }),
+                getAllSOSLogs().catch(err => { console.warn("getAllSOSLogs fallback:", err); return []; }),
+                getAllEmergencyPosts().catch(err => { console.warn("getAllEmergencyPosts fallback:", err); return []; })
             ]);
             
             // Explicitly sort posts by date descending
@@ -4463,9 +4760,10 @@
             cachedGuardianLinks = Array.isArray(guardianLinks) ? guardianLinks : [];
             cachedSosLogs = Array.isArray(sosLogs) ? sosLogs : [];
             cachedEmergencyPosts = Array.isArray(emergencyPosts) ? emergencyPosts : [];
-            // (2026-07-13) Save fresh data to local cache; was unpersisted
             saveToLocalCache();
             applyFilters();
+            if (typeof renderDailyReport === 'function') renderDailyReport();
+            if (typeof renderAdminSosQueue === 'function') renderAdminSosQueue(cachedSosLogs);
             // (2026-07-13) Subscribe to real-time GAD counseling messages; was uncalled
             if (!window._gadMessagesUnsub) {
                 window._gadMessagesUnsub = subscribeToGADMessages(null, (messages) => {
@@ -4487,9 +4785,7 @@
                     }
                 });
             }
-
-            // (2026-07-13) Sync students with simulator dropdown; was user list only
-            if (typeof populateSimulatorStudents === 'function') populateSimulatorStudents();
+            // (2026-07-13) Set managed user editor state; was simulator sync
             if (isCreatingManagedUser) {
                 setUserEditorState(null, { creating: true });
             } else if (selectedManagedUserId) {
@@ -5076,378 +5372,7 @@
             return inside;
         }
 
-        let adminSimulatorLeafletMap = null;
-        let simulatorPinMarker = null;
-        let simulatorPolygonLayer = null;
-        let simulatorBuildingMarkers = [];
-        let activeSimPinCoords = null;
-        let isSimPinInsideCampus = false;
-        let simulatorDispatchLogs = [];
-
-        function populateSimulatorStudents() {
-            const select = document.getElementById('simulatorStudentSelect');
-            if (!select) return;
-            const currentSelected = select.value;
-            const students = (cachedUsers || []).filter((u) => getRoleKey(u) === 'student');
-
-            if (!students.length) {
-                select.innerHTML = '<option value="">No registered student profiles found</option>';
-                updateSimulatorStudentStatus();
-                return;
-            }
-
-            select.innerHTML = '<option value="">-- Choose a Student to Simulate --</option>' + students.map((s) => {
-                const label = `${escapeHtml(s.name || 'Student')} (${escapeHtml(s.studentId || s.email || s.id)})`;
-                return `<option value="${escapeHtml(s.id)}">${label}</option>`;
-            }).join('');
-
-            if (currentSelected && students.some((s) => s.id === currentSelected)) {
-                select.value = currentSelected;
-            } else if (students.length === 1) {
-                select.value = students[0].id;
-            }
-            updateSimulatorStudentStatus();
-        }
-
-        async function updateSimulatorStudentStatus() {
-            const select = document.getElementById('simulatorStudentSelect');
-            const badge = document.getElementById('simulatorStudentStatusBadge');
-            const metaText = document.getElementById('simulatorStudentMetaText');
-            if (!select || !badge || !metaText) return;
-
-            const studentId = select.value;
-            if (!studentId) {
-                badge.textContent = 'No student selected';
-                badge.style.background = 'white';
-                badge.style.color = 'var(--muted)';
-                badge.style.borderColor = '#e2e8f0';
-                metaText.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">info</span><span>Select a student above to trigger automated Time In or Time Out.</span>';
-                return;
-            }
-
-            const student = (cachedUsers || []).find((u) => u.id === studentId);
-            badge.textContent = 'Checking status...';
-
-            try {
-                const history = await getAttendanceHistory(studentId);
-                const latest = history?.[0];
-                if (latest && latest.type === 'in') {
-                    badge.innerHTML = '<span class="signal-dot" style="background:#0f9b67;"></span><span>Timed IN (On Campus)</span>';
-                    badge.style.background = 'rgba(15,155,103,0.1)';
-                    badge.style.color = 'var(--green)';
-                    badge.style.borderColor = 'rgba(15,155,103,0.2)';
-                } else if (latest && latest.type === 'out') {
-                    badge.innerHTML = '<span class="signal-dot" style="background:#d11f34;"></span><span>Timed OUT (Off Campus)</span>';
-                    badge.style.background = 'rgba(209,31,52,0.1)';
-                    badge.style.color = 'var(--red)';
-                    badge.style.borderColor = 'rgba(209,31,52,0.2)';
-                } else {
-                    badge.textContent = 'No attendance logs yet';
-                    badge.style.background = 'rgba(90,31,224,0.06)';
-                    badge.style.color = 'var(--primary)';
-                    badge.style.borderColor = 'rgba(90,31,224,0.15)';
-                }
-
-                metaText.innerHTML = `<span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">verified</span><span>Target: <strong>${escapeHtml(student?.name || 'Student')}</strong> &bull; ID: ${escapeHtml(student?.studentId || 'N/A')} &bull; Email: ${escapeHtml(student?.email || 'N/A')}</span>`;
-            } catch (err) {
-                badge.textContent = 'Status ready';
-            }
-        }
-
-        function renderSimulatorBuildingMarkers() {
-            if (!adminSimulatorLeafletMap) return;
-            simulatorBuildingMarkers.forEach((m) => adminSimulatorLeafletMap.removeLayer(m));
-            simulatorBuildingMarkers = [];
-
-            const buildings = getActiveAdminBuildings();
-            buildings.forEach((b) => {
-                if (!b?.coords || !Array.isArray(b.coords)) return;
-                const bIcon = L.divIcon({
-                    className: 'facility-marker-icon',
-                    html: `<div style="background:#2563eb; color:white; width:28px; height:28px; border-radius:8px; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid white;"><span class="material-symbols-outlined" style="font-size:16px;">${b.icon || 'location_city'}</span></div>`,
-                    iconSize: [28, 28],
-                    iconAnchor: [14, 14]
-                });
-                const m = L.marker(b.coords, { icon: bIcon }).addTo(adminSimulatorLeafletMap);
-                m.bindTooltip(`<strong>${escapeHtml(b.name || 'Facility')}</strong>`, { direction: 'top', offset: [0, -14] });
-                simulatorBuildingMarkers.push(m);
-            });
-        }
-
-        function initAdminSimulatorMap() {
-            const mapEl = document.getElementById('adminSimulatorMap');
-            if (!mapEl || typeof L === 'undefined') return;
-
-            if (!adminSimulatorLeafletMap) {
-                adminSimulatorLeafletMap = L.map('adminSimulatorMap', {
-                    zoomControl: true,
-                    attributionControl: false,
-                    zoomSnap: 0.25,
-                    zoomDelta: 0.5,
-                    wheelPxPerZoomLevel: 140
-                }).setView(ADMIN_CAMPUS_CENTER, 17);
-
-                const simBaseMaps = {
-                    "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                    "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                    "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                    "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
-                };
-                simBaseMaps["Google Hybrid"].addTo(adminSimulatorLeafletMap);
-                L.control.layers(simBaseMaps, null, { position: 'topright' }).addTo(adminSimulatorLeafletMap);
-
-                const geofence = getActiveAdminGeofencePolygon();
-                simulatorPolygonLayer = L.polygon(geofence, {
-                    color: '#0f9b67',
-                    weight: 3,
-                    dashArray: '6, 6',
-                    fillColor: '#10b981',
-                    fillOpacity: 0.15
-                }).addTo(adminSimulatorLeafletMap);
-
-                renderSimulatorBuildingMarkers();
-
-                adminSimulatorLeafletMap.on('click', (e) => {
-                    const lat = Number(e.latlng.lat);
-                    const lng = Number(e.latlng.lng);
-                    activeSimPinCoords = [lat, lng];
-                    isSimPinInsideCampus = isPointInPolygon([lat, lng], currentAdminGeofence);
-
-                    if (simulatorPinMarker) {
-                        adminSimulatorLeafletMap.removeLayer(simulatorPinMarker);
-                    }
-
-                    const pinColor = isSimPinInsideCampus ? '#0f9b67' : '#d11f34';
-                    const pinIconName = isSimPinInsideCampus ? 'login' : 'logout';
-                    const pinHtml = `<div style="width:34px; height:34px; border-radius:50%; background:${pinColor}; border:3px solid white; box-shadow:0 0 16px ${pinColor}88; display:flex; align-items:center; justify-content:center; color:white;"><span class="material-symbols-outlined" style="font-size:18px;">${pinIconName}</span></div>`;
-
-                    simulatorPinMarker = L.marker([lat, lng], {
-                        icon: L.divIcon({ className: 'sim-pin-icon', html: pinHtml, iconSize: [34, 34], iconAnchor: [17, 17] })
-                    }).addTo(adminSimulatorLeafletMap);
-
-                    const badge = document.getElementById('simulatorPinStatusBadge');
-                    const badgeText = document.getElementById('simulatorPinStatusText');
-                    const coordsText = document.getElementById('simulatorPinCoordsText');
-                    const zoneText = document.getElementById('simulatorPinZoneText');
-                    const dispatchBtn = document.getElementById('btnDispatchPinAttendance');
-
-                    if (coordsText) coordsText.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                    if (badge) {
-                        badge.style.background = isSimPinInsideCampus ? 'rgba(15,155,103,0.12)' : 'rgba(209,31,52,0.12)';
-                        badge.style.color = isSimPinInsideCampus ? 'var(--green)' : 'var(--red)';
-                    }
-                    if (badgeText) {
-                        badgeText.textContent = isSimPinInsideCampus ? 'Inside Campus (Time In)' : 'Outside Campus (Time Out)';
-                    }
-                    if (zoneText) {
-                        zoneText.textContent = isSimPinInsideCampus ? 'Position inside school perimeter. Dispatching will trigger Time In.' : 'Position outside campus boundary. Dispatching will trigger Time Out.';
-                    }
-                    if (dispatchBtn) dispatchBtn.disabled = false;
-                });
-            } else {
-                if (simulatorPolygonLayer) {
-                    simulatorPolygonLayer.setLatLngs(getActiveAdminGeofencePolygon());
-                }
-                renderSimulatorBuildingMarkers();
-            }
-
-            setTimeout(() => {
-                if (adminSimulatorLeafletMap) adminSimulatorLeafletMap.invalidateSize();
-            }, 100);
-        }
-
-        async function executeSimulatorAttendance(actionType, customLat = null, customLng = null, customAddress = '') {
-            const select = document.getElementById('simulatorStudentSelect');
-            const studentId = select?.value;
-
-            if (!studentId) {
-                showToast("Select Student", "Please choose a student profile to simulate.", "error");
-                return;
-            }
-
-            const student = (cachedUsers || []).find((u) => u.id === studentId);
-            const studentName = student?.name || 'Student';
-
-            let lat = customLat;
-            let lng = customLng;
-            let address = customAddress;
-
-            if (lat === null || lng === null) {
-                if (actionType === 'in') {
-                    lat = ADMIN_CAMPUS_CENTER[0];
-                    lng = ADMIN_CAMPUS_CENTER[1];
-                    address = address || 'Campus Main Grounds (Admin Simulator)';
-                } else {
-                    lat = 14.526800;
-                    lng = 120.978500;
-                    address = address || 'Outside Campus Bounds (Admin Simulator)';
-                }
-            }
-
-            const btnIn = document.getElementById('btnSimulateTimeIn');
-            const btnOut = document.getElementById('btnSimulateTimeOut');
-            const btnPin = document.getElementById('btnDispatchPinAttendance');
-
-            // (2026-07-13) Fast parallel dispatch & button loader; was slow serial
-            const isFromPin = customLat !== null && customLng !== null;
-            const originalPinHtml = btnPin?.innerHTML;
-            const originalInHtml = btnIn?.innerHTML;
-            const originalOutHtml = btnOut?.innerHTML;
-
-            if (btnIn) {
-                btnIn.disabled = true;
-                if (!isFromPin && actionType === 'in') {
-                    btnIn.innerHTML = `<span class="material-symbols-outlined spin-icon" style="font-size:18px;">progress_activity</span><span>Triggering Entry...</span>`;
-                }
-            }
-            if (btnOut) {
-                btnOut.disabled = true;
-                if (!isFromPin && actionType === 'out') {
-                    btnOut.innerHTML = `<span class="material-symbols-outlined spin-icon" style="font-size:18px;">progress_activity</span><span>Triggering Exit...</span>`;
-                }
-            }
-            if (btnPin) {
-                btnPin.disabled = true;
-                if (isFromPin) {
-                    btnPin.innerHTML = `<span class="material-symbols-outlined spin-icon" style="font-size:18px;">progress_activity</span><span>Dispatching...</span>`;
-                }
-            }
-
-            try {
-                const locationPayload = { lat, lng, address, simulated: true };
-                const [, , notifiedGuardians] = await Promise.all([
-                    logAttendance(studentId, actionType, locationPayload),
-                    updateStudentLiveLocation(studentId, { lat, lng }).catch(() => {}),
-                    notifyGuardiansOfGeofenceEvent(studentId, studentName, actionType, locationPayload).catch(() => [])
-                ]);
-
-                const logItem = {
-                    id: Date.now(),
-                    studentName,
-                    studentId: student?.studentId || studentId,
-                    type: actionType,
-                    coords: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
-                    address,
-                    timestamp: new Date(),
-                    guardianCount: Array.isArray(notifiedGuardians) ? notifiedGuardians.length : 0
-                };
-
-                simulatorDispatchLogs.unshift(logItem);
-                renderSimulatorDispatchLogs();
-                updateSimulatorStudentStatus();
-
-                const actionLabel = actionType === 'in' ? 'Timed IN (Campus Entry)' : 'Timed OUT (Campus Exit)';
-                showToast("Simulation Successful", `${studentName} was ${actionLabel}. Parents notified.`, "success");
-            } catch (err) {
-                console.warn("Simulator dispatch error:", err);
-                showToast("Simulation Failed", err.message || "Could not complete simulation dispatch.", "error");
-            } finally {
-                if (btnIn) {
-                    btnIn.disabled = false;
-                    if (originalInHtml) btnIn.innerHTML = originalInHtml;
-                }
-                if (btnOut) {
-                    btnOut.disabled = false;
-                    if (originalOutHtml) btnOut.innerHTML = originalOutHtml;
-                }
-                if (btnPin) {
-                    if (originalPinHtml) btnPin.innerHTML = originalPinHtml;
-                    if (activeSimPinCoords) btnPin.disabled = false;
-                }
-            }
-        }
-
-        function renderSimulatorDispatchLogs() {
-            const container = document.getElementById('simulatorDispatchLogsList');
-            if (!container) return;
-
-            if (!simulatorDispatchLogs.length) {
-                container.innerHTML = '<div class="empty-state">No simulated attendance dispatches recorded yet. Use the trigger buttons above to test.</div>';
-                return;
-            }
-
-            container.innerHTML = simulatorDispatchLogs.map((log) => {
-                const isEntry = log.type === 'in';
-                const timeStr = log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : 'Just now';
-                return `
-                    <div class="user-row" style="grid-template-columns: minmax(0, 1.4fr) 1fr 1.2fr 0.9fr auto;">
-                        <div class="user-cell-primary">
-                            <div class="user-avatar" style="background:${isEntry ? 'linear-gradient(135deg, #0f9b67, #10b981)' : 'linear-gradient(135deg, #e11d48, #f43f5e)'}; color:white;">
-                                ${escapeHtml((log.studentName || 'S').charAt(0).toUpperCase())}
-                            </div>
-                            <div>
-                                <div class="row-title">${escapeHtml(log.studentName)}</div>
-                                <div class="row-sub">ID: ${escapeHtml(log.studentId)}</div>
-                            </div>
-                        </div>
-                        <div>
-                            <span class="role-pill ${isEntry ? 'student' : 'staff'}" style="${isEntry ? 'background:#ecfdf5; color:#065f46; border:1px solid #a7f3d0;' : 'background:#fff1f2; color:#9f1239; border:1px solid #fecdd3;'}">
-                                <span class="material-symbols-outlined" style="font-size:14px;">${isEntry ? 'login' : 'logout'}</span>
-                                <span>${isEntry ? 'Auto Timed In' : 'Auto Timed Out'}</span>
-                            </span>
-                        </div>
-                        <div>
-                            <div style="font-weight:700; font-size:0.84rem;">${escapeHtml(log.address)}</div>
-                            <div style="font-size:0.75rem; color:var(--muted); font-family:monospace;">${escapeHtml(log.coords)}</div>
-                        </div>
-                        <div style="font-size:0.8rem; color:var(--muted); font-weight:600;">
-                            ${timeStr}
-                        </div>
-                        <div style="text-align:right;">
-                            <span class="capsule" style="background:rgba(90,31,224,0.08); color:var(--primary); font-size:0.72rem; min-height:28px;">
-                                <span class="material-symbols-outlined" style="font-size:14px;">send</span>
-                                <span>Push Notified (${log.guardianCount})</span>
-                            </span>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function setupSimulatorControls() {
-            const btnIn = document.getElementById('btnSimulateTimeIn');
-            const btnOut = document.getElementById('btnSimulateTimeOut');
-            const btnPin = document.getElementById('btnDispatchPinAttendance');
-            const btnRefresh = document.getElementById('btnRefreshSimStudents');
-            const btnClear = document.getElementById('btnClearSimLogs');
-            const select = document.getElementById('simulatorStudentSelect');
-
-            if (btnIn && !btnIn.dataset.bound) {
-                btnIn.dataset.bound = 'true';
-                btnIn.addEventListener('click', () => executeSimulatorAttendance('in'));
-            }
-            if (btnOut && !btnOut.dataset.bound) {
-                btnOut.dataset.bound = 'true';
-                btnOut.addEventListener('click', () => executeSimulatorAttendance('out'));
-            }
-            if (btnPin && !btnPin.dataset.bound) {
-                btnPin.dataset.bound = 'true';
-                btnPin.addEventListener('click', () => {
-                    if (!activeSimPinCoords) return;
-                    const action = isSimPinInsideCampus ? 'in' : 'out';
-                    const addr = isSimPinInsideCampus ? 'Inside Campus Perimeter (Pin Dispatch)' : 'Outside Campus Boundary (Pin Dispatch)';
-                    executeSimulatorAttendance(action, activeSimPinCoords[0], activeSimPinCoords[1], addr);
-                });
-            }
-            if (btnRefresh && !btnRefresh.dataset.bound) {
-                btnRefresh.dataset.bound = 'true';
-                btnRefresh.addEventListener('click', () => {
-                    populateSimulatorStudents();
-                    showToast("Directory Refreshed", "Student profiles updated for simulation.", "info");
-                });
-            }
-            if (btnClear && !btnClear.dataset.bound) {
-                btnClear.dataset.bound = 'true';
-                btnClear.addEventListener('click', () => {
-                    simulatorDispatchLogs = [];
-                    renderSimulatorDispatchLogs();
-                });
-            }
-            if (select && !select.dataset.bound) {
-                select.dataset.bound = 'true';
-                select.addEventListener('change', () => updateSimulatorStudentStatus());
-            }
-        }
+        // (2026-07-13) Removed attendance simulator completely; was demo generator
 
         // (2026-07-13) Verified reporter metadata resolution for SOS logs; was raw uid string
         function getReporterInfo(log) {
@@ -5740,6 +5665,9 @@
             input.addEventListener('input', debouncedApplyFilters);
         });
 
+        // (2026-07-13) Execute local cache load after state setup; was in auth header
+        loadFromLocalCache();
+
         if (statsUserList) {
             statsUserList.addEventListener('click', (event) => {
                 const deleteButton = event.target.closest('[data-user-delete-id]');
@@ -5965,20 +5893,36 @@
             }
         });
 
-        // --- ADMIN CHAT LOGIC (Date: 2026-05-02) ---
+        // (2026-07-13) Enhanced dispatch chat suite; was basic thread view
         const threadList = document.getElementById('threadList');
         const adminChatMessages = document.getElementById('adminChatMessages');
         const adminChatInput = document.getElementById('adminChatInput');
         const adminSendBtn = document.getElementById('adminSendBtn');
         const activeUserName = document.getElementById('activeUserName');
         const activeUserAvatar = document.getElementById('activeUserAvatar');
+        const threadSearchInput = document.getElementById('threadSearchInput');
+        const threadCountBadge = document.getElementById('threadCountBadge');
+        const btnRefreshThreads = document.getElementById('btnRefreshThreads');
+        const activeUserRoleBadge = document.getElementById('activeUserRoleBadge');
+        const activeUserIdTag = document.getElementById('activeUserIdTag');
+        const activeUserStatus = document.getElementById('activeUserStatus');
+        const activeUserBeacon = document.getElementById('activeUserBeacon');
+        const chatHeaderActions = document.getElementById('chatHeaderActions');
+        const btnToggleStudentDossier = document.getElementById('btnToggleStudentDossier');
+        const btnHeaderDeleteThread = document.getElementById('btnHeaderDeleteThread');
+        const activeUserDossierPanel = document.getElementById('activeUserDossierPanel');
+        const dossierStudentId = document.getElementById('dossierStudentId');
+        const dossierEmail = document.getElementById('dossierEmail');
+        const dossierSosCount = document.getElementById('dossierSosCount');
+        const dossierGuardianInfo = document.getElementById('dossierGuardianInfo');
+        const cannedResponseBar = document.getElementById('cannedResponseBar');
 
         let currentActiveUserId = null;
         let currentActiveThreadId = null;
         let unsubscribeAdminChat = null;
-        let unsubscribeAdminThreads = null;
-        let currentAdminUid = "system_admin_securo"; // (2026-09-09) real UID set after auth
-        const ADMIN_ID = "system_admin_securo";
+        let currentMsgFilter = 'all';
+        let currentMsgSearchQuery = '';
+        currentAdminUid = currentAdminUid || ADMIN_ID;
 
         function stopAdminRealtimeThreads() {
             if (unsubscribeAdminThreads) {
@@ -5993,41 +5937,92 @@
 
         function initAdminChat() {
             if (unsubscribeAdminThreads) return;
-            // (2026-09-09) pass real adminUid so Firestore rules accept the read
             unsubscribeAdminThreads = getAllChatThreads(currentAdminUid, (threads) => {
                 cachedThreads = Array.isArray(threads) ? threads : [];
                 renderStatistics(cachedUsers);
-                renderThreads(threads);
+                renderThreads(cachedThreads);
                 if (currentActiveThreadId && currentActiveUserId && !unsubscribeAdminChat) {
                     window.openAdminThread(currentActiveThreadId, currentActiveUserId, activeUserName.textContent);
                 }
             });
         }
 
+        function formatThreadTimestamp(timestamp) {
+            if (!timestamp) return '';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            if (Number.isNaN(date.getTime())) return '';
+            const now = new Date();
+            const isToday = date.toDateString() === now.toDateString();
+            if (isToday) {
+                return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            }
+            return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        }
+
         function renderThreads(threads) {
-            if (threads.length === 0) {
-                threadList.innerHTML = '<div class="messages-empty" style="padding:24px 12px;"><span class="material-symbols-outlined" style="font-size:38px; opacity:0.2;">forum</span><p>No messages yet.</p></div>';
+            const rawThreads = Array.isArray(threads) ? threads : [];
+            const query = currentMsgSearchQuery.trim().toLowerCase();
+
+            const filteredThreads = rawThreads.filter((thread) => {
+                const parts = (thread.threadId || '').split('_');
+                const otherUserId = thread.ownerId || (parts[0] === ADMIN_ID ? parts[1] : parts[0]);
+                const userObj = cachedUsers.find(u => u.id === otherUserId || (u.email && thread.senderEmail && u.email.toLowerCase() === thread.senderEmail.toLowerCase()));
+                const displayName = (userObj?.name || thread.senderLabel || thread.senderName || 'Anonymous').toLowerCase();
+                const text = (thread.text || '').toLowerCase();
+                const unread = isThreadUnread(thread);
+                const role = userObj?.role || thread.senderRole || 'student';
+
+                if (query && !displayName.includes(query) && !text.includes(query)) {
+                    return false;
+                }
+
+                if (currentMsgFilter === 'unread' && !unread) return false;
+                if (currentMsgFilter === 'student' && role === 'guardian') return false;
+                if (currentMsgFilter === 'guardian' && role !== 'guardian') return false;
+
+                return true;
+            });
+
+            if (threadCountBadge) {
+                threadCountBadge.textContent = String(rawThreads.length);
+            }
+
+            if (filteredThreads.length === 0) {
+                threadList.innerHTML = `
+                    <div class="messages-empty" style="padding:28px 14px; text-align:center;">
+                        <span class="material-symbols-outlined" style="font-size:36px; opacity:0.3; color:var(--muted);">filter_list_off</span>
+                        <p style="margin:6px 0 0; font-size:0.82rem; color:var(--muted);">No conversations match filter.</p>
+                    </div>
+                `;
                 return;
             }
 
-            threadList.innerHTML = threads.map(thread => {
-                const parts = thread.threadId.split('_');
+            threadList.innerHTML = filteredThreads.map(thread => {
+                const parts = (thread.threadId || '').split('_');
                 const otherUserId = thread.ownerId || (parts[0] === ADMIN_ID ? parts[1] : parts[0]);
+                const userObj = cachedUsers.find(u => u.id === otherUserId || (u.email && thread.senderEmail && u.email.toLowerCase() === thread.senderEmail.toLowerCase()));
                 const isActive = currentActiveThreadId === thread.threadId;
                 const unread = isThreadUnread(thread);
-                const displayName = thread.senderLabel || thread.senderName || 'Anonymous';
-                const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase();
-                // (2026-07-13) Mark guardian thread avatar with red; was unstyled
-                const isGuardian = (cachedUsers.find(u => u.id === otherUserId)?.role === 'guardian') || thread.senderRole === 'guardian';
+                const displayName = userObj?.name || thread.senderLabel || thread.senderName || 'Anonymous';
+                const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || 'U';
+                const role = userObj?.role || thread.senderRole || 'student';
+                const isGuardian = role === 'guardian';
+                const timeStr = formatThreadTimestamp(thread.updatedAt || thread.timestamp || thread.lastMessageAt);
 
                 return `
-                    <div class="thread-item ${isActive ? 'active' : ''} ${unread ? 'unread' : ''}" data-thread-id="${thread.threadId}" data-other-user-id="${otherUserId}" data-other-user-name="${displayName}">
+                    <div class="thread-item ${isActive ? 'active' : ''} ${unread ? 'unread' : ''}" data-thread-id="${escapeHtml(thread.threadId)}" data-other-user-id="${escapeHtml(otherUserId)}" data-other-user-name="${escapeHtml(displayName)}">
                         <div class="thread-avatar ${isGuardian ? 'guardian' : ''}">${initials}</div>
                         <div class="thread-info">
-                            <div class="thread-name">${displayName}</div>
-                            <div class="thread-preview">${thread.text}</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                                <div class="thread-name">${escapeHtml(displayName)}</div>
+                                <span style="font-size:0.67rem; color:var(--muted); font-weight:600;">${timeStr}</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                                <div class="thread-preview">${escapeHtml(thread.text || 'Direct message')}</div>
+                                <span class="role-pill ${isGuardian ? 'guardian' : 'student'}" style="font-size:0.58rem; padding:1px 6px; flex-shrink:0;">${isGuardian ? 'Guardian' : 'Student'}</span>
+                            </div>
                         </div>
-                        ${unread ? '<div class="thread-badge"></div>' : ''}
+                        ${unread ? '<div class="thread-badge" title="Unread conversation"></div>' : ''}
                     </div>
                 `;
             }).join('');
@@ -6080,14 +6075,66 @@
             currentActiveThreadId = threadId;
             currentActiveUserId = userId;
             seenAdminThreads.set(threadId, Date.now());
-            activeUserName.textContent = userName || 'User';
-            activeUserAvatar.textContent = (userName || 'U').split(" ").map(n => n[0]).join("").toUpperCase();
-            // (2026-07-13) Set red avatar for guardian thread; was purple
-            const activeUserObj = cachedUsers.find(u => u.id === userId);
-            activeUserAvatar.classList.toggle('guardian', activeUserObj?.role === 'guardian' || getRoleKey(activeUserObj) === 'guardian');
+
+            const userObj = cachedUsers.find(u => u.id === userId || (u.email && u.email.toLowerCase() === (userName || '').toLowerCase()));
+            const displayName = userName || userObj?.name || 'User';
+            activeUserName.textContent = displayName;
+            const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || 'U';
+            activeUserAvatar.textContent = initials;
             
+            const isGuardian = userObj?.role === 'guardian';
+            activeUserAvatar.classList.toggle('guardian', isGuardian);
+            if (activeUserBeacon) activeUserBeacon.style.display = 'block';
+
+            if (activeUserRoleBadge) {
+                activeUserRoleBadge.style.display = 'inline-block';
+                activeUserRoleBadge.className = 'role-pill ' + (isGuardian ? 'guardian' : 'student');
+                activeUserRoleBadge.textContent = isGuardian ? 'Guardian' : (userObj?.role === 'staff' ? 'Staff' : 'Student');
+            }
+
+            if (activeUserIdTag) {
+                if (userObj?.studentId) {
+                    activeUserIdTag.style.display = 'inline';
+                    activeUserIdTag.textContent = '#' + userObj.studentId;
+                } else {
+                    activeUserIdTag.style.display = 'none';
+                }
+            }
+
+            if (activeUserStatus) {
+                activeUserStatus.innerHTML = '<span class="signal-dot" style="width:6px; height:6px; background:#10b981;"></span><span>Secure Channel Connected</span>';
+            }
+
+            if (chatHeaderActions) chatHeaderActions.style.display = 'flex';
+            if (cannedResponseBar) cannedResponseBar.style.display = 'flex';
+
+            if (dossierStudentId) dossierStudentId.textContent = userObj?.studentId || userObj?.id || 'N/A';
+            if (dossierEmail) dossierEmail.textContent = userObj?.email || 'No email on record';
+            if (dossierSosCount) {
+                const userSos = cachedSosLogs.filter(l => l.userId === userId || (l.studentName && l.studentName.toLowerCase() === displayName.toLowerCase()));
+                if (userSos.length > 0) {
+                    dossierSosCount.textContent = `${userSos.length} alerts logged (${userSos[0].status || 'Logged'})`;
+                    dossierSosCount.style.color = '#dc2626';
+                } else {
+                    dossierSosCount.textContent = '0 alerts (Safe)';
+                    dossierSosCount.style.color = '#16a34a';
+                }
+            }
+            if (dossierGuardianInfo) {
+                const links = cachedGuardianLinks.filter(g => g.studentId === userId || (userObj?.email && g.studentEmail && g.studentEmail.toLowerCase() === userObj.email.toLowerCase()));
+                if (links.length > 0) {
+                    dossierGuardianInfo.textContent = links.map(l => l.guardianName || l.guardianEmail || 'Linked Guardian').join(', ');
+                } else if (isGuardian) {
+                    const studentLinks = cachedGuardianLinks.filter(g => g.guardianId === userId || (userObj?.email && g.guardianEmail && g.guardianEmail.toLowerCase() === userObj.email.toLowerCase()));
+                    dossierGuardianInfo.textContent = studentLinks.length > 0 ? studentLinks.map(l => l.studentName || l.studentEmail).join(', ') : 'Registered Guardian';
+                } else {
+                    dossierGuardianInfo.textContent = 'None linked';
+                }
+            }
+
             adminChatInput.disabled = false;
             adminSendBtn.disabled = false;
+            adminChatInput.placeholder = `Type response to ${displayName}...`;
             setTimeout(() => adminChatInput.focus(), 100);
 
             if (unsubscribeAdminChat) unsubscribeAdminChat();
@@ -6099,19 +6146,43 @@
             renderThreads(cachedThreads);
         };
 
-        // (2026-07-13) Display date and time in messages; was time only
         function renderAdminMessages(messages) {
             adminChatMessages.innerHTML = "";
+            if (!messages || messages.length === 0) {
+                adminChatMessages.innerHTML = `
+                    <div class="messages-empty" style="padding:40px 20px;">
+                        <span class="material-symbols-outlined" style="font-size:38px; opacity:0.3; color:var(--primary);">chat</span>
+                        <p style="margin:6px 0 0; color:var(--muted); font-size:0.85rem;">No messages in this conversation yet. Send a dispatch directive below.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let lastDateLabel = "";
             messages.forEach(msg => {
                 const isSent = msg.senderId === ADMIN_ID;
                 const date = msg.timestamp?.toDate?.() || new Date(msg.localTime || Date.now());
                 const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
                 const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
 
+                if (dateStr !== lastDateLabel) {
+                    lastDateLabel = dateStr;
+                    const divider = document.createElement("div");
+                    divider.style.cssText = "display:flex; justify-content:center; margin:14px 0 8px;";
+                    divider.innerHTML = `<span style="background:#e2e8f0; color:#64748b; font-size:0.68rem; font-weight:800; padding:2px 10px; border-radius:12px; letter-spacing:0.03em;">${dateStr}</span>`;
+                    adminChatMessages.appendChild(divider);
+                }
+
                 const msgEl = document.createElement("div");
                 msgEl.className = `admin-msg ${isSent ? 'sent' : 'received'}`;
                 if (msg.isPending) msgEl.style.opacity = "0.7";
-                msgEl.innerHTML = `${msg.text}<span class="msg-time">${dateStr} · ${timeStr}</span>`;
+                
+                const senderTag = isSent ? 'Command Desk' : escapeHtml(activeUserName.textContent || 'Student');
+                msgEl.innerHTML = `
+                    <span style="font-size:0.67rem; font-weight:800; display:block; margin-bottom:2px; opacity:0.8;">${senderTag}</span>
+                    <div>${escapeHtml(msg.text)}</div>
+                    <span class="msg-time">${timeStr}</span>
+                `;
                 adminChatMessages.appendChild(msgEl);
             });
             adminChatMessages.scrollTo({ top: adminChatMessages.scrollHeight, behavior: 'smooth' });
@@ -6121,14 +6192,16 @@
             const text = adminChatInput.value.trim();
             if (!text || !currentActiveUserId) return;
 
-            // Predictive Update
             const msgEl = document.createElement("div");
             msgEl.className = "admin-msg sent";
             msgEl.style.opacity = "0.7";
             const now = new Date();
-            const dateStr = now.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
             const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
-            msgEl.innerHTML = `${text}<span class="msg-time">${dateStr} · ${timeStr}</span>`;
+            msgEl.innerHTML = `
+                <span style="font-size:0.67rem; font-weight:800; display:block; margin-bottom:2px; opacity:0.8;">Command Desk</span>
+                <div>${escapeHtml(text)}</div>
+                <span class="msg-time">${timeStr}</span>
+            `;
             adminChatMessages.appendChild(msgEl);
             adminChatMessages.scrollTo({ top: adminChatMessages.scrollHeight, behavior: 'smooth' });
             adminChatInput.value = "";
@@ -6141,8 +6214,8 @@
                 });
             } catch (err) {
                 console.warn("Failed to send admin message:", err);
-                msgEl.style.color = "#ef4444";
-                msgEl.innerHTML += '<span style="font-size:0.5rem;display:block;">Failed to send</span>';
+                msgEl.style.borderColor = "#ef4444";
+                msgEl.innerHTML += '<span style="font-size:0.65rem; color:#ef4444; display:block; margin-top:2px;">Failed to send</span>';
             }
         }
 
@@ -6161,13 +6234,27 @@
                     }
                     activeUserName.textContent = 'Select a conversation';
                     activeUserAvatar.textContent = '?';
+                    activeUserAvatar.className = 'thread-avatar';
+                    if (activeUserBeacon) activeUserBeacon.style.display = 'none';
+                    if (activeUserRoleBadge) activeUserRoleBadge.style.display = 'none';
+                    if (activeUserIdTag) activeUserIdTag.style.display = 'none';
+                    if (chatHeaderActions) chatHeaderActions.style.display = 'none';
+                    if (cannedResponseBar) cannedResponseBar.style.display = 'none';
+                    if (activeUserDossierPanel) activeUserDossierPanel.style.display = 'none';
+                    if (activeUserStatus) {
+                        activeUserStatus.innerHTML = '<span class="signal-dot" style="width:6px; height:6px; background:#94a3b8;"></span><span>Awaiting Selection</span>';
+                    }
                     adminChatInput.value = '';
+                    adminChatInput.placeholder = 'Type a reply...';
                     adminChatInput.disabled = true;
                     adminSendBtn.disabled = true;
                     adminChatMessages.innerHTML = `
-                        <div class="messages-empty">
-                            <span class="material-symbols-outlined" style="font-size: 48px; opacity: 0.2;">chat_bubble</span>
-                            <p>Select a user to start messaging</p>
+                        <div class="messages-empty" style="padding:40px 20px;">
+                            <div style="width:68px; height:68px; border-radius:20px; background:rgba(90,31,224,0.08); color:var(--primary); display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
+                                <span class="material-symbols-outlined" style="font-size:36px;">chat_bubble</span>
+                            </div>
+                            <h4 style="margin:0; font-family:'Sora',sans-serif; color:var(--ink); font-size:1.05rem;">Direct Dispatch Messaging</h4>
+                            <p style="margin:4px 0 0; max-width:320px; font-size:0.82rem; color:var(--muted); line-height:1.4;">Select a student or guardian from the conversation directory to initiate secure safety communications.</p>
                         </div>
                     `;
                 }
@@ -6176,6 +6263,57 @@
                 showToast("Delete failed", error.message || "Could not delete this conversation.", "error");
             }
         };
+
+        // Attach UI listeners for search, filter chips, canned responses, dossier toggle, and header delete
+        if (threadSearchInput) {
+            threadSearchInput.addEventListener('input', (e) => {
+                currentMsgSearchQuery = e.target.value;
+                renderThreads(cachedThreads);
+            });
+        }
+
+        document.querySelectorAll('.msg-filter-chip').forEach((chip) => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.msg-filter-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                currentMsgFilter = chip.dataset.msgFilter || 'all';
+                renderThreads(cachedThreads);
+            });
+        });
+
+        if (btnRefreshThreads) {
+            btnRefreshThreads.addEventListener('click', () => {
+                initAdminChat();
+                renderThreads(cachedThreads);
+                showToast("Refreshed", "Message threads synchronized.", "info");
+            });
+        }
+
+        document.querySelectorAll('.canned-chip').forEach((chip) => {
+            chip.addEventListener('click', () => {
+                const cannedText = chip.dataset.canned;
+                if (cannedText && !adminChatInput.disabled) {
+                    adminChatInput.value = cannedText;
+                    adminChatInput.focus();
+                }
+            });
+        });
+
+        if (btnToggleStudentDossier && activeUserDossierPanel) {
+            btnToggleStudentDossier.addEventListener('click', () => {
+                const isHidden = activeUserDossierPanel.style.display === 'none';
+                activeUserDossierPanel.style.display = isHidden ? 'block' : 'none';
+                btnToggleStudentDossier.style.background = isHidden ? '#e2e8f0' : '#f1f5f9';
+            });
+        }
+
+        if (btnHeaderDeleteThread) {
+            btnHeaderDeleteThread.addEventListener('click', () => {
+                if (currentActiveThreadId) {
+                    window.handleDeleteThread(currentActiveThreadId, activeUserName.textContent);
+                }
+            });
+        }
 
         window.handleDeleteUser = async (userId, userName) => {
             if (!userId) return;
@@ -6309,6 +6447,12 @@
             }
         });
 
+        // (2026-07-13) Prevent image drag across entire application; was draggable
+        window.addEventListener('dragstart', (e) => {
+            if (e.target && e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        }, false);
     </script>
 </body>
 </html>

@@ -38,6 +38,17 @@
             box-sizing: border-box;
         }
 
+        /* (2026-07-13) Disable dragging for all images; was default draggable */
+        img {
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
         body {
             margin: 0;
             font-family: "Outfit", sans-serif;
@@ -2024,6 +2035,13 @@
                 await showStatus('Profile Error', 'Could not load your profile details right now.', 'error');
             }
         });
+
+        // (2026-07-13) Prevent image drag across entire application; was draggable
+        window.addEventListener('dragstart', (e) => {
+            if (e.target && e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        }, false);
     </script>
 </body>
 </html>

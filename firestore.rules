@@ -11,9 +11,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
     
+    // (2026-07-13) Support admin emails in rules; was admin@admin.com only
     function isAdmin() {
       return isSignedIn() && (
-        request.auth.token.email == 'admin@admin.com' ||
+        request.auth.token.email in ['admin@admin.com', 'zearamil9@gmail.com'] ||
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
       );
     }
@@ -77,22 +78,29 @@ service cloud.firestore {
       allow delete: if isAdmin() || isStaff();
     }
     
+    // (2026-07-13) Support standard Uid fields in security rules; was id only
     // Guardian Links
     match /guardian_links/{linkId} {
       allow read: if isSignedIn() && (
         isAdmin() ||
         request.auth.uid == resource.data.guardianId ||
-        request.auth.uid == resource.data.studentUid
+        request.auth.uid == resource.data.guardianUid ||
+        request.auth.uid == resource.data.studentUid ||
+        request.auth.uid == resource.data.studentId
       );
       allow create: if isSignedIn();
       allow update: if isSignedIn() && (
         isAdmin() ||
         request.auth.uid == resource.data.guardianId ||
-        request.auth.uid == resource.data.studentUid
+        request.auth.uid == resource.data.guardianUid ||
+        request.auth.uid == resource.data.studentUid ||
+        request.auth.uid == resource.data.studentId
       );
       allow delete: if isAdmin() || 
         request.auth.uid == resource.data.guardianId ||
-        request.auth.uid == resource.data.studentUid;
+        request.auth.uid == resource.data.guardianUid ||
+        request.auth.uid == resource.data.studentUid ||
+        request.auth.uid == resource.data.studentId;
     }
     
     // Messages (Chat)
@@ -100,13 +108,20 @@ service cloud.firestore {
       allow read: if isSignedIn() && (
         isAdmin() ||
         request.auth.uid == resource.data.senderId ||
+        request.auth.uid == resource.data.senderUid ||
         request.auth.uid == resource.data.receiverId ||
-        resource.data.receiverId == 'system_admin_securo'
+        request.auth.uid == resource.data.recipientUid ||
+        resource.data.receiverId == 'system_admin_securo' ||
+        resource.data.recipientUid == 'system_admin_securo'
       );
       allow create: if isSignedIn();
-      allow update: if isAdmin() || 
+      allow update: if isSignedIn() && (
+        isAdmin() || 
         request.auth.uid == resource.data.senderId ||
-        request.auth.uid == resource.data.receiverId;
+        request.auth.uid == resource.data.senderUid ||
+        request.auth.uid == resource.data.receiverId ||
+        request.auth.uid == resource.data.recipientUid
+      );
       allow delete: if isAdmin();
     }
     
@@ -134,11 +149,12 @@ service cloud.firestore {
     match /notifications/{notificationId} {
       allow read: if isSignedIn() && (
         isAdmin() ||
-        isOwner(resource.data.userId)
+        isOwner(resource.data.userId) ||
+        isOwner(resource.data.recipientUid)
       );
       allow create: if isSignedIn();
-      allow update: if isOwner(resource.data.userId);
-      allow delete: if isOwner(resource.data.userId) || isAdmin();
+      allow update: if isOwner(resource.data.userId) || isOwner(resource.data.recipientUid) || isAdmin();
+      allow delete: if isOwner(resource.data.userId) || isOwner(resource.data.recipientUid) || isAdmin();
     }
     
     // Audit Logs (Admin only)
