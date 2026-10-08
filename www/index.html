@@ -3152,6 +3152,16 @@
             will-change: opacity, transform;
             transition: opacity 0.3s ease;
         }
+        /* (2026-07-13) Hide contacts widget and lock SOS scroll; was scrollable */
+        #emergencyContactsWidget,
+        .emergency-contacts-widget {
+            display: none !important;
+        }
+
+        #page-sos {
+            padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important;
+            overflow: hidden !important;
+        }
 
         .page-sos-shell {
             position: relative;
@@ -5260,8 +5270,8 @@
                                     </div>
                                 </div>
 
-                                <!-- Emergency Contact Quick-Dial Widget -->
-                                <div id="emergencyContactsWidget"></div>
+                                <!-- (2026-07-13) Hide contacts widget to prevent SOS scroll; was visible -->
+                                <div id="emergencyContactsWidget" style="display: none !important;"></div>
                             </div>
                         </section>
 
