@@ -1077,9 +1077,147 @@
             }
         }
 
+        /* (2026-07-13) Add mobile responsive styles; was fixed desktop layout */
         @media (max-width: 768px) {
+            .page-container {
+                padding: 0 20px;
+            }
+
             .nav-links {
                 display: none;
+            }
+
+            .brand-logo-img {
+                height: 32px;
+            }
+
+            .nav-actions .btn-ghost {
+                display: none;
+            }
+
+            .nav-actions .btn-primary {
+                padding: 8px 16px;
+                font-size: 0.84rem;
+            }
+
+            .hero-section {
+                padding: 30px 0 50px;
+                min-height: auto;
+            }
+
+            .hero-grid {
+                gap: 36px;
+            }
+
+            .hero-headline {
+                font-size: clamp(2.4rem, 8vw, 3.6rem);
+                margin-bottom: 20px;
+            }
+
+            .hero-subhead {
+                font-size: 1.25rem;
+            }
+
+            .hero-description {
+                font-size: 1rem;
+                margin-bottom: 24px;
+            }
+
+            .app-store-badges {
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
+            .store-badge-btn {
+                padding: 8px 16px;
+            }
+
+            .trailer-tabs-bar {
+                width: 100%;
+                max-width: 100%;
+                justify-content: flex-start;
+                padding: 4px;
+                gap: 6px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .trailer-pill {
+                padding: 6px 12px;
+                font-size: 0.75rem;
+            }
+
+            .iphone-mockup-wrap {
+                width: min(320px, 86vw);
+                height: auto;
+                aspect-ratio: 340 / 690;
+                border-radius: 46px;
+                padding: 10px;
+                box-shadow: 0 20px 50px rgba(18, 15, 38, 0.14), 0 0 0 3px #423d5a, 0 0 0 6px #1e1b2e;
+            }
+
+            .iphone-screen {
+                border-radius: 38px;
+            }
+
+            .iphone-island {
+                top: 14px;
+                width: 88px;
+                height: 22px;
+            }
+
+            .island-camera {
+                width: 8px;
+                height: 8px;
+            }
+
+            .island-sensor {
+                width: 6px;
+                height: 6px;
+            }
+
+            .phone-floating-pill {
+                bottom: 16px;
+                font-size: 0.72rem;
+                padding: 6px 12px;
+                max-width: 88%;
+                white-space: normal;
+                text-align: center;
+            }
+
+            .features-section,
+            .dual-view-section,
+            .roles-section {
+                padding: 60px 0;
+            }
+
+            .section-title {
+                font-size: clamp(1.8rem, 6vw, 2.4rem);
+            }
+
+            .section-desc {
+                font-size: 0.98rem;
+            }
+
+            .perspective-card {
+                padding: 24px 20px;
+            }
+
+            .perspective-card h3 {
+                font-size: 1.5rem;
+            }
+
+            .perspective-screenshot-box {
+                height: 260px;
+            }
+
+            .feature-card {
+                padding: 24px 20px;
+            }
+
+            .role-portal-card {
+                padding: 28px 20px;
             }
 
             .demo-instant-banner {
@@ -1104,6 +1242,40 @@
                 flex-direction: column;
                 gap: 16px;
                 text-align: center;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .page-container {
+                padding: 0 16px;
+            }
+
+            .hero-headline {
+                font-size: 2.2rem;
+            }
+
+            .store-badge-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .iphone-mockup-wrap {
+                width: min(290px, 88vw);
+                border-radius: 40px;
+                padding: 8px;
+            }
+
+            .iphone-screen {
+                border-radius: 32px;
+            }
+
+            .perspective-screenshot-box {
+                height: 220px;
+            }
+
+            .credentials-box {
+                padding: 12px;
+                font-size: 0.78rem;
             }
         }
     </style>
