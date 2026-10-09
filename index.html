@@ -8722,6 +8722,19 @@
             }, 650);
         }
 
+        // (2026-07-13) Helper for current site guardian link; prev: hardcoded zea
+        function getGuardianBaseUrl() {
+            if (typeof window !== "undefined" && window.location && window.location.origin) {
+                const isNative = window.location.protocol.startsWith('file') ||
+                    window.location.protocol.startsWith('capacitor') ||
+                    (Boolean(window.Capacitor) && window.location.hostname === 'localhost');
+                if (!isNative) {
+                    return window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/guardian.html');
+                }
+            }
+            return "https://securo.cebutech.digital/guardian.html";
+        }
+
         function triggerFullscreenOnboarding(user, existingProfile) {
             fsCurrentUserContext = { user, profile: existingProfile };
             if (fsOnboardingError) fsOnboardingError.textContent = "";
@@ -8739,7 +8752,8 @@
             fsHasCopiedGuardianLink = false;
             goToSlide(0);
             const sId = existingProfile?.studentId || (user?.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1]) || "";
-            const guardianUrl = "https://zeamarae.github.io/Securo/guardian.html" + (sId ? `?ref=${encodeURIComponent(sId)}` : "");
+            // (2026-07-13) Dynamic guardian URL using current site; prev: hardcoded zea
+            const guardianUrl = getGuardianBaseUrl() + (sId ? `?ref=${encodeURIComponent(sId)}` : "");
             const inviteEl = document.getElementById("fsGuardianInviteLink");
             if (inviteEl) inviteEl.textContent = guardianUrl;
             if (appView) appView.classList.remove("active");
@@ -8859,8 +8873,9 @@
                         fsSubmitOnboardingBtn.style.opacity = "1";
                         fsSubmitOnboardingBtn.innerHTML = '<span id="fsSubmitText">Save & Continue</span><span class="material-symbols-outlined" id="fsSubmitIcon">arrow_forward</span>';
                     }
+                    // (2026-07-13) Dynamic guardian URL on save; prev: hardcoded zea link
                     const studentId = updatedProfile.studentId || "";
-                    const guardianUrl = "https://zeamarae.github.io/Securo/guardian.html" + (studentId ? `?ref=${encodeURIComponent(studentId)}` : "");
+                    const guardianUrl = getGuardianBaseUrl() + (studentId ? `?ref=${encodeURIComponent(studentId)}` : "");
                     const fsGuardianInviteLink = document.getElementById("fsGuardianInviteLink");
                     if (fsGuardianInviteLink) fsGuardianInviteLink.textContent = guardianUrl;
                     const fsShareGuardianLinkBtn = document.getElementById("fsShareGuardianLinkBtn");
@@ -9328,12 +9343,8 @@
                         return uid && parsed[uid]?.studentId ? parsed[uid].studentId : "";
                     } catch (_) { return ""; }
                 })() || "";
-            const isGitHub = window.location.hostname.includes('github.io');
-            let base = "https://zeamarae.github.io/Securo/guardian.html";
-            if (!isGitHub && window.location.origin && !window.location.protocol.startsWith('file') && !window.location.protocol.startsWith('capacitor')) {
-                base = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/guardian.html');
-            }
-            const guardianUrl = base + (studentId ? `?ref=${encodeURIComponent(studentId)}` : "");
+            // (2026-07-13) Use dynamic getGuardianBaseUrl; prev: hardcoded zea base
+            const guardianUrl = getGuardianBaseUrl() + (studentId ? `?ref=${encodeURIComponent(studentId)}` : "");
             if (urlText) urlText.textContent = guardianUrl;
             if (copyBtnLabel) copyBtnLabel.textContent = "Copy Invite Link";
             if (shareBtn) {
@@ -11805,7 +11816,8 @@
                                 </div>
                                 <div id="fsGuardianInviteLink"
                                     style="font-size: 0.82rem; color: #1e293b; font-weight: 600; word-break: break-all; line-height: 1.45; font-family: monospace; user-select: all; padding: 2px 0;">
-                                    https://zeamarae.github.io/Securo/guardian.html</div>
+                                    <!-- (2026-07-13) Dynamic link placeholder; prev: zea domain -->
+                                    Generating link...</div>
                             </div>
 
                             <!-- Action buttons -->
