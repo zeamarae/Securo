@@ -3026,12 +3026,21 @@
             overflow: hidden;
         }
 
+        /* (2026-07-13) Suppress native Android playback button; was visible on video */
         .vault-video-box video::-webkit-media-controls,
         .vault-video-box video::-webkit-media-controls-start-playback-button,
-        .vault-video-box video::-webkit-media-controls-enclosure {
+        .vault-video-box video::-webkit-media-controls-enclosure,
+        .vault-preview::-webkit-media-controls,
+        .vault-preview::-webkit-media-controls-start-playback-button,
+        .vault-preview::-webkit-media-controls-enclosure,
+        .details-media-wrap video::-webkit-media-controls-start-playback-button {
             display: none !important;
-            -webkit-appearance: none;
-            opacity: 0;
+            -webkit-appearance: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            width: 0 !important;
+            height: 0 !important;
+            pointer-events: none !important;
         }
 
         .vault-video-badge {
@@ -7140,10 +7149,11 @@
                 if (condition.includes('rain')) materialIcon = 'rainy';
                 if (condition.includes('thunderstorm')) materialIcon = 'thunderstorm';
 
+                // (2026-07-13) Fix degree symbol mojibake in weather widget; was corrupted
                 widget.innerHTML = `
                     <span class="material-symbols-outlined weather-icon">${materialIcon}</span>
                     <div class="weather-info">
-                        <span class="weather-temp">${temp}Â°C</span>
+                        <span class="weather-temp">${temp}\u00B0C</span>
                         <span class="weather-condition">${condition}</span>
                     </div>
                 `;
@@ -7152,7 +7162,7 @@
                 widget.innerHTML = `
                     <span class="material-symbols-outlined weather-icon">cloud_off</span>
                     <div class="weather-info">
-                        <span class="weather-temp">--Â°C</span>
+                        <span class="weather-temp">--\u00B0C</span>
                         <span class="weather-condition">Daanbantayan</span>
                     </div>
                 `;
@@ -7433,8 +7443,29 @@
             resizedCanvas.width = Math.round(width * scale);
             resizedCanvas.height = Math.round(height * scale);
             const resizedContext = resizedCanvas.getContext("2d");
-            resizedContext.drawImage(canvas, 0, 0, resizedCanvas.width, resizedCanvas.height);
             return resizedCanvas.toDataURL("image/jpeg", quality);
+        }
+
+        const _studentBlobUrlCache = new Map();
+        function getPlayableVideoUrl(src) {
+            if (!src || typeof src !== 'string' || !src.startsWith('data:video/')) return src || '';
+            if (_studentBlobUrlCache.has(src)) return _studentBlobUrlCache.get(src);
+            try {
+                const parts = src.split(',');
+                if (parts.length < 2) return src;
+                const mimeMatch = parts[0].match(/:(.*?);/);
+                const mime = mimeMatch ? mimeMatch[1] : 'video/mp4';
+                const binary = atob(parts[1]);
+                const len = binary.length;
+                const buffer = new Uint8Array(len);
+                for (let i = 0; i < len; i++) buffer[i] = binary.charCodeAt(i);
+                const blob = new Blob([buffer], { type: mime });
+                const url = URL.createObjectURL(blob);
+                _studentBlobUrlCache.set(src, url);
+                return url;
+            } catch (e) {
+                return src;
+            }
         }
 
         function renderVaultItems(items) {
@@ -7455,14 +7486,20 @@
                 const icon = item.kind === "image" ? "image" : item.kind === "video" ? "videocam" : item.kind === "audio" ? "mic" : "description";
                 const selectionKey = getVaultSelectionKey(item);
                 const isSelected = selectedVaultKeys.has(selectionKey);
+                const isVideo = item.kind === "video";
+                const playableUrl = isVideo ? getPlayableVideoUrl(item.src) : "";
                 // (2026-07-13) Vault video thumbnail with play badge; prev: raw video tag
                 const preview = item.kind === "image"
                     ? `<img class="vault-preview" src="${item.src}" alt="${item.label || "Vault image"}">`
                     : item.kind === "video"
-                        ? `<div class="vault-video-box">
-                               <video class="vault-preview" src="${item.src ? (item.src.includes('#t=') ? item.src : item.src + '#t=0.001') : ''}" preload="metadata" muted playsinline poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect width='1' height='1' fill='%23191c2e'/%3E%3C/svg%3E"></video>
-                               <div class="vault-video-badge"><span class="material-symbols-outlined">play_arrow</span></div>
-                           </div>`
+                        ? (item.thumbnail
+                            ? `<img class="vault-preview" src="${item.thumbnail}" alt="Video thumbnail">
+                               <div class="vault-video-badge"><span class="material-symbols-outlined">play_arrow</span></div>`
+                            : `<div class="vault-video-box" style="background:linear-gradient(135deg, #181528, #2a1f47);">
+                                   <video class="vault-preview" src="${playableUrl}" muted playsinline webkit-playsinline preload="metadata" style="object-fit:cover; pointer-events:none;"></video>
+                                   <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.4));"></div>
+                                   <div class="vault-video-badge"><span class="material-symbols-outlined">play_arrow</span></div>
+                               </div>`)
                         : "";
                 const centerIcon = item.kind === "audio"
                     ? '<div style="display:flex;justify-content:center;padding-bottom:16px;"><span class="material-symbols-outlined" style="font-size:46px;">graphic_eq</span></div>'
@@ -7923,10 +7960,13 @@
             const mediaWrap = document.getElementById("detailsMediaWrap");
             const dt = item.createdAt?.toDate?.() || new Date(item.createdAt || Date.now());
 
+            // (2026-07-13) Stream video via blob URL to fix gray placeholder; was dataUrl
             mediaWrap.innerHTML = item.kind === "image"
                 ? `<img src="${item.src}">`
                 : item.kind === "video"
-                    ? `<video src="${item.src}" controls></video>`
+                    ? `<div style="position:relative; width:100%; height:100%; background:#0c0a17; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+                           <video src="${getPlayableVideoUrl(item.src)}" controls playsinline webkit-playsinline style="width:100%; max-height:100%; background:#0c0a17; object-fit:contain; display:block;"></video>
+                       </div>`
                     : `<div style="display:flex;flex-direction:column;align-items:center;color:#fff;"><span class="material-symbols-outlined" style="font-size:64px;margin-bottom:12px;">mic</span><strong>Voice Evidence</strong></div>`;
 
             const isVisual = item.kind === "image" || item.kind === "video";
@@ -8050,8 +8090,19 @@
             }
         });
 
+        // (2026-07-13) Clean video playback on modal close; was unpaused bare tag
         document.getElementById("closeDetailsBtn").addEventListener("click", () => {
+            const v = document.getElementById("detailsMediaWrap")?.querySelector("video");
+            if (v) { v.pause(); v.src = ""; }
             document.getElementById("vaultDetailsOverlay").classList.remove("active");
+        });
+
+        document.getElementById("vaultDetailsOverlay")?.addEventListener("click", (e) => {
+            if (e.target.id === "vaultDetailsOverlay") {
+                const v = document.getElementById("detailsMediaWrap")?.querySelector("video");
+                if (v) { v.pause(); v.src = ""; }
+                document.getElementById("vaultDetailsOverlay").classList.remove("active");
+            }
         });
 
         document.getElementById("downloadDetailsBtn").addEventListener("click", () => {
@@ -10966,8 +11017,8 @@
                     events.push({
                         kind: 'attendance',
                         subtype: log.type === 'in' ? 'in' : 'out',
-                        title: log.type === 'in' ? 'Timed In' : 'Timed Out',
-                        sub: (formatAttendanceLocation(log.location) || 'Unknown location') + ' Â· Syncingâ€¦',
+                        // (2026-07-13) Fix mojibake characters in sync status; was corrupted string
+                        sub: (formatAttendanceLocation(log.location) || 'Unknown location') + ' \u2022 Syncing...',
                         ts,
                         pending: true
                     });
@@ -10997,8 +11048,8 @@
                     events.push({
                         kind: 'vault',
                         subtype: 'vault',
-                        title: 'Evidence Submitted',
-                        sub: `${count} file${count !== 1 ? 's' : ''} Â· ${locStr}`,
+                        // (2026-07-13) Fix mojibake separator in vault events; was corrupted
+                        sub: `${count} file${count !== 1 ? 's' : ''} \u2022 ${locStr}`,
                         ts,
                         pending: false
                     });
