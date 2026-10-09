@@ -12,27 +12,28 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
     <!-- (2026-07-13) Add Leaflet and SheetJS for reports; was Leaflet only -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
     <style>
+        /* (2026-07-13) Set light theme colors; was dark palette */
         :root {
-            --glass-white: 39, 39, 42; /* Dark glass base instead of white */
-            --bg: #09090b; /* Cosmic dark */
-            --surface: rgba(var(--glass-white), 0.75);
-            --surface-strong: rgba(var(--glass-white), 0.9);
-            --ink: #f8fafc; /* Light text */
-            --muted: #a1a1aa;
-            --primary: #8b5cf6; /* Vibrant Purple */
-            --primary-strong: #a78bfa;
-            --primary-soft: rgba(139, 92, 246, 0.15);
-            --cyan: #06b6d4; /* Neon cyan */
-            --green: #10b981; /* Emerald */
-            --red: #f43f5e; /* Rose red */
-            --red-soft: rgba(244, 63, 94, 0.15);
-            --amber: #f59e0b; /* Amber */
-            --line: rgba(255, 255, 255, 0.1);
-            --shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
-            --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.5);
+            --glass-white: 255, 255, 255;
+            --bg: #f6f4fe;
+            --surface: rgba(var(--glass-white), 0.88);
+            --surface-strong: #ffffff;
+            --ink: #171428;
+            --muted: #64748b;
+            --primary: #5a1fe0;
+            --primary-strong: #7b42f6;
+            --primary-soft: rgba(90, 31, 224, 0.08);
+            --cyan: #0284c7;
+            --green: #059669;
+            --red: #e11d48;
+            --red-soft: rgba(225, 29, 72, 0.1);
+            --amber: #d97706;
+            --line: rgba(90, 31, 224, 0.08);
+            --shadow: 0 16px 36px rgba(90, 31, 224, 0.08);
+            --shadow-soft: 0 8px 20px rgba(90, 31, 224, 0.05);
             --radius-xl: 32px;
             --radius-lg: 24px;
             --radius-md: 18px;
@@ -2803,6 +2804,8 @@
         let cachedGuardianLinks = [];
         let cachedSosLogs = [];
         let cachedEmergencyPosts = [];
+        // (2026-07-13) Add cached attendance state; was fetched on-demand
+        let cachedAttendance = [];
         let cachedAdminNotifications = [];
         let currentAdminName = "Administrator";
         let selectedManagedUserId = null;
@@ -3386,12 +3389,15 @@
                 });
             });
 
-            // 2. Attendance & Geofence Logs
-            let attendanceLogs = [];
-            try {
-                attendanceLogs = await getAllAttendance();
-            } catch (e) {
-                attendanceLogs = [];
+            // (2026-07-13) Use cached attendance logs; was un-cached await network
+            let attendanceLogs = (Array.isArray(cachedAttendance) && cachedAttendance.length) ? cachedAttendance : [];
+            if (!attendanceLogs.length) {
+                try {
+                    attendanceLogs = await getAllAttendance();
+                    cachedAttendance = attendanceLogs;
+                } catch (e) {
+                    attendanceLogs = [];
+                }
             }
             (attendanceLogs || []).forEach(att => {
                 const dateObj = att.timestamp?.toDate ? att.timestamp.toDate() : (att.timestamp ? new Date(att.timestamp) : new Date());
@@ -4003,6 +4009,7 @@
                     guardianLinks: cachedGuardianLinks,
                     sosLogs: cachedSosLogs,
                     emergencyPosts: cachedEmergencyPosts,
+                    attendanceLogs: cachedAttendance,
                     savedAdminName: currentAdminName,
                     time: Date.now()
                 };
@@ -4024,6 +4031,7 @@
                 if (Array.isArray(data.guardianLinks)) cachedGuardianLinks = data.guardianLinks;
                 if (Array.isArray(data.sosLogs)) cachedSosLogs = data.sosLogs;
                 if (Array.isArray(data.emergencyPosts)) cachedEmergencyPosts = data.emergencyPosts;
+                if (Array.isArray(data.attendanceLogs)) cachedAttendance = data.attendanceLogs;
                 if (data.savedAdminName && adminDropdownName) {
                     adminDropdownName.textContent = data.savedAdminName;
                     if (adminInitials) {
@@ -4037,6 +4045,11 @@
                     }
                 }
                 applyFilters();
+                if (typeof renderDailyReport === 'function') renderDailyReport();
+                if (typeof renderAdminSosQueue === 'function') renderAdminSosQueue(cachedSosLogs);
+                if (typeof setUserEditorState === 'function' && cachedUsers.length && !selectedManagedUserId) {
+                    setUserEditorState(cachedUsers[0]);
+                }
                 return true;
             } catch (err) {
                 console.warn("Could not load from local cache:", err);
@@ -4062,7 +4075,8 @@
                 initAdminChat();
             }
             try {
-                const profile = await getUserProfile(user.uid);
+                const profilePromise = getUserProfile(user.uid).catch(() => null);
+                const profile = await Promise.race([profilePromise, new Promise(r => setTimeout(() => r(null), 3000))]);
                 const isSpecialAdmin = profile?.role === 'admin';
                 currentAdminName = profile?.name || user.displayName || 'Administrator';
                 if (adminDropdownName) adminDropdownName.textContent = currentAdminName;
@@ -4084,38 +4098,48 @@
                     }, 900);
                     return;
                 }
-                await loadAllData();
+                loadAllData().then(() => {
+                    showToast("Admin ready", `Command center synced successfully. Welcome ${currentAdminName}.`, "success");
+                }).catch(err => {
+                    console.warn("Background sync error:", err);
+                });
                 if (unsubscribeAdminNotifications) unsubscribeAdminNotifications();
                 unsubscribeAdminNotifications = subscribeToAccountNotifications(user.uid, renderAdminNotifications);
-                showToast("Admin ready", `Command center synced successfully. Welcome ${currentAdminName}.`, "success");
             } catch (error) {
                 showToast("Sync failed", error.message || "Unable to load admin data right now.", "error");
             }
         });
 
-        // (2026-07-13) Safe parallel fetch with fallbacks; was failing entire sync
+        // (2026-07-13) Safe parallel fetch with timeouts; was blocking full sync
         async function loadAllData() {
-            const [posts, users, threads, guardianLinks, sosLogs, emergencyPosts] = await Promise.all([
-                getGADPosts().catch(err => { console.warn("getGADPosts fallback:", err); return []; }),
-                getAllUsers().catch(err => { console.warn("getAllUsers fallback:", err); return []; }),
-                getAllChatThreadsOnce(currentAdminUid).catch(err => { console.warn("getAllChatThreadsOnce fallback:", err); return []; }),
-                getAllGuardianLinksAdmin().catch(err => { console.warn("getAllGuardianLinksAdmin fallback:", err); return []; }),
-                getAllSOSLogs().catch(err => { console.warn("getAllSOSLogs fallback:", err); return []; }),
-                getAllEmergencyPosts().catch(err => { console.warn("getAllEmergencyPosts fallback:", err); return []; })
+            const timeoutFetch = (promise, ms = 6000, fallback = []) => 
+                Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
+
+            const [posts, users, threads, guardianLinks, sosLogs, emergencyPosts, attendance] = await Promise.all([
+                timeoutFetch(getGADPosts().catch(err => { console.warn("getGADPosts fallback:", err); return []; })),
+                timeoutFetch(getAllUsers().catch(err => { console.warn("getAllUsers fallback:", err); return []; })),
+                timeoutFetch(getAllChatThreadsOnce(currentAdminUid).catch(err => { console.warn("getAllChatThreadsOnce fallback:", err); return []; })),
+                timeoutFetch(getAllGuardianLinksAdmin().catch(err => { console.warn("getAllGuardianLinksAdmin fallback:", err); return []; })),
+                timeoutFetch(getAllSOSLogs().catch(err => { console.warn("getAllSOSLogs fallback:", err); return []; })),
+                timeoutFetch(getAllEmergencyPosts().catch(err => { console.warn("getAllEmergencyPosts fallback:", err); return []; })),
+                timeoutFetch(getAllAttendance().catch(err => { console.warn("getAllAttendance fallback:", err); return []; }))
             ]);
             
             // Explicitly sort posts by date descending
-            cachedPosts = (Array.isArray(posts) ? posts : []).sort((a, b) => {
-                const dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.timestamp || 0).getTime();
-                const dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.timestamp || 0).getTime();
-                return dateB - dateA;
-            });
+            if (Array.isArray(posts) && posts.length) {
+                cachedPosts = posts.sort((a, b) => {
+                    const dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.timestamp || 0).getTime();
+                    const dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.timestamp || 0).getTime();
+                    return dateB - dateA;
+                });
+            }
 
-            cachedUsers = Array.isArray(users) ? users : [];
-            cachedThreads = Array.isArray(threads) ? threads : [];
-            cachedGuardianLinks = Array.isArray(guardianLinks) ? guardianLinks : [];
-            cachedSosLogs = Array.isArray(sosLogs) ? sosLogs : [];
-            cachedEmergencyPosts = Array.isArray(emergencyPosts) ? emergencyPosts : [];
+            if (Array.isArray(users) && users.length) cachedUsers = users;
+            if (Array.isArray(threads) && threads.length) cachedThreads = threads;
+            if (Array.isArray(guardianLinks) && guardianLinks.length) cachedGuardianLinks = guardianLinks;
+            if (Array.isArray(sosLogs) && sosLogs.length) cachedSosLogs = sosLogs;
+            if (Array.isArray(emergencyPosts) && emergencyPosts.length) cachedEmergencyPosts = emergencyPosts;
+            if (Array.isArray(attendance) && attendance.length) cachedAttendance = attendance;
             saveToLocalCache();
             applyFilters();
             if (typeof renderDailyReport === 'function') renderDailyReport();
