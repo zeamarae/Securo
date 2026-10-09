@@ -6530,14 +6530,14 @@
             const recentInTs = recentInLog ? getAttendanceLogDate(recentInLog).getTime() : null;
             const recentOutTs = recentOutLog ? getAttendanceLogDate(recentOutLog).getTime() : null;
 
+            // (2026-07-13) Guard geofence timestamps against fake times; prev: Date.now()
             if (isInside) {
                 try { localStorage.removeItem(userExitKey); } catch (e) {}
-                let entryTs = appState.campusEntryTs || recentInTs;
-                if (!entryTs) {
-                    const storedEntry = localStorage.getItem(userEntryKey);
-                    entryTs = storedEntry ? parseInt(storedEntry, 10) : Date.now();
+                const storedEntry = localStorage.getItem(userEntryKey);
+                const entryTs = appState.campusEntryTs || recentInTs || (storedEntry ? parseInt(storedEntry, 10) : null);
+                if (entryTs) {
+                    try { localStorage.setItem(userEntryKey, String(entryTs)); } catch (e) {}
                 }
-                try { localStorage.setItem(userEntryKey, String(entryTs)); } catch (e) {}
                 appState.isInsideCampus = true;
                 appState.campusEntryTs = entryTs;
                 appState.campusExitTs = null;
@@ -6546,12 +6546,11 @@
             } else {
                 try { localStorage.removeItem(userEntryKey); } catch (e) {}
                 appState.isInsideCampus = false;
-                let exitTs = appState.campusExitTs || recentOutTs;
-                if (!exitTs) {
-                    const storedExit = localStorage.getItem(userExitKey);
-                    exitTs = storedExit ? parseInt(storedExit, 10) : Date.now();
+                const storedExit = localStorage.getItem(userExitKey);
+                const exitTs = appState.campusExitTs || recentOutTs || (storedExit ? parseInt(storedExit, 10) : null);
+                if (exitTs) {
+                    try { localStorage.setItem(userExitKey, String(exitTs)); } catch (e) {}
                 }
-                try { localStorage.setItem(userExitKey, String(exitTs)); } catch (e) {}
                 appState.campusExitTs = exitTs;
                 appState.campusEntryTs = null;
                 processAutoAttendance('out', lat, lng);
@@ -10403,7 +10402,16 @@
             appState.isTimedIn = isTimedIn;
             timeInBtn.disabled = isTimedIn;
             timeOutBtn.disabled = !isTimedIn;
-            if (currentStatusText) currentStatusText.textContent = isTimedIn ? "Timed In" : "Timed Out";
+            // (2026-07-13) Status shows Not Timed In when empty; prev: always Timed Out
+            if (currentStatusText) {
+                if (isTimedIn) {
+                    currentStatusText.textContent = "Timed In";
+                } else if (!_fullAttendanceHistory || !_fullAttendanceHistory.length) {
+                    currentStatusText.textContent = "Not Timed In";
+                } else {
+                    currentStatusText.textContent = "Timed Out";
+                }
+            }
             const pill = document.getElementById("attendanceStatusPill");
             const dot = document.getElementById("attendanceStatusDot");
             if (pill) {
@@ -10478,24 +10486,35 @@
                 const userKey = appState.user?.uid || 'guest';
                 const userExitKey = `securo_campus_exit_ts_${userKey}`;
                 const userEntryKey = `securo_campus_entry_ts_${userKey}`;
+                // (2026-07-13) Show status without faked timestamps; prev: faked exit time
                 if (isInside) {
                     trackingStatusIcon.textContent = "login";
                     const recentIn = typeof getSpecificUserLatestAttendanceLog === 'function' ? getSpecificUserLatestAttendanceLog('in') : null;
                     const recentInTs = recentIn ? getAttendanceLogDate(recentIn).getTime() : null;
                     const storedEntry = localStorage.getItem(userEntryKey);
-                    const entryTs = appState.campusEntryTs || recentInTs || (storedEntry ? parseInt(storedEntry, 10) : Date.now());
-                    const formatted = `You went inside the campus at ${formatCampusEventTime(entryTs)}`;
-                    trackingStatusCopy.textContent = formatted;
-                    trackingStatusBanner.title = `${formatted}. Live campus tracking is active.`;
+                    const entryTs = appState.campusEntryTs || recentInTs || (storedEntry ? parseInt(storedEntry, 10) : null);
+                    if (entryTs && (recentInTs || appState.campusEntryTs)) {
+                        const formatted = `You went inside the campus at ${formatCampusEventTime(entryTs)}`;
+                        trackingStatusCopy.textContent = formatted;
+                        trackingStatusBanner.title = `${formatted}. Live campus tracking is active.`;
+                    } else {
+                        trackingStatusCopy.textContent = "Inside Campus Bounds";
+                        trackingStatusBanner.title = "Inside campus bounds. Live tracking active.";
+                    }
                 } else {
                     trackingStatusIcon.textContent = "logout";
                     const recentOut = typeof getSpecificUserLatestAttendanceLog === 'function' ? getSpecificUserLatestAttendanceLog('out') : null;
                     const recentOutTs = recentOut ? getAttendanceLogDate(recentOut).getTime() : null;
                     const storedExit = localStorage.getItem(userExitKey);
-                    const exitTs = appState.campusExitTs || recentOutTs || (storedExit ? parseInt(storedExit, 10) : Date.now());
-                    const formatted = `You went out the campus at ${formatCampusEventTime(exitTs)}`;
-                    trackingStatusCopy.textContent = formatted;
-                    trackingStatusBanner.title = `${formatted}. Live campus tracking is active.`;
+                    const exitTs = appState.campusExitTs || recentOutTs || (storedExit ? parseInt(storedExit, 10) : null);
+                    if (exitTs && (recentOutTs || appState.campusExitTs)) {
+                        const formatted = `You went out the campus at ${formatCampusEventTime(exitTs)}`;
+                        trackingStatusCopy.textContent = formatted;
+                        trackingStatusBanner.title = `${formatted}. Live campus tracking is active.`;
+                    } else {
+                        trackingStatusCopy.textContent = "Outside Campus Bounds";
+                        trackingStatusBanner.title = "Outside campus bounds. Live tracking active.";
+                    }
                 }
                 return;
             }
