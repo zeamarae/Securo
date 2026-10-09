@@ -6159,11 +6159,11 @@
             campusMarkersLayerGroup.clearLayers();
             buildingMarkerMap.clear();
 
-            // (2026-07-13) Red map markers & dashed geofence for student; was purple
+            // (2026-07-13) Restore purple markers & dotted geofence for student; was red
             currentStudentBuildings.forEach(b => {
                 const bIcon = L.divIcon({
                     className: 'campus-facility-icon-marker',
-                    html: `<div style="background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 3px 10px rgba(24,20,40,0.16); border:2px solid #f43f5e; display:flex; align-items:center; justify-content:center; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:16px; color:#f43f5e;">${b.icon || 'location_on'}</span></div>`,
+                    html: `<div style="background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 3px 10px rgba(24,20,40,0.16); border:2px solid #5a1fe0; display:flex; align-items:center; justify-content:center; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:16px; color:#5a1fe0;">${b.icon || 'location_on'}</span></div>`,
                     iconSize: [30, 30],
                     iconAnchor: [15, 15]
                 });
@@ -6176,7 +6176,7 @@
                 marker.bindPopup(`
                     <div style="padding:4px 2px; min-width:160px;">
                         <strong style="display:flex; align-items:center; gap:6px; font-size:0.9rem; color:#181428;">
-                            <span class="material-symbols-outlined" style="font-size:18px; color:#f43f5e;">${b.icon || 'location_on'}</span>
+                            <span class="material-symbols-outlined" style="font-size:18px; color:#5a1fe0;">${b.icon || 'location_on'}</span>
                             ${b.name}
                         </strong>
                         <p style="margin:6px 0 0; font-size:0.78rem; color:#64748b; line-height:1.4;">${bDesc}</p>
@@ -6212,13 +6212,13 @@
                 if (campusGeofencePolygonLayer) {
                     map.removeLayer(campusGeofencePolygonLayer);
                 }
-                // (2026-07-13) Red dashed geofence for student; was purple dotted
+                // (2026-07-13) Purple dotted geofence for student view; was red dashed
                 campusGeofencePolygonLayer = L.polygon(currentStudentGeofence, {
-                    color: '#e11d48',
+                    color: '#5a1fe0',
                     weight: 3,
-                    dashArray: '5, 6',
-                    fillColor: '#f43f5e',
-                    fillOpacity: 0.1
+                    dashArray: '3, 6',
+                    fillColor: '#7c3aed',
+                    fillOpacity: 0.08
                 }).addTo(map);
             }
 
@@ -6555,13 +6555,13 @@
             setTimeout(() => { if (map) map.invalidateSize(); }, 100);
             setTimeout(() => { if (map) map.invalidateSize(); }, 500);
 
-            // (2026-07-13) Red dashed geofence for student; was purple dotted
+            // (2026-07-13) Purple dotted geofence for student view; was red dashed
             campusGeofencePolygonLayer = L.polygon(currentStudentGeofence, {
-                color: '#e11d48',
+                color: '#5a1fe0',
                 weight: 3,
-                dashArray: '5, 6',
-                fillColor: '#f43f5e',
-                fillOpacity: 0.1
+                dashArray: '3, 6',
+                fillColor: '#7c3aed',
+                fillOpacity: 0.08
             }).addTo(map);
 
             // Draw building markers with exact admin-saved positions
