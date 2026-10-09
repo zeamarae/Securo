@@ -669,7 +669,8 @@
                 </div>
                 <h2 class="denied-title" id="deniedModalTitle">Permission Required</h2>
                 <p class="denied-desc" id="deniedModalDesc">Camera access is required for campus safety.</p>
-                <div class="denied-instructions">
+                <!-- (2026-07-13) Dynamic instructions wrapper; prev: hardcoded browser text -->
+                <div class="denied-instructions" id="deniedInstructionsContainer">
                     <p>To enable access in your browser:</p>
                     <ol>
                         <li>Tap the <strong>Site Controls 🔒</strong> icon in your address bar</li>
@@ -713,6 +714,7 @@
         const deniedModalDesc = document.getElementById('deniedModalDesc');
         const retryDeniedPromptBtn = document.getElementById('retryDeniedPromptBtn');
 
+        // (2026-07-13) Native and browser denied guidance; prev: browser-only text
         function showDeniedModal(type) {
             activeDeniedType = type;
             if (type === 'camera') {
@@ -723,6 +725,31 @@
                 deniedModalIcon.textContent = 'location_off';
                 deniedModalTitle.textContent = 'Location Access Blocked';
                 deniedModalDesc.textContent = 'Securo requires continuous location access for emergency dispatch and geofencing. Permission was denied or turned off.';
+            }
+            const instructionsEl = document.getElementById('deniedInstructionsContainer');
+            if (instructionsEl) {
+                const isNative = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
+                if (isNative) {
+                    const itemLabel = type === 'camera' ? 'Camera' : 'Location';
+                    instructionsEl.innerHTML = `
+                        <p>To enable access on Android:</p>
+                        <ol>
+                            <li>Open phone <strong>Settings &gt; Apps &gt; Securo</strong></li>
+                            <li>Tap <strong>Permissions &gt; ${itemLabel}</strong></li>
+                            <li>Select <strong>Allow only while using the app</strong></li>
+                            <li>Return here and tap <strong>Retry Permission</strong></li>
+                        </ol>
+                    `;
+                } else {
+                    instructionsEl.innerHTML = `
+                        <p>To enable access in your browser:</p>
+                        <ol>
+                            <li>Tap the <strong>Site Controls 🔒</strong> icon in your address bar</li>
+                            <li>Set <strong>Camera</strong> / <strong>Location</strong> to <strong>Allow</strong></li>
+                            <li>Tap <strong>Retry Permission</strong> below</li>
+                        </ol>
+                    `;
+                }
             }
             deniedModal.style.display = 'flex';
         }
@@ -754,7 +781,7 @@
             });
         }
 
-        // (2026-07-13) Web permission revocation watcher; prev: unmonitored
+        // (2026-07-13) Native and web permission checks; prev: web-only queries
         async function checkExistingPermissions() {
             const camStored = localStorage.getItem('securo_camera_granted') === 'true';
             const locStored = localStorage.getItem('securo_location_granted') === 'true';
@@ -763,13 +790,27 @@
             let locActive = locStored;
 
             try {
+                const CapGeo = window.Capacitor?.Plugins?.Geolocation || window.Capacitor?.Geolocation;
+                if (CapGeo && typeof CapGeo.checkPermissions === 'function') {
+                    const geoPerm = await CapGeo.checkPermissions().catch(() => null);
+                    if (geoPerm && (geoPerm.location === 'granted' || geoPerm.coarseLocation === 'granted')) {
+                        locActive = true;
+                    }
+                }
+                const CapCam = window.Capacitor?.Plugins?.Camera || window.Capacitor?.Camera;
+                if (CapCam && typeof CapCam.checkPermissions === 'function') {
+                    const camPerm = await CapCam.checkPermissions().catch(() => null);
+                    if (camPerm && camPerm.camera === 'granted') {
+                        camActive = true;
+                    }
+                }
                 if (navigator.permissions && navigator.permissions.query) {
                     const [camQ, locQ] = await Promise.all([
                         navigator.permissions.query({ name: 'camera' }).catch(() => null),
                         navigator.permissions.query({ name: 'geolocation' }).catch(() => null)
                     ]);
                     if (camQ) {
-                        camActive = (camQ.state === 'granted');
+                        camActive = (camQ.state === 'granted') || camActive;
                         camQ.addEventListener('change', () => {
                             if (camQ.state === 'denied') {
                                 cameraGranted = false;
@@ -786,7 +827,7 @@
                         });
                     }
                     if (locQ) {
-                        locActive = (locQ.state === 'granted');
+                        locActive = (locQ.state === 'granted') || locActive;
                         locQ.addEventListener('change', () => {
                             if (locQ.state === 'denied') {
                                 locationGranted = false;
@@ -824,12 +865,17 @@
             }
         }
 
-        // Request camera permission
+        // (2026-07-13) Request native camera permissions; prev: web mediaDevices only
         async function requestCamera() {
             grantCameraBtn.disabled = true;
             grantCameraBtn.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span><span>Requesting...</span>';
 
             try {
+                const CapCam = window.Capacitor?.Plugins?.Camera || window.Capacitor?.Camera;
+                if (CapCam && typeof CapCam.requestPermissions === 'function') {
+                    await CapCam.requestPermissions().catch(() => null);
+                }
+
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 stream.getTracks().forEach(track => track.stop()); // Stop immediately
 
@@ -851,14 +897,26 @@
             }
         }
 
-        // Request location permission
+        // (2026-07-13) Request native and web location permissions; prev: web only
         async function requestLocation() {
             grantLocationBtn.disabled = true;
             grantLocationBtn.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span><span>Requesting...</span>';
 
             try {
+                let nativeSuccess = false;
+                const CapGeo = window.Capacitor?.Plugins?.Geolocation || window.Capacitor?.Geolocation;
+                if (CapGeo && typeof CapGeo.requestPermissions === 'function') {
+                    const perm = await CapGeo.requestPermissions().catch(() => null);
+                    if (perm && (perm.location === 'granted' || perm.coarseLocation === 'granted')) {
+                        nativeSuccess = true;
+                    }
+                }
+
                 await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    navigator.geolocation.getCurrentPosition(resolve, (err) => {
+                        if (nativeSuccess) return resolve();
+                        reject(err);
+                    }, {
                         enableHighAccuracy: true,
                         timeout: 10000,
                         maximumAge: 0
