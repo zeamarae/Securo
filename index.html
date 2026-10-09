@@ -8877,10 +8877,29 @@
             }, { passive: true });
         }
 
-        // (2026-07-13) Redirect unauthenticated index visitors to landing; was no-op
+        // (2026-07-13) Load index on mobile/APK, landing on PC; was landing for all
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
-                window.location.replace("landing.html");
+                const isApk = Boolean(
+                    window.Capacitor?.isNativePlatform?.() ||
+                    window.Capacitor ||
+                    window.location.protocol === 'file:' ||
+                    window.location.protocol === 'capacitor:'
+                );
+                const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                if (!isApk && !isMobile) {
+                    window.location.replace("landing.html");
+                    return;
+                }
+                if (sessionStorage.getItem('securo_just_registered') === '1' && fsOnboardingScreen) {
+                    fsOnboardingScreen.classList.add("active");
+                } else if (appView) {
+                    appView.classList.add("active");
+                    if (!appState.initialViewDone && typeof setActiveView === 'function') {
+                        setActiveView("map");
+                        appState.initialViewDone = true;
+                    }
+                }
                 return;
             }
 

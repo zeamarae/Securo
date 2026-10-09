@@ -300,10 +300,19 @@ export const logout = async () => {
  */
 export const checkAuth = (redirectIfUnauth = true) => {
     onAuthStateChanged(auth, (user) => {
-        // (2026-07-13) Redirect unauthenticated users to landing.html; was role-selection
+        // (2026-07-13) Gate landing redirect to PC only; was redirect all unauth
         if (!user && redirectIfUnauth) {
-            window.location.href = 'landing.html';
-        } else if (user && (window.location.pathname.includes('login.html') || window.location.pathname.includes('role-selection.html'))) {
+            const isApk = Boolean(
+                window.Capacitor?.isNativePlatform?.() ||
+                window.Capacitor ||
+                window.location.protocol === 'file:' ||
+                window.location.protocol === 'capacitor:'
+            );
+            const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (!isApk && !isMobile) {
+                window.location.href = 'landing.html';
+            }
+        } else if (user && (window.location.pathname.includes('login.html') || window.location.pathname.includes('role-selection.html') || window.location.pathname.includes('landing.html'))) {
             // Redirect logged-in users to index.html
             window.location.href = 'index.html';
         }
