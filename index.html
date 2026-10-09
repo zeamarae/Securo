@@ -2987,6 +2987,7 @@
             /* Perf: removed backdrop-filter from tiny decorative element */
         }
 
+        /* (2026-07-13) Dark styled vault video thumb & badge; prev: raw video tag */
         .vault-preview {
             position: absolute;
             inset: 0;
@@ -2995,8 +2996,51 @@
             object-fit: cover;
         }
 
+        .vault-video-box {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            background: #17192a;
+            overflow: hidden;
+        }
+
+        .vault-video-box video::-webkit-media-controls,
+        .vault-video-box video::-webkit-media-controls-start-playback-button,
+        .vault-video-box video::-webkit-media-controls-enclosure {
+            display: none !important;
+            -webkit-appearance: none;
+            opacity: 0;
+        }
+
+        .vault-video-badge {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .vault-video-badge span {
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(15, 12, 30, 0.72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+        }
+
         .vault-tile.video .vault-preview {
-            filter: brightness(0.8);
+            filter: brightness(0.85);
         }
 
         .vault-tile.audio .tile-corner,
@@ -3503,7 +3547,29 @@
             box-shadow: 0 22px 60px rgba(0, 0, 0, 0.3);
         }
 
-        .camera-preview-shell video,
+        /* (2026-07-13) Dark styled video & empty shell; prev: gray player display */
+        .camera-preview-shell video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            background: #080b18;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .camera-preview-shell video.is-active-stream {
+            opacity: 1;
+        }
+
+        .camera-preview-shell video::-webkit-media-controls,
+        .camera-preview-shell video::-webkit-media-controls-start-playback-button,
+        .camera-preview-shell video::-webkit-media-controls-enclosure {
+            display: none !important;
+            -webkit-appearance: none;
+            opacity: 0;
+        }
+
         .camera-preview-shell canvas {
             width: 100%;
             height: 100%;
@@ -3598,6 +3664,7 @@
             box-shadow: 0 0 0 5px rgba(255, 68, 90, 0.18);
         }
 
+        /* (2026-07-13) Opaque camera standby background; prev: transparent layout */
         .camera-empty,
         .camera-error {
             position: absolute;
@@ -3610,6 +3677,9 @@
             padding: 24px;
             text-align: center;
             color: #fff;
+            background: radial-gradient(circle at 50% 40%, rgba(90, 31, 224, 0.15) 0%, transparent 65%),
+                        linear-gradient(180deg, #14172a 0%, #080b18 100%);
+            z-index: 2;
         }
 
         .camera-empty[hidden],
@@ -6020,7 +6090,8 @@
                     <div class="camera-stage">
                         <!-- Instagram style: modes removed, replaced with dynamic interaction -->
                         <div class="camera-preview-shell">
-                            <video id="cameraPreview" autoplay playsinline muted></video>
+                            <!-- (2026-07-13) Dark poster on camera preview; prev: bare video tag -->
+                            <video id="cameraPreview" autoplay playsinline muted poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect width='1' height='1' fill='%23080b18'/%3E%3C/svg%3E"></video>
                             <div class="camera-overlay-grid" aria-hidden="true"></div>
                             <div class="camera-status-pill" id="recordingStatus"
                                 style="display:none; background:rgba(209, 31, 52, 0.9);">
@@ -6373,20 +6444,46 @@
             return inside;
         }
 
-        // (2026-07-13) Add Capacitor permission & student push notifs; was banner only
+        // (2026-07-13) Request and sync native location status; prev: passive check
         async function ensureCapacitorLocationPermission() {
             try {
-                if (window.Capacitor) {
+                if (window.Capacitor?.isNativePlatform?.()) {
                     const Geolocation = window.Capacitor.Plugins?.Geolocation || window.Capacitor?.Geolocation;
                     if (Geolocation && typeof Geolocation.requestPermissions === 'function') {
-                        const perm = await Geolocation.requestPermissions();
-                        return perm?.location === 'granted';
+                        const perm = await Geolocation.requestPermissions().catch(() => null);
+                        const isOk = (perm?.location === 'granted' || perm?.coarseLocation === 'granted');
+                        if (isOk) {
+                            appState.locationPermissionDenied = false;
+                            startTracking();
+                        } else {
+                            appState.locationPermissionDenied = true;
+                        }
+                        updateTrackingStatusBanner();
+                        return isOk;
                     }
+                }
+                if (navigator.geolocation) {
+                    return await new Promise((resolve) => {
+                        navigator.geolocation.getCurrentPosition(
+                            () => {
+                                appState.locationPermissionDenied = false;
+                                startTracking();
+                                updateTrackingStatusBanner();
+                                resolve(true);
+                            },
+                            () => {
+                                appState.locationPermissionDenied = true;
+                                updateTrackingStatusBanner();
+                                resolve(false);
+                            },
+                            { timeout: 4000 }
+                        );
+                    });
                 }
             } catch (e) {
                 Logger.warn("Permissions", "Capacitor location permission error", e);
             }
-            return true;
+            return false;
         }
 
         // (2026-07-13) Add haptics & vibration for SOS alerts; was absent
@@ -6666,6 +6763,43 @@
                 });
                 mapResizeObserver.observe(mapContainer);
             }
+
+            // (2026-07-13) Repeatedly prompt location on map move; was silent bypass
+            let lastLocationPromptTs = 0;
+            const checkMapMovementLocation = async () => {
+                const now = Date.now();
+                if (now - lastLocationPromptTs < 2500) return; // Debounce rapid drag events
+                lastLocationPromptTs = now;
+
+                let isGranted = false;
+                try {
+                    if (window.Capacitor?.isNativePlatform?.()) {
+                        const CapGeo = window.Capacitor.Plugins?.Geolocation || window.Capacitor?.Geolocation;
+                        if (CapGeo && typeof CapGeo.checkPermissions === 'function') {
+                            const p = await CapGeo.checkPermissions().catch(() => null);
+                            isGranted = (p?.location === 'granted' || p?.coarseLocation === 'granted');
+                        }
+                    } else if (navigator.permissions && navigator.permissions.query) {
+                        const p = await navigator.permissions.query({ name: 'geolocation' }).catch(() => null);
+                        isGranted = (p?.state === 'granted');
+                    }
+                } catch (e) {}
+
+                if (!isGranted) {
+                    appState.isLocationTrackingActive = false;
+                    appState.locationPermissionDenied = true;
+                    updateTrackingStatusBanner();
+                    const promptResult = await ensureCapacitorLocationPermission();
+                    if (!promptResult) {
+                        showStatus("Turn On Location", "Location access is turned off. Please enable location permissions in settings.", "error");
+                    }
+                } else if (!appState.trackingId) {
+                    startTracking();
+                }
+            };
+
+            map.on('movestart', checkMapMovementLocation);
+            map.on('dragstart', checkMapMovementLocation);
 
             document.getElementById('map-zoom-in').onclick = () => map.zoomIn(0.5);
             document.getElementById('map-zoom-out').onclick = () => map.zoomOut(0.5);
@@ -7300,10 +7434,14 @@
                 const icon = item.kind === "image" ? "image" : item.kind === "video" ? "videocam" : item.kind === "audio" ? "mic" : "description";
                 const selectionKey = getVaultSelectionKey(item);
                 const isSelected = selectedVaultKeys.has(selectionKey);
+                // (2026-07-13) Vault video thumbnail with play badge; prev: raw video tag
                 const preview = item.kind === "image"
                     ? `<img class="vault-preview" src="${item.src}" alt="${item.label || "Vault image"}">`
                     : item.kind === "video"
-                        ? `<video class="vault-preview" src="${item.src}" muted playsinline></video>`
+                        ? `<div class="vault-video-box">
+                               <video class="vault-preview" src="${item.src ? (item.src.includes('#t=') ? item.src : item.src + '#t=0.001') : ''}" preload="metadata" muted playsinline poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect width='1' height='1' fill='%23191c2e'/%3E%3C/svg%3E"></video>
+                               <div class="vault-video-badge"><span class="material-symbols-outlined">play_arrow</span></div>
+                           </div>`
                         : "";
                 const centerIcon = item.kind === "audio"
                     ? '<div style="display:flex;justify-content:center;padding-bottom:16px;"><span class="material-symbols-outlined" style="font-size:46px;">graphic_eq</span></div>'
@@ -9888,6 +10026,7 @@
             mediaChunks = [];
         }
 
+        // (2026-07-13) Toggle is-active-stream class on video; prev: raw stream reset
         function stopEmergencyCamera() {
             stopRecorderIfNeeded();
             if (emergencyStream) {
@@ -9895,6 +10034,7 @@
                 emergencyStream = null;
             }
             cameraPreview.srcObject = null;
+            cameraPreview.classList.remove('is-active-stream');
         }
 
         async function startEmergencyCamera() {
@@ -9929,6 +10069,7 @@
                         });
 
                         await cameraPreview.play().catch(e => console.warn("Auto-play blocked:", e));
+                        cameraPreview.classList.add('is-active-stream');
                         cameraError.hidden = true;
                         cameraEmpty.hidden = true;
                         return;

@@ -319,6 +319,11 @@
             .permission-requirement-notice { font-size: 0.72rem; }
         }
 
+        /* (2026-07-13) Hide standalone status badges; was visible badge */
+        #cameraStatus, #locationStatus {
+            display: none !important;
+        }
+
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -865,9 +870,12 @@
             }
         }
 
-        // (2026-07-13) Request native camera permissions; prev: web mediaDevices only
+        // (2026-07-13) Button-integrated camera status feedback; prev: status badge
         async function requestCamera() {
             grantCameraBtn.disabled = true;
+            grantCameraBtn.style.background = '#5a1fe0';
+            grantCameraBtn.style.color = '#fff';
+            grantCameraBtn.style.borderColor = 'transparent';
             grantCameraBtn.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span><span>Requesting...</span>';
 
             try {
@@ -881,7 +889,11 @@
 
                 cameraGranted = true;
                 localStorage.setItem('securo_camera_granted', 'true');
-                showStatus(cameraStatus, 'Camera access granted!', 'granted');
+                grantCameraBtn.disabled = true;
+                grantCameraBtn.style.background = '#0f9b67';
+                grantCameraBtn.style.color = '#fff';
+                grantCameraBtn.style.borderColor = '#0f9b67';
+                grantCameraBtn.innerHTML = '<span class="material-symbols-outlined">check_circle</span><span>Camera Access Granted (Success)</span>';
                 
                 setTimeout(() => {
                     showLocationCard();
@@ -890,16 +902,21 @@
                 cameraGranted = false;
                 localStorage.setItem('securo_camera_granted', 'false');
                 localStorage.removeItem('securo_permissions_completed');
-                showStatus(cameraStatus, 'Camera access denied. Camera is mandatory.', 'denied');
                 grantCameraBtn.disabled = false;
-                grantCameraBtn.innerHTML = '<span class="material-symbols-outlined">photo_camera</span><span>Try Again</span>';
+                grantCameraBtn.style.background = '#d11f34';
+                grantCameraBtn.style.color = '#fff';
+                grantCameraBtn.style.borderColor = '#d11f34';
+                grantCameraBtn.innerHTML = '<span class="material-symbols-outlined">cancel</span><span>Failed - Tap to Retry</span>';
                 showDeniedModal('camera');
             }
         }
 
-        // (2026-07-13) Request native and web location permissions; prev: web only
+        // (2026-07-13) Button-integrated location status feedback; prev: status badge
         async function requestLocation() {
             grantLocationBtn.disabled = true;
+            grantLocationBtn.style.background = '#5a1fe0';
+            grantLocationBtn.style.color = '#fff';
+            grantLocationBtn.style.borderColor = 'transparent';
             grantLocationBtn.innerHTML = '<span class="material-symbols-outlined">hourglass_empty</span><span>Requesting...</span>';
 
             try {
@@ -925,7 +942,11 @@
 
                 locationGranted = true;
                 localStorage.setItem('securo_location_granted', 'true');
-                showStatus(locationStatus, 'Location access granted!', 'granted');
+                grantLocationBtn.disabled = true;
+                grantLocationBtn.style.background = '#0f9b67';
+                grantLocationBtn.style.color = '#fff';
+                grantLocationBtn.style.borderColor = '#0f9b67';
+                grantLocationBtn.innerHTML = '<span class="material-symbols-outlined">check_circle</span><span>Location Access Granted (Success)</span>';
 
                 setTimeout(() => {
                     if (cameraGranted && locationGranted) {
@@ -933,14 +954,16 @@
                     } else {
                         showCompleteCard();
                     }
-                }, 600);
+                }, 800);
             } catch (error) {
                 locationGranted = false;
                 localStorage.setItem('securo_location_granted', 'false');
                 localStorage.removeItem('securo_permissions_completed');
-                showStatus(locationStatus, 'Location access denied. Location is mandatory.', 'denied');
                 grantLocationBtn.disabled = false;
-                grantLocationBtn.innerHTML = '<span class="material-symbols-outlined">location_on</span><span>Try Again</span>';
+                grantLocationBtn.style.background = '#d11f34';
+                grantLocationBtn.style.color = '#fff';
+                grantLocationBtn.style.borderColor = '#d11f34';
+                grantLocationBtn.innerHTML = '<span class="material-symbols-outlined">cancel</span><span>Failed - Tap to Retry</span>';
                 showDeniedModal('location');
             }
         }
