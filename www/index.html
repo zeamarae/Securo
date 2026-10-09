@@ -5405,7 +5405,7 @@
                                 <span>No parents watching over you yet</span>
                             </div>
                         </div>
-                        <button type="button" class="invite-parent-bar-btn" id="inviteParentBarBtn" title="Invite a parent or guardian">
+                        <button type="button" class="invite-parent-bar-btn" id="inviteParentBarBtn" title="Invite a parent or guardian" style="display: none;">
                             <span class="material-symbols-outlined">person_add</span>
                             <span>Invite Parent</span>
                         </button>
@@ -9145,9 +9145,13 @@
                         studentId: appState.user.studentId,
                         name: appState.user.name
                     }).catch((syncError) => console.warn("Guardian link profile sync failed:", syncError));
+                    // (2026-07-13) Sync and render links on profile load; prev: count only
                     getLinksForStudent(appState.user.studentId, user.uid)
                         .then((links) => {
-                            appState.acceptedGuardianCount = links.filter((link) => link.status === "accepted").length;
+                            const validLinks = Array.isArray(links) ? links : [];
+                            appState.acceptedGuardianCount = validLinks.filter((link) => link.status === "accepted").length;
+                            appState.guardianLinkReminders = validLinks;
+                            renderGuardianWatchers(validLinks);
                             refreshLocationTracking();
                         })
                         .catch((linkError) => {
@@ -9224,7 +9228,7 @@
                         syncNotificationViews();
                         // (2026-07-13) Show accepted guardians on map chip; was not displayed
                         renderGuardianWatchers(appState.guardianLinkReminders);
-                    });
+                    }, appState.user.studentId);
                 }
             } catch (error) {
                 Logger.error("Auth", "Auth state processing error", error);

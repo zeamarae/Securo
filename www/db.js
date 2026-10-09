@@ -21,6 +21,7 @@ import {
     orderBy,
     limit,
     onSnapshot,
+    or,
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { Logger } from './utils.js';
@@ -1781,17 +1782,20 @@ export const getLinksForStudent = async (studentId, studentUid) => {
  * @param {string} studentUid
  * @param {function} callback
  */
-// (2026-07-13) Resolve live and local guardian profile in links; was Firestore only
-export const subscribeToStudentLinks = (studentUid, callback) => {
-    if (!studentUid) {
+// (2026-07-13) Query links by studentUid or studentId via or; was uid only
+export const subscribeToStudentLinks = (studentUid, callback, studentId = null) => {
+    if (!studentUid && !studentId) {
         callback([]);
         return () => {};
     }
 
-    const q = query(
-        collection(db, "guardian_links"),
-        where("studentUid", "==", studentUid)
-    );
+    const clauses = [];
+    if (studentUid) clauses.push(where("studentUid", "==", studentUid));
+    if (studentId && studentId !== studentUid) clauses.push(where("studentId", "==", studentId));
+
+    const q = clauses.length > 1
+        ? query(collection(db, "guardian_links"), or(...clauses))
+        : query(collection(db, "guardian_links"), clauses[0]);
 
     let guardianUnsubs = new Map();
     let latestLinks = [];
