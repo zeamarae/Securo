@@ -4,7 +4,7 @@
   "main": "auth.js",
   "scripts": {
     "dev": "npx serve -p 5508 .",
-    "build": "node -e \"const fs=require('fs'); if(!fs.existsSync('www')) fs.mkdirSync('www'); fs.readdirSync('.').forEach(f=>{if(['.html','.js','.css','.png','.jpg','.svg'].some(ext=>f.endsWith(ext))) fs.copyFileSync(f, 'www/'+f);}); console.log('Assets copied to www');\"",
+    "build": "node -e \"const fs=require('fs'); if(!fs.existsSync('www')) fs.mkdirSync('www'); fs.readdirSync('www').forEach(f=>{if(f.endsWith('.apk')||f.endsWith('.zip')) fs.unlinkSync('www/'+f);}); fs.readdirSync('.').forEach(f=>{if(['.html','.js','.css','.png','.jpg','.svg'].some(ext=>f.endsWith(ext))) fs.copyFileSync(f, 'www/'+f);}); console.log('Assets copied to www');\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
