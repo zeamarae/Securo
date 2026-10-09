@@ -1753,32 +1753,109 @@
             font-size: 15px;
         }
 
+        /* (2026-07-13) Fix parent invite modal styles; prev: unstyled white text */
         .invite-parent-card {
             max-width: 400px;
             width: 90%;
+            padding: 24px 20px !important;
         }
 
         .invite-link-box {
             background: #f8f6fc;
-            border: 1px dashed rgba(90, 31, 224, 0.35);
-            border-radius: 12px;
-            padding: 10px 12px;
-            font-size: 0.78rem;
+            border: 1.5px dashed rgba(90, 31, 224, 0.35);
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 0.8rem;
             color: var(--primary);
             font-weight: 600;
             word-break: break-all;
             user-select: all;
             margin-bottom: 16px;
-            text-align: left;
+            text-align: center;
             max-height: 80px;
             overflow-y: auto;
+            line-height: 1.4;
         }
 
         .invite-modal-actions {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             width: 100%;
+        }
+
+        .invite-modal-actions .invite-btn-primary {
+            background: linear-gradient(135deg, #682ef1, #4e14e6);
+            color: #ffffff !important;
+            height: 48px;
+            border-radius: 14px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border: none;
+            box-shadow: 0 8px 20px rgba(90, 31, 224, 0.28);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .invite-modal-actions .invite-btn-primary:active {
+            transform: scale(0.97);
+        }
+
+        .invite-modal-actions .invite-btn-share {
+            background: rgba(90, 31, 224, 0.08);
+            color: var(--primary) !important;
+            border: 1.5px solid rgba(90, 31, 224, 0.22);
+            height: 46px;
+            border-radius: 14px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            box-shadow: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.18s ease, background 0.18s ease;
+        }
+
+        .invite-modal-actions .invite-btn-share:hover {
+            background: rgba(90, 31, 224, 0.14);
+        }
+
+        .invite-modal-actions .invite-btn-share:active {
+            transform: scale(0.97);
+        }
+
+        .invite-modal-actions .invite-btn-done {
+            background: #f1f0f7;
+            color: #475569 !important;
+            border: none;
+            height: 42px;
+            border-radius: 14px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            box-shadow: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.18s ease, color 0.18s ease;
+        }
+
+        .invite-modal-actions .invite-btn-done:hover {
+            background: #e6e3f0;
+            color: #1e293b !important;
+        }
+
+        .invite-modal-actions .invite-btn-done:active {
+            transform: scale(0.97);
         }
 
         .parent-selector-chip {
@@ -9227,14 +9304,30 @@
             });
         }
 
-        // (2026-07-13) Parent invite modal logic and link sharing; was none
+        // (2026-07-13) Fix parent invite link studentId lookup; prev: missing ref
         function openInviteParentModal() {
             const modal = document.getElementById("inviteParentModal");
             const urlText = document.getElementById("guardianInviteUrlText");
             const shareBtn = document.getElementById("shareGuardianInviteBtn");
             const copyBtnLabel = document.getElementById("copyInviteBtnLabel");
             if (!modal) return;
-            const studentId = appState.profile?.studentId || (appState.user?.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1]) || "";
+            const studentId = appState.user?.studentId ||
+                appState.profile?.studentId ||
+                (appState.user?.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1]) ||
+                (() => {
+                    const text = document.getElementById("dropdownId")?.textContent || "";
+                    const match = text.match(/ID:\s*(\d{7})/);
+                    return match ? match[1] : "";
+                })() ||
+                (() => {
+                    try {
+                        const raw = localStorage.getItem("securo_user_directory");
+                        if (!raw) return "";
+                        const parsed = JSON.parse(raw);
+                        const uid = (typeof auth !== "undefined" && auth?.currentUser?.uid) || appState.user?.uid;
+                        return uid && parsed[uid]?.studentId ? parsed[uid].studentId : "";
+                    } catch (_) { return ""; }
+                })() || "";
             const isGitHub = window.location.hostname.includes('github.io');
             let base = "https://zeamarae.github.io/Securo/guardian.html";
             if (!isGitHub && window.location.origin && !window.location.protocol.startsWith('file') && !window.location.protocol.startsWith('capacitor')) {
@@ -9260,21 +9353,30 @@
             const copyBtn = document.getElementById("copyGuardianInviteBtn");
             if (copyBtn) {
                 copyBtn.onclick = () => {
-                    navigator.clipboard.writeText(guardianUrl).then(() => {
+                    const notifyCopied = () => {
                         if (copyBtnLabel) copyBtnLabel.textContent = "Copied to Clipboard!";
                         showStatus("Link Copied", "Guardian invite link copied to clipboard. Send it to your parents!");
                         setTimeout(() => { if (copyBtnLabel) copyBtnLabel.textContent = "Copy Invite Link"; }, 2500);
-                    }).catch(() => {
+                    };
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(guardianUrl).then(notifyCopied).catch(() => {
+                            const ta = document.createElement("textarea");
+                            ta.value = guardianUrl;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand("copy");
+                            document.body.removeChild(ta);
+                            notifyCopied();
+                        });
+                    } else {
                         const ta = document.createElement("textarea");
                         ta.value = guardianUrl;
                         document.body.appendChild(ta);
                         ta.select();
                         document.execCommand("copy");
                         document.body.removeChild(ta);
-                        if (copyBtnLabel) copyBtnLabel.textContent = "Copied to Clipboard!";
-                        showStatus("Link Copied", "Guardian invite link copied to clipboard. Send it to your parents!");
-                        setTimeout(() => { if (copyBtnLabel) copyBtnLabel.textContent = "Copy Invite Link"; }, 2500);
-                    });
+                        notifyCopied();
+                    }
                 };
             }
             const closeBtn = document.getElementById("closeInviteParentBtn");
@@ -11210,7 +11312,7 @@
             }
         }, false);
     </script>
-    <!-- (2026-07-13) Modal for inviting parents with copy & share; was none -->
+    <!-- (2026-07-13) Fix parent invite modal UI styling; prev: clashing status-btn -->
     <div class="status-modal" id="inviteParentModal">
         <div class="status-card invite-parent-card">
             <div class="status-icon-wrap" style="background: rgba(90, 31, 224, 0.12); color: var(--primary);">
@@ -11224,15 +11326,15 @@
                 <span id="guardianInviteUrlText" class="invite-url-text">Generating link...</span>
             </div>
             <div class="invite-modal-actions">
-                <button type="button" class="status-btn" id="copyGuardianInviteBtn">
-                    <span class="material-symbols-outlined" style="font-size: 18px;">content_copy</span>
+                <button type="button" class="invite-btn-primary" id="copyGuardianInviteBtn">
+                    <span class="material-symbols-outlined" style="font-size: 19px;">content_copy</span>
                     <span id="copyInviteBtnLabel">Copy Invite Link</span>
                 </button>
-                <button type="button" class="status-btn" id="shareGuardianInviteBtn" style="display: none; background: linear-gradient(135deg, #0f9b67, #0a7a52); box-shadow: 0 8px 18px rgba(15, 155, 103, 0.25);">
-                    <span class="material-symbols-outlined" style="font-size: 18px;">share</span>
+                <button type="button" class="invite-btn-share" id="shareGuardianInviteBtn" style="display: none;">
+                    <span class="material-symbols-outlined" style="font-size: 19px;">share</span>
                     <span>Share via App</span>
                 </button>
-                <button type="button" class="status-btn secondary" id="closeInviteParentBtn">Done</button>
+                <button type="button" class="invite-btn-done" id="closeInviteParentBtn">Done</button>
             </div>
         </div>
     </div>
