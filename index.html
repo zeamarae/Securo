@@ -1720,6 +1720,67 @@
             display: none;
         }
 
+        /* (2026-07-13) Add invite parent button & modal styles; was none */
+        .invite-parent-bar-btn {
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: #ffffff;
+            border: none;
+            font-size: 0.74rem;
+            font-weight: 700;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(90, 31, 224, 0.25);
+            transition: transform 0.15s ease, opacity 0.15s ease;
+            flex-shrink: 0;
+            text-decoration: none;
+        }
+
+        .invite-parent-bar-btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.95;
+        }
+
+        .invite-parent-bar-btn:active {
+            transform: translateY(0);
+        }
+
+        .invite-parent-bar-btn .material-symbols-outlined {
+            font-size: 15px;
+        }
+
+        .invite-parent-card {
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .invite-link-box {
+            background: #f8f6fc;
+            border: 1px dashed rgba(90, 31, 224, 0.35);
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 0.78rem;
+            color: var(--primary);
+            font-weight: 600;
+            word-break: break-all;
+            user-select: all;
+            margin-bottom: 16px;
+            text-align: left;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .invite-modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
         .parent-selector-chip {
             padding: 4px 10px;
             border-radius: 10px;
@@ -5259,14 +5320,18 @@
                         </div>
                     </header>
 
-                    <!-- (2026-07-13) Show parents watching student under header; was none -->
+                    <!-- (2026-07-13) Add parent invite link to header bar; was chip only -->
                     <div class="student-parent-bar" id="studentParentBar">
-                        <div id="studentParentChips" style="display:flex; gap:12px; overflow-x:auto; flex:1; align-items:center;">
-                            <div class="parent-selector-chip" style="background: rgba(255, 255, 255, 0.85); border: 1px dashed rgba(90, 31, 224, 0.25); color: #64748b; font-weight: 500;">
+                        <div id="studentParentChips" style="display:flex; gap:8px; overflow-x:auto; flex:1; align-items:center;">
+                            <div class="parent-selector-chip" id="noParentsChip" style="background: rgba(255, 255, 255, 0.85); border: 1px dashed rgba(90, 31, 224, 0.25); color: #64748b; font-weight: 500; cursor: pointer;" title="Tap to invite parents">
                                 <span class="material-symbols-outlined" style="font-size: 18px; color: var(--primary);">family_restroom</span>
                                 <span>No parents watching over you yet</span>
                             </div>
                         </div>
+                        <button type="button" class="invite-parent-bar-btn" id="inviteParentBarBtn" title="Invite a parent or guardian">
+                            <span class="material-symbols-outlined">person_add</span>
+                            <span>Invite Parent</span>
+                        </button>
                     </div>
 
                     <main class="screen-content" id="screenContent">
@@ -9081,11 +9146,13 @@
             const accepted = (links || []).filter(l => l.status === "accepted");
             if (!accepted.length) {
                 container.innerHTML = `
-                    <div class="parent-selector-chip" style="background: rgba(255, 255, 255, 0.85); border: 1px dashed rgba(90, 31, 224, 0.25); color: #64748b; font-weight: 500;">
+                    <div class="parent-selector-chip" id="noParentsChip" style="background: rgba(255, 255, 255, 0.85); border: 1px dashed rgba(90, 31, 224, 0.25); color: #64748b; font-weight: 500; cursor: pointer;" title="Tap to invite parents">
                         <span class="material-symbols-outlined" style="font-size: 18px; color: var(--primary);">family_restroom</span>
                         <span>No parents watching over you yet</span>
                     </div>
                 `;
+                const noChip = document.getElementById("noParentsChip");
+                if (noChip) noChip.onclick = () => openInviteParentModal();
                 return;
             }
             const localUsers = (() => {
@@ -9158,6 +9225,75 @@
 
                 container.appendChild(chip);
             });
+        }
+
+        // (2026-07-13) Parent invite modal logic and link sharing; was none
+        function openInviteParentModal() {
+            const modal = document.getElementById("inviteParentModal");
+            const urlText = document.getElementById("guardianInviteUrlText");
+            const shareBtn = document.getElementById("shareGuardianInviteBtn");
+            const copyBtnLabel = document.getElementById("copyInviteBtnLabel");
+            if (!modal) return;
+            const studentId = appState.profile?.studentId || (appState.user?.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1]) || "";
+            const isGitHub = window.location.hostname.includes('github.io');
+            let base = "https://zeamarae.github.io/Securo/guardian.html";
+            if (!isGitHub && window.location.origin && !window.location.protocol.startsWith('file') && !window.location.protocol.startsWith('capacitor')) {
+                base = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/guardian.html');
+            }
+            const guardianUrl = base + (studentId ? `?ref=${encodeURIComponent(studentId)}` : "");
+            if (urlText) urlText.textContent = guardianUrl;
+            if (copyBtnLabel) copyBtnLabel.textContent = "Copy Invite Link";
+            if (shareBtn) {
+                if (navigator.share) {
+                    shareBtn.style.display = "flex";
+                    shareBtn.onclick = () => {
+                        navigator.share({
+                            title: "Securo Guardian Registration",
+                            text: "Register as my guardian on Securo to monitor live safety and emergency alerts.",
+                            url: guardianUrl
+                        }).catch(() => {});
+                    };
+                } else {
+                    shareBtn.style.display = "none";
+                }
+            }
+            const copyBtn = document.getElementById("copyGuardianInviteBtn");
+            if (copyBtn) {
+                copyBtn.onclick = () => {
+                    navigator.clipboard.writeText(guardianUrl).then(() => {
+                        if (copyBtnLabel) copyBtnLabel.textContent = "Copied to Clipboard!";
+                        showStatus("Link Copied", "Guardian invite link copied to clipboard. Send it to your parents!");
+                        setTimeout(() => { if (copyBtnLabel) copyBtnLabel.textContent = "Copy Invite Link"; }, 2500);
+                    }).catch(() => {
+                        const ta = document.createElement("textarea");
+                        ta.value = guardianUrl;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(ta);
+                        if (copyBtnLabel) copyBtnLabel.textContent = "Copied to Clipboard!";
+                        showStatus("Link Copied", "Guardian invite link copied to clipboard. Send it to your parents!");
+                        setTimeout(() => { if (copyBtnLabel) copyBtnLabel.textContent = "Copy Invite Link"; }, 2500);
+                    });
+                };
+            }
+            const closeBtn = document.getElementById("closeInviteParentBtn");
+            if (closeBtn) {
+                closeBtn.onclick = () => modal.classList.remove("active");
+            }
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.classList.remove("active");
+            };
+            modal.classList.add("active");
+        }
+
+        const inviteParentBarBtn = document.getElementById("inviteParentBarBtn");
+        if (inviteParentBarBtn) {
+            inviteParentBarBtn.addEventListener("click", () => openInviteParentModal());
+        }
+        const noParentsChipInit = document.getElementById("noParentsChip");
+        if (noParentsChipInit) {
+            noParentsChipInit.addEventListener("click", () => openInviteParentModal());
         }
 
         // Guardian Consent Notification Logic
@@ -11074,6 +11210,33 @@
             }
         }, false);
     </script>
+    <!-- (2026-07-13) Modal for inviting parents with copy & share; was none -->
+    <div class="status-modal" id="inviteParentModal">
+        <div class="status-card invite-parent-card">
+            <div class="status-icon-wrap" style="background: rgba(90, 31, 224, 0.12); color: var(--primary);">
+                <span class="material-symbols-outlined">family_restroom</span>
+            </div>
+            <h3 class="status-title" style="font-size: 1.25rem;">Invite Parent or Guardian</h3>
+            <p class="status-msg" style="font-size: 0.85rem; margin-bottom: 14px;">
+                Share your unique link with your parents so they can monitor your safety and live SOS alerts.
+            </p>
+            <div class="invite-link-box" id="inviteLinkBox">
+                <span id="guardianInviteUrlText" class="invite-url-text">Generating link...</span>
+            </div>
+            <div class="invite-modal-actions">
+                <button type="button" class="status-btn" id="copyGuardianInviteBtn">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">content_copy</span>
+                    <span id="copyInviteBtnLabel">Copy Invite Link</span>
+                </button>
+                <button type="button" class="status-btn" id="shareGuardianInviteBtn" style="display: none; background: linear-gradient(135deg, #0f9b67, #0a7a52); box-shadow: 0 8px 18px rgba(15, 155, 103, 0.25);">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">share</span>
+                    <span>Share via App</span>
+                </button>
+                <button type="button" class="status-btn secondary" id="closeInviteParentBtn">Done</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Status/Success Modal (Date: 2026-05-01) -->
     <div class="status-modal" id="statusModal">
         <div class="status-card">
