@@ -316,7 +316,8 @@ export const checkAuth = (redirectIfUnauth = true) => {
             if (!window.location.pathname.includes('login.html')) {
                 window.location.href = 'login.html';
             }
-        } else if (user && (window.location.pathname.includes('login.html') || window.location.pathname.includes('role-selection.html') || window.location.pathname.includes('landing.html'))) {
+        // (2026-07-13) Allow landing on auth; was redirecting user to index.html
+        } else if (user && (window.location.pathname.includes('login.html') || window.location.pathname.includes('role-selection.html'))) {
             // Redirect logged-in users to index.html
             window.location.href = 'index.html';
         }

@@ -11,6 +11,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&display=swap" rel="stylesheet">
     <script src="router.js"></script>
+    <!-- (2026-07-13) Redirect desktop to landing page; was stuck on onboarding -->
+    <script>
+        (() => {
+            const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
+            const isDesktop = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+            if (isDesktop) {
+                sessionStorage.setItem('securo_allow_landing', '1');
+                window.location.replace('landing.html');
+            }
+        })();
+    </script>
 
     <style>
         :root {

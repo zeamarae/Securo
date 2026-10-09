@@ -29,23 +29,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="preloader.js"></script>
 
-    <!-- (2026-07-13) Desktop root redirection to landing; was no auto-redirect -->
+    <!-- (2026-07-13) Redirect desktop root to landing; was delayed/blocked -->
     <script>
         (() => {
-            const isTargetHost = window.location.host === '127.0.0.1:5508' ||
-                                 window.location.host === 'localhost:5508' ||
-                                 window.location.hostname === 'securo.cebutech.digital';
-            const isRootUrl = (window.location.pathname === '/' || window.location.pathname === '/index.html') &&
+            const isTargetHost = window.location.hostname === '127.0.0.1' ||
+                                 window.location.hostname === 'localhost' ||
+                                 window.location.hostname === 'securo.cebutech.digital' ||
+                                 window.location.host === '127.0.0.1:5508' ||
+                                 window.location.host === 'localhost:5508';
+            const pathname = window.location.pathname;
+            const isRootUrl = (pathname === '/' || pathname === '/index.html' || pathname.endsWith('/index.html') || !pathname) &&
                               !window.location.search &&
                               (!window.location.hash || window.location.hash === '#' || window.location.hash === '');
             const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
-            const isDesktop = !isNativeApk && window.innerWidth >= 1024 && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isDesktop = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
             if (isTargetHost && isRootUrl && isDesktop) {
-                setTimeout(() => {
-                    sessionStorage.setItem('securo_allow_landing', '1');
-                    window.location.replace('landing.html');
-                }, 2800);
+                window.__securoDesktopPending = true;
+                sessionStorage.setItem('securo_allow_landing', '1');
+                window.location.replace('landing.html');
             }
         })();
     </script>
@@ -9188,6 +9190,10 @@
 
         // (2026-07-13) Route unauth users to login page; prev: landing or onboarding
         onAuthStateChanged(auth, async (user) => {
+            // (2026-07-13) Skip auth redirect if desktop landing pending; was unchecked
+            if (window.__securoDesktopPending) {
+                return;
+            }
             if (!user) {
                 window.location.replace("login.html");
                 return;
@@ -9214,7 +9220,13 @@
                 return;
             }
 
-            // (2026-07-13) Block student app access if permissions missing; was allow entry
+            // (2026-07-13) Skip onboarding if desktop detected; was redirecting
+            const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
+            const isDesktopDevice = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+            if (window.__securoDesktopPending || isDesktopDevice) {
+                return;
+            }
+
             const camAllowed = localStorage.getItem('securo_camera_granted') === 'true';
             const locAllowed = localStorage.getItem('securo_location_granted') === 'true';
             if (!camAllowed || !locAllowed) {
