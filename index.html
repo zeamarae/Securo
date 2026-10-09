@@ -8877,7 +8877,7 @@
             }, { passive: true });
         }
 
-        // (2026-07-13) Route mobile view/APK to index, PC to landing; was PC only
+        // (2026-07-13) Route unauth mobile to registration, PC to landing; was map view
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 const isApk = Boolean(
@@ -8893,12 +8893,8 @@
                 }
                 if (sessionStorage.getItem('securo_just_registered') === '1' && fsOnboardingScreen) {
                     fsOnboardingScreen.classList.add("active");
-                } else if (appView) {
-                    appView.classList.add("active");
-                    if (!appState.initialViewDone && typeof setActiveView === 'function') {
-                        setActiveView("map");
-                        appState.initialViewDone = true;
-                    }
+                } else {
+                    window.location.replace("login.html");
                 }
                 return;
             }

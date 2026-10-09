@@ -1086,6 +1086,12 @@
         loginTab.addEventListener('click', () => setMode('login'));
         signupTab.addEventListener('click', () => setMode('signup'));
 
+        // (2026-07-13) Auto-select signup tab on request; was login tab only
+        const authUrlParams = new URLSearchParams(window.location.search);
+        if (authUrlParams.get('mode') === 'register' || window.location.hash === '#register') {
+            setMode('signup');
+        }
+
         // Handle Forgot Password (Date: 2026-05-02)
         document.getElementById('forgotPassword').addEventListener('click', async (e) => {
             e.preventDefault();
