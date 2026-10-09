@@ -15,25 +15,36 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
+        /* (2026-09-30) Dark navy command center theme; was light purple/white */
         :root {
-            --bg: #f8fafc;
-            --surface: rgba(255,255,255,0.96);
-            --surface-strong: rgba(255,255,255,0.98);
-            --ink: #181428;
-            --muted: #6f6a86;
-            --primary: #5a1fe0;
-            --primary-strong: #4311c5;
-            --primary-soft: #f1ebff;
-            --cyan: #6cd7ff;
-            --green: #0f9b67;
-            --red: #d11f34;
-            --amber: #ffb649;
-            --line: rgba(226,232,240,0.9);
-            --shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
-            --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.06);
+            --bg: #0a0f1e;
+            --bg-2: #0d1526;
+            --surface: rgba(15, 23, 42, 0.92);
+            --surface-strong: rgba(20, 30, 55, 0.98);
+            --surface-card: #111827;
+            --surface-card-hover: #162032;
+            --ink: #e2e8f0;
+            --ink-strong: #f1f5f9;
+            --muted: #64748b;
+            --muted-light: #94a3b8;
+            --primary: #06b6d4;
+            --primary-strong: #0891b2;
+            --primary-soft: rgba(6,182,212,0.12);
+            --primary-glow: rgba(6,182,212,0.25);
+            --cyan: #22d3ee;
+            --green: #10b981;
+            --green-soft: rgba(16,185,129,0.12);
+            --red: #f43f5e;
+            --red-soft: rgba(244,63,94,0.12);
+            --amber: #f59e0b;
+            --amber-soft: rgba(245,158,11,0.12);
+            --line: rgba(255,255,255,0.07);
+            --line-strong: rgba(255,255,255,0.12);
+            --shadow: 0 18px 36px rgba(0, 0, 0, 0.5);
+            --shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.35);
             --radius-xl: 32px;
-            --radius-lg: 24px;
-            --radius-md: 18px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
         }
 
         /* (2026-07-13) Enable text highlighting in admin; was user-select none */
@@ -61,7 +72,7 @@
             min-height: 100vh;
             font-family: "Outfit", sans-serif;
             color: var(--ink);
-            background: #f8fafc;
+            background: var(--bg);
             line-height: 1.5;
             height: 100vh;
             overflow: hidden;
@@ -73,7 +84,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            background: #f8fafc;
+            background: var(--bg);
         }
 
         .glass-shell {
@@ -99,9 +110,10 @@
             justify-content: space-between;
             align-items: center;
             gap: 20px;
-            padding: 18px 22px;
-            border-bottom: 1px solid rgba(226,232,240,0.9);
-            background: rgba(255,255,255,0.96);
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(10, 15, 30, 0.95);
+            backdrop-filter: blur(20px);
             flex-shrink: 0;
             z-index: 100;
         }
@@ -116,12 +128,12 @@
             width: 56px;
             height: 56px;
             border-radius: 15px;
-            background: linear-gradient(135deg, #f3eeff, #e2d8ff);
+            background: linear-gradient(135deg, rgba(6,182,212,0.18), rgba(6,182,212,0.08));
             color: var(--primary);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 12px 24px rgba(90,31,224,0.12);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px rgba(6,182,212,0.2), 0 12px 24px rgba(6,182,212,0.1);
         }
 
         .brand-wrap h1 {
@@ -148,14 +160,14 @@
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            border: 1px solid rgba(255,255,255,0.75);
+            border: 1px solid rgba(6,182,212,0.4);
             background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-            color: #fff;
+            color: #0a0f1e;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            box-shadow: 0 10px 20px rgba(90,31,224,0.14);
+            box-shadow: 0 0 0 4px rgba(6,182,212,0.12), 0 8px 20px rgba(6,182,212,0.2);
             position: relative;
             cursor: pointer;
         }
@@ -165,10 +177,10 @@
             top: 58px;
             right: 0;
             width: 240px;
-            background: rgba(255,255,255,0.98);
-            border: 1px solid rgba(255,255,255,0.8);
+            background: #141e33;
+            border: 1px solid var(--line-strong);
             border-radius: 16px;
-            box-shadow: 0 24px 48px rgba(15, 23, 42, 0.16);
+            box-shadow: 0 24px 48px rgba(0,0,0,0.6);
             padding: 10px;
             display: none;
             flex-direction: column;
@@ -182,7 +194,7 @@
 
         .dropdown-divider {
             height: 1px;
-            background: rgba(15,23,42,0.06);
+            background: var(--line);
             margin: 6px 4px;
         }
 
@@ -203,7 +215,7 @@
         }
 
         .dropdown-item:hover {
-            background: rgba(90,31,224,0.08);
+            background: var(--primary-soft);
             color: var(--primary);
         }
 
@@ -212,7 +224,7 @@
         }
 
         .dropdown-item.logout:hover {
-            background: #fff1f2;
+            background: var(--red-soft);
             color: var(--red);
         }
 
@@ -236,22 +248,29 @@
         }
 
         .ghost-btn {
-            background: rgba(255,255,255,0.7);
+            background: rgba(255,255,255,0.06);
             color: var(--ink);
-            border: 1px solid rgba(255,255,255,0.7);
+            border: 1px solid var(--line-strong);
             box-shadow: var(--shadow-soft);
+        }
+
+        .ghost-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--primary);
+            color: var(--primary);
         }
 
         .primary-btn {
             background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-            color: #fff;
-            box-shadow: 0 16px 32px rgba(90,31,224,0.22);
+            color: #0a0f1e;
+            font-weight: 800;
+            box-shadow: 0 8px 24px var(--primary-glow);
         }
 
         .danger-btn {
-            background: linear-gradient(135deg, #eb3a53, #c71d35);
+            background: linear-gradient(135deg, #f43f5e, #e11d48);
             color: #fff;
-            box-shadow: 0 16px 32px rgba(209,31,52,0.22);
+            box-shadow: 0 8px 24px rgba(244,63,94,0.28);
         }
 
         /* (2026-07-13) Disabled & loader button styling; was unstyled when disabled */
@@ -276,18 +295,19 @@
             to { transform: rotate(360deg); }
         }
 
+        /* (2026-09-30) Signal chip dark theme; was white/glassy */
         .signal-chip {
-            min-height: 48px;
-            padding: 0 16px;
-            border-radius: 16px;
-            background: rgba(255,255,255,0.72);
-            border: 1px solid rgba(255,255,255,0.74);
-            box-shadow: var(--shadow-soft);
+            min-height: 40px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: rgba(16,185,129,0.1);
+            border: 1px solid rgba(16,185,129,0.2);
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             font-weight: 700;
-            color: var(--ink);
+            font-size: 0.82rem;
+            color: var(--green);
         }
 
         .signal-dot {
@@ -319,8 +339,8 @@
 
         /* (2026-07-13) Modernize admin sidebar styling; was flat tab buttons */
         .sidebar {
-            border-right: 1px solid rgba(226,232,240,0.85);
-            background: rgba(255,255,255,0.72);
+            border-right: 1px solid var(--line);
+            background: #0c1424;
             backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
@@ -332,12 +352,12 @@
         }
 
         .sidebar-label {
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             text-transform: uppercase;
-            letter-spacing: 0.16em;
+            letter-spacing: 0.18em;
             color: var(--muted);
             margin: 0 10px 12px;
-            font-weight: 700;
+            font-weight: 800;
         }
 
         .nav-stack {
@@ -364,7 +384,7 @@
         }
 
         .tab-btn:hover {
-            background: rgba(90,31,224,0.06);
+            background: var(--primary-soft);
             color: var(--primary);
             transform: translateX(3px);
         }
@@ -373,44 +393,45 @@
             width: 32px;
             height: 32px;
             border-radius: 10px;
-            background: rgba(90,31,224,0.08);
+            background: rgba(6,182,212,0.1);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            color: var(--primary);
+            color: var(--muted);
             transition: all 0.2s ease;
         }
 
         .tab-btn:hover .material-symbols-outlined {
             background: var(--primary);
-            color: white;
+            color: #0a0f1e;
         }
 
         .tab-btn.active {
-            background: #ffffff;
+            background: rgba(6,182,212,0.12);
             color: var(--primary);
-            border-color: rgba(90,31,224,0.14);
-            box-shadow: 0 4px 16px rgba(90,31,224,0.12), 0 1px 3px rgba(0,0,0,0.04);
+            border-color: rgba(6,182,212,0.25);
+            box-shadow: 0 0 0 1px rgba(6,182,212,0.1) inset;
         }
 
         .tab-btn.active .material-symbols-outlined {
             background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 10px rgba(90,31,224,0.3);
+            color: #0a0f1e;
+            box-shadow: 0 4px 10px var(--primary-glow);
         }
 
         .sidebar-note {
             margin-top: 20px;
             padding: 16px;
             border-radius: 16px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.74), rgba(244,240,255,0.64));
-            border: 1px solid rgba(255,255,255,0.68);
+            background: linear-gradient(180deg, rgba(6,182,212,0.08), rgba(6,182,212,0.04));
+            border: 1px solid rgba(6,182,212,0.15);
         }
 
         .sidebar-note strong {
             display: block;
             font-family: "Sora", sans-serif;
             margin-bottom: 6px;
+            color: var(--primary);
         }
 
         .sidebar-note p {
@@ -423,11 +444,11 @@
         .main-panel {
             padding: 18px 22px;
             overflow-y: auto;
-            background: rgba(255,255,255,0.2);
+            background: transparent;
             display: flex;
             flex-direction: column;
             gap: 18px;
-            height: 100%; 
+            height: 100%;
             min-height: 0;
         }
 
@@ -437,16 +458,35 @@
             gap: 16px;
         }
 
+        /* (2026-09-30) Stats KPI row — 4 equal cards; was 4-col grid */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        /* (2026-09-30) Two-column split: left wide charts, right stacked panels */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+            grid-template-rows: auto auto;
             gap: 16px;
         }
 
-        .chart-grid {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-            gap: 18px;
+        /* (2026-09-30) Left column spans both rows; right panels stack naturally */
+        .chart-grid .chart-card:first-child {
+            grid-row: 1 / 2;
+        }
+        .chart-grid .chart-card:nth-child(2) {
+            grid-row: 2 / 3;
+        }
+        .chart-grid .chart-card:nth-child(3) {
+            grid-column: 2;
+            grid-row: 1 / 2;
+        }
+        .chart-grid .chart-card:nth-child(4) {
+            grid-column: 2;
+            grid-row: 2 / 3;
         }
 
         .chart-card {
@@ -558,16 +598,17 @@
 
         .bar-track {
             width: 100%;
-            height: 12px;
+            height: 8px;
             border-radius: 999px;
-            background: rgba(90,31,224,0.08);
+            background: rgba(6,182,212,0.08);
             overflow: hidden;
         }
 
         .bar-fill {
             height: 100%;
             border-radius: inherit;
-            background: linear-gradient(135deg, var(--primary), #7c5cff);
+            background: linear-gradient(90deg, var(--primary), #22d3ee);
+            box-shadow: 0 0 8px rgba(6,182,212,0.4);
         }
 
         /* (2026-07-13) Center accounts head & flex first child; was flex-start */
@@ -607,9 +648,9 @@
             grid-template-columns: minmax(0, 1fr);
             gap: 12px;
             background:
-                radial-gradient(circle at top right, rgba(108, 215, 255, 0.24), transparent 28%),
-                radial-gradient(circle at bottom left, rgba(90,31,224,0.16), transparent 30%),
-                linear-gradient(180deg, rgba(255,255,255,0.92), rgba(247,243,255,0.74));
+                radial-gradient(ellipse at top right, rgba(6,182,212,0.18) 0%, transparent 55%),
+                radial-gradient(ellipse at bottom left, rgba(6,182,212,0.08) 0%, transparent 40%),
+                linear-gradient(160deg, #111827, #0c1424);
         }
 
         .overview-copy h2 {
@@ -644,8 +685,8 @@
             min-height: 40px;
             padding: 0 14px;
             border-radius: 999px;
-            background: rgba(255,255,255,0.74);
-            border: 1px solid rgba(255,255,255,0.74);
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--line-strong);
             color: var(--ink);
             font-size: 0.76rem;
             font-weight: 700;
@@ -660,8 +701,8 @@
         .sync-card {
             padding: 18px;
             border-radius: 22px;
-            background: rgba(255,255,255,0.66);
-            border: 1px solid rgba(255,255,255,0.72);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--line);
         }
 
         .sync-card strong {
@@ -679,53 +720,54 @@
         }
 
         /* (2026-07-13) Modernize panel & metric cards; was flat low-padding card */
+        /* (2026-09-30) Dark navy card surface; was white */
         .metric-card,
         .panel-card {
-            background: rgba(255, 255, 255, 0.95);
-            border: 1px solid rgba(226, 232, 240, 0.85);
+            background: var(--surface-card);
+            border: 1px solid var(--line);
             border-radius: var(--radius-lg);
-            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.35);
             backdrop-filter: blur(24px);
             transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .metric-card {
-            padding: 16px 18px;
+            padding: 18px 20px;
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
+            gap: 12px;
         }
 
         .metric-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 28px -4px rgba(90, 31, 224, 0.09), 0 4px 8px -2px rgba(15, 23, 42, 0.03);
-            border-color: rgba(90, 31, 224, 0.2);
+            box-shadow: 0 12px 32px rgba(6,182,212,0.1), 0 4px 8px rgba(0,0,0,0.4);
+            border-color: rgba(6,182,212,0.25);
         }
 
         .metric-label {
-            color: var(--muted);
-            font-size: 0.68rem;
+            color: var(--muted-light);
+            font-size: 0.66rem;
             text-transform: uppercase;
-            letter-spacing: 0.14em;
-            font-weight: 700;
-            margin-bottom: 8px;
+            letter-spacing: 0.16em;
+            font-weight: 800;
+            margin-bottom: 4px;
         }
 
         .metric-value {
             font-family: "Sora", sans-serif;
-            font-size: 1.7rem;
+            font-size: 2rem;
             font-weight: 800;
             letter-spacing: -0.05em;
-            line-height: 1.05;
-            color: var(--ink);
+            line-height: 1.0;
+            color: var(--ink-strong);
         }
 
         .metric-sub {
             color: var(--muted);
-            font-size: 0.78rem;
-            margin-top: 6px;
+            font-size: 0.75rem;
             font-weight: 500;
         }
 
@@ -768,14 +810,15 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 5px 9px;
+            padding: 4px 10px;
             border-radius: 999px;
-            background: rgba(90,31,224,0.08);
+            background: var(--primary-soft);
             color: var(--primary);
-            font-size: 0.68rem;
-            font-weight: 700;
+            font-size: 0.65rem;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.14em;
+            border: 1px solid rgba(6,182,212,0.2);
         }
 
         .composer-grid {
@@ -783,20 +826,20 @@
             gap: 12px;
         }
 
+        /* (2026-09-30) Announcement input dark theme; was white background with purple border */
         .announcement-input-shell {
-            border: 1.5px solid rgba(90,31,224,0.18);
+            border: 1.5px solid var(--line-strong);
             border-radius: 20px;
-            background: #ffffff;
-            box-shadow: 0 4px 20px rgba(55, 31, 129, 0.04);
+            background: rgba(255,255,255,0.04);
             overflow: hidden;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
         .announcement-input-shell:focus-within {
             border-color: var(--primary);
             box-shadow:
-                0 0 0 3.5px rgba(90,31,224,0.12),
-                0 12px 28px rgba(55, 31, 129, 0.08);
+                0 0 0 3px var(--primary-soft),
+                0 8px 24px rgba(6,182,212,0.1);
         }
 
         .announcement-input-meta {
@@ -898,11 +941,12 @@
         }
 
         /* (2026-07-13) Fix invisible outlines for inputs and rows; was faint white */
+        /* (2026-09-30) Dark input surfaces; was white */
         .glass-input,
         .glass-textarea {
             width: 100%;
-            border: 1.5px solid #cbd5e1;
-            background: #ffffff;
+            border: 1.5px solid var(--line-strong);
+            background: rgba(255,255,255,0.05);
             border-radius: 14px;
             padding: 11px 14px;
             outline: none;
@@ -910,25 +954,24 @@
             color: var(--ink);
             font-size: 0.9rem;
             transition: all 0.2s ease;
-            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
         }
 
         .glass-input:hover,
         .glass-textarea:hover {
-            border-color: #94a3b8;
+            border-color: rgba(6,182,212,0.3);
         }
 
         .glass-input:focus,
         .glass-textarea:focus {
             border-color: var(--primary);
-            background: #ffffff;
-            box-shadow: 0 0 0 3.5px rgba(90, 31, 224, 0.14);
+            background: rgba(6,182,212,0.06);
+            box-shadow: 0 0 0 3px var(--primary-soft);
         }
 
         .glass-input:read-only,
         .glass-input:disabled {
-            background: #f1f5f9;
-            border-color: #e2e8f0;
+            background: rgba(255,255,255,0.03);
+            border-color: var(--line);
             color: var(--muted);
             cursor: not-allowed;
             box-shadow: none;
@@ -966,9 +1009,9 @@
             align-items: center;
             padding: 13px 14px;
             border-radius: 16px;
-            background: #ffffff;
-            border: 1.5px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--line);
+            box-shadow: none;
         }
 
         .management-grid {
@@ -1003,16 +1046,16 @@
         .user-table-row {
             padding: 14px 16px;
             border-radius: 16px;
-            background: #ffffff;
-            border: 1.5px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--line);
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .user-table-row:hover {
-            border-color: rgba(90, 31, 224, 0.3);
-            box-shadow: 0 4px 12px rgba(90, 31, 224, 0.08);
+            border-color: rgba(6,182,212,0.3);
+            box-shadow: 0 4px 12px rgba(6,182,212,0.08);
             transform: translateY(-1px);
+            background: rgba(6,182,212,0.04);
         }
 
         .user-table-main {
@@ -1029,8 +1072,8 @@
             width: 38px;
             height: 38px;
             border-radius: 12px;
-            border: 1px solid rgba(90,31,224,0.12);
-            background: rgba(248,245,255,0.9);
+            border: 1px solid rgba(6,182,212,0.2);
+            background: var(--primary-soft);
             color: var(--primary);
             display: inline-flex;
             align-items: center;
@@ -1041,8 +1084,8 @@
 
         .icon-ghost-btn:hover {
             transform: translateY(-1px);
-            box-shadow: var(--shadow-soft);
-            background: rgba(241,235,255,0.96);
+            box-shadow: 0 4px 12px rgba(6,182,212,0.2);
+            background: rgba(6,182,212,0.18);
         }
 
         /* (2026-07-13) Action menu portal: position:fixed escapes overflow containers; was position:absolute z-30 */
@@ -1051,9 +1094,9 @@
             min-width: 168px;
             padding: 8px;
             border-radius: 16px;
-            background: rgba(255,255,255,0.98);
-            border: 1px solid rgba(90,31,224,0.1);
-            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+            background: #141e33;
+            border: 1px solid var(--line-strong);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.6);
             display: grid;
             gap: 6px;
             /* (2026-07-13) Elevate portal z-index to 9999; was 900 */
@@ -1077,7 +1120,8 @@
         }
 
         .row-action-item:hover {
-            background: rgba(90,31,224,0.06);
+            background: var(--primary-soft);
+            color: var(--primary);
         }
 
         .row-action-item.delete {
@@ -1087,8 +1131,8 @@
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.38);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(12px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -1108,10 +1152,10 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            background: #ffffff;
-            border: 1.5px solid #e2e8f0;
+            background: #111827;
+            border: 1px solid var(--line-strong);
             border-radius: 28px;
-            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.22);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
             padding: 24px;
         }
 
@@ -1120,7 +1164,7 @@
             display: flex;
             gap: 4px;
             padding: 4px;
-            background: #f1f5f9;
+            background: rgba(255,255,255,0.05);
             border-radius: 14px;
             margin: 14px 0;
         }
@@ -1145,9 +1189,9 @@
         }
 
         .modal-tab-btn.active {
-            background: #ffffff;
+            background: var(--primary-soft);
             color: var(--primary);
-            box-shadow: 0 2px 8px rgba(90, 31, 224, 0.1);
+            box-shadow: 0 2px 8px var(--primary-glow);
         }
 
         .modal-tab-panel {
@@ -1170,8 +1214,8 @@
             gap: 12px;
             padding: 10px 14px;
             border-radius: 14px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--line);
         }
 
         .history-log-row + .history-log-row {
@@ -1196,8 +1240,8 @@
             gap: 10px;
             padding: 11px 14px;
             border-radius: 14px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--line);
         }
 
         .link-chip-row + .link-chip-row {
@@ -1236,8 +1280,8 @@
             width: 40px;
             height: 40px;
             border-radius: 14px;
-            border: 1px solid rgba(90,31,224,0.1);
-            background: rgba(248,245,255,0.92);
+            border: 1px solid rgba(6,182,212,0.2);
+            background: var(--primary-soft);
             color: var(--primary);
             display: inline-flex;
             align-items: center;
@@ -1257,8 +1301,8 @@
         .management-card {
             padding: 13px 14px;
             border-radius: 16px;
-            border: 1px solid rgba(255,255,255,0.74);
-            background: rgba(255,255,255,0.78);
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,0.04);
             cursor: pointer;
             transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
         }
@@ -1266,11 +1310,12 @@
         .management-card:hover {
             transform: translateY(-1px);
             box-shadow: var(--shadow-soft);
+            border-color: rgba(6,182,212,0.25);
         }
 
         .management-card.active {
-            border-color: rgba(90,31,224,0.26);
-            box-shadow: 0 0 0 4px rgba(90,31,224,0.08);
+            border-color: rgba(6,182,212,0.35);
+            box-shadow: 0 0 0 4px rgba(6,182,212,0.08);
         }
 
         .management-card-top,
@@ -1300,9 +1345,9 @@
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            color: #fff;
+            color: #0a0f1e;
             background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-            box-shadow: 0 10px 20px rgba(90,31,224,0.16);
+            box-shadow: 0 6px 16px var(--primary-glow);
             flex-shrink: 0;
         }
 
@@ -1384,8 +1429,8 @@
             margin: 14px 0 0;
             padding: 11px 13px;
             border-radius: 15px;
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--line);
             color: var(--muted);
             font-size: 0.8rem;
             line-height: 1.45;
@@ -1404,8 +1449,8 @@
             gap: 10px;
             padding: 10px 12px;
             border-radius: 16px;
-            background: rgba(248,250,252,0.96);
-            border: 1px solid rgba(226,232,240,0.9);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--line);
         }
 
         .relation-status {
@@ -1453,17 +1498,17 @@
         .table-row {
             padding: 16px 20px;
             border-radius: 16px;
-            background: #ffffff;
-            border: 1.5px solid #e2e8f0;
-            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--line);
             align-items: center;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .table-row:hover {
-            border-color: rgba(90, 31, 224, 0.3);
-            box-shadow: 0 4px 12px rgba(90, 31, 224, 0.08);
+            border-color: rgba(6,182,212,0.3);
+            box-shadow: 0 4px 12px rgba(6,182,212,0.06);
             transform: translateY(-1px);
+            background: rgba(6,182,212,0.03);
         }
 
         .search-input {
@@ -1486,10 +1531,11 @@
             min-height: 28px;
             padding: 0 10px;
             border-radius: 999px;
-            background: rgba(90,31,224,0.08);
+            background: var(--primary-soft);
             color: var(--primary);
             font-size: 0.75rem;
             font-weight: 700;
+            border: 1px solid rgba(6,182,212,0.15);
         }
 
         .status-pill {
@@ -1504,9 +1550,9 @@
             letter-spacing: 0.1em;
         }
 
-        .status-pill.emergency { background: #fff1f2; color: var(--red); }
-        .status-pill.gad { background: #f1ebff; color: var(--primary); }
-        .status-pill.active { background: #eefdf6; color: var(--green); }
+        .status-pill.emergency { background: var(--red-soft); color: var(--red); }
+        .status-pill.gad { background: var(--primary-soft); color: var(--primary); }
+        .status-pill.active { background: var(--green-soft); color: var(--green); }
 
         .row-actions {
             display: flex;
@@ -1572,10 +1618,10 @@
             align-items: flex-start;
             padding: 11px 13px;
             border-radius: 15px;
-            background: rgba(255,255,255,0.9);
-            border: 1px solid rgba(255,255,255,0.76);
+            background: #141e33;
+            border: 1px solid var(--line-strong);
             backdrop-filter: blur(18px);
-            box-shadow: var(--shadow-soft);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
 
         .toast-icon {
@@ -1585,13 +1631,13 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: #f1ebff;
+            background: var(--primary-soft);
             color: var(--primary);
             flex: 0 0 auto;
         }
 
-        .toast-card.error .toast-icon { background: #fff1f2; color: var(--red); }
-        .toast-card.success .toast-icon { background: #eefdf6; color: var(--green); }
+        .toast-card.error .toast-icon { background: var(--red-soft); color: var(--red); }
+        .toast-card.success .toast-icon { background: var(--green-soft); color: var(--green); }
 
         .toast-copy strong {
             display: block;
@@ -1663,30 +1709,30 @@
             gap: 12px;
             cursor: pointer;
             transition: background 0.2s;
-            border-bottom: 1px solid rgba(0,0,0,0.03);
+            border-bottom: 1px solid var(--line);
         }
 
         .thread-item:hover {
-            background: rgba(90,31,224,0.04);
+            background: var(--primary-soft);
         }
 
         .thread-item.active {
-            background: rgba(90,31,224,0.08);
+            background: rgba(6,182,212,0.1);
             border-left: 4px solid var(--primary);
         }
 
         .thread-item.unread .thread-name,
         .thread-item.unread .thread-preview {
             font-weight: 800;
-            color: var(--ink);
+            color: var(--ink-strong);
         }
 
         .thread-badge {
             width: 10px;
             height: 10px;
             border-radius: 999px;
-            background: #ef4444;
-            box-shadow: 0 0 0 4px rgba(239,68,68,0.14);
+            background: var(--red);
+            box-shadow: 0 0 0 4px rgba(244,63,94,0.18);
             flex-shrink: 0;
         }
 
@@ -1705,8 +1751,8 @@
 
         /* (2026-07-13) Red thread avatar for guardians; was purple soft */
         .thread-avatar.guardian {
-            background: #fff1f2;
-            color: #e11d48;
+            background: var(--red-soft);
+            color: var(--red);
         }
 
         .thread-info {
@@ -1732,8 +1778,8 @@
         }
 
         .readable-card {
-            border: 1px solid rgba(90,31,224,0.08);
-            box-shadow: 0 18px 40px rgba(49, 30, 105, 0.08);
+            border: 1px solid rgba(6,182,212,0.12);
+            box-shadow: 0 0 0 1px rgba(6,182,212,0.06) inset;
         }
 
         .image-preview-card {
@@ -1741,8 +1787,8 @@
             gap: 12px;
             padding: 14px;
             border-radius: 15px;
-            background: rgba(90,31,224,0.06);
-            border: 1px solid rgba(90,31,224,0.08);
+            background: var(--primary-soft);
+            border: 1px solid rgba(6,182,212,0.15);
             align-items: center;
         }
 
@@ -1771,19 +1817,19 @@
 
         .admin-msg.received {
             align-self: flex-start;
-            background: white;
-            color: #1e293b;
-            border: 1.5px solid #e2e8f0;
+            background: rgba(255,255,255,0.06);
+            color: var(--ink);
+            border: 1px solid var(--line-strong);
             border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
 
         .admin-msg.sent {
             align-self: flex-end;
-            background: linear-gradient(135deg, var(--primary), #4f46e5);
-            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: #0a0f1e;
+            font-weight: 600;
             border-bottom-right-radius: 4px;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            box-shadow: 0 4px 16px var(--primary-glow);
         }
 
         .msg-time {
@@ -1794,9 +1840,9 @@
             display: block;
         }
 
-        .admin-msg.sent .msg-time { 
-            text-align: right; 
-            color: rgba(255,255,255,0.8);
+        .admin-msg.sent .msg-time {
+            text-align: right;
+            color: rgba(10,15,30,0.7);
         }
 
         /* (2026-07-13) Full height messages section; was fixed 68vh height */
@@ -1814,26 +1860,26 @@
             min-height: 0;
             height: 100%;
             display: grid;
-            grid-template-columns: 340px minmax(0, 1fr);
+            grid-template-columns: 320px minmax(0, 1fr);
             overflow: hidden;
-            border: 1.5px solid #e2e8f0;
+            border: 1px solid var(--line);
             border-radius: var(--radius-lg);
-            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
         }
 
         .messages-sidebar {
-            border-right: 1px solid rgba(15,23,42,0.06);
+            border-right: 1px solid var(--line);
             display: flex;
             flex-direction: column;
-            background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(248,245,255,0.82));
+            background: #0c1424;
             height: 100%;
             min-height: 0;
         }
 
         .messages-sidebar-head {
             padding: 18px 18px 16px;
-            border-bottom: 1px solid rgba(15,23,42,0.06);
-            background: rgba(255,255,255,0.94);
+            border-bottom: 1px solid var(--line);
+            background: transparent;
             flex-shrink: 0;
         }
 
@@ -1861,7 +1907,7 @@
         .messages-main {
             display: grid;
             grid-template-rows: auto 1fr auto;
-            background: #fcfcff;
+            background: #0a0f1e;
             height: 100%;
             min-height: 0;
             overflow: hidden;
@@ -2067,7 +2113,7 @@
             border-top: 1px solid rgba(15,23,42,0.06);
             display: flex;
             gap: 12px;
-            background: rgba(255,255,255,0.96);
+            background: rgba(12,20,36,0.98);
             z-index: 10;
             align-items: center;
         }
@@ -2123,8 +2169,8 @@
             width: 40px;
             height: 40px;
             border-radius: 12px;
-            background: var(--primary);
-            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: #0a0f1e;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2210,7 +2256,7 @@
                 <!-- (2026-07-13) Topbar brand using logo with text.png; was icon box -->
                 <div class="brand-wrap" style="display:flex; align-items:center; gap:14px;">
                     <img src="logo with text.png" alt="Securo" style="height: 32px; max-height: 32px; object-fit: contain; display: block;">
-                    <div style="border-left: 1px solid rgba(0,0,0,0.1); padding-left: 14px;">
+                    <div style="border-left: 1px solid rgba(255,255,255,0.12); padding-left: 14px;">
                         <h1 style="margin:0; font-size:1.08rem; font-family:'Sora', sans-serif; font-weight:800; color:var(--ink);">Command Center</h1>
                         <p style="margin:0; font-size:0.75rem; color:var(--muted);">Campus safety operations & dispatch management</p>
                     </div>
@@ -2312,64 +2358,83 @@
                 <main class="main-panel">
                     <section class="admin-section active" id="sec-stats">
                         <!-- (2026-07-13) Add executive metric cards with icons; was bare text -->
+                        <!-- (2026-09-30) Stats hero banner added; was no header -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:20px 24px; border-radius:var(--radius-lg); background:linear-gradient(135deg, #0d1b2e 0%, #0a1628 60%, rgba(6,182,212,0.06) 100%); border:1px solid var(--line-strong); box-shadow:inset 0 0 0 1px rgba(6,182,212,0.06);">
+                            <div>
+                                <div style="font-size:0.64rem; font-weight:800; letter-spacing:0.18em; text-transform:uppercase; color:var(--primary); margin-bottom:6px;">COMMAND CENTER</div>
+                                <h2 style="margin:0; font-family:'Sora',sans-serif; font-size:1.5rem; font-weight:800; letter-spacing:-0.04em; color:var(--ink-strong);">Platform Statistics</h2>
+                                <p style="margin:4px 0 0; color:var(--muted); font-size:0.82rem;">Live overview of all registered users, activity, and support channels.</p>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                <div style="display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.2); font-size:0.76rem; font-weight:700; color:var(--green);">
+                                    <span style="width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 0 4px rgba(16,185,129,0.2); animation:pulseDot 2s ease-in-out infinite;"></span>
+                                    <span>Live Sync Active</span>
+                                </div>
+                                <div style="display:inline-flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px; background:var(--primary-soft); border:1px solid rgba(6,182,212,0.2); font-size:0.76rem; font-weight:700; color:var(--primary);">
+                                    <span class="material-symbols-outlined" style="font-size:16px;">monitoring</span>
+                                    <span>Dashboard</span>
+                                </div>
+                            </div>
+                        </div>
                         <div class="stats-grid">
-                            <div class="metric-card">
+                            <!-- (2026-09-30) Dark accent KPI cards; was plain white metric-card -->
+                            <div class="metric-card" style="background:linear-gradient(135deg,#0d1e38,#0a1628); border-color:rgba(6,182,212,0.18);">
                                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                                     <div>
                                         <div class="metric-label">Total Users</div>
-                                        <div class="metric-value" id="metricUsers">0</div>
+                                        <div class="metric-value" id="metricUsers" style="color:var(--primary);">0</div>
                                     </div>
-                                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(90,31,224,0.1); color:var(--primary); display:flex; align-items:center; justify-content:center;">
+                                    <div style="width:44px; height:44px; border-radius:14px; background:var(--primary-soft); border:1px solid rgba(6,182,212,0.22); color:var(--primary); display:flex; align-items:center; justify-content:center;">
                                         <span class="material-symbols-outlined" style="font-size:22px;">groups</span>
                                     </div>
                                 </div>
                                 <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
-                                    <span class="signal-dot" style="background:var(--primary); width:7px; height:7px;"></span>
+                                    <span style="width:6px; height:6px; border-radius:50%; background:var(--primary); flex-shrink:0;"></span>
                                     <span>All platform accounts</span>
                                 </div>
                             </div>
-                            <div class="metric-card">
+                            <div class="metric-card" style="background:linear-gradient(135deg,#0d1e38,#0a1628); border-color:rgba(16,185,129,0.18);">
                                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                                     <div>
                                         <div class="metric-label">Students</div>
-                                        <div class="metric-value" id="metricStudents">0</div>
+                                        <div class="metric-value" id="metricStudents" style="color:var(--green);">0</div>
                                     </div>
-                                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(2,132,199,0.1); color:#0284c7; display:flex; align-items:center; justify-content:center;">
+                                    <div style="width:44px; height:44px; border-radius:14px; background:var(--green-soft); border:1px solid rgba(16,185,129,0.22); color:var(--green); display:flex; align-items:center; justify-content:center;">
                                         <span class="material-symbols-outlined" style="font-size:22px;">school</span>
                                     </div>
                                 </div>
                                 <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
-                                    <span class="signal-dot" style="background:#0284c7; width:7px; height:7px;"></span>
+                                    <span style="width:6px; height:6px; border-radius:50%; background:var(--green); flex-shrink:0;"></span>
                                     <span>Active student profiles</span>
                                 </div>
                             </div>
-                            <div class="metric-card">
+                            <div class="metric-card" style="background:linear-gradient(135deg,#0d1e38,#0a1628); border-color:rgba(245,158,11,0.18);">
                                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                                     <div>
                                         <div class="metric-label">Guardians</div>
-                                        <div class="metric-value" id="metricGuardians">0</div>
+                                        <div class="metric-value" id="metricGuardians" style="color:var(--amber);">0</div>
                                     </div>
-                                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(15,155,103,0.1); color:var(--green); display:flex; align-items:center; justify-content:center;">
+                                    <div style="width:44px; height:44px; border-radius:14px; background:var(--amber-soft); border:1px solid rgba(245,158,11,0.22); color:var(--amber); display:flex; align-items:center; justify-content:center;">
                                         <span class="material-symbols-outlined" style="font-size:22px;">family_restroom</span>
                                     </div>
                                 </div>
                                 <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
-                                    <span class="signal-dot" style="background:var(--green); width:7px; height:7px;"></span>
+                                    <span style="width:6px; height:6px; border-radius:50%; background:var(--amber); flex-shrink:0;"></span>
                                     <span>Connected guardians</span>
                                 </div>
                             </div>
-                            <div class="metric-card">
+                            <div class="metric-card" style="background:linear-gradient(135deg,#0d1e38,#0a1628); border-color:rgba(244,63,94,0.18);">
                                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                                     <div>
                                         <div class="metric-label">Conversations</div>
-                                        <div class="metric-value" id="metricThreads">0</div>
+                                        <div class="metric-value" id="metricThreads" style="color:var(--red);">0</div>
                                     </div>
-                                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(124,58,237,0.1); color:#7c3aed; display:flex; align-items:center; justify-content:center;">
+                                    <div style="width:44px; height:44px; border-radius:14px; background:var(--red-soft); border:1px solid rgba(244,63,94,0.22); color:var(--red); display:flex; align-items:center; justify-content:center;">
                                         <span class="material-symbols-outlined" style="font-size:22px;">chat</span>
                                     </div>
                                 </div>
                                 <div class="metric-sub" style="display:flex; align-items:center; gap:6px;">
-                                    <span class="signal-dot" style="background:#7c3aed; width:7px; height:7px;"></span>
+                                    <span style="width:6px; height:6px; border-radius:50%; background:var(--red); flex-shrink:0;"></span>
                                     <span>Support inquiry channels</span>
                                 </div>
                             </div>
@@ -4736,6 +4801,11 @@
             }
             // (2026-09-09) store real UID for Firestore-rules-aware queries
             currentAdminUid = user.uid;
+            // (2026-09-30) Reinit chat with real UID if messages tab was pre-loaded with fallback UID
+            stopAdminRealtimeThreads();
+            if (document.querySelector('.tab-btn[data-tab="messages"]')?.classList.contains('active')) {
+                initAdminChat();
+            }
             try {
                 const profile = await getUserProfile(user.uid);
                 const isSpecialAdmin = profile?.role === 'admin';
@@ -5972,6 +6042,7 @@
         }
 
         function initAdminChat() {
+            // (2026-09-30) Allow reinit after auth sets real UID; was blocking on any existing sub
             if (unsubscribeAdminThreads) return;
             unsubscribeAdminThreads = getAllChatThreads(currentAdminUid, (threads) => {
                 cachedThreads = Array.isArray(threads) ? threads : [];
