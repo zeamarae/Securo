@@ -25,8 +25,8 @@
         if (window.location.hash && window.location.hash.startsWith('#/')) {
             return window.location.hash.slice(2);
         }
-        const file = window.location.pathname.split('/').pop().replace('.html', '');
-        return file || 'role-selection';
+        // (2026-07-13) Default route to landing; was role-selection
+        return file || 'landing';
     }
 
     /**

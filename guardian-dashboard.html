@@ -112,7 +112,8 @@
             left: 0;
             right: 0;
             width: 100%;
-            z-index: 1000;
+            /* (2026-07-13) Fix topbar z-index above map overlay; was 1000 */
+            z-index: 3000;
             box-sizing: border-box;
             transform: translateZ(0);
             will-change: transform;
@@ -328,13 +329,18 @@
             background: #eee;
         }
 
+        /* (2026-07-13) Fix overlay overlap with map controls; was right: 16px */
         .map-overlay {
             position: absolute;
-            top: 20px;
-            left: 16px;
-            right: 16px;
-            z-index: 10;
+            top: 14px;
+            left: 14px;
+            right: 76px;
+            z-index: 1005;
             pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: calc(100% - 28px);
         }
 
         .student-status-card {
@@ -937,7 +943,8 @@
             display: none;
             flex-direction: column;
             padding: 10px;
-            z-index: 1100;
+            /* (2026-07-13) Fix profile dropdown z-index; was 1100 */
+            z-index: 3100;
             animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -1425,7 +1432,64 @@
                         <div class="portal-title" style="font-size:0.75rem; font-weight:800; padding:3px 8px; border-radius:6px; background:rgba(225,29,72,0.1); color:var(--primary); letter-spacing:0.04em;">Guardian</div>
                     </div>
                 </div>
-                <div class="topbar-right">
+                <div class="topbar-right" style="display:flex; align-items:center; gap:10px;">
+                    <!-- (2026-07-13) Move emergency & location modals to dropdown; was map overlay -->
+                    <div class="notif-btn" style="position:relative;">
+                        <button class="surface-icon" type="button" id="guardianNotifBell"
+                            aria-label="Notifications" style="width:40px; height:40px; border-radius:12px; background:white; border:1px solid rgba(225,29,72,0.12); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; color:var(--ink); box-shadow:0 2px 6px rgba(0,0,0,0.04);">
+                            <span class="material-symbols-outlined">notifications</span>
+                            <div class="notif-badge" id="guardianNotifBadge" style="display:none; position:absolute; top:6px; right:6px; width:10px; height:10px; background:#e11d48; border-radius:50%; border:2px solid #fff;"></div>
+                        </button>
+                        <!-- (2026-07-13) Fix notif dropdown clipping on mobile; was overflow left -->
+                        <div class="notif-dropdown" id="guardianNotifDropdown" style="display:none; position:fixed; top:60px; right:12px; width:min(340px, calc(100vw - 24px)); max-width:calc(100vw - 24px); background:#fff; border-radius:18px; box-shadow:0 12px 36px rgba(0,0,0,0.14); border:1px solid rgba(0,0,0,0.08); padding:16px; z-index:3200; max-height:80vh; overflow-y:auto; box-sizing:border-box;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #f1f5f9;">
+                                <div>
+                                    <strong style="font-size:0.92rem; color:var(--ink); display:block;">Alerts & Requests</strong>
+                                    <span style="font-size:0.75rem; color:var(--muted);">Emergency and location status</span>
+                                </div>
+                                <button type="button" id="closeGuardianNotifDropdown" style="background:none; border:none; cursor:pointer; color:var(--muted); padding:2px; display:flex;">
+                                    <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+                                </button>
+                            </div>
+
+                            <div id="guardianNotifCards" style="display:flex; flex-direction:column; gap:10px;">
+                                <div class="location-alert-card" id="sosEmergencyCard" style="display:none; background:#fff1f2; border:1px solid #fda4af; margin:0;">
+                                    <div class="location-alert-icon" style="background:#fee2e2; color:#e11d48;">
+                                        <span class="material-symbols-outlined">emergency</span>
+                                    </div>
+                                    <div style="flex:1; min-width:0;">
+                                        <strong style="font-size:0.84rem; color:#9f1239; font-weight:800; display:block;">🚨 EMERGENCY SOS ACTIVE</strong>
+                                        <div id="sosEmergencyText" style="font-size:0.75rem; color:#be123c; line-height:1.35; margin-top:1px;">
+                                            Your child triggered an emergency alert.
+                                        </div>
+                                        <button class="btn-primary" id="viewSosLocationBtn" type="button" style="margin-top:6px; background:#e11d48; border-color:#e11d48; padding:6px 12px; min-height:32px; height:32px; font-size:0.75rem; border-radius:10px; width:100%;">
+                                            Locate Child on Map
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="location-alert-card" id="locationAlertCard" style="margin:0;">
+                                    <div class="location-alert-icon">
+                                        <span class="material-symbols-outlined">location_off</span>
+                                    </div>
+                                    <div style="flex:1; min-width:0;">
+                                        <strong style="font-size:0.84rem; color:var(--ink); font-weight:800; display:block;">Child location required</strong>
+                                        <div id="locationAlertText" style="font-size:0.75rem; color:var(--muted); line-height:1.35; margin-top:1px;">
+                                            Your child needs to turn on location sharing before live tracking can continue.
+                                        </div>
+                                        <button class="btn-primary" id="requestLocationBtn" type="button" style="margin-top:6px; padding:6px 12px; min-height:32px; height:32px; font-size:0.75rem; border-radius:10px; width:100%; box-shadow:none;">
+                                            Ask Child to Turn On Location
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div id="guardianDropdownEmptyState" style="text-align:center; padding:16px 8px; color:var(--muted); font-size:0.8rem;">
+                                    <span class="material-symbols-outlined" style="font-size:24px; color:#cbd5e1; display:block; margin-bottom:4px;">notifications_none</span>
+                                    No active alerts or requests right now.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="profile-chip" id="profileBtn">
                         <span id="userInitials">P</span>
                         <div class="profile-dropdown" id="profileDropdown">
@@ -1473,14 +1537,6 @@
             <div class="view active" id="mapView" style="position:relative;">
                 <div id="map"></div>
 
-                <!-- (2026-07-13) Child campus presence floating chip; was none -->
-                <div class="guardian-map-chip-container" style="position:absolute; top:16px; left:16px; z-index:1005; pointer-events:auto;">
-                    <div class="tracking-status-pill is-on is-inside" id="guardianTrackingStatusBanner" style="display:none; cursor:default;">
-                        <span class="pulse-status-dot" id="guardianTrackingStatusDot"></span>
-                        <span class="material-symbols-outlined tracking-status-icon" id="guardianTrackingStatusIcon">login</span>
-                        <span class="tracking-status-label-text" id="guardianTrackingStatusCopy">Child Campus Status</span>
-                    </div>
-                </div>
                 <!-- (2026-07-13) Map controls matching student view; was missing control buttons -->
                 <div class="map-controls-custom map-controls-top">
                     <button class="map-btn" id="map-layers-btn"
@@ -1504,6 +1560,14 @@
                     </button>
                 </div>
                 <div class="map-overlay">
+                    <!-- (2026-07-13) Move child presence chip into overlay; was floating above -->
+                    <div class="guardian-map-chip-container" style="pointer-events:auto; display:flex;">
+                        <div class="tracking-status-pill is-on is-inside" id="guardianTrackingStatusBanner" style="display:none; cursor:default; max-width:100%;">
+                            <span class="pulse-status-dot" id="guardianTrackingStatusDot"></span>
+                            <span class="material-symbols-outlined tracking-status-icon" id="guardianTrackingStatusIcon">login</span>
+                            <span class="tracking-status-label-text" id="guardianTrackingStatusCopy">Child Campus Status</span>
+                        </div>
+                    </div>
                     <div class="student-status-card">
                         <div class="student-avatar" id="studentAvatar"></div>
                         <div style="flex:1;">
@@ -1547,36 +1611,7 @@
                         </div>
                     <!-- (2026-07-13) Close pending card container; was unclosed tag -->
                     </div>
-                    <!-- (2026-07-13) Add active SOS emergency card; was missing -->
-                    <div class="location-alert-card" id="sosEmergencyCard" style="display:none; background:#fff1f2; border:1px solid #fda4af;">
-                        <div class="location-alert-icon" style="background:#fee2e2; color:#e11d48;">
-                            <span class="material-symbols-outlined">emergency</span>
-                        </div>
-                        <div style="flex:1; min-width:0;">
-                            <strong style="font-size:0.84rem; color:#9f1239; font-weight:800; display:block;">🚨 EMERGENCY SOS ACTIVE</strong>
-                            <div id="sosEmergencyText" style="font-size:0.75rem; color:#be123c; line-height:1.35; margin-top:1px;">
-                                Your child triggered an emergency alert.
-                            </div>
-                            <button class="btn-primary" id="viewSosLocationBtn" type="button" style="margin-top:6px; background:#e11d48; border-color:#e11d48; padding:6px 12px; min-height:32px; height:32px; font-size:0.75rem; border-radius:10px; width:100%;">
-                                Locate Child on Map
-                            </button>
-                        </div>
-                    </div>
-                    <!-- (2026-07-13) Slim location alert layout; was bulky stacked card -->
-                    <div class="location-alert-card" id="locationAlertCard">
-                        <div class="location-alert-icon">
-                            <span class="material-symbols-outlined">location_off</span>
-                        </div>
-                        <div style="flex:1; min-width:0;">
-                            <strong style="font-size:0.84rem; color:var(--ink); font-weight:800; display:block;">Child location required</strong>
-                            <div id="locationAlertText" style="font-size:0.75rem; color:var(--muted); line-height:1.35; margin-top:1px;">
-                                Your child needs to turn on location sharing before live tracking can continue.
-                            </div>
-                            <button class="btn-primary" id="requestLocationBtn" type="button" style="margin-top:6px; padding:6px 12px; min-height:32px; height:32px; font-size:0.75rem; border-radius:10px; width:100%; box-shadow:none;">
-                                Ask Child to Turn On Location
-                            </button>
-                        </div>
-                    </div>
+                    <!-- (2026-07-13) Remove modal cards from map overlay; was blocking map view -->
                 </div>
             </div>
 
@@ -1759,8 +1794,10 @@
         import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './utils.js';
         import './install-sw.js'; // Initialize service worker for offline support
         
-        import { auth } from './firebase-config.js';
+        // (2026-07-13) Add Firestore & findUserByEmail imports; was auth only
+        import { auth, db } from './firebase-config.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { doc, onSnapshot, collection, query, where, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import {
             getUserProfile,
             getAcceptedLinksForGuardian,
@@ -1784,8 +1821,8 @@
             sendGuardianLocationReminder,
             subscribeToCampusMapConfig,
             subscribeToStudentSOS,
-            // (2026-07-13) Import deleteCurrentUserAccount; was missing
-            deleteCurrentUserAccount
+            deleteCurrentUserAccount,
+            findUserByEmail
         } from './db.js';
 
         let map, studentMarker, polyline;
@@ -1967,15 +2004,15 @@
                 zoomDelta: 0.5,
                 wheelPxPerZoomLevel: 140
             }).setView(CAMPUS_CENTER, 17);
-            // (2026-07-13) Restore original map tiles; was purple-map-tiles
+            // (2026-07-13) Set default guardian map to Google Streets; was Google Hybrid
             const baseMapLayers = {
+                "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
                 "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
                 "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
                 "Google Terrain": L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20 }),
                 "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
             };
-            baseMapLayers["Google Hybrid"].addTo(map);
+            baseMapLayers["Google Streets"].addTo(map);
 
             // Campus Geofence Visual Polygon
             guardianGeofencePolygonLayer = L.polygon(getCampusGeofencePolygon(), {
@@ -2072,6 +2109,23 @@
             return "";
         }
 
+        function updateGuardianNotifBadge() {
+            const badge = document.getElementById('guardianNotifBadge');
+            const sosCard = document.getElementById('sosEmergencyCard');
+            const locCard = document.getElementById('locationAlertCard');
+            const empty = document.getElementById('guardianDropdownEmptyState');
+            const hasSos = sosCard && sosCard.style.display !== 'none';
+            const hasLoc = locCard && locCard.classList.contains('active');
+            const hasAlerts = hasSos || hasLoc;
+            if (badge) {
+                badge.style.display = hasAlerts ? 'block' : 'none';
+                badge.style.background = hasSos ? '#e11d48' : '#f59e0b';
+            }
+            if (empty) {
+                empty.style.display = hasAlerts ? 'none' : 'block';
+            }
+        }
+
         function renderLocationAlert(reason = "") {
             const card = document.getElementById('locationAlertCard');
             const text = document.getElementById('locationAlertText');
@@ -2082,11 +2136,13 @@
                 card.classList.add('active');
                 text.textContent = reason;
                 if (locateBtn) locateBtn.disabled = true;
+                updateGuardianNotifBadge();
                 return;
             }
 
             card.classList.remove('active');
             if (locateBtn) locateBtn.disabled = false;
+            updateGuardianNotifBadge();
         }
 
         function formatNotificationTime(value) {
@@ -2288,17 +2344,62 @@
             }
         }
 
-        // (2026-07-13) Child status chip rotation without auto modal; was auto modal
+        let guardianProfileUnsub = null;
+
+        function updateGuardianProfileUI(rawName) {
+            const fallback = auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'Guardian';
+            const name = (rawName || guardianProfile?.name || fallback).trim();
+            const initials = name
+                .split(/\s+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map((p) => p[0])
+                .join('')
+                .toUpperCase() || 'P';
+            const initEl = document.getElementById('userInitials');
+            const dropEl = document.getElementById('dropdownName');
+            if (initEl) initEl.textContent = initials;
+            if (dropEl) dropEl.textContent = name;
+        }
+
+        // (2026-07-13) Resolve guardian name & initials live; was uid only
         async function initDashboard(user) {
             console.log("Initializing dashboard for:", user.email);
             try {
                 guardianProfile = await getUserProfile(user.uid);
+                const emailPrefix = (user.email || '').split('@')[0].toLowerCase();
+                if (!guardianProfile?.name || guardianProfile.name.toLowerCase() === emailPrefix) {
+                    const byEmail = await findUserByEmail(user.email);
+                    if (byEmail?.name) {
+                        guardianProfile = { ...(guardianProfile || {}), ...byEmail };
+                    }
+                }
                 if (guardianProfile) guardianProfile.uid = user.uid;
                 console.log("Guardian Profile:", guardianProfile);
+                updateGuardianProfileUI(guardianProfile?.name);
 
-                if (guardianProfile) {
-                    document.getElementById('userInitials').textContent = guardianProfile.name.charAt(0);
-                    document.getElementById('dropdownName').textContent = guardianProfile.name;
+                if (!guardianProfileUnsub) {
+                    const normEmail = (user.email || '').toLowerCase().trim();
+                    const handleProfileSnap = (data) => {
+                        if (data?.name) {
+                            if (!guardianProfile) guardianProfile = { uid: user.uid };
+                            guardianProfile.name = data.name;
+                            updateGuardianProfileUI(data.name);
+                        }
+                    };
+                    try {
+                        guardianProfileUnsub = onSnapshot(doc(db, "users", user.uid), (snap) => {
+                            if (snap.exists()) handleProfileSnap(snap.data());
+                        }, () => {});
+                    } catch (e) {}
+                    if (normEmail) {
+                        try {
+                            const eq = query(collection(db, "users"), where("email", "==", normEmail));
+                            onSnapshot(eq, (snap) => {
+                                if (!snap.empty) handleProfileSnap(snap.docs[0].data());
+                            }, () => {});
+                        } catch (e) {}
+                    }
                 }
 
                 if (notificationUnsub) notificationUnsub();
@@ -2382,11 +2483,35 @@
 
         profileBtn.onclick = (e) => {
             e.stopPropagation();
+            const guardianNotifDropdown = document.getElementById('guardianNotifDropdown');
+            if (guardianNotifDropdown) guardianNotifDropdown.style.display = 'none';
             profileDropdown.classList.toggle('active');
         };
 
+        // (2026-07-13) Wire notification dropdown toggle & badge sync; was missing
+        const guardianNotifBell = document.getElementById('guardianNotifBell');
+        const guardianNotifDropdown = document.getElementById('guardianNotifDropdown');
+        const closeGuardianNotifDropdown = document.getElementById('closeGuardianNotifDropdown');
+
+        if (guardianNotifBell && guardianNotifDropdown) {
+            guardianNotifBell.onclick = (e) => {
+                e.stopPropagation();
+                profileDropdown?.classList.remove('active');
+                const isShown = guardianNotifDropdown.style.display === 'block';
+                guardianNotifDropdown.style.display = isShown ? 'none' : 'block';
+            };
+            closeGuardianNotifDropdown?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                guardianNotifDropdown.style.display = 'none';
+            });
+            guardianNotifDropdown.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
+
         document.addEventListener('click', () => {
             profileDropdown.classList.remove('active');
+            if (guardianNotifDropdown) guardianNotifDropdown.style.display = 'none';
         });
 
         document.getElementById('logoutBtn').onclick = async () => {
@@ -2449,44 +2574,47 @@
             ].includes(normalized);
         }
 
+        // (2026-07-13) Prioritize live student profile by ID; was stale link
         async function resolveChildDisplayName(link) {
-            let resolvedName = !isGenericChildName(link?.studentName) ? link.studentName : '';
-
+            let liveName = '';
             if (link?.studentUid) {
                 try {
                     const profile = await getUserProfile(link.studentUid);
-                    if (!isGenericChildName(profile?.name)) {
-                        resolvedName = profile.name;
+                    if (profile?.name && !isGenericChildName(profile.name)) {
+                        liveName = profile.name;
                     }
-                } catch (error) {
-                    
-                }
-
-                if (isGenericChildName(resolvedName)) {
-                    try {
-                        const bootstrapProfile = await getStudentBootstrapProfile(link.studentUid);
-                        if (!isGenericChildName(bootstrapProfile?.name)) {
-                            resolvedName = bootstrapProfile.name;
-                        }
-                    } catch (error) {
-                        
-                    }
-                }
+                } catch (e) {}
             }
-
-            if (isGenericChildName(resolvedName) && link?.studentId) {
+            if (!liveName && link?.studentId) {
                 try {
                     const users = await getAllUsers();
-                    const matchedUser = users.find((user) => String(user.studentId || '') === String(link.studentId));
-                    if (!isGenericChildName(matchedUser?.name)) {
-                        resolvedName = matchedUser.name;
+                    const matched = users.find((user) => String(user.studentId || '').trim() === String(link.studentId).trim());
+                    if (matched?.name && !isGenericChildName(matched.name)) {
+                        liveName = matched.name;
                     }
-                } catch (error) {
-                    
-                }
+                } catch (e) {}
             }
-
-            return resolvedName || link?.studentId || 'Linked Child';
+            if (!liveName && link?.studentId) {
+                try {
+                    const localUsers = (() => {
+                        try { return JSON.parse(localStorage.getItem('securo_users_local') || '[]'); } catch (e) { return []; }
+                    })();
+                    const matched = localUsers.find((user) => String(user.studentId || '').trim() === String(link.studentId).trim());
+                    if (matched?.name && !isGenericChildName(matched.name)) {
+                        liveName = matched.name;
+                    }
+                } catch (e) {}
+            }
+            const finalName = liveName || (!isGenericChildName(link?.studentName) ? link.studentName : '') || link?.studentId || 'Linked Child';
+            if (liveName && link?.id && link.studentName !== liveName) {
+                try {
+                    updateDoc(doc(db, "guardian_links", link.id), {
+                        studentName: liveName,
+                        lastSyncedAt: serverTimestamp()
+                    }).catch(() => {});
+                } catch (e) {}
+            }
+            return finalName;
         }
 
         document.getElementById('studentIdInput').addEventListener('input', (event) => {
@@ -2650,7 +2778,7 @@
             }
         });
 
-        // (2026-07-13) Multi-child selector chips with active status; was unhighlighted
+        // (2026-07-13) Add long-press to unlink child; was click only
         async function renderStudentSelector(links) {
             const bar = document.getElementById('studentSelector');
             bar.innerHTML = '';
@@ -2659,7 +2787,55 @@
                 const chip = document.createElement('div');
                 chip.className = 'selector-chip' + (activeLink?.id === link.id ? ' active' : '');
                 chip.textContent = resolvedName;
-                chip.onclick = () => selectStudent(link, resolvedName);
+                chip.title = `Hold to remove ${resolvedName}`;
+                chip.style.userSelect = 'none';
+
+                let holdTimer = null;
+                let isLongPress = false;
+
+                const startHold = () => {
+                    isLongPress = false;
+                    holdTimer = setTimeout(async () => {
+                        isLongPress = true;
+                        if (confirm(`Remove child ${resolvedName}? You can link or invite them again anytime.`)) {
+                            try {
+                                // (2026-07-13) Pass guardian & student pair to remove all matching links
+                                await removeGuardianLink(link.id, {
+                                    guardianId: auth.currentUser?.uid,
+                                    guardianEmail: auth.currentUser?.email,
+                                    studentId: link.studentId,
+                                    studentUid: link.studentUid
+                                });
+                                showToast("Child removed successfully.");
+                                if (auth.currentUser) initDashboard(auth.currentUser);
+                            } catch (e) {
+                                showToast("Failed to remove child.", "error");
+                            }
+                        }
+                    }, 700);
+                };
+
+                const cancelHold = () => {
+                    if (holdTimer) {
+                        clearTimeout(holdTimer);
+                        holdTimer = null;
+                    }
+                };
+
+                chip.addEventListener('pointerdown', startHold);
+                chip.addEventListener('pointerup', cancelHold);
+                chip.addEventListener('pointerleave', cancelHold);
+                chip.addEventListener('pointercancel', cancelHold);
+                chip.addEventListener('contextmenu', (e) => e.preventDefault());
+
+                chip.onclick = (e) => {
+                    if (isLongPress) {
+                        e.preventDefault();
+                        isLongPress = false;
+                        return;
+                    }
+                    selectStudent(link, resolvedName);
+                };
                 bar.appendChild(chip);
             }
         }
@@ -2849,8 +3025,8 @@
                 }) : [];
                 if (recentSos.length > 0) {
                     const alert = recentSos[0];
-                    if (card) card.style.display = 'flex';
-                    const sName = activeLink?.studentName || alert.userName || alert.studentName || 'Your child';
+                    // (2026-07-13) Display active resolved student name in SOS; was stale link
+                    const sName = document.getElementById('activeStudentName')?.textContent?.trim() || activeLink?.studentName || alert.userName || alert.studentName || 'Your child';
                     const sTime = alert.timestamp?.toDate?.() ? alert.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active now';
                     const sLoc = alert.location?.address || (alert.location?.lat ? `${alert.location.lat.toFixed(4)}, ${alert.location.lng.toFixed(4)}` : 'Campus Grounds');
                     const sType = (alert.emergencyType || 'SOS Emergency').toUpperCase();
@@ -2861,11 +3037,15 @@
                     if (btn && alert.location?.lat && alert.location?.lng) {
                         btn.onclick = () => {
                             setActiveView('map');
+                            const notifDrop = document.getElementById('guardianNotifDropdown');
+                            if (notifDrop) notifDrop.style.display = 'none';
                             if (map) map.setView([alert.location.lat, alert.location.lng], 18);
                         };
                     }
+                    updateGuardianNotifBadge();
                 } else {
                     if (card) card.style.display = 'none';
+                    updateGuardianNotifBadge();
                 }
             });
         }

@@ -238,11 +238,12 @@
                 <img src="logo with text.png" alt="Securo" class="securo-preloader-logo">
                 <div class="securo-preloader-shimmer"></div>
             </div>
+            <!-- (2026-07-13) Move indicator below logo in preloader; was above logo -->
             <div class="securo-preloader-indicator">
+                <span class="securo-preloader-status-text">INITIALIZING SECURE SYSTEMS</span>
                 <div class="securo-preloader-progress-track">
                     <div class="securo-preloader-progress-bar"></div>
                 </div>
-                <span class="securo-preloader-status-text">INITIALIZING SECURE SYSTEMS</span>
             </div>
         </div>
     </div>
@@ -293,7 +294,12 @@
 
         <div class="footer-note">
             <p>&copy; 2026 Securo Campus Safety Systems</p>
-            <a href="admin-login.html" style="color: inherit; text-decoration: none; opacity: 0.5;">Admin Terminal</a>
+            <div style="display:flex; justify-content:center; gap:16px; margin-top:8px;">
+                <!-- (2026-07-13) Add link to landing page trailer; was admin link only -->
+                <a href="landing.html" style="color: var(--primary); text-decoration: none; font-weight: 700;">Explore App Trailer</a>
+                <span style="opacity:0.3;">•</span>
+                <a href="admin-login.html" style="color: inherit; text-decoration: none; opacity: 0.5;">Admin Terminal</a>
+            </div>
         </div>
     </div>
 

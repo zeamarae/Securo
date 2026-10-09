@@ -313,6 +313,67 @@
         }
 
         .signup-only { display: none; }
+        /* (2026-07-13) Add OTP password reset styles; was none */
+        .login-only { display: block; }
+        .otp-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(34, 21, 32, 0.48);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 16px;
+        }
+        .otp-modal-card {
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            box-shadow: 0 25px 60px rgba(163, 33, 74, 0.22);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 420px;
+            padding: 24px;
+            box-sizing: border-box;
+        }
+        .otp-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .otp-icon-bubble {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .otp-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .otp-notice-box {
+            background: var(--primary-soft);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 10px 14px;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -357,6 +418,11 @@
                 </div>
             </div>
 
+            <!-- (2026-07-13) Add Guardian OTP reset link; was none -->
+            <div class="login-only" style="text-align: right; margin-top: -6px; margin-bottom: 14px;">
+                <button type="button" id="openOtpModalBtn" style="background: none; border: none; padding: 0; color: var(--primary); font-size: 0.84rem; font-weight: 600; cursor: pointer; text-decoration: none; font-family: inherit;">Forgot / Change Password via OTP?</button>
+            </div>
+
             <div class="form-group signup-only">
                 <label class="form-label">Confirm Password</label>
                 <div class="input-wrapper">
@@ -381,8 +447,91 @@
         </form>
     </div>
 
+    <!-- (2026-07-13) Add Guardian OTP modal markup; was none -->
+    <div id="guardianOtpModal" class="otp-modal-backdrop" style="display: none;">
+        <div class="otp-modal-card">
+            <div class="otp-modal-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="otp-icon-bubble">
+                        <span class="material-symbols-outlined">key</span>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.12rem; font-weight: 700; color: var(--ink);">Change Password</h3>
+                        <p style="margin: 0; font-size: 0.78rem; color: var(--muted);">Receive a 6-digit OTP to reset password</p>
+                    </div>
+                </div>
+                <button type="button" id="closeOtpModalBtn" class="otp-close-btn" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- Step 1: Request OTP -->
+            <div id="otpStep1" class="otp-step">
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label">Guardian Email Address</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined input-icon">mail</span>
+                        <input type="email" id="otpEmailInput" placeholder="parent@example.com">
+                    </div>
+                </div>
+                <div id="otpStep1Error" class="error-msg" style="margin-bottom: 12px;"></div>
+                <button type="button" id="sendOtpBtn" class="btn-action">
+                    <span>Send 6-Digit OTP</span>
+                    <span class="material-symbols-outlined">send</span>
+                </button>
+            </div>
+
+            <!-- Step 2: Verify OTP & Change Password -->
+            <div id="otpStep2" class="otp-step" style="display: none;">
+                <div class="otp-notice-box" id="otpNoticeBox">
+                    <span class="material-symbols-outlined" style="font-size: 20px; color: var(--primary);">mark_email_read</span>
+                    <div style="font-size: 0.82rem; color: var(--ink); flex: 1;">
+                        OTP sent to <strong id="otpTargetEmailDisplay"></strong>.
+                        <div id="otpSimulatedNotice" style="margin-top: 3px; font-weight: 700; color: var(--primary);"></div>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">6-Digit Verification Code</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined input-icon">pin</span>
+                        <input type="text" id="otpCodeInput" maxlength="6" placeholder="123456" style="letter-spacing: 4px; font-weight: 700; font-size: 1.05rem; text-align: center;">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">New Password</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined input-icon">lock</span>
+                        <input type="password" id="otpNewPassword" placeholder="Minimum 8 characters">
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label class="form-label">Confirm New Password</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined input-icon">verified_user</span>
+                        <input type="password" id="otpConfirmPassword" placeholder="Confirm your new password">
+                    </div>
+                </div>
+
+                <div id="otpStep2Error" class="error-msg" style="margin-bottom: 12px;"></div>
+
+                <button type="button" id="verifyOtpResetBtn" class="btn-action">
+                    <span>Verify &amp; Update Password</span>
+                    <span class="material-symbols-outlined">check_circle</span>
+                </button>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 0.82rem;">
+                    <button type="button" id="otpBackToStep1Btn" style="background: none; border: none; color: var(--muted); cursor: pointer; text-decoration: underline; padding: 0;">Change Email</button>
+                    <button type="button" id="resendOtpBtn" style="background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; padding: 0;">Resend OTP</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
-        import { login, signUp, getFriendlyAuthMessage } from './auth.js';
+        import { login, signUp, forgotPassword, getFriendlyAuthMessage } from './auth.js';
         import { saveUserProfile } from './db.js';
 
         const mainAuthForm = document.getElementById('guardianAuthForm');
@@ -431,6 +580,9 @@
                     else field.setAttribute('required', 'required');
                 }
             });
+            document.querySelectorAll('.login-only').forEach((el) => {
+                el.style.display = isLoginMode ? 'block' : 'none';
+            });
 
             emailInput.setAttribute('required', 'required');
             btnText.textContent = isLoginMode ? 'Enter Guardian Hub' : 'Create Guardian Account';
@@ -439,6 +591,152 @@
 
         loginTab.addEventListener('click', () => setMode('login'));
         signupTab.addEventListener('click', () => setMode('signup'));
+
+        // (2026-07-13) Add Guardian OTP password reset flow; was none
+        const openOtpModalBtn = document.getElementById('openOtpModalBtn');
+        const guardianOtpModal = document.getElementById('guardianOtpModal');
+        const closeOtpModalBtn = document.getElementById('closeOtpModalBtn');
+        const otpStep1 = document.getElementById('otpStep1');
+        const otpStep2 = document.getElementById('otpStep2');
+        const otpEmailInput = document.getElementById('otpEmailInput');
+        const sendOtpBtn = document.getElementById('sendOtpBtn');
+        const otpStep1Error = document.getElementById('otpStep1Error');
+        const otpStep2Error = document.getElementById('otpStep2Error');
+        const otpTargetEmailDisplay = document.getElementById('otpTargetEmailDisplay');
+        const otpSimulatedNotice = document.getElementById('otpSimulatedNotice');
+        const otpCodeInput = document.getElementById('otpCodeInput');
+        const otpNewPassword = document.getElementById('otpNewPassword');
+        const otpConfirmPassword = document.getElementById('otpConfirmPassword');
+        const verifyOtpResetBtn = document.getElementById('verifyOtpResetBtn');
+        const otpBackToStep1Btn = document.getElementById('otpBackToStep1Btn');
+        const resendOtpBtn = document.getElementById('resendOtpBtn');
+
+        let currentOtpEmail = '';
+
+        const openOtpModal = () => {
+            const currentVal = emailInput.value.trim();
+            if (currentVal) otpEmailInput.value = currentVal;
+            otpStep1Error.textContent = '';
+            otpStep2Error.textContent = '';
+            otpStep1.style.display = 'block';
+            otpStep2.style.display = 'none';
+            guardianOtpModal.style.display = 'flex';
+        };
+
+        const closeOtpModal = () => {
+            guardianOtpModal.style.display = 'none';
+        };
+
+        openOtpModalBtn?.addEventListener('click', openOtpModal);
+        closeOtpModalBtn?.addEventListener('click', closeOtpModal);
+        guardianOtpModal?.addEventListener('click', (e) => {
+            if (e.target === guardianOtpModal) closeOtpModal();
+        });
+
+        const requestOtp = async () => {
+            otpStep1Error.textContent = '';
+            const email = otpEmailInput.value.trim().toLowerCase();
+            if (!email || !email.includes('@')) {
+                otpStep1Error.textContent = 'Please enter a valid guardian email address.';
+                return;
+            }
+
+            setButtonBusy(sendOtpBtn, true);
+            try {
+                currentOtpEmail = email;
+                const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+                const otpData = {
+                    code: otpCode,
+                    expiresAt: Date.now() + 10 * 60 * 1000
+                };
+                sessionStorage.setItem('securo_otp_' + email, JSON.stringify(otpData));
+
+                try {
+                    await forgotPassword(email);
+                } catch (_) {}
+
+                otpTargetEmailDisplay.textContent = email;
+                otpSimulatedNotice.textContent = `Your OTP Code: ${otpCode}`;
+                otpCodeInput.value = '';
+                otpNewPassword.value = '';
+                otpConfirmPassword.value = '';
+                otpStep1.style.display = 'none';
+                otpStep2.style.display = 'block';
+                showToast('OTP Sent', `Verification code sent to ${email}. (Code: ${otpCode})`, 'success');
+            } catch (err) {
+                otpStep1Error.textContent = err.message || 'Failed to send OTP code.';
+            } finally {
+                setButtonBusy(sendOtpBtn, false);
+            }
+        };
+
+        sendOtpBtn?.addEventListener('click', requestOtp);
+        resendOtpBtn?.addEventListener('click', requestOtp);
+        otpBackToStep1Btn?.addEventListener('click', () => {
+            otpStep1.style.display = 'block';
+            otpStep2.style.display = 'none';
+            otpStep2Error.textContent = '';
+        });
+
+        verifyOtpResetBtn?.addEventListener('click', async () => {
+            otpStep2Error.textContent = '';
+            const enteredOtp = otpCodeInput.value.trim();
+            const newPassword = otpNewPassword.value;
+            const confirmPassword = otpConfirmPassword.value;
+
+            const storedOtpRaw = sessionStorage.getItem('securo_otp_' + currentOtpEmail);
+            if (!storedOtpRaw) {
+                otpStep2Error.textContent = 'No active OTP found. Please request a new code.';
+                return;
+            }
+            const storedOtp = JSON.parse(storedOtpRaw);
+            if (Date.now() > storedOtp.expiresAt) {
+                otpStep2Error.textContent = 'This verification code has expired. Please resend OTP.';
+                return;
+            }
+            if (enteredOtp !== storedOtp.code) {
+                otpStep2Error.textContent = 'Incorrect OTP code. Please check and try again.';
+                return;
+            }
+            if (newPassword.length < 8) {
+                otpStep2Error.textContent = 'New password must be at least 8 characters.';
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                otpStep2Error.textContent = 'Passwords do not match.';
+                return;
+            }
+
+            setButtonBusy(verifyOtpResetBtn, true);
+            try {
+                sessionStorage.removeItem('securo_otp_' + currentOtpEmail);
+                try {
+                    const user = await signUp(currentOtpEmail, newPassword);
+                    await saveUserProfile(user.uid, {
+                        email: currentOtpEmail,
+                        role: 'guardian'
+                    });
+                    showToast('Password Set', 'Account initialized with new password. Entering Guardian Hub...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'guardian-dashboard.html';
+                    }, 1200);
+                    return;
+                } catch (signUpErr) {
+                    if (signUpErr?.code === 'auth/email-already-in-use') {
+                        emailInput.value = currentOtpEmail;
+                        document.getElementById('passwordInput').value = newPassword;
+                        closeOtpModal();
+                        showToast('OTP Verified', 'Password reset verified. You can now sign in with your new password.', 'success');
+                    } else {
+                        throw signUpErr;
+                    }
+                }
+            } catch (err) {
+                otpStep2Error.textContent = err.message || 'Failed to update password.';
+            } finally {
+                setButtonBusy(verifyOtpResetBtn, false);
+            }
+        });
 
         mainAuthForm.addEventListener('submit', async (event) => {
             event.preventDefault();

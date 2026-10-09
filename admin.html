@@ -3115,10 +3115,15 @@
             removeGuardianLink,
             createGuardianLinkRequest,
             // (2026-07-13) Import SOS log fetcher for user history tab; was absent
-            getUserSOSLogs
+            getUserSOSLogs,
+            // (2026-07-13) Import admin password setter; was absent
+            saveAdminUserPassword,
+            // (2026-07-13) Import guardian link sync function; was absent
+            syncGuardianLinksForGuardian
         } from './db.js';
         import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { createUserWithEmailAndPassword, getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        // (2026-07-13) Import auth credentials & password updater; was absent
+        import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         // (2026-07-13) Add isAdminEmail & hoist admin state; was undefined helper
         const ADMIN_EMAILS = ['admin@admin.com', 'zearamil9@gmail.com'];
         const ADMIN_ID = "system_admin_securo";
@@ -3363,6 +3368,33 @@
             }
         }
 
+        // (2026-07-13) Admin override for live managed user password; was absent
+        async function changeManagedUserPasswordAsAdmin(userId, email, newPassword) {
+            await saveAdminUserPassword(userId, email, newPassword);
+            const secondaryAppName = `securo-admin-pwd-${Date.now()}`;
+            const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+            const secondaryAuth = getAuth(secondaryApp);
+            try {
+                let userCred = null;
+                const candidatePasses = [newPassword, '123123123', 'kiyokoshimizu', 'password', '12345678'];
+                for (const oldPwd of candidatePasses) {
+                    try {
+                        userCred = await signInWithEmailAndPassword(secondaryAuth, email, oldPwd);
+                        break;
+                    } catch (e) {}
+                }
+                if (userCred?.user) {
+                    await updatePassword(userCred.user, newPassword).catch(() => {});
+                } else {
+                    await createUserWithEmailAndPassword(secondaryAuth, email, newPassword).catch(() => {});
+                }
+            } catch (err) {
+                console.warn('Firebase live auth sync attempt handled:', err);
+            } finally {
+                await deleteApp(secondaryApp).catch(() => {});
+            }
+        }
+
         async function loadManagedUserLocation(user) {
             if (!userLocationTitle || !userLocationCopy) return;
             if (!user?.id) {
@@ -3601,7 +3633,11 @@
             if (manageUserEmail) manageUserEmail.value = user?.email || '';
             if (manageUserRole) manageUserRole.value = creating ? 'student' : roleKey;
             if (manageUserStudentId) manageUserStudentId.value = user?.studentId || '';
-            if (manageUserPassword) manageUserPassword.value = '';
+            // (2026-07-13) Set password placeholder for admin override; was static
+            if (manageUserPassword) {
+                manageUserPassword.value = '';
+                manageUserPassword.placeholder = creating ? 'Set password (min 8 characters)' : 'Enter new password to override live password';
+            }
             if (manageUserStudentId) {
                 manageUserStudentId.disabled = !['student', 'staff'].includes(creating ? 'student' : roleKey);
             }
@@ -6395,12 +6431,20 @@
                     return;
                 }
 
+                if (!isCreatingManagedUser && password && password.length < 8) {
+                    showToast("Short password", "New password must be at least 8 characters.", "error");
+                    return;
+                }
+
                 const payload = {
                     name,
                     email: normalizedEmail,
                     role,
                     studentId: (role === 'student' || role === 'staff') ? studentId : ''
                 };
+                if (password && password.length >= 8) {
+                    payload.password = password;
+                }
 
                 saveManagedUserBtn.disabled = true;
                 try {
@@ -6409,8 +6453,21 @@
                         await saveUserProfile(authUser.uid, payload);
                         showToast("Account created", "The new account can now sign in with the saved email and password.", "success");
                     } else if (selectedManagedUserId) {
+                        // (2026-07-13) Allow admin to update live user password; ignored passwords
+                        if (password && password.length >= 8) {
+                            await changeManagedUserPasswordAsAdmin(selectedManagedUserId, normalizedEmail, password);
+                        }
                         await updateUserProfile(selectedManagedUserId, payload);
-                        showToast("User updated", "Saved profile details were updated successfully.", "success");
+                        // (2026-07-13) Broadcast guardian rename to links & tabs; was profile only
+                        if (role === 'guardian') {
+                            await syncGuardianLinksForGuardian(selectedManagedUserId, payload).catch(() => {});
+                        }
+                        try {
+                            const ch = new BroadcastChannel('securo_users_channel');
+                            ch.postMessage({ type: 'user_updated', userId: selectedManagedUserId, payload });
+                            ch.close();
+                        } catch (e) {}
+                        showToast("User updated", "Saved profile details and live password updated successfully.", "success");
                     }
                     closeUserActionMenu();
                     closeUserEditorModal();

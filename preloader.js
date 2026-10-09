@@ -52,6 +52,7 @@
 
         // 1. Initial State
         gsap.set(logo, { opacity: 0, scale: 0.72, y: 35 });
+        // (2026-07-13) Set initial y offset for bottom indicator; was -10
         gsap.set(indicator, { opacity: 0, y: 10 });
         gsap.set(progressBar, { width: '0%' });
 

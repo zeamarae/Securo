@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Securo - The Next-Gen Campus Safety & Attendance Ecosystem</title>
+    <meta name="description" content="Securo is the shared campus safety, attendance, and emergency protection platform connecting students, parents, and security in real time.">
+    <link rel="icon" type="image/png" href="logo.png">
+
+    <!-- Typography & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+
+    <style>
+        :root {
+            --bg: #fcfbfe;
+            --bg-warm: #faf7f5;
+            --surface: #ffffff;
+            --ink: #120f26;
+            --ink-muted: #625c75;
+            --primary: #5a1fe0;
+            --primary-strong: #4311c5;
+            --primary-soft: #f2edff;
+            --accent-orange: #ff5722;
+            --accent-amber: #f59e0b;
+            --accent-green: #10b981;
+            --accent-rose: #f43f5e;
+            --line: rgba(18, 15, 38, 0.08);
+            --line-primary: rgba(90, 31, 224, 0.15);
+            --shadow-subtle: 0 10px 30px rgba(18, 15, 38, 0.04);
+            --shadow-card: 0 20px 48px rgba(90, 31, 224, 0.08);
+            --shadow-phone: 0 35px 90px rgba(18, 15, 38, 0.16);
+            --radius-xl: 32px;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: "Outfit", -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: var(--ink);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Ambient Glows */
+        .ambient-glow-top {
+            position: absolute;
+            top: -200px;
+            right: -100px;
+            width: 700px;
+            height: 700px;
+            background: radial-gradient(circle, rgba(90, 31, 224, 0.08) 0%, rgba(255, 87, 34, 0.03) 50%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .ambient-glow-bottom {
+            position: absolute;
+            bottom: 200px;
+            left: -150px;
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, rgba(244, 63, 94, 0.05) 0%, rgba(90, 31, 224, 0.04) 50%, transparent 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Container */
+        .page-container {
+            width: 100%;
+            max-width: 1320px;
+            margin: 0 auto;
+            padding: 0 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Navbar */
+        .navbar-main {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background: rgba(252, 251, 254, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--line);
+            padding: 16px 0;
+            transition: all 0.3s ease;
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand-logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .brand-logo-img {
+            height: 38px;
+            width: auto;
+            display: block;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--ink-muted);
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-ghost {
+            text-decoration: none;
+            color: var(--ink);
+            font-size: 0.92rem;
+            font-weight: 700;
+            padding: 10px 18px;
+            border-radius: 999px;
+            transition: background 0.2s ease;
+        }
+
+        .btn-ghost:hover {
+            background: rgba(18, 15, 38, 0.05);
+        }
+
+        .btn-primary {
+            text-decoration: none;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
+            color: #ffffff !important;
+            font-size: 0.92rem;
+            font-weight: 700;
+            padding: 12px 24px;
+            border-radius: 999px;
+            box-shadow: 0 8px 24px rgba(90, 31, 224, 0.28);
+            transition: all 0.25s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(90, 31, 224, 0.36);
+        }
+
+        /* Hero Section (Matching Reference Layout) */
+        .hero-section {
+            padding: 60px 0 100px;
+            min-height: calc(100vh - 80px);
+            display: flex;
+            align-items: center;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 60px;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* Hero Left: Editorial Content */
+        .hero-left {
+            position: relative;
+            padding-right: 20px;
+        }
+
+        .hero-headline {
+            font-family: "Fraunces", Georgia, serif;
+            font-size: clamp(3.4rem, 6.5vw, 5.6rem);
+            font-weight: 700;
+            line-height: 1.05;
+            letter-spacing: -0.035em;
+            color: #1a1728;
+            margin-bottom: 34px;
+        }
+
+        .hero-headline span {
+            display: block;
+        }
+
+        .app-store-badges {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .store-badge-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: #000000;
+            color: #ffffff;
+            padding: 9px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+
+        .store-badge-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.22);
+        }
+
+        .store-badge-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .store-badge-text {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.15;
+            text-align: left;
+        }
+
+        .store-badge-text .caption {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            opacity: 0.8;
+        }
+
+        .store-badge-text .store-title {
+            font-size: 0.96rem;
+            font-weight: 700;
+            font-family: "Outfit", sans-serif;
+        }
+
+        .hero-subhead {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: #1a1728;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .hero-description {
+            font-size: 1.1rem;
+            color: var(--ink-muted);
+            line-height: 1.7;
+            max-width: 520px;
+            margin-bottom: 32px;
+        }
+
+        /* Hero Graphic Illustration (Homage to reference orange burst fan) */
+        .hero-illustration-wrapper {
+            position: relative;
+            margin-top: 10px;
+            height: 140px;
+            width: 100%;
+            overflow: visible;
+        }
+
+        .sunburst-graphic {
+            position: absolute;
+            left: 0;
+            bottom: -20px;
+            width: 280px;
+            height: auto;
+            pointer-events: none;
+            animation: pulsePetals 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulsePetals {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.04) rotate(2deg); }
+        }
+
+        /* Hero Right: iPhone Showcase */
+        .hero-right {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* Interactive Showcase Controls */
+        .trailer-tabs-bar {
+            display: flex;
+            gap: 8px;
+            padding: 6px;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--line-primary);
+            border-radius: 999px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 24px rgba(90, 31, 224, 0.08);
+            max-width: 100%;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .trailer-tabs-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .trailer-pill {
+            padding: 8px 16px;
+            border-radius: 999px;
+            border: none;
+            background: transparent;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--ink-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.25s ease;
+        }
+
+        .trailer-pill:hover {
+            color: var(--primary);
+            background: var(--primary-soft);
+        }
+
+        .trailer-pill.active {
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(90, 31, 224, 0.3);
+        }
+
+        .trailer-pill .material-symbols-outlined {
+            font-size: 16px;
+        }
+
+        /* Realistic iPhone Mockup Frame */
+        .iphone-mockup-wrap {
+            position: relative;
+            width: 340px;
+            height: 690px;
+            background: #1e1b2e;
+            border-radius: 54px;
+            padding: 12px;
+            box-shadow: var(--shadow-phone), 0 0 0 4px #423d5a, 0 0 0 8px #1e1b2e;
+            transition: transform 0.3s ease;
+        }
+
+        .iphone-mockup-wrap:hover {
+            transform: translateY(-4px);
+        }
+
+        /* Dynamic Island & Speaker */
+        .iphone-island {
+            position: absolute;
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 105px;
+            height: 28px;
+            background: #000000;
+            border-radius: 20px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 8px;
+        }
+
+        .island-camera {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #111422;
+            border: 1px solid #23283f;
+        }
+
+        .island-sensor {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #111422;
+        }
+
+        /* Screen Display Screen Frame */
+        .iphone-screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 44px;
+            overflow: hidden;
+            background: #ffffff;
+            position: relative;
+        }
+
+        .iphone-screenshot-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+            display: block;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        /* Floating Badge Over iPhone */
+        .phone-floating-pill {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(18, 15, 38, 0.88);
+            backdrop-filter: blur(12px);
+            color: #ffffff;
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.15);
+            z-index: 50;
+        }
+
+        .phone-floating-pill .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.4);
+            animation: pulseGlow 1.8s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+
+        /* Section Title Block */
+        .section-header {
+            text-align: center;
+            max-width: 760px;
+            margin: 0 auto 60px;
+        }
+
+        .section-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--primary);
+            background: var(--primary-soft);
+            padding: 6px 16px;
+            border-radius: 999px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-family: "Fraunces", Georgia, serif;
+            font-size: clamp(2.2rem, 4vw, 3.4rem);
+            font-weight: 700;
+            line-height: 1.15;
+            letter-spacing: -0.03em;
+            color: var(--ink);
+            margin-bottom: 16px;
+        }
+
+        .section-lead {
+            font-size: 1.15rem;
+            color: var(--ink-muted);
+            line-height: 1.6;
+        }
+
+        /* Feature Pillars Grid (Trailer Highlights) */
+        .features-section {
+            padding: 100px 0;
+            background: #ffffff;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .feature-card {
+            background: var(--bg);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            padding: 36px 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--line-primary);
+            box-shadow: var(--shadow-card);
+        }
+
+        .feature-icon-box {
+            width: 58px;
+            height: 58px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon-box {
+            transform: scale(1.08);
+        }
+
+        .feature-icon-box.purple {
+            background: #f1ecff;
+            color: var(--primary);
+        }
+
+        .feature-icon-box.rose {
+            background: #fff0f3;
+            color: var(--accent-rose);
+        }
+
+        .feature-icon-box.emerald {
+            background: #ecfdf5;
+            color: var(--accent-green);
+        }
+
+        .feature-icon-box.orange {
+            background: #fff4ed;
+            color: var(--accent-orange);
+        }
+
+        .feature-icon-box.amber {
+            background: #fefce8;
+            color: var(--accent-amber);
+        }
+
+        .feature-card h3 {
+            font-family: "Sora", sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .feature-card p {
+            font-size: 0.96rem;
+            color: var(--ink-muted);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .feature-badge-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: auto;
+        }
+
+        .feature-tag {
+            font-size: 0.74rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(18, 15, 38, 0.05);
+            color: var(--ink-muted);
+        }
+
+        /* Dual View Experience Showcase */
+        .dual-view-section {
+            padding: 110px 0;
+            background: linear-gradient(180deg, var(--bg) 0%, #f6f2ff 100%);
+        }
+
+        .dual-view-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: stretch;
+        }
+
+        .perspective-card {
+            background: #ffffff;
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--line-primary);
+            padding: 44px;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .perspective-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 6px 14px;
+            border-radius: 999px;
+            margin-bottom: 20px;
+            align-self: flex-start;
+        }
+
+        .perspective-tag.student {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
+        .perspective-tag.guardian {
+            background: #fff0f3;
+            color: var(--accent-rose);
+        }
+
+        .perspective-card h3 {
+            font-family: "Fraunces", Georgia, serif;
+            font-size: 1.85rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .perspective-card p {
+            font-size: 1.02rem;
+            color: var(--ink-muted);
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+
+        .perspective-screenshot-box {
+            width: 100%;
+            height: 380px;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: #1a1728;
+            box-shadow: 0 16px 36px rgba(18, 15, 38, 0.12);
+            position: relative;
+            margin-top: auto;
+        }
+
+        .perspective-screenshot-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+
+        .perspective-card:hover .perspective-screenshot-box img {
+            transform: scale(1.03);
+        }
+
+        /* Role Selection Portal Section (Bottom Requirement) */
+        .roles-section {
+            padding: 120px 0 100px;
+            background: #ffffff;
+            position: relative;
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            margin-bottom: 50px;
+        }
+
+        .role-portal-card {
+            background: var(--bg);
+            border: 2px solid var(--line);
+            border-radius: var(--radius-xl);
+            padding: 40px 32px;
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .role-portal-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: 0 24px 60px rgba(90, 31, 224, 0.14);
+        }
+
+        .role-portal-card.featured {
+            border-color: var(--primary);
+            background: #ffffff;
+            box-shadow: 0 16px 40px rgba(90, 31, 224, 0.08);
+        }
+
+        .role-portal-card.featured::before {
+            content: "PRIMARY STUDENT EXPERIENCE";
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: #ffffff;
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            padding: 4px 16px;
+            border-radius: 999px;
+            box-shadow: 0 4px 12px rgba(90, 31, 224, 0.3);
+        }
+
+        .role-avatar-circle {
+            width: 64px;
+            height: 64px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .role-avatar-circle.student {
+            background: #f1ecff;
+            color: var(--primary);
+        }
+
+        .role-avatar-circle.guardian {
+            background: #fff0f3;
+            color: var(--accent-rose);
+        }
+
+        .role-avatar-circle.admin {
+            background: #ecfdf5;
+            color: var(--accent-green);
+        }
+
+        .role-portal-card h3 {
+            font-family: "Sora", sans-serif;
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+        }
+
+        .role-portal-card .role-desc {
+            font-size: 0.95rem;
+            color: var(--ink-muted);
+            line-height: 1.55;
+            margin-bottom: 24px;
+            min-height: 44px;
+        }
+
+        /* Demo Credentials Pill Box */
+        .demo-credentials-box {
+            background: rgba(90, 31, 224, 0.04);
+            border: 1px dashed rgba(90, 31, 224, 0.22);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 28px;
+            font-size: 0.82rem;
+        }
+
+        .demo-credentials-box .box-title {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 6px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .demo-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+            color: var(--ink);
+        }
+
+        .demo-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .demo-row .key {
+            color: var(--ink-muted);
+            font-weight: 500;
+        }
+
+        .demo-row .val {
+            font-family: monospace;
+            font-weight: 700;
+            color: var(--primary-strong);
+            background: #ffffff;
+            padding: 2px 6px;
+            border-radius: 6px;
+            border: 1px solid rgba(90, 31, 224, 0.12);
+        }
+
+        .role-cta-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px 20px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.98rem;
+            transition: all 0.25s ease;
+            margin-top: auto;
+        }
+
+        .role-cta-btn.student {
+            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
+            color: #ffffff;
+            box-shadow: 0 8px 20px rgba(90, 31, 224, 0.25);
+        }
+
+        .role-cta-btn.student:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(90, 31, 224, 0.35);
+        }
+
+        .role-cta-btn.guardian {
+            background: linear-gradient(135deg, var(--accent-rose), #e11d48);
+            color: #ffffff;
+            box-shadow: 0 8px 20px rgba(244, 63, 94, 0.25);
+        }
+
+        .role-cta-btn.guardian:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(244, 63, 94, 0.35);
+        }
+
+        .role-cta-btn.admin {
+            background: #ffffff;
+            color: var(--ink);
+            border: 1.5px solid var(--line);
+        }
+
+        .role-cta-btn.admin:hover {
+            background: #f8fafc;
+            border-color: var(--ink);
+            transform: translateY(-2px);
+        }
+
+        /* Demo Notice Banner */
+        .demo-instant-banner {
+            background: linear-gradient(135deg, #f7f4ff 0%, #fff7f9 100%);
+            border: 1px solid var(--line-primary);
+            border-radius: var(--radius-lg);
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+
+        .banner-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .banner-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: var(--primary);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .banner-text h4 {
+            font-family: "Sora", sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--ink);
+            margin-bottom: 4px;
+        }
+
+        .banner-text p {
+            font-size: 0.9rem;
+            color: var(--ink-muted);
+        }
+
+        .banner-actions {
+            display: flex;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .banner-btn {
+            padding: 10px 20px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .banner-btn.student {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .banner-btn.guardian {
+            background: var(--accent-rose);
+            color: #ffffff;
+        }
+
+        /* Institutional Footer */
+        .footer-main {
+            background: #100d20;
+            color: #ffffff;
+            padding: 70px 0 40px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1fr 1fr;
+            gap: 50px;
+            margin-bottom: 60px;
+        }
+
+        .footer-brand h2 {
+            font-family: "Sora", sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin-bottom: 14px;
+            letter-spacing: -0.03em;
+            color: #ffffff;
+        }
+
+        .footer-brand p {
+            color: #9b94b0;
+            font-size: 0.94rem;
+            line-height: 1.6;
+            max-width: 320px;
+        }
+
+        .footer-col h4 {
+            font-family: "Sora", sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #cfc7e8;
+            margin-bottom: 20px;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-col ul li a {
+            color: #9b94b0;
+            text-decoration: none;
+            font-size: 0.92rem;
+            transition: color 0.2s ease;
+        }
+
+        .footer-col ul li a:hover {
+            color: #ffffff;
+        }
+
+        .footer-bottom {
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #726b87;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1080px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 50px;
+                text-align: center;
+            }
+
+            .hero-left {
+                padding-right: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .hero-description {
+                max-width: 600px;
+            }
+
+            .app-store-badges {
+                justify-content: center;
+            }
+
+            .hero-illustration-wrapper {
+                display: none;
+            }
+
+            .features-grid,
+            .roles-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dual-view-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .demo-instant-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .banner-info {
+                flex-direction: column;
+            }
+
+            .banner-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Gradient Blobs -->
+    <div class="ambient-glow-top"></div>
+    <div class="ambient-glow-bottom"></div>
+
+    <!-- Navigation Header -->
+    <header class="navbar-main">
+        <div class="page-container nav-content">
+            <a href="landing.html" class="brand-logo-wrap" title="Securo Safety Platform">
+                <img src="logo with text.png" alt="Securo Logo" class="brand-logo-img">
+            </a>
+
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="#hero">Overview</a></li>
+                    <li><a href="#trailer">App Trailer</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#dual-view">Student vs Guardian</a></li>
+                    <li><a href="#roles">Role Portals</a></li>
+                </ul>
+            </nav>
+
+            <div class="nav-actions">
+                <a href="#roles" class="btn-ghost">Demo Access</a>
+                <a href="#roles" class="btn-primary">
+                    <span>Enter Portal</span>
+                    <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section: Editorial Headline + Apple Hardware Screenshot Showcase -->
+        <section class="hero-section" id="hero">
+            <div class="page-container hero-grid">
+                
+                <!-- Left Editorial Column -->
+                <div class="hero-left">
+                    <h1 class="hero-headline">
+                        <span>Track.</span>
+                        <span>Protect.</span>
+                        <span>Respond.</span>
+                        <span>Repeat.</span>
+                    </h1>
+
+                    <!-- App Store & Google Play Download Badges -->
+                    <div class="app-store-badges">
+                        <a href="#roles" class="store-badge-btn" title="Download on Apple App Store">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.63-.76 1.05-1.82.93-2.87-1 .04-2.19.67-2.89 1.48-.56.64-1.05 1.71-.92 2.73 1.11.08 2.25-.58 2.88-1.34z"/>
+                            </svg>
+                            <div class="store-badge-text">
+                                <span class="caption">Download on the</span>
+                                <span class="store-title">App Store</span>
+                            </div>
+                        </a>
+
+                        <a href="#roles" class="store-badge-btn" title="Get it on Google Play">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M3.6 2.5C3.2 2.9 3 3.5 3 4.3v15.4c0 .8.2 1.4.6 1.8l9.6-9.6L3.6 2.5zm11.1 8.5l2.4-2.4-12.8-7.3c-.1 0-.2-.1-.3-.1l10.7 9.8zm0 2l-10.7 9.8c.1 0 .2-.1.3-.1l12.8-7.3-2.4-2.4zm1.4-1.4l3.1 1.8c.9.5.9 1.4 0 1.9l-3.1 1.8-1.9-1.9 1.9-1.9z"/>
+                            </svg>
+                            <div class="store-badge-text">
+                                <span class="caption">GET IT ON</span>
+                                <span class="store-title">Google Play</span>
+                            </div>
+                        </a>
+                    </div>
+
+                    <h2 class="hero-subhead">A secure student is an empowered student.</h2>
+                    <p class="hero-description">
+                        Securo is your shared hub for student well-being, live campus safety, and rapid emergency intervention. Students and families stay connected through every moment of university life.
+                    </p>
+
+                  
+                </div>
+
+                <!-- Right iPhone Interactive Trailer Mockup -->
+                <div class="hero-right" id="trailer">
+                    <!-- Interactive Tab Switcher -->
+                    <div class="trailer-tabs-bar" role="tablist">
+                        <button class="trailer-pill active" onclick="switchPreview('map', this)">
+                            <span class="material-symbols-outlined">map</span>
+                            <span>Live Map</span>
+                        </button>
+                        <button class="trailer-pill" onclick="switchPreview('sos', this)">
+                            <span class="material-symbols-outlined">sos</span>
+                            <span>SOS Alert</span>
+                        </button>
+                        <button class="trailer-pill" onclick="switchPreview('vault', this)">
+                            <span class="material-symbols-outlined">lock</span>
+                            <span>Vault</span>
+                        </button>
+                        <button class="trailer-pill" onclick="switchPreview('attendance', this)">
+                            <span class="material-symbols-outlined">badge</span>
+                            <span>Attendance</span>
+                        </button>
+                        <button class="trailer-pill" onclick="switchPreview('gad', this)">
+                            <span class="material-symbols-outlined">support_agent</span>
+                            <span>GAD Chat</span>
+                        </button>
+                        <button class="trailer-pill" onclick="switchPreview('guardian', this)">
+                            <span class="material-symbols-outlined">family_restroom</span>
+                            <span>Guardian</span>
+                        </button>
+                    </div>
+
+                    <!-- Authentic iPhone Hardware Frame -->
+                    <div class="iphone-mockup-wrap">
+                        <div class="iphone-island">
+                            <div class="island-camera"></div>
+                            <div class="island-sensor"></div>
+                        </div>
+
+                        <div class="iphone-screen">
+                            <img src="screenshots/student_map.png" alt="Securo App Live Interface" id="previewScreenImg" class="iphone-screenshot-img">
+                        </div>
+
+                        <!-- Live Status Floating Chip -->
+                        <!-- (2026-07-13) Set active watcher to Mommy Mafe Ramil; was John Paul -->
+                        <div class="phone-floating-pill" id="previewStatusPill">
+                            <span class="live-dot"></span>
+                            <span id="previewStatusText">Parent Watching Active: Mommy Mafe Ramil</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Feature Trailer Highlights Grid -->
+        <section class="features-section" id="features">
+            <div class="page-container">
+                <div class="section-header">
+                    <span class="section-eyebrow">Enterprise Architecture</span>
+                    <h2 class="section-title">Engineered for Uncompromising Campus Safety</h2>
+                    <p class="section-lead">A unified multi-stakeholder platform replacing fragmented alert boxes with instant, verifiable defense.</p>
+                </div>
+
+                <div class="features-grid">
+                    <!-- Pillar 1: Campus Radar & Parent Watcher -->
+                    <div class="feature-card">
+                        <div class="feature-icon-box purple">
+                            <span class="material-symbols-outlined">radar</span>
+                        </div>
+                        <h3>Live Geofenced Radar & Parent Watcher</h3>
+                        <p>Continuous boundary surveillance with sticky guardian presence indicators. Students instantly see which approved family members are watching over them.</p>
+                        <div class="feature-badge-row">
+                            <span class="feature-tag">GPS Geofence</span>
+                            <span class="feature-tag">Live Pulse</span>
+                        </div>
+                    </div>
+
+                    <!-- Pillar 2: 1-Tap SOS Panic Trigger -->
+                    <div class="feature-card">
+                        <div class="feature-icon-box rose">
+                            <span class="material-symbols-outlined">emergency_home</span>
+                        </div>
+                        <h3>1-Tap SOS Beacon & Audio Alarm</h3>
+                        <p>High-priority incident trigger with a 5-second cancelable countdown, high-decibel audible siren, and real-time dispatcher coordinates beaconing.</p>
+                        <div class="feature-badge-row">
+                            <span class="feature-tag">5s Countdown</span>
+                            <span class="feature-tag">Instant Dispatch</span>
+                        </div>
+                    </div>
+
+                    <!-- Pillar 3: Encrypted Vault Locker -->
+                    <div class="feature-card">
+                        <div class="feature-icon-box orange">
+                            <span class="material-symbols-outlined">shield_lock</span>
+                        </div>
+                        <h3>Tamper-Proof Evidence Vault</h3>
+                        <p>Encrypted incident evidence repository. Upload and secure photos, audio notes, and video clips protected from unauthorized device-level deletion.</p>
+                        <div class="feature-badge-row">
+                            <span class="feature-tag">Encrypted Storage</span>
+                            <span class="feature-tag">Tamper-Proof</span>
+                        </div>
+                    </div>
+
+                    <!-- Pillar 4: Geofence Automated Attendance -->
+                    <div class="feature-card">
+                        <div class="feature-icon-box emerald">
+                            <span class="material-symbols-outlined">how_to_reg</span>
+                        </div>
+                        <h3>Contactless Gate Attendance</h3>
+                        <p>Automated arrival and departure verification at university gates without physical lines. Real-time logging delivers certainty to families.</p>
+                        <div class="feature-badge-row">
+                            <span class="feature-tag">Auto In/Out</span>
+                            <span class="feature-tag">Zero Queues</span>
+                        </div>
+                    </div>
+
+                    <!-- Pillar 5: Confidential GAD & Counseling Desk -->
+                    <div class="feature-card">
+                        <div class="feature-icon-box purple">
+                            <span class="material-symbols-outlined">forum</span>
+                        </div>
+                        <h3>Confidential GAD Support Chat</h3>
+                        <p>Direct real-time communication channel for student guidance, mental health counseling, and anti-sexual harassment (COSH) safe reporting.</p>
+                        <div class="feature-badge-row">
+                            <span class="feature-tag">Anonymous Option</span>
+                            <span class="feature-tag">Live Thread</span>
+                        </div>
+                    </div>
+
+                    <!-- Pillar 6: Guardian 360 Presence -->
+                    <div class="feature-card">
+                        <div class="feature-icon-box amber">
+                            <span class="material-symbols-outlined">family_restroom</span>
+                        </div>
+                        <h3>Guardian 360° Safety Suite</h3>
+                        <p>Dedicated portal empowering parents to track multiple linked children, view gate timestamps, and access authorized emergency posts.</p>
+                        <div class="feature-badge-row">
+                            <span class="feature-tag">Multi-Child</span>
+                            <span class="feature-tag">Push Alerts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dual-Perspective Experience Showcase -->
+        <section class="dual-view-section" id="dual-view">
+            <div class="page-container">
+                <div class="section-header">
+                    <span class="section-eyebrow">Synchronized Ecosystem</span>
+                    <h2 class="section-title">Two Perspectives. One Unified Safety Net.</h2>
+                    <p class="section-lead">See how Securo seamlessly bridges the student's personal defense on campus with the parent's peace of mind at home.</p>
+                </div>
+
+                <div class="dual-view-grid">
+                    <!-- Student Perspective -->
+                    <div class="perspective-card">
+                        <span class="perspective-tag student">
+                            <span class="material-symbols-outlined" style="font-size:16px;">school</span>
+                            Student Experience
+                        </span>
+                        <h3>Active Defense & Campus Autonomy</h3>
+                        <p>Complete control over campus navigation, gate attendance, emergency SOS activation, and confidential counseling—all from one frictionless interface.</p>
+                        <div class="perspective-screenshot-box">
+                            <img src="screenshots/student_map.png" alt="Student Active Map View">
+                        </div>
+                    </div>
+
+                    <!-- Guardian Perspective -->
+                    <div class="perspective-card">
+                        <span class="perspective-tag guardian">
+                            <span class="material-symbols-outlined" style="font-size:16px;">family_restroom</span>
+                            Guardian Experience
+                        </span>
+                        <h3>Continuous Peace of Mind</h3>
+                        <p>Real-time location breadcrumbs, automatic arrival and departure geofence notifications, and immediate shared emergency vault access.</p>
+                        <div class="perspective-screenshot-box">
+                            <img src="screenshots/guardian_dashboard.png" alt="Guardian Dashboard Monitoring View">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Role Selection Portal Section (Bottom Requirement with Demo Credentials) -->
+        <section class="roles-section" id="roles">
+            <div class="page-container">
+                <div class="section-header">
+                    <span class="section-eyebrow">Enterprise Access</span>
+                    <h2 class="section-title">Select Your Securo Experience</h2>
+                    <p class="section-lead">Choose your portal to enter the Securo live deployment. Use the verified demo accounts below for an instant walkthrough.</p>
+                </div>
+
+                <div class="roles-grid">
+                    <!-- Student Card -->
+                    <div class="role-portal-card featured">
+                        <div class="role-avatar-circle student">
+                            <span class="material-symbols-outlined" style="font-size:32px;">school</span>
+                        </div>
+                        <h3>Student Portal</h3>
+                        <p class="role-desc">Live radar, parent watcher bar, SOS alarm trigger, geofenced attendance, and GAD chat.</p>
+
+                        <!-- Demo Credentials Box -->
+                        <!-- (2026-07-13) Update demo student and guardian credentials; was legacy -->
+                        <div class="demo-credentials-box">
+                            <div class="box-title">
+                                <span class="material-symbols-outlined" style="font-size:14px;">key</span>
+                                Demo Student Login
+                            </div>
+                            <div class="demo-row">
+                                <span class="key">Student ID:</span>
+                                <span class="val">8230537</span>
+                            </div>
+                            <div class="demo-row">
+                                <span class="key">Password:</span>
+                                <span class="val">8230537</span>
+                            </div>
+                        </div>
+
+                        <a href="login.html" class="role-cta-btn student">
+                            <span>Launch Student App</span>
+                            <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
+                        </a>
+                    </div>
+
+                    <!-- Guardian Card -->
+                    <div class="role-portal-card">
+                        <div class="role-avatar-circle guardian">
+                            <span class="material-symbols-outlined" style="font-size:32px;">family_restroom</span>
+                        </div>
+                        <h3>Guardian Portal</h3>
+                        <p class="role-desc">Child live tracking radar, gate entry/exit push alerts, and shared incident evidence vault.</p>
+
+                        <!-- Demo Credentials Box -->
+                        <div class="demo-credentials-box">
+                            <div class="box-title">
+                                <span class="material-symbols-outlined" style="font-size:14px;">key</span>
+                                Demo Guardian Login
+                            </div>
+                            <div class="demo-row">
+                                <span class="key">Email:</span>
+                                <span class="val">kiyokoshimizu611@gmail.com</span>
+                            </div>
+                            <div class="demo-row">
+                                <span class="key">Password:</span>
+                                <span class="val"></span>
+                            </div>
+                        </div>
+
+                        <a href="guardian.html" class="role-cta-btn guardian">
+                            <span>Launch Guardian Portal</span>
+                            <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
+                        </a>
+                    </div>
+
+                    <!-- Administration Card -->
+                    <div class="role-portal-card">
+                        <div class="role-avatar-circle admin">
+                            <span class="material-symbols-outlined" style="font-size:32px;">admin_panel_settings</span>
+                        </div>
+                        <h3>Admin Terminal</h3>
+                        <p class="role-desc">Campus security dispatch console, attendance analytics, student verification, and audit logs.</p>
+
+                        <!-- Demo Credentials Box -->
+                        <div class="demo-credentials-box">
+                            <div class="box-title">
+                                <span class="material-symbols-outlined" style="font-size:14px;">security</span>
+                                Campus Dispatch Terminal
+                            </div>
+                            <div class="demo-row">
+                                <span class="key">Access:</span>
+                                <span class="val">Authorized Personnel</span>
+                            </div>
+                            <div class="demo-row">
+                                <span class="key">Console:</span>
+                                <span class="val">Security Desk</span>
+                            </div>
+                        </div>
+
+                        <a href="admin-login.html" class="role-cta-btn admin">
+                            <span>Access Security Console</span>
+                            <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Instant One-Click Jump Banner -->
+                <div class="demo-instant-banner">
+                    <div class="banner-info">
+                        <div class="banner-icon">
+                            <span class="material-symbols-outlined">bolt</span>
+                        </div>
+                        <div class="banner-text">
+                            <h4>Ready for an Instant Interactive Demo?</h4>
+                            <p>Pre-configured test accounts are live. Simply click to load student or parent credentials.</p>
+                        </div>
+                    </div>
+                    <div class="banner-actions">
+                        <a href="login.html" class="banner-btn student">Sign In as Student (1234567)</a>
+                        <a href="guardian.html" class="banner-btn guardian">Sign In as Guardian</a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- Institutional Footer -->
+    <footer class="footer-main">
+        <div class="page-container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h2>Securo</h2>
+                    <p>The mission-critical campus safety, automated attendance, and emergency defense infrastructure for higher education institutions.</p>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Ecosystem</h4>
+                    <ul>
+                        <li><a href="#hero">Live Campus Radar</a></li>
+                        <li><a href="#features">1-Tap SOS Alarm</a></li>
+                        <li><a href="#features">Evidence Vault Locker</a></li>
+                        <li><a href="#features">Geofence Attendance</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Direct Access</h4>
+                    <ul>
+                        <li><a href="login.html">Student Login</a></li>
+                        <li><a href="guardian.html">Guardian Portal</a></li>
+                        <li><a href="admin-login.html">Admin Terminal</a></li>
+                        <li><a href="role-selection.html">Role Selector</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Safety & Compliance</h4>
+                    <ul>
+                        <li><a href="about.html">About Securo</a></li>
+                        <li><a href="terms.html">Terms of Service</a></li>
+                        <li><a href="permissions-onboarding.html">Privacy & Permissions</a></li>
+                        <li><a href="incident-report.html">Campus Hotlines</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2026 Securo Campus Safety Systems. All rights reserved.</p>
+                <p>Designed for university operations and continuous student protection.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Interactive Trailer Script -->
+    <script>
+        // (2026-07-13) Update map preview label to Mommy Mafe Ramil; was John Paul
+        const PREVIEWS = {
+            map: {
+                src: 'screenshots/student_map.png',
+                text: 'Parent Watching Active: Mommy Mafe Ramil'
+            },
+            sos: {
+                src: 'screenshots/student_sos.png',
+                text: 'SOS Armed: 5-Second Cancel Countdown'
+            },
+            vault: {
+                src: 'screenshots/student_vault.png',
+                text: 'Evidence Vault: Encrypted Locker'
+            },
+            attendance: {
+                src: 'screenshots/student_attendance.png',
+                text: 'Campus Geofence: Ingress / Egress Logged'
+            },
+            gad: {
+                src: 'screenshots/student_gad.png',
+                text: 'GAD Desk: Real-Time Confidential Chat'
+            },
+            guardian: {
+                src: 'screenshots/guardian_dashboard.png',
+                text: 'Guardian View: Real-Time Child Radar'
+            }
+        };
+
+        function switchPreview(key, buttonEl) {
+            const data = PREVIEWS[key];
+            if (!data) return;
+
+            // Update pills
+            document.querySelectorAll('.trailer-pill').forEach(btn => btn.classList.remove('active'));
+            if (buttonEl) buttonEl.classList.add('active');
+
+            // Smooth image transition
+            const img = document.getElementById('previewScreenImg');
+            const pillText = document.getElementById('previewStatusText');
+
+            if (img) {
+                img.style.opacity = '0.3';
+                img.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    img.src = data.src;
+                    img.style.opacity = '1';
+                    img.style.transform = 'scale(1)';
+                }, 180);
+            }
+
+            if (pillText) {
+                pillText.textContent = data.text;
+            }
+        }
+    </script>
+</body>
+</html>

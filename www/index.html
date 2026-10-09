@@ -173,35 +173,36 @@
             display: block;
         }
 
+        /* (2026-07-13) Compact dropdown notifications; was fullscreen blurred sheet */
         .notif-dropdown {
             position: fixed;
             inset: 0;
-            background: rgba(20, 18, 34, 0.76);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: transparent;
             display: none;
-            align-items: stretch;
-            justify-content: stretch;
             z-index: 9000;
             padding: 0;
         }
 
         .notif-dropdown.active {
-            display: flex;
+            display: block;
         }
 
         .notif-panel {
-            width: 100%;
-            height: 100%;
-            max-height: none;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(247, 245, 255, 0.96) 100%);
-            border: none;
-            border-radius: 0;
-            box-shadow: none;
+            position: absolute;
+            top: calc(64px + env(safe-area-inset-top, 0px));
+            right: 12px;
+            width: min(360px, calc(100vw - 24px));
+            height: auto;
+            max-height: min(70vh, 480px);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 245, 255, 0.98) 100%);
+            border: 1px solid rgba(90, 31, 224, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 18px 48px rgba(24, 20, 40, 0.18);
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            animation: slideInDown 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            transform-origin: top right;
+            animation: slideInDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .notif-header {
@@ -1697,6 +1698,102 @@
             user-drag: none;
             user-select: none;
             -webkit-user-select: none;
+        }
+
+        /* (2026-07-13) Reduce student-parent-bar size & font; was 8px pad & 0.84rem */
+        .student-parent-bar {
+            padding: 5px 12px;
+            background: rgba(246, 243, 255, 0.96);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            border-bottom: 1px solid rgba(90, 31, 224, 0.12);
+            flex-shrink: 0;
+            z-index: 900;
+            scrollbar-width: none;
+        }
+
+        .student-parent-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .parent-selector-chip {
+            padding: 4px 10px;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1px solid rgba(90, 31, 224, 0.16);
+            font-size: 0.76rem;
+            font-weight: 700;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: #1e1b4b;
+            box-shadow: 0 1px 4px rgba(90, 31, 224, 0.05);
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* (2026-07-13) Red-tinted chip with red profile icon; was purple outline */
+        .parent-selector-chip.active {
+            background: rgba(225, 29, 72, 0.08);
+            color: #be123c;
+            border: 1.5px solid #e11d48;
+            box-shadow: 0 2px 8px rgba(225, 29, 72, 0.12);
+        }
+
+        .parent-selector-chip .parent-avatar {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(225, 29, 72, 0.15);
+            color: #e11d48;
+            font-size: 0.60rem;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .parent-selector-chip.active .parent-avatar {
+            background: linear-gradient(135deg, #e11d48, #be123c);
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(225, 29, 72, 0.25);
+        }
+
+        .parent-selector-chip .watching-live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 999px;
+            background: rgba(16, 185, 129, 0.15);
+            color: #065f46;
+        }
+
+        .parent-selector-chip.active .watching-live-badge {
+            background: rgba(16, 185, 129, 0.14);
+            color: #065f46;
+        }
+
+        .parent-selector-chip .watching-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+            display: inline-block;
+        }
+
+        .parent-selector-chip.active .watching-dot {
+            background: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
         }
 
         .tracking-status-pill {
@@ -4912,11 +5009,12 @@
                 <img src="logo with text.png" alt="Securo" class="securo-preloader-logo">
                 <div class="securo-preloader-shimmer"></div>
             </div>
+            <!-- (2026-07-13) Move indicator below logo in preloader; was above logo -->
             <div class="securo-preloader-indicator">
+                <span class="securo-preloader-status-text">INITIALIZING SECURE SYSTEMS</span>
                 <div class="securo-preloader-progress-track">
                     <div class="securo-preloader-progress-bar"></div>
                 </div>
-                <span class="securo-preloader-status-text">INITIALIZING SECURE SYSTEMS</span>
             </div>
         </div>
     </div>
@@ -5016,6 +5114,16 @@
 
                         </div>
                     </header>
+
+                    <!-- (2026-07-13) Show parents watching student under header; was none -->
+                    <div class="student-parent-bar" id="studentParentBar">
+                        <div id="studentParentChips" style="display:flex; gap:12px; overflow-x:auto; flex:1; align-items:center;">
+                            <div class="parent-selector-chip" style="background: rgba(255, 255, 255, 0.85); border: 1px dashed rgba(90, 31, 224, 0.25); color: #64748b; font-weight: 500;">
+                                <span class="material-symbols-outlined" style="font-size: 18px; color: var(--primary);">family_restroom</span>
+                                <span>No parents watching over you yet</span>
+                            </div>
+                        </div>
+                    </div>
 
                     <main class="screen-content" id="screenContent">
                         <!-- (2026-07-13) Reorganize page-map with compact tracking pill and split controls; was monolithic stack -->
@@ -5469,7 +5577,7 @@
                                     </div>
 
                                     <div
-                                        style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left;">
+                                        style="display:grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; text-align: left;">
                                         <div
                                             style="padding: 12px 14px; border-radius: 16px; background: #f8fafc; border: 1px solid rgba(0, 0, 0, 0.05);">
                                             <div class="mini-label"
@@ -5480,12 +5588,13 @@
                                                 No records yet</div>
                                         </div>
                                         <div
-                                            style="padding: 12px 14px; border-radius: 16px; background: #f8fafc; border: 1px solid rgba(0, 0, 0, 0.05);">
+                                            style="padding: 12px 14px; border-radius: 16px; background: #f8fafc; border: 1px solid rgba(0, 0, 0, 0.05); min-width: 0;">
                                             <div class="mini-label"
                                                 style="font-size: 0.68rem; font-weight: 800; text-transform: uppercase; color: var(--muted); letter-spacing: 0.06em;">
                                                 Last Location</div>
+                                            <!-- (2026-07-13) Wrap long location text; was nowrap overflowing card -->
                                             <div id="attendanceLastLocation"
-                                                style="font-size: 0.88rem; font-weight: 700; color: var(--ink); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                style="font-size: 0.88rem; font-weight: 700; color: var(--ink); margin-top: 2px; white-space: normal; overflow-wrap: anywhere; word-break: break-word; line-height: 1.3;">
                                                 No records yet</div>
                                         </div>
                                     </div>
@@ -5710,6 +5819,8 @@
             subscribeToGuardianRequests,
             getLinksForStudent,
             respondToGuardianLink,
+            // (2026-07-13) Import removeGuardianLink for unlink gesture; was absent
+            removeGuardianLink,
             updateStudentLiveLocation,
             syncGuardianLinksForStudent,
             setStudentLocationSharingStatus,
@@ -5887,12 +5998,13 @@
                 if (campusGeofencePolygonLayer) {
                     map.removeLayer(campusGeofencePolygonLayer);
                 }
+                // (2026-07-13) Purple dotted line geofence for student; was red dashed
                 campusGeofencePolygonLayer = L.polygon(currentStudentGeofence, {
-                    color: '#e11d48',
+                    color: '#5a1fe0',
                     weight: 3,
-                    dashArray: '5, 6',
-                    fillColor: '#f43f5e',
-                    fillOpacity: 0.1
+                    dashArray: '3, 6',
+                    fillColor: '#7c3aed',
+                    fillOpacity: 0.08
                 }).addTo(map);
             }
 
@@ -6093,36 +6205,54 @@
             }
         }
 
-        // (2026-07-13) Track personal campus entry/exit timestamps; was duration only
+        function getSpecificUserLatestAttendanceLog(preferredType) {
+            const history = Array.isArray(_fullAttendanceHistory) ? _fullAttendanceHistory : [];
+            if (!history.length) return null;
+            if (preferredType) {
+                const found = history.find(log => log.type === preferredType);
+                if (found) return found;
+            }
+            return history[0];
+        }
+
+        // (2026-07-13) Detect user-specific recent attendance logs; was unscoped storage
         function checkCampusGeofence(lat, lng) {
             const isInside = isPointInPolygon([lat, lng], getCampusGeofencePolygon());
-            const storedExitTime = localStorage.getItem("securo_campus_exit_ts");
-            const storedEntryTime = localStorage.getItem("securo_campus_entry_ts");
+            const userKey = appState.user?.uid || 'guest';
+            const userExitKey = `securo_campus_exit_ts_${userKey}`;
+            const userEntryKey = `securo_campus_entry_ts_${userKey}`;
+            try {
+                localStorage.removeItem("securo_campus_exit_ts");
+                localStorage.removeItem("securo_campus_entry_ts");
+            } catch (e) {}
+
+            const recentInLog = getSpecificUserLatestAttendanceLog('in');
+            const recentOutLog = getSpecificUserLatestAttendanceLog('out');
+            const recentInTs = recentInLog ? getAttendanceLogDate(recentInLog).getTime() : null;
+            const recentOutTs = recentOutLog ? getAttendanceLogDate(recentOutLog).getTime() : null;
 
             if (isInside) {
-                if (storedExitTime) {
-                    localStorage.removeItem("securo_campus_exit_ts");
+                try { localStorage.removeItem(userExitKey); } catch (e) {}
+                let entryTs = appState.campusEntryTs || recentInTs;
+                if (!entryTs) {
+                    const storedEntry = localStorage.getItem(userEntryKey);
+                    entryTs = storedEntry ? parseInt(storedEntry, 10) : Date.now();
                 }
-                let entryTs = storedEntryTime ? parseInt(storedEntryTime, 10) : null;
-                if (!entryTs || isNaN(entryTs)) {
-                    entryTs = Date.now();
-                    localStorage.setItem("securo_campus_entry_ts", String(entryTs));
-                }
+                try { localStorage.setItem(userEntryKey, String(entryTs)); } catch (e) {}
                 appState.isInsideCampus = true;
                 appState.campusEntryTs = entryTs;
                 appState.campusExitTs = null;
                 appState.campusExitDuration = "";
                 processAutoAttendance('in', lat, lng);
             } else {
-                if (storedEntryTime) {
-                    localStorage.removeItem("securo_campus_entry_ts");
-                }
+                try { localStorage.removeItem(userEntryKey); } catch (e) {}
                 appState.isInsideCampus = false;
-                let exitTs = storedExitTime ? parseInt(storedExitTime, 10) : null;
-                if (!exitTs || isNaN(exitTs)) {
-                    exitTs = Date.now();
-                    localStorage.setItem("securo_campus_exit_ts", String(exitTs));
+                let exitTs = appState.campusExitTs || recentOutTs;
+                if (!exitTs) {
+                    const storedExit = localStorage.getItem(userExitKey);
+                    exitTs = storedExit ? parseInt(storedExit, 10) : Date.now();
                 }
+                try { localStorage.setItem(userExitKey, String(exitTs)); } catch (e) {}
                 appState.campusExitTs = exitTs;
                 appState.campusEntryTs = null;
                 processAutoAttendance('out', lat, lng);
@@ -6241,13 +6371,13 @@
                 }, 3000);
             });
 
-            // Draw geofence polygon with exact admin-saved vertices
+            // (2026-07-13) Purple dotted line geofence for student; was red dashed
             campusGeofencePolygonLayer = L.polygon(currentStudentGeofence, {
-                color: '#e11d48',
+                color: '#5a1fe0',
                 weight: 3,
-                dashArray: '5, 6',
-                fillColor: '#f43f5e',
-                fillOpacity: 0.1
+                dashArray: '3, 6',
+                fillColor: '#7c3aed',
+                fillOpacity: 0.08
             }).addTo(map);
 
             // Draw building markers with exact admin-saved positions
@@ -7815,6 +7945,12 @@
                 button.classList.toggle("active", button.dataset.nav === pageName);
             });
 
+            // (2026-07-13) Show parent watcher bar on map view only; was hidden
+            const studentParentBar = document.getElementById("studentParentBar");
+            if (studentParentBar) {
+                studentParentBar.style.display = pageName === "map" ? "flex" : "none";
+            }
+
             updateGlobalSosFabVisibility(pageName);
 
             if (pageName === "vault" && appState.user.uid) {
@@ -8720,12 +8856,100 @@
                     guardianLinkReminderUnsub = subscribeToStudentLinks(user.uid, (links) => {
                         appState.guardianLinkReminders = Array.isArray(links) ? links : [];
                         syncNotificationViews();
+                        // (2026-07-13) Show accepted guardians on map chip; was not displayed
+                        renderGuardianWatchers(appState.guardianLinkReminders);
                     });
                 }
             } catch (error) {
                 Logger.error("Auth", "Auth state processing error", error);
             }
         });
+
+        // (2026-07-13) Add long-press to unlink parent watcher; was static
+        function renderGuardianWatchers(links) {
+            const container = document.getElementById("studentParentChips");
+            if (!container) return;
+            const accepted = (links || []).filter(l => l.status === "accepted");
+            if (!accepted.length) {
+                container.innerHTML = `
+                    <div class="parent-selector-chip" style="background: rgba(255, 255, 255, 0.85); border: 1px dashed rgba(90, 31, 224, 0.25); color: #64748b; font-weight: 500;">
+                        <span class="material-symbols-outlined" style="font-size: 18px; color: var(--primary);">family_restroom</span>
+                        <span>No parents watching over you yet</span>
+                    </div>
+                `;
+                return;
+            }
+            const localUsers = (() => {
+                try { return JSON.parse(localStorage.getItem("securo_users_local") || "[]"); } catch (e) { return []; }
+            })();
+            container.innerHTML = '';
+            accepted.forEach(link => {
+                const gid = link.guardianId || link.guardianUid;
+                const email = (link.guardianEmail || "").toLowerCase().trim();
+                const localMatch = localUsers.find(u => 
+                    (gid && String(u.id || u.uid || '') === String(gid)) ||
+                    (email && (String(u.email || '').toLowerCase().trim() === email || String(u.personalEmail || '').toLowerCase().trim() === email))
+                );
+                const name = (localMatch?.name || link.guardianName || link.guardianEmail || "Parent").trim();
+                const initials = name
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .slice(0, 2)
+                    .map(p => p[0])
+                    .join("")
+                    .toUpperCase() || "P";
+
+                const chip = document.createElement('div');
+                chip.className = 'parent-selector-chip active';
+                chip.title = `Hold to remove ${name}`;
+                chip.style.userSelect = 'none';
+                chip.innerHTML = `
+                    <span class="parent-avatar">${escapeHtml(initials)}</span>
+                    <span>${escapeHtml(name)}</span>
+                    <span class="watching-live-badge">
+                        <span class="watching-dot"></span>
+                        <span>Watching</span>
+                    </span>
+                `;
+
+                let holdTimer = null;
+                let isLongPress = false;
+                const startHold = () => {
+                    isLongPress = false;
+                    holdTimer = setTimeout(async () => {
+                        isLongPress = true;
+                        if (confirm(`Remove parent ${name} from watching over your account? You can re-invite them anytime.`)) {
+                            try {
+                                // (2026-07-13) Pass guardian & student pair to remove all matching links
+                                await removeGuardianLink(link.id, {
+                                    guardianId: link.guardianId || link.guardianUid,
+                                    guardianEmail: link.guardianEmail,
+                                    studentId: link.studentId,
+                                    studentUid: appState.user?.uid || auth.currentUser?.uid
+                                });
+                                showToast("Parent removed successfully.");
+                            } catch (e) {
+                                showToast("Failed to remove parent.", "error");
+                            }
+                        }
+                    }, 700);
+                };
+                const cancelHold = () => {
+                    if (holdTimer) {
+                        clearTimeout(holdTimer);
+                        holdTimer = null;
+                    }
+                };
+
+                chip.addEventListener('pointerdown', startHold);
+                chip.addEventListener('pointerup', cancelHold);
+                chip.addEventListener('pointerleave', cancelHold);
+                chip.addEventListener('pointercancel', cancelHold);
+                chip.addEventListener('contextmenu', (e) => e.preventDefault());
+
+                container.appendChild(chip);
+            });
+        }
 
         // Guardian Consent Notification Logic
         function showGuardianRequestNotification(request) {
@@ -9044,11 +9268,72 @@
         const submitGadPmBtn = document.getElementById("submitGadPmBtn");
         const globalGadFab = document.getElementById("globalGadFab");
 
+        // (2026-07-13) Real-time GAD chatbox thread & composer; was form modal
+        let _cachedGadMessages = [];
+
+        function renderGadChatThread(messages) {
+            const thread = document.getElementById("gadChatThread");
+            if (!thread) return;
+            const msgs = messages || _cachedGadMessages;
+            let html = '<div class="gad-bubble them">Hi! This is the GAD Desk. Tell us what is on your mind — your message is confidential.</div>';
+            if (msgs && msgs.length) {
+                const sorted = [...msgs].sort((a, b) => {
+                    const ta = a.createdAt?.seconds || 0;
+                    const tb = b.createdAt?.seconds || 0;
+                    return ta - tb;
+                });
+                sorted.forEach(m => {
+                    const timeStr = m.createdAt?.seconds
+                        ? new Date(m.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : 'Just now';
+                    const catLabel = m.category || 'General';
+                    const anonLabel = m.isAnonymous ? 'Anonymous' : 'Verified';
+                    html += `
+                        <div class="gad-bubble me">
+                            <span class="gad-bubble-tag">${escapeHtml(anonLabel)} · ${escapeHtml(catLabel)}</span>
+                            <div>${escapeHtml(m.message || '')}</div>
+                            <span class="gad-bubble-meta">${timeStr}</span>
+                        </div>
+                    `;
+                    if (m.status === 'answered' && m.reply) {
+                        html += `
+                            <div class="gad-bubble them">
+                                <span class="gad-bubble-tag" style="background:#0f9b67; color:#fff;">GAD Desk</span>
+                                <div>${escapeHtml(m.reply)}</div>
+                                <span class="gad-bubble-meta">${escapeHtml(m.repliedBy || 'Counselor')}</span>
+                            </div>
+                        `;
+                    } else {
+                        html += `
+                            <div class="gad-chat-pending">
+                                <span class="material-symbols-outlined" style="font-size:14px; color:#ffb649;">schedule</span>
+                                <span>Waiting for GAD reply...</span>
+                            </div>
+                        `;
+                    }
+                });
+            }
+            thread.innerHTML = html;
+            thread.scrollTop = thread.scrollHeight;
+        }
+
         function openGadPmModal() {
             if (gadPmModal) {
                 gadPmModal.classList.add("active");
-                const subjectInput = document.getElementById("gadSubjectInput");
-                if (subjectInput) subjectInput.focus();
+                renderGadChatThread();
+                const msgInput = document.getElementById("gadMessageBody");
+                if (msgInput) {
+                    msgInput.focus();
+                    if (!msgInput._enterBound) {
+                        msgInput._enterBound = true;
+                        msgInput.addEventListener("keydown", (e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                submitGadPmBtn?.click();
+                            }
+                        });
+                    }
+                }
             }
         }
 
@@ -9067,16 +9352,14 @@
             submitGadPmBtn.addEventListener("click", async () => {
                 const isAnon = !!document.getElementById("gadAnonToggle")?.checked;
                 const category = document.getElementById("gadCategorySelect")?.value || "general";
-                const subject = document.getElementById("gadSubjectInput")?.value.trim();
-                const message = document.getElementById("gadMessageBody")?.value.trim();
+                const messageInput = document.getElementById("gadMessageBody");
+                const message = messageInput?.value.trim();
 
-                if (!message) {
-                    showStatus("Message Required", "Please enter your message for the GAD desk.", "error");
-                    return;
-                }
+                if (!message) return;
 
+                const originalBtnHtml = submitGadPmBtn.innerHTML;
                 submitGadPmBtn.disabled = true;
-                submitGadPmBtn.textContent = "Sending...";
+                submitGadPmBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">hourglass_top</span>';
 
                 try {
                     await sendGADMessage({
@@ -9084,22 +9367,20 @@
                         studentName: appState.user.name,
                         studentId: appState.user.studentId,
                         isAnonymous: isAnon,
-                        subject: subject || "Support Request",
+                        subject: category === 'counseling' ? 'Counseling Request' : 'GAD Inquiry',
                         category,
                         message
                     });
 
-                    closeGadPmModal();
-                    if (document.getElementById("gadSubjectInput")) document.getElementById("gadSubjectInput").value = "";
-                    if (document.getElementById("gadMessageBody")) document.getElementById("gadMessageBody").value = "";
-                    showStatus("Message Sent", isAnon ? "Sent anonymously. GAD can reply securely to your account." : "Sent to the GAD desk. We will respond shortly.");
-                    switchGadTab('messages');
+                    if (messageInput) messageInput.value = "";
+                    loadStudentGADInquiries();
                 } catch (e) {
                     console.warn("GAD message send error:", e);
                     showStatus("Send Error", "Could not send message right now.", "error");
                 } finally {
                     submitGadPmBtn.disabled = false;
-                    submitGadPmBtn.textContent = "Send Message";
+                    submitGadPmBtn.innerHTML = originalBtnHtml;
+                    if (messageInput) messageInput.focus();
                 }
             });
         }
@@ -9108,9 +9389,11 @@
         function loadStudentGADInquiries() {
             if (gadInquiriesUnsub) gadInquiriesUnsub();
             const container = document.getElementById("gadInquiriesList");
-            if (!container) return;
 
             gadInquiriesUnsub = subscribeToGADMessages(appState.user.uid, (messages) => {
+                _cachedGadMessages = Array.isArray(messages) ? messages : [];
+                renderGadChatThread(_cachedGadMessages);
+                if (!container) return;
                 if (!messages || !messages.length) {
                     container.innerHTML = '<div style="text-align: center; padding: 30px; color: var(--muted); font-size:0.88rem;">No messages sent yet. Use "Message GAD" above to start.</div>';
                     return;
@@ -9770,7 +10053,7 @@
             return `${timeStr} ${dayStr}`;
         }
 
-        // (2026-07-13) Format personal campus update with time/day & color; was generic
+        // (2026-07-13) Format personal campus update from user logs; was generic storage
         function updateTrackingStatusBanner() {
             if (!trackingStatusBanner || !trackingStatusIcon || !trackingStatusCopy) return;
 
@@ -9783,15 +10066,24 @@
             trackingStatusBanner.classList.toggle("is-outside", isTrackingOn && !isInside);
 
             if (isTrackingOn) {
+                const userKey = appState.user?.uid || 'guest';
+                const userExitKey = `securo_campus_exit_ts_${userKey}`;
+                const userEntryKey = `securo_campus_entry_ts_${userKey}`;
                 if (isInside) {
                     trackingStatusIcon.textContent = "login";
-                    const entryTs = appState.campusEntryTs || parseInt(localStorage.getItem("securo_campus_entry_ts") || String(Date.now()), 10);
+                    const recentIn = typeof getSpecificUserLatestAttendanceLog === 'function' ? getSpecificUserLatestAttendanceLog('in') : null;
+                    const recentInTs = recentIn ? getAttendanceLogDate(recentIn).getTime() : null;
+                    const storedEntry = localStorage.getItem(userEntryKey);
+                    const entryTs = appState.campusEntryTs || recentInTs || (storedEntry ? parseInt(storedEntry, 10) : Date.now());
                     const formatted = `You went inside the campus at ${formatCampusEventTime(entryTs)}`;
                     trackingStatusCopy.textContent = formatted;
                     trackingStatusBanner.title = `${formatted}. Live campus tracking is active.`;
                 } else {
                     trackingStatusIcon.textContent = "logout";
-                    const exitTs = appState.campusExitTs || parseInt(localStorage.getItem("securo_campus_exit_ts") || String(Date.now()), 10);
+                    const recentOut = typeof getSpecificUserLatestAttendanceLog === 'function' ? getSpecificUserLatestAttendanceLog('out') : null;
+                    const recentOutTs = recentOut ? getAttendanceLogDate(recentOut).getTime() : null;
+                    const storedExit = localStorage.getItem(userExitKey);
+                    const exitTs = appState.campusExitTs || recentOutTs || (storedExit ? parseInt(storedExit, 10) : Date.now());
                     const formatted = `You went out the campus at ${formatCampusEventTime(exitTs)}`;
                     trackingStatusCopy.textContent = formatted;
                     trackingStatusBanner.title = `${formatted}. Live campus tracking is active.`;
@@ -9810,6 +10102,7 @@
             renderAttendanceHistory(history);
             calculateStats(history);
             updateAttendanceSummary(history);
+            updateTrackingStatusBanner();
             return history;
         }
 
@@ -10737,73 +11030,124 @@
         </div>
     </div>
     // (2026-07-13) Add GAD Direct & Anonymous Messaging modal; was toastNotify and body close
-    <!-- GAD PM & Anonymous Messaging Modal -->
+    <!-- (2026-07-13) GAD chatbox with thread + composer; was subject/message form modal -->
+    <style>
+        .gad-chat-card {
+            width: min(440px, calc(100vw - 24px));
+            height: min(640px, calc(100dvh - 48px));
+            background: #fff;
+            border-radius: 26px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 30px 70px rgba(24, 20, 40, 0.28);
+            text-align: left;
+        }
+        .gad-chat-header {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 16px;
+            background: linear-gradient(135deg, #5a1fe0, #4311c5);
+            color: #fff;
+        }
+        .gad-chat-avatar {
+            width: 40px; height: 40px; border-radius: 14px;
+            background: rgba(255,255,255,0.18);
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .gad-chat-close {
+            margin-left: auto; width: 36px; height: 36px; border-radius: 12px;
+            border: none; background: rgba(255,255,255,0.16); color: #fff;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+        }
+        .gad-chat-anon {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 16px; font-size: 0.74rem; font-weight: 700; color: #4311c5;
+            background: #f5f1ff; border-bottom: 1px solid rgba(90,31,224,0.1); cursor: pointer;
+        }
+        .gad-chat-thread {
+            flex: 1; overflow-y: auto; padding: 16px 14px;
+            background: linear-gradient(180deg, #faf8ff 0%, #f4f1ff 100%);
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .gad-bubble {
+            max-width: 82%; padding: 10px 13px; border-radius: 18px;
+            font-size: 0.86rem; line-height: 1.4; word-break: break-word; white-space: pre-wrap;
+        }
+        .gad-bubble.me {
+            align-self: flex-end; background: linear-gradient(135deg, #5a1fe0, #4311c5);
+            color: #fff; border-bottom-right-radius: 6px;
+        }
+        .gad-bubble.them {
+            align-self: flex-start; background: #fff; color: var(--ink);
+            border: 1px solid rgba(90,31,224,0.1); border-bottom-left-radius: 6px;
+        }
+        .gad-bubble-meta { display: block; font-size: 0.66rem; opacity: 0.75; margin-top: 4px; }
+        .gad-bubble-tag {
+            display: inline-block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 0.04em; padding: 2px 6px; border-radius: 6px; margin-bottom: 4px;
+            background: rgba(255,255,255,0.2);
+        }
+        .gad-chat-pending {
+            align-self: flex-start; font-size: 0.7rem; color: var(--muted);
+            display: flex; align-items: center; gap: 4px;
+        }
+        .gad-chat-composer {
+            border-top: 1px solid rgba(90,31,224,0.1); padding: 10px 12px 12px; background: #fff;
+        }
+        .gad-chat-composer select {
+            width: 100%; padding: 7px 10px; border-radius: 10px; border: 1px solid #e2e8f0;
+            background: #f8fafc; font-family: inherit; font-size: 0.76rem; margin-bottom: 8px;
+        }
+        .gad-chat-input-row { display: flex; align-items: flex-end; gap: 8px; }
+        .gad-chat-input-row textarea {
+            flex: 1; resize: none; max-height: 110px; min-height: 42px;
+            padding: 11px 14px; border-radius: 20px; border: 1px solid #e2e8f0;
+            font-family: inherit; font-size: 0.88rem; background: #f8fafc; outline: none;
+        }
+        .gad-chat-input-row textarea:focus { border-color: #5a1fe0; background: #fff; }
+        .gad-chat-send {
+            width: 44px; height: 44px; border-radius: 50%; border: none; flex-shrink: 0;
+            background: linear-gradient(135deg, #5a1fe0, #4311c5); color: #fff;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            box-shadow: 0 8px 18px rgba(90,31,224,0.3);
+        }
+        .gad-chat-send:disabled { opacity: 0.55; cursor: default; }
+    </style>
     <div class="status-modal" id="gadPmModal">
-        <div class="status-card" style="max-width: 440px; text-align: left; padding: 24px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div
-                        style="width:40px; height:40px; border-radius:14px; background:#f1ebff; color:#5a1fe0; display:flex; align-items:center; justify-content:center;">
-                        <span class="material-symbols-outlined">support_agent</span>
-                    </div>
-                    <div>
-                        <strong style="font-size:1.05rem; display:block; font-family:'Sora',sans-serif;">Message GAD
-                            Desk</strong>
-                        <span style="font-size:0.75rem; color:var(--muted);">Confidential inquiry or safe
-                            reporting</span>
-                    </div>
+        <div class="gad-chat-card" id="gadChatCard">
+            <div class="gad-chat-header">
+                <div class="gad-chat-avatar"><span class="material-symbols-outlined">support_agent</span></div>
+                <div>
+                    <strong style="font-size:1rem; display:block; font-family:'Sora',sans-serif;">GAD Desk</strong>
+                    <span style="font-size:0.72rem; opacity:0.85;">Confidential chat · replies appear here</span>
                 </div>
-                <button type="button" id="closeGadPmModalBtn"
-                    style="background:transparent; border:none; color:var(--muted); cursor:pointer;">
+                <button type="button" id="closeGadPmModalBtn" class="gad-chat-close" aria-label="Close chat">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
-
-            <div
-                style="background:#f8fafc; border:1px solid rgba(90,31,224,0.12); border-radius:14px; padding:12px; margin-bottom:14px;">
-                <label
-                    style="display:flex; align-items:center; gap:10px; cursor:pointer; font-size:0.85rem; font-weight:700; color:var(--ink);">
-                    <input type="checkbox" id="gadAnonToggle" checked
-                        style="width:18px; height:18px; accent-color:#5a1fe0;">
-                    <span>Send as Anonymous Student</span>
-                </label>
-                <p style="margin:4px 0 0 28px; font-size:0.72rem; color:var(--muted);">Your name and student ID are
-                    hidden. GAD can reply safely to this device.</p>
+            <label class="gad-chat-anon">
+                <input type="checkbox" id="gadAnonToggle" checked style="width:16px; height:16px; accent-color:#5a1fe0;">
+                <span class="material-symbols-outlined" style="font-size:16px;">visibility_off</span>
+                <span>Send anonymously (name &amp; ID hidden)</span>
+            </label>
+            <div class="gad-chat-thread" id="gadChatThread">
+                <div class="gad-bubble them">Hi! This is the GAD Desk. Tell us what's on your mind — your message is confidential.</div>
             </div>
-
-            <div class="form-group" style="margin-bottom:12px;">
-                <label
-                    style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:4px; display:block;">Category</label>
-                <select id="gadCategorySelect"
-                    style="width:100%; padding:10px 14px; border-radius:12px; border:1px solid #e2e8f0; background:white; font-family:inherit; font-size:0.88rem;">
-                    <option value="counseling">Counseling & Mental Health</option>
-                    <option value="cosh">Anti-Sexual Harassment (COSH)</option>
-                    <option value="safespaces">Safe Spaces & Inclusion</option>
-                    <option value="policy">Policy & Rights Inquiry</option>
-                    <option value="general">General Support</option>
+            <div class="gad-chat-composer">
+                <select id="gadCategorySelect" aria-label="Topic">
+                    <option value="counseling">Topic: Counseling &amp; Mental Health</option>
+                    <option value="cosh">Topic: Anti-Sexual Harassment (COSH)</option>
+                    <option value="safespaces">Topic: Safe Spaces &amp; Inclusion</option>
+                    <option value="policy">Topic: Policy &amp; Rights Inquiry</option>
+                    <option value="general">Topic: General Support</option>
                 </select>
-            </div>
-
-            <div class="form-group" style="margin-bottom:12px;">
-                <label
-                    style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:4px; display:block;">Subject</label>
-                <input type="text" id="gadSubjectInput" placeholder="Brief subject..."
-                    style="width:100%; padding:10px 14px; border-radius:12px; border:1px solid #e2e8f0; font-family:inherit; font-size:0.88rem;">
-            </div>
-
-            <div class="form-group" style="margin-bottom:18px;">
-                <label
-                    style="font-size:0.78rem; font-weight:700; color:var(--muted); margin-bottom:4px; display:block;">Your
-                    Message</label>
-                <textarea id="gadMessageBody" rows="4" placeholder="Type your confidential message here..."
-                    style="width:100%; padding:12px 14px; border-radius:12px; border:1px solid #e2e8f0; font-family:inherit; font-size:0.88rem; resize:vertical;"></textarea>
-            </div>
-
-            <div style="display:flex; gap:10px;">
-                <button type="button" id="cancelGadPmBtn" class="status-btn secondary" style="flex:1;">Cancel</button>
-                <button type="button" id="submitGadPmBtn" class="status-btn"
-                    style="flex:2; background:linear-gradient(135deg, #5a1fe0, #4311c5); color:white;">Send
-                    Message</button>
+                <input type="hidden" id="gadSubjectInput" value="">
+                <div class="gad-chat-input-row">
+                    <textarea id="gadMessageBody" rows="1" placeholder="Type a message..."></textarea>
+                    <button type="button" id="submitGadPmBtn" class="gad-chat-send" aria-label="Send message">
+                        <span class="material-symbols-outlined">send</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
