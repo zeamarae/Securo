@@ -8877,9 +8877,12 @@
             }, { passive: true });
         }
 
-        // Listen for auth state changes to update profile (Date: 2026-05-01)
+        // (2026-07-13) Redirect unauthenticated index visitors to landing; was no-op
         onAuthStateChanged(auth, async (user) => {
-            if (!user) return;
+            if (!user) {
+                window.location.replace("landing.html");
+                return;
+            }
 
             // (2026-07-13) Role-based auth routing and onboarding gate; was hardcoded
             appState.user.uid = user.uid;
@@ -9238,8 +9241,9 @@
         logoutLink.addEventListener("click", async () => {
             const confirmed = await showLogoutConfirm();
             if (confirmed) {
+                // (2026-07-13) Redirect to landing page on logout; was login.html
                 await logout();
-                window.location.href = "login.html";
+                window.location.href = "landing.html";
             }
         });
 
