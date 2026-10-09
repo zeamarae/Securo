@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -6159,12 +6159,13 @@
             campusMarkersLayerGroup.clearLayers();
             buildingMarkerMap.clear();
 
+            // (2026-07-13) Red map markers & dashed geofence for student; was purple
             currentStudentBuildings.forEach(b => {
                 const bIcon = L.divIcon({
                     className: 'campus-facility-icon-marker',
-                    html: `<div style="background:white; border-radius:50%; width:32px; height:32px; box-shadow:0 3px 12px rgba(24,20,40,0.18); border:2px solid #5a1fe0; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:transform 0.2s cubic-bezier(0.34,1.56,0.64,1);"><span class="material-symbols-outlined" style="font-size:18px; color:#5a1fe0;">${b.icon || 'location_on'}</span></div>`,
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16]
+                    html: `<div style="background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 3px 10px rgba(24,20,40,0.16); border:2px solid #f43f5e; display:flex; align-items:center; justify-content:center; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:16px; color:#f43f5e;">${b.icon || 'location_on'}</span></div>`,
+                    iconSize: [30, 30],
+                    iconAnchor: [15, 15]
                 });
                 // (2026-07-13) Single clean popup on tap/hover; was duplicate tooltip + popup
                 const marker = L.marker(b.coords, { icon: bIcon }).addTo(campusMarkersLayerGroup);
@@ -6175,7 +6176,7 @@
                 marker.bindPopup(`
                     <div style="padding:4px 2px; min-width:160px;">
                         <strong style="display:flex; align-items:center; gap:6px; font-size:0.9rem; color:#181428;">
-                            <span class="material-symbols-outlined" style="font-size:18px; color:#5a1fe0;">${b.icon || 'location_on'}</span>
+                            <span class="material-symbols-outlined" style="font-size:18px; color:#f43f5e;">${b.icon || 'location_on'}</span>
                             ${b.name}
                         </strong>
                         <p style="margin:6px 0 0; font-size:0.78rem; color:#64748b; line-height:1.4;">${bDesc}</p>
@@ -6211,13 +6212,13 @@
                 if (campusGeofencePolygonLayer) {
                     map.removeLayer(campusGeofencePolygonLayer);
                 }
-                // (2026-07-13) Purple dotted line geofence for student; was red dashed
+                // (2026-07-13) Red dashed geofence for student; was purple dotted
                 campusGeofencePolygonLayer = L.polygon(currentStudentGeofence, {
-                    color: '#5a1fe0',
+                    color: '#e11d48',
                     weight: 3,
-                    dashArray: '3, 6',
-                    fillColor: '#7c3aed',
-                    fillOpacity: 0.08
+                    dashArray: '5, 6',
+                    fillColor: '#f43f5e',
+                    fillOpacity: 0.1
                 }).addTo(map);
             }
 
@@ -6538,59 +6539,29 @@
                 wheelPxPerZoomLevel: 140
             }).setView(CAMPUS_CENTER, 17);
 
-            // (2026-07-13) Restore original map tiles; was purple-map-tiles
+            // (2026-07-13) Set Google Streets as default student map; was OpenStreetMap
             const baseMapLayers = {
-                "Street View": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    maxZoom: 19,
-                    attribution: '©OpenStreetMap contributors',
-                    crossOrigin: true
-                }),
-                "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                    maxZoom: 19,
-                    attribution: 'Tiles ©Esri',
-                    crossOrigin: true
-                })
+                "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                "Google Terrain": L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
             };
 
-            let activeLayer = baseMapLayers["Street View"];
+            let activeLayer = baseMapLayers["Google Streets"];
             activeLayer.addTo(map);
 
             // Force tile load after layer is added
             setTimeout(() => { if (map) map.invalidateSize(); }, 100);
             setTimeout(() => { if (map) map.invalidateSize(); }, 500);
 
-            // After map is ready, try to upgrade to Google Streets silently
-            map.once('load', () => {
-                const googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-                    maxZoom: 20,
-                    attribution: 'Map data ©Google'
-                });
-                let googleLoaded = false;
-                googleStreets.once('tileload', () => {
-                    if (!googleLoaded) {
-                        googleLoaded = true;
-                        map.removeLayer(activeLayer);
-                        googleStreets.addTo(map);
-                        baseMapLayers["Street View"] = googleStreets;
-                        activeLayer = googleStreets;
-                    }
-                });
-                // Add quietly to test — if no tiles load within 3s, it stays on OSM
-                googleStreets.addTo(map);
-                setTimeout(() => {
-                    if (!googleLoaded && map.hasLayer(googleStreets)) {
-                        map.removeLayer(googleStreets);
-                    }
-                }, 3000);
-            });
-
-            // (2026-07-13) Purple dotted line geofence for student; was red dashed
+            // (2026-07-13) Red dashed geofence for student; was purple dotted
             campusGeofencePolygonLayer = L.polygon(currentStudentGeofence, {
-                color: '#5a1fe0',
+                color: '#e11d48',
                 weight: 3,
-                dashArray: '3, 6',
-                fillColor: '#7c3aed',
-                fillOpacity: 0.08
+                dashArray: '5, 6',
+                fillColor: '#f43f5e',
+                fillOpacity: 0.1
             }).addTo(map);
 
             // Draw building markers with exact admin-saved positions
