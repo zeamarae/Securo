@@ -9236,6 +9236,9 @@
             const container = document.getElementById("studentParentChips");
             if (!container) return;
             const accepted = (links || []).filter(l => l.status === "accepted");
+            // (2026-07-13) Hide invite btn when parent linked; prev: always shown
+            const inviteBarBtnEl = document.getElementById("inviteParentBarBtn");
+            if (inviteBarBtnEl) inviteBarBtnEl.style.display = accepted.length ? "none" : "";
             if (!accepted.length) {
                 container.innerHTML = `
                     <div class="parent-selector-chip" id="noParentsChip" style="background: rgba(255, 255, 255, 0.85); border: 1px dashed rgba(90, 31, 224, 0.25); color: #64748b; font-weight: 500; cursor: pointer;" title="Tap to invite parents">
