@@ -29,6 +29,27 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="preloader.js"></script>
 
+    <!-- (2026-07-13) Desktop root redirection to landing; was no auto-redirect -->
+    <script>
+        (() => {
+            const isTargetHost = window.location.host === '127.0.0.1:5508' ||
+                                 window.location.host === 'localhost:5508' ||
+                                 window.location.hostname === 'securo.cebutech.digital';
+            const isRootUrl = (window.location.pathname === '/' || window.location.pathname === '/index.html') &&
+                              !window.location.search &&
+                              (!window.location.hash || window.location.hash === '#' || window.location.hash === '');
+            const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
+            const isDesktop = !isNativeApk && window.innerWidth >= 1024 && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            if (isTargetHost && isRootUrl && isDesktop) {
+                setTimeout(() => {
+                    sessionStorage.setItem('securo_allow_landing', '1');
+                    window.location.replace('landing.html');
+                }, 2800);
+            }
+        })();
+    </script>
+
     <style>
         :root {
             --bg: #f4f3ff;
