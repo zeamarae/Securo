@@ -8877,7 +8877,7 @@
             }, { passive: true });
         }
 
-        // (2026-07-13) Load index on mobile/APK, landing on PC; was landing for all
+        // (2026-07-13) Route mobile view/APK to index, PC to landing; was PC only
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 const isApk = Boolean(
@@ -8886,7 +8886,7 @@
                     window.location.protocol === 'file:' ||
                     window.location.protocol === 'capacitor:'
                 );
-                const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const isMobile = window.innerWidth <= 768 || window.screen.width <= 768 || (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
                 if (!isApk && !isMobile) {
                     window.location.replace("landing.html");
                     return;

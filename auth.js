@@ -308,7 +308,7 @@ export const checkAuth = (redirectIfUnauth = true) => {
                 window.location.protocol === 'file:' ||
                 window.location.protocol === 'capacitor:'
             );
-            const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isMobile = window.innerWidth <= 768 || window.screen.width <= 768 || (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             if (!isApk && !isMobile) {
                 window.location.href = 'landing.html';
             }

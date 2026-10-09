@@ -7,7 +7,7 @@
     <meta name="description" content="Securo is the shared campus safety, attendance, and emergency protection platform connecting students, parents, and security in real time.">
     <link rel="icon" type="image/png" href="logo.png">
 
-    <!-- (2026-07-13) Route mobile/APK to index.html; was static landing page -->
+    <!-- (2026-07-13) Route mobile view and APK to index; was landing for all -->
     <script>
         (function () {
             const isApk = Boolean(
@@ -16,7 +16,7 @@
                 window.location.protocol === 'file:' ||
                 window.location.protocol === 'capacitor:'
             );
-            const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isMobile = window.innerWidth <= 768 || window.screen.width <= 768 || (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
             const urlParams = new URLSearchParams(window.location.search);
             const allowLanding = urlParams.has('trailer') || urlParams.has('preview') || sessionStorage.getItem('securo_allow_landing') === '1';
             if ((isApk || isMobile) && !allowLanding) {
