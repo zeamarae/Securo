@@ -895,13 +895,7 @@
         // Check if already logged in
         checkAuth(false);
 
-        // (2026-07-13) Block login until both permissions granted; was skippable
-        (async () => {
-            if (!Permissions.shouldShowPermissionOnboarding()) return;
-            const hasAll = await Permissions.hasAllPermissionsGranted();
-            if (hasAll) return;
-            window.location.href = 'permissions-onboarding.html';
-        })();
+        // (2026-07-13) Always start on login first; prev: auto-redirect permissions
 
         const mainAuthForm = document.getElementById('mainAuthForm');
         const loginTab = document.getElementById('loginTab');
@@ -1450,7 +1444,10 @@
                         return;
                     }
 
-                    window.location.href = 'index.html';
+                    // (2026-07-13) Route to permissions or dashboard; prev: index.html
+                    const camOk = localStorage.getItem('securo_camera_granted') === 'true';
+                    const locOk = localStorage.getItem('securo_location_granted') === 'true';
+                    window.location.href = (!camOk || !locOk) ? 'permissions-onboarding.html' : 'index.html';
                 } else {
                     const studentId = signupIdInput.value.trim();
                     const confirmPassword = document.getElementById('confirmPasswordSignup').value;
@@ -1479,9 +1476,11 @@
                     });
 
                     setButtonBusy(submitBtn, false);
-                    // (2026-07-13) Flag new registration for instant onboarding; prev: unflagged
+                    // (2026-07-13) Route registration to onboarding; prev: index.html
                     sessionStorage.setItem('securo_just_registered', '1');
-                    window.location.href = 'index.html';
+                    const camOk = localStorage.getItem('securo_camera_granted') === 'true';
+                    const locOk = localStorage.getItem('securo_location_granted') === 'true';
+                    window.location.href = (!camOk || !locOk) ? 'permissions-onboarding.html' : 'index.html';
                 }
             } catch (error) {
                 const friendlyMessage = getFriendlyAuthMessage(error, isLoginMode ? "login" : "signup", roleLabel);

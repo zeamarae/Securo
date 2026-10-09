@@ -8877,25 +8877,10 @@
             }, { passive: true });
         }
 
-        // (2026-07-13) Route unauth mobile to registration, PC to landing; was map view
+        // (2026-07-13) Route unauth users to login page; prev: landing or onboarding
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
-                const isApk = Boolean(
-                    window.Capacitor?.isNativePlatform?.() ||
-                    window.Capacitor ||
-                    window.location.protocol === 'file:' ||
-                    window.location.protocol === 'capacitor:'
-                );
-                const isMobile = window.innerWidth <= 768 || window.screen.width <= 768 || (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                if (!isApk && !isMobile) {
-                    window.location.replace("landing.html");
-                    return;
-                }
-                if (sessionStorage.getItem('securo_just_registered') === '1' && fsOnboardingScreen) {
-                    fsOnboardingScreen.classList.add("active");
-                } else {
-                    window.location.replace("login.html");
-                }
+                window.location.replace("login.html");
                 return;
             }
 
@@ -8926,6 +8911,28 @@
             if (!camAllowed || !locAllowed) {
                 window.location.replace('permissions-onboarding.html');
                 return;
+            }
+
+            // (2026-07-13) Watch for web permission revocation; prev: unmonitored
+            if (navigator.permissions && navigator.permissions.query) {
+                navigator.permissions.query({ name: 'camera' }).then(p => {
+                    p.addEventListener('change', () => {
+                        if (p.state === 'denied') {
+                            localStorage.setItem('securo_camera_granted', 'false');
+                            localStorage.removeItem('securo_permissions_completed');
+                            window.location.replace('permissions-onboarding.html');
+                        }
+                    });
+                }).catch(() => {});
+                navigator.permissions.query({ name: 'geolocation' }).then(p => {
+                    p.addEventListener('change', () => {
+                        if (p.state === 'denied') {
+                            localStorage.setItem('securo_location_granted', 'false');
+                            localStorage.removeItem('securo_permissions_completed');
+                            window.location.replace('permissions-onboarding.html');
+                        }
+                    });
+                }).catch(() => {});
             }
 
             if (cachedProfile && !isJustRegistered && cachedProfile.onboardingCompleted) {

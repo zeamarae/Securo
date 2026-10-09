@@ -27,19 +27,25 @@
             --radius-lg: 24px;
         }
 
-        * { box-sizing: border-box; }
+        /* (2026-07-13) Dynamic screen clamp & flush btn; prev: fixed scrollable */
+        html, body {
+            height: 100%;
+            height: 100dvh;
+            max-height: 100dvh;
+            overflow: hidden !important;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         body {
             font-family: "Outfit", sans-serif;
             background: linear-gradient(180deg, rgba(90, 31, 224, 0.08) 0%, rgba(255, 255, 255, 0) 30%), 
                         linear-gradient(180deg, #f7f4ff 0%, #fdfcff 100%);
-            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
             color: var(--ink);
-            margin: 0;
         }
 
         /* (2026-07-13) Disable dragging for all images; was default draggable */
@@ -55,40 +61,56 @@
 
         .onboarding-container {
             width: 100%;
-            max-width: 480px;
-            position: relative;
+            max-width: 440px;
+            height: 100%;
+            height: 100dvh;
+            max-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: clamp(8px, 1.8vh, 16px);
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
         .permission-card {
             background: var(--surface);
-            border-radius: var(--radius-xl);
-            padding: 40px 32px;
-            box-shadow: 0 30px 60px rgba(49, 30, 105, 0.15);
+            border-radius: clamp(16px, 3.5vw, 24px);
+            padding: clamp(12px, 1.8vh, 18px) clamp(14px, 3.5vw, 20px);
+            box-shadow: 0 20px 45px rgba(49, 30, 105, 0.12);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.85);
             display: none;
-            animation: fadeSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            max-height: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            animation: fadeSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .permission-card.active {
-            display: block;
+            display: flex;
         }
 
         @keyframes fadeSlideIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .progress-bar {
             display: flex;
-            gap: 8px;
-            margin-bottom: 32px;
+            gap: 6px;
+            margin-bottom: clamp(4px, 0.8vh, 8px);
+            flex-shrink: 0;
+            background: transparent;
         }
 
         .progress-dot {
             flex: 1;
-            height: 4px;
+            height: 3px;
             border-radius: 999px;
             background: rgba(90, 31, 224, 0.15);
             transition: background 0.3s ease;
@@ -99,123 +121,178 @@
         }
 
         .permission-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 24px;
-            margin: 0 auto 24px;
+            width: clamp(38px, 5.5vh, 50px);
+            height: clamp(38px, 5.5vh, 50px);
+            border-radius: clamp(12px, 1.8vh, 16px);
+            margin: 0 auto clamp(4px, 0.8vh, 8px);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 40px;
+            font-size: clamp(22px, 3.2vh, 28px);
             position: relative;
+            flex-shrink: 0;
+        }
+
+        .permission-icon .material-symbols-outlined {
+            font-size: inherit;
         }
 
         .permission-icon.camera {
             background: linear-gradient(135deg, #a78bfa, #7c3aed);
             color: white;
-            box-shadow: 0 12px 24px rgba(124, 58, 237, 0.3);
+            box-shadow: 0 8px 18px rgba(124, 58, 237, 0.25);
         }
 
         .permission-icon.location {
             background: linear-gradient(135deg, #34d399, #059669);
             color: white;
-            box-shadow: 0 12px 24px rgba(5, 150, 105, 0.3);
+            box-shadow: 0 8px 18px rgba(5, 150, 105, 0.25);
         }
 
         .permission-icon.complete {
             background: linear-gradient(135deg, #60a5fa, #2563eb);
             color: white;
-            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.3);
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.25);
+        }
+
+        .permission-icon.denied {
+            background: linear-gradient(135deg, #f87171, #dc2626);
+            color: white;
+            box-shadow: 0 8px 18px rgba(220, 38, 38, 0.25);
         }
 
         .card-title {
             font-family: "Sora", sans-serif;
-            font-size: 1.75rem;
+            font-size: clamp(1.05rem, 2.2vh, 1.35rem);
             font-weight: 800;
             text-align: center;
-            margin: 0 0 12px;
+            margin: 0 0 clamp(2px, 0.4vh, 4px);
             color: var(--ink);
+            line-height: 1.2;
+            flex-shrink: 0;
         }
 
         .card-subtitle {
             text-align: center;
             color: var(--muted);
-            font-size: 1rem;
-            line-height: 1.6;
-            margin: 0 0 32px;
+            font-size: clamp(0.7rem, 1.25vh, 0.82rem);
+            line-height: 1.3;
+            margin: 0 0 clamp(4px, 0.8vh, 8px);
+            flex-shrink: 0;
+        }
+
+        .warning-box {
+            padding: clamp(6px, 1vh, 8px) clamp(8px, 1.5vw, 12px);
+            border-radius: 12px;
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            margin-bottom: clamp(4px, 0.8vh, 8px);
+            flex-shrink: 0;
+        }
+
+        .warning-box strong {
+            display: block;
+            color: var(--amber);
+            font-weight: 700;
+            font-size: clamp(0.72rem, 1.2vh, 0.8rem);
+            margin-bottom: 2px;
+        }
+
+        .warning-box p {
+            margin: 0;
+            color: var(--muted);
+            font-size: clamp(0.65rem, 1.1vh, 0.73rem);
+            line-height: 1.25;
         }
 
         .feature-list {
             display: grid;
-            gap: 16px;
-            margin-bottom: 32px;
+            gap: clamp(4px, 0.7vh, 8px);
+            margin: 0 0 clamp(6px, 1vh, 10px);
+            flex-shrink: 1;
+            min-height: 0;
         }
 
         .feature-item {
             display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 16px;
-            border-radius: 18px;
+            align-items: center;
+            gap: clamp(8px, 1.6vw, 10px);
+            padding: clamp(6px, 0.9vh, 8px) clamp(8px, 1.6vw, 12px);
+            border-radius: 12px;
             background: rgba(90, 31, 224, 0.04);
             border: 1px solid rgba(90, 31, 224, 0.08);
         }
 
         .feature-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
+            width: clamp(26px, 3.6vh, 32px);
+            height: clamp(26px, 3.6vh, 32px);
+            border-radius: 8px;
             background: linear-gradient(135deg, var(--primary), var(--primary-strong));
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            font-size: 20px;
+            font-size: clamp(14px, 2vh, 18px);
+        }
+
+        .feature-icon .material-symbols-outlined {
+            font-size: inherit;
         }
 
         .feature-text {
             flex: 1;
+            min-width: 0;
         }
 
         .feature-title {
             font-weight: 700;
-            font-size: 0.95rem;
-            margin: 0 0 4px;
+            font-size: clamp(0.72rem, 1.25vh, 0.82rem);
+            margin: 0;
             color: var(--ink);
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .feature-desc {
-            font-size: 0.85rem;
+            font-size: clamp(0.64rem, 1.1vh, 0.72rem);
             color: var(--muted);
-            margin: 0;
-            line-height: 1.4;
+            margin: 1px 0 0;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .btn-primary, .btn-secondary {
             width: 100%;
-            min-height: 56px;
+            min-height: clamp(40px, 5vh, 46px);
+            height: clamp(40px, 5vh, 46px);
             border: none;
-            border-radius: 18px;
+            border-radius: 14px;
             font-weight: 700;
-            font-size: 1rem;
+            font-size: clamp(0.8rem, 1.45vh, 0.9rem);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
             cursor: pointer;
             transition: transform 0.2s ease, opacity 0.2s ease;
-            margin-bottom: 12px;
+            margin-top: auto;
+            margin-bottom: clamp(3px, 0.6vh, 6px);
+            flex-shrink: 0;
         }
 
         .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--primary-strong));
             color: white;
-            box-shadow: 0 12px 24px rgba(90, 31, 224, 0.25);
+            box-shadow: 0 8px 18px rgba(90, 31, 224, 0.22);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
+            transform: translateY(-1px);
             opacity: 0.95;
         }
 
@@ -236,12 +313,13 @@
         .status-badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
+            gap: 6px;
+            padding: 4px 10px;
             border-radius: 999px;
-            font-size: 0.85rem;
+            font-size: clamp(0.7rem, 1.2vh, 0.78rem);
             font-weight: 700;
-            margin: 0 auto 24px;
+            margin: 0 auto clamp(4px, 0.6vh, 6px);
+            flex-shrink: 0;
         }
 
         .status-badge.granted {
@@ -259,54 +337,34 @@
             color: var(--amber);
         }
 
-        .warning-box {
-            padding: 16px;
-            border-radius: 18px;
-            background: rgba(245, 158, 11, 0.08);
-            border: 1px solid rgba(245, 158, 11, 0.2);
-            margin-bottom: 24px;
-        }
-
-        .warning-box strong {
-            display: block;
-            color: var(--amber);
-            font-weight: 700;
-            margin-bottom: 6px;
-        }
-
-        .warning-box p {
-            margin: 0;
-            color: var(--muted);
-            font-size: 0.88rem;
-            line-height: 1.5;
-        }
-
         .complete-checklist {
             display: grid;
-            gap: 12px;
-            margin-bottom: 32px;
+            gap: clamp(6px, 1vh, 10px);
+            margin-bottom: clamp(10px, 1.5vh, 16px);
+            flex-shrink: 0;
         }
 
         .checklist-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 14px 16px;
-            border-radius: 16px;
+            gap: 10px;
+            padding: clamp(8px, 1.2vh, 12px) 14px;
+            border-radius: 12px;
             background: white;
             border: 1px solid rgba(0, 0, 0, 0.06);
         }
 
         .checklist-icon {
-            width: 28px;
-            height: 28px;
+            width: clamp(24px, 3.2vh, 28px);
+            height: clamp(24px, 3.2vh, 28px);
             border-radius: 50%;
             background: var(--green);
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 14px;
+            flex-shrink: 0;
         }
 
         /* (2026-07-13) Mandatory requirement notice styles; was skip-link styles */
@@ -314,17 +372,112 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            font-size: 0.85rem;
+            gap: 4px;
+            font-size: clamp(0.65rem, 1.1vh, 0.73rem);
             font-weight: 600;
             color: var(--muted);
-            margin-top: 14px;
+            margin: 0;
             text-align: center;
+            flex-shrink: 0;
         }
 
         .permission-requirement-notice .material-symbols-outlined {
-            font-size: 18px;
+            font-size: clamp(14px, 2vh, 16px);
             color: var(--amber);
+        }
+
+        /* (2026-07-13) Modal popup overlay for denied permissions; was missing */
+        .permission-denied-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 12, 30, 0.72);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(12px, 3vh, 20px);
+            animation: fadeInOverlay 0.25s ease;
+        }
+
+        .permission-denied-box {
+            background: #ffffff;
+            border-radius: 20px;
+            max-width: 380px;
+            width: 100%;
+            padding: clamp(16px, 2.5vh, 22px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            animation: scaleInBox 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes scaleInBox {
+            from { opacity: 0; transform: scale(0.94); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .denied-icon-badge {
+            width: clamp(44px, 5.8vh, 52px);
+            height: clamp(44px, 5.8vh, 52px);
+            border-radius: 50%;
+            background: rgba(209, 31, 52, 0.12);
+            color: var(--red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto clamp(6px, 1vh, 10px);
+            font-size: clamp(24px, 3.2vh, 30px);
+        }
+
+        .denied-title {
+            font-family: "Sora", sans-serif;
+            font-size: clamp(1.05rem, 2vh, 1.25rem);
+            font-weight: 800;
+            color: var(--ink);
+            margin: 0 0 clamp(4px, 0.6vh, 6px);
+        }
+
+        .denied-desc {
+            color: var(--muted);
+            font-size: clamp(0.7rem, 1.2vh, 0.8rem);
+            line-height: 1.35;
+            margin: 0 0 clamp(8px, 1.2vh, 12px);
+        }
+
+        .denied-instructions {
+            background: #f8f6fc;
+            border: 1px solid #e9e3f7;
+            border-radius: 12px;
+            padding: clamp(8px, 1.2vh, 12px);
+            text-align: left;
+            margin-bottom: clamp(10px, 1.5vh, 14px);
+        }
+
+        .denied-instructions p {
+            margin: 0 0 4px;
+            font-size: clamp(0.7rem, 1.15vh, 0.76rem);
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .denied-instructions ol {
+            margin: 0;
+            padding-left: 18px;
+            font-size: clamp(0.65rem, 1.1vh, 0.72rem);
+            color: var(--muted);
+            line-height: 1.35;
+        }
+
+        .denied-instructions li {
+            margin-bottom: 2px;
         }
     </style>
 </head>
@@ -497,6 +650,29 @@
                 <span>Grant Missing Permissions</span>
             </button>
         </div>
+
+        <!-- (2026-07-13) Forced re-prompt popup on deny; prev: badge only -->
+        <div id="permissionDeniedModal" class="permission-denied-overlay" style="display: none;">
+            <div class="permission-denied-box">
+                <div class="denied-icon-badge">
+                    <span class="material-symbols-outlined" id="deniedModalIcon">warning</span>
+                </div>
+                <h2 class="denied-title" id="deniedModalTitle">Permission Required</h2>
+                <p class="denied-desc" id="deniedModalDesc">Camera access is required for campus safety.</p>
+                <div class="denied-instructions">
+                    <p>To enable access in your browser:</p>
+                    <ol>
+                        <li>Tap the <strong>Site Controls 🔒</strong> icon in your address bar</li>
+                        <li>Set <strong>Camera</strong> / <strong>Location</strong> to <strong>Allow</strong></li>
+                        <li>Tap <strong>Retry Permission</strong> below</li>
+                    </ol>
+                </div>
+                <button class="btn-primary" id="retryDeniedPromptBtn">
+                    <span class="material-symbols-outlined">refresh</span>
+                    <span>Retry Permission</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <script type="module">
@@ -505,6 +681,7 @@
 
         let cameraGranted = false;
         let locationGranted = false;
+        let activeDeniedType = 'camera';
 
         const cameraCard = document.getElementById('cameraCard');
         const locationCard = document.getElementById('locationCard');
@@ -520,6 +697,39 @@
         const cameraCheckText = document.getElementById('cameraCheckText');
         const locationCheckText = document.getElementById('locationCheckText');
 
+        const deniedModal = document.getElementById('permissionDeniedModal');
+        const deniedModalIcon = document.getElementById('deniedModalIcon');
+        const deniedModalTitle = document.getElementById('deniedModalTitle');
+        const deniedModalDesc = document.getElementById('deniedModalDesc');
+        const retryDeniedPromptBtn = document.getElementById('retryDeniedPromptBtn');
+
+        function showDeniedModal(type) {
+            activeDeniedType = type;
+            if (type === 'camera') {
+                deniedModalIcon.textContent = 'videocam_off';
+                deniedModalTitle.textContent = 'Camera Access Blocked';
+                deniedModalDesc.textContent = 'Securo requires active camera access for SOS evidence and secure check-ins. Permission was denied or turned off.';
+            } else {
+                deniedModalIcon.textContent = 'location_off';
+                deniedModalTitle.textContent = 'Location Access Blocked';
+                deniedModalDesc.textContent = 'Securo requires continuous location access for emergency dispatch and geofencing. Permission was denied or turned off.';
+            }
+            deniedModal.style.display = 'flex';
+        }
+
+        function hideDeniedModal() {
+            deniedModal.style.display = 'none';
+        }
+
+        retryDeniedPromptBtn.addEventListener('click', async () => {
+            hideDeniedModal();
+            if (activeDeniedType === 'camera') {
+                await requestCamera();
+            } else {
+                await requestLocation();
+            }
+        });
+
         function bypassToApp() {
             if (!cameraGranted || !locationGranted) return;
             localStorage.setItem('securo_permissions_completed', 'true');
@@ -534,7 +744,7 @@
             });
         }
 
-        // (2026-07-13) Block app access unless permissions allowed; was allow skip
+        // (2026-07-13) Web permission revocation watcher; prev: unmonitored
         async function checkExistingPermissions() {
             const camStored = localStorage.getItem('securo_camera_granted') === 'true';
             const locStored = localStorage.getItem('securo_location_granted') === 'true';
@@ -548,8 +758,39 @@
                         navigator.permissions.query({ name: 'camera' }).catch(() => null),
                         navigator.permissions.query({ name: 'geolocation' }).catch(() => null)
                     ]);
-                    if (camQ) camActive = (camQ.state === 'granted');
-                    if (locQ) locActive = (locQ.state === 'granted');
+                    if (camQ) {
+                        camActive = (camQ.state === 'granted');
+                        camQ.addEventListener('change', () => {
+                            if (camQ.state === 'denied') {
+                                cameraGranted = false;
+                                localStorage.setItem('securo_camera_granted', 'false');
+                                localStorage.removeItem('securo_permissions_completed');
+                                showDeniedModal('camera');
+                            } else if (camQ.state === 'granted') {
+                                cameraGranted = true;
+                                localStorage.setItem('securo_camera_granted', 'true');
+                                hideDeniedModal();
+                                if (!locationGranted) showLocationCard();
+                                else bypassToApp();
+                            }
+                        });
+                    }
+                    if (locQ) {
+                        locActive = (locQ.state === 'granted');
+                        locQ.addEventListener('change', () => {
+                            if (locQ.state === 'denied') {
+                                locationGranted = false;
+                                localStorage.setItem('securo_location_granted', 'false');
+                                localStorage.removeItem('securo_permissions_completed');
+                                showDeniedModal('location');
+                            } else if (locQ.state === 'granted') {
+                                locationGranted = true;
+                                localStorage.setItem('securo_location_granted', 'true');
+                                hideDeniedModal();
+                                if (cameraGranted) bypassToApp();
+                            }
+                        });
+                    }
                 }
             } catch (error) {
                 console.log('Permission API query not fully supported, checking status');
@@ -588,14 +829,15 @@
                 
                 setTimeout(() => {
                     showLocationCard();
-                }, 1200);
+                }, 800);
             } catch (error) {
                 cameraGranted = false;
                 localStorage.setItem('securo_camera_granted', 'false');
                 localStorage.removeItem('securo_permissions_completed');
-                showStatus(cameraStatus, 'Camera access denied. Camera is mandatory to unlock Securo.', 'denied');
+                showStatus(cameraStatus, 'Camera access denied. Camera is mandatory.', 'denied');
                 grantCameraBtn.disabled = false;
                 grantCameraBtn.innerHTML = '<span class="material-symbols-outlined">photo_camera</span><span>Try Again</span>';
+                showDeniedModal('camera');
             }
         }
 
@@ -623,14 +865,15 @@
                     } else {
                         showCompleteCard();
                     }
-                }, 800);
+                }, 600);
             } catch (error) {
                 locationGranted = false;
                 localStorage.setItem('securo_location_granted', 'false');
                 localStorage.removeItem('securo_permissions_completed');
-                showStatus(locationStatus, 'Location access denied. Location is mandatory to unlock Securo.', 'denied');
+                showStatus(locationStatus, 'Location access denied. Location is mandatory.', 'denied');
                 grantLocationBtn.disabled = false;
                 grantLocationBtn.innerHTML = '<span class="material-symbols-outlined">location_on</span><span>Try Again</span>';
+                showDeniedModal('location');
             }
         }
 
