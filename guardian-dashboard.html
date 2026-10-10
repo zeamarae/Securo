@@ -1280,9 +1280,10 @@
             z-index: 100001;
         }
 
+        /* (2026-07-13) Add top inset for universal topbar; was 16px max */
         .chat-header {
             padding: 16px 20px;
-            padding-top: max(16px, env(safe-area-inset-top, 16px));
+            padding-top: max(56px, calc(16px + env(safe-area-inset-top, 0px)));
             background: linear-gradient(135deg, var(--primary), #e11d48);
             color: white;
             display: flex;
@@ -1353,9 +1354,10 @@
             text-align: left;
         }
 
+        /* (2026-07-13) Add bottom inset for 3-button nav; was 14px bottom */
         .chat-input-area {
             padding: 14px;
-            padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+            padding-bottom: max(56px, calc(14px + env(safe-area-inset-bottom, 0px)));
             border-top: 1px solid rgba(0, 0, 0, 0.05);
             background: white;
             position: sticky;
