@@ -6481,46 +6481,57 @@
             return inside;
         }
 
-        // (2026-07-13) Request and sync native location status; prev: passive check
+        // (2026-07-13) Fast location permission check; was blocking on every click
         async function ensureCapacitorLocationPermission() {
+            if (appState.lastLocation?.lat && !appState.locationPermissionDenied) {
+                return true;
+            }
             try {
                 if (window.Capacitor?.isNativePlatform?.()) {
                     const Geolocation = window.Capacitor.Plugins?.Geolocation || window.Capacitor?.Geolocation;
-                    if (Geolocation && typeof Geolocation.requestPermissions === 'function') {
-                        const perm = await Geolocation.requestPermissions().catch(() => null);
-                        const isOk = (perm?.location === 'granted' || perm?.coarseLocation === 'granted');
-                        if (isOk) {
-                            appState.locationPermissionDenied = false;
-                            startTracking();
-                        } else {
-                            appState.locationPermissionDenied = true;
+                    if (Geolocation) {
+                        if (typeof Geolocation.checkPermissions === 'function') {
+                            const check = await Geolocation.checkPermissions().catch(() => null);
+                            if (check?.location === 'granted' || check?.coarseLocation === 'granted') {
+                                appState.locationPermissionDenied = false;
+                                startTracking();
+                                updateTrackingStatusBanner();
+                                return true;
+                            }
                         }
-                        updateTrackingStatusBanner();
-                        return isOk;
+                        if (typeof Geolocation.requestPermissions === 'function') {
+                            const perm = await Geolocation.requestPermissions().catch(() => null);
+                            const isOk = (perm?.location === 'granted' || perm?.coarseLocation === 'granted');
+                            appState.locationPermissionDenied = !isOk;
+                            if (isOk) startTracking();
+                            updateTrackingStatusBanner();
+                            return isOk;
+                        }
                     }
                 }
                 if (navigator.geolocation) {
                     return await new Promise((resolve) => {
+                        const t = setTimeout(() => resolve(true), 1500);
                         navigator.geolocation.getCurrentPosition(
                             () => {
+                                clearTimeout(t);
                                 appState.locationPermissionDenied = false;
                                 startTracking();
                                 updateTrackingStatusBanner();
                                 resolve(true);
                             },
                             () => {
-                                appState.locationPermissionDenied = true;
-                                updateTrackingStatusBanner();
-                                resolve(false);
+                                clearTimeout(t);
+                                resolve(true);
                             },
-                            { timeout: 4000 }
+                            { timeout: 1500, maximumAge: 60000, enableHighAccuracy: false }
                         );
                     });
                 }
             } catch (e) {
                 Logger.warn("Permissions", "Capacitor location permission error", e);
             }
-            return false;
+            return true;
         }
 
         // (2026-07-13) Add haptics & vibration for SOS alerts; was absent
@@ -8454,6 +8465,11 @@
             // (2026-07-13) Sync live landmark when opening SOS tab; was static text
             if (pageName === "sos") {
                 updateSosLocationDisplay(appState.lastLocation?.lat, appState.lastLocation?.lng);
+            }
+
+            // (2026-07-13) Pre-fetch location on attendance tab open; was cold on click
+            if (pageName === "attendance" && !appState.lastLocation) {
+                resolveAttendanceLocation().catch(() => {});
             }
 
             // Load history page data when navigating to it
@@ -11037,25 +11053,30 @@
         }
 
         // (2026-07-13) Request Capacitor location & notify student; was browser only
+        // (2026-07-13) Instant attendance without lingering loader; was slow wait
         async function handleAttendance(type) {
             const btn = type === 'in' ? timeInBtn : timeOutBtn;
             if (!btn || btn.classList.contains("is-busy")) return;
+
+            if (type === 'in' && appState.isTimedIn) {
+                await showStatus("Already Timed In", "You already have an active time-in record.");
+                return;
+            }
+            if (type === 'out' && !appState.isTimedIn) {
+                await showStatus("Time In Required", "You need to time in first before timing out.", "error");
+                return;
+            }
+
             setButtonBusy(btn, true);
 
             try {
                 await ensureCapacitorLocationPermission();
 
-                if (type === 'in' && appState.isTimedIn) {
-                    await showStatus("Already Timed In", "You already have an active time-in record.");
-                    return;
-                }
-                if (type === 'out' && !appState.isTimedIn) {
-                    await showStatus("Time In Required", "You need to time in first before timing out.", "error");
-                    return;
-                }
-
                 const capturedAt = new Date();
                 const location = await resolveAttendanceLocation();
+
+                // Clear button spinner immediately so it doesn't linger while dialog is shown
+                setButtonBusy(btn, false);
 
                 // (2026-07-13) Disallow time in outside campus bounds; was allowing time in
                 if (type === 'in') {
@@ -11073,6 +11094,8 @@
                 if (!confirmed) {
                     return;
                 }
+
+                setButtonBusy(btn, true);
 
                 queueAttendanceLog(appState.user.uid, {
                     localId: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
@@ -11393,7 +11416,7 @@
             };
         }
 
-        // (2026-07-13) Instant attendance GPS & local barangay; was 10s cold GPS wait
+        // (2026-07-13) Fast cached location resolution; was slow cold GPS wait
         async function resolveAttendanceLocation() {
             let lat = null;
             let lng = null;
@@ -11402,14 +11425,32 @@
             if (appState.lastLocation?.lat && appState.lastLocation?.lng) {
                 lat = appState.lastLocation.lat;
                 lng = appState.lastLocation.lng;
-            } else {
+            } else if (window.Capacitor?.isNativePlatform?.() && window.Capacitor.Plugins?.Geolocation) {
+                try {
+                    const pos = await Promise.race([
+                        window.Capacitor.Plugins.Geolocation.getCurrentPosition({
+                            enableHighAccuracy: false,
+                            timeout: 1500,
+                            maximumAge: 60000
+                        }),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 1500))
+                    ]);
+                    if (pos?.coords?.latitude && pos?.coords?.longitude) {
+                        lat = pos.coords.latitude;
+                        lng = pos.coords.longitude;
+                        appState.lastLocation = { lat, lng, timestamp: new Date() };
+                    }
+                } catch (_) {}
+            }
+
+            if (!lat || !lng) {
                 try {
                     const position = await new Promise((resolve, reject) => {
                         if (!navigator.geolocation) return reject(new Error("No geolocation"));
                         navigator.geolocation.getCurrentPosition(resolve, reject, {
-                            enableHighAccuracy: true,
-                            timeout: 2500,
-                            maximumAge: 20000
+                            enableHighAccuracy: false,
+                            timeout: 1500,
+                            maximumAge: 60000
                         });
                     });
                     lat = position.coords.latitude;
