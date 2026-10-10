@@ -11710,96 +11710,208 @@
         </div>
     </div>
     // (2026-07-13) Add GAD Direct & Anonymous Messaging modal; was toastNotify and body close
-    <!-- (2026-07-13) GAD chatbox with thread + composer; was subject/message form modal -->
+    <!-- (2026-07-13) Fullscreen GAD chat layout matching guardian; was dialog modal -->
     <style>
-        .gad-chat-card {
-            width: min(440px, calc(100vw - 24px));
-            height: min(640px, calc(100dvh - 48px));
+        #gadPmModal {
+            position: fixed;
+            inset: 0;
+            background: rgba(23, 20, 40, 0.42);
+            backdrop-filter: blur(6px);
+            z-index: 100000 !important;
+            padding: 0;
+            display: none;
+            align-items: stretch;
+            justify-content: center;
+        }
+        #gadPmModal.active {
+            display: flex;
+        }
+        #gadPmModal .gad-chat-card {
+            width: 100vw;
+            height: 100dvh;
+            min-height: 100dvh;
+            max-width: 100vw;
+            border-radius: 0;
             background: #fff;
-            border-radius: 26px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            box-shadow: 0 30px 70px rgba(24, 20, 40, 0.28);
+            box-shadow: none;
             text-align: left;
+            position: relative;
+            z-index: 100001;
         }
         .gad-chat-header {
-            display: flex; align-items: center; gap: 10px;
-            padding: 14px 16px;
+            padding: 16px 20px;
+            padding-top: max(16px, env(safe-area-inset-top, 16px));
             background: linear-gradient(135deg, #5a1fe0, #4311c5);
             color: #fff;
-        }
-        .gad-chat-avatar {
-            width: 40px; height: 40px; border-radius: 14px;
-            background: rgba(255,255,255,0.18);
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            flex-shrink: 0;
         }
         .gad-chat-close {
-            margin-left: auto; width: 36px; height: 36px; border-radius: 12px;
-            border: none; background: rgba(255,255,255,0.16); color: #fff;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            background: transparent;
+            border: none;
+            color: #fff;
+            padding: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
         }
         .gad-chat-anon {
-            display: flex; align-items: center; gap: 8px;
-            padding: 8px 16px; font-size: 0.74rem; font-weight: 700; color: #4311c5;
-            background: #f5f1ff; border-bottom: 1px solid rgba(90,31,224,0.1); cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #5a1fe0;
+            background: #f7f4ff;
+            border-bottom: 1px solid rgba(90, 31, 224, 0.08);
+            cursor: pointer;
+            flex-shrink: 0;
         }
         .gad-chat-thread {
-            flex: 1; overflow-y: auto; padding: 16px 14px;
-            background: linear-gradient(180deg, #faf8ff 0%, #f4f1ff 100%);
-            display: flex; flex-direction: column; gap: 10px;
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 18px;
+            background: #fbf9ff;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
         .gad-bubble {
-            max-width: 82%; padding: 10px 13px; border-radius: 18px;
-            font-size: 0.86rem; line-height: 1.4; word-break: break-word; white-space: pre-wrap;
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 0.92rem;
+            line-height: 1.45;
+            word-break: break-word;
+            white-space: pre-wrap;
         }
         .gad-bubble.me {
-            align-self: flex-end; background: linear-gradient(135deg, #5a1fe0, #4311c5);
-            color: #fff; border-bottom-right-radius: 6px;
+            align-self: flex-end;
+            background: #5a1fe0;
+            color: #fff;
+            border-bottom-right-radius: 4px;
         }
         .gad-bubble.them {
-            align-self: flex-start; background: #fff; color: var(--ink);
-            border: 1px solid rgba(90,31,224,0.1); border-bottom-left-radius: 6px;
+            align-self: flex-start;
+            background: #fff;
+            color: var(--ink);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
         }
-        .gad-bubble-meta { display: block; font-size: 0.66rem; opacity: 0.75; margin-top: 4px; }
+        .gad-bubble-meta {
+            display: block;
+            margin-top: 4px;
+            font-size: 0.7rem;
+            opacity: 0.75;
+            text-align: right;
+        }
+        .gad-bubble.them .gad-bubble-meta {
+            text-align: left;
+        }
         .gad-bubble-tag {
-            display: inline-block; font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
-            letter-spacing: 0.04em; padding: 2px 6px; border-radius: 6px; margin-bottom: 4px;
-            background: rgba(255,255,255,0.2);
+            display: inline-block;
+            font-size: 0.6rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 2px 6px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            background: rgba(255, 255, 255, 0.2);
         }
         .gad-chat-pending {
-            align-self: flex-start; font-size: 0.7rem; color: var(--muted);
-            display: flex; align-items: center; gap: 4px;
+            align-self: flex-start;
+            font-size: 0.7rem;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
         .gad-chat-composer {
-            border-top: 1px solid rgba(90,31,224,0.1); padding: 10px 12px 12px; background: #fff;
+            padding: 14px;
+            padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            background: #fff;
+            position: sticky;
+            bottom: 0;
+            z-index: 2;
+            flex-shrink: 0;
         }
         .gad-chat-composer select {
-            width: 100%; padding: 7px 10px; border-radius: 10px; border: 1px solid #e2e8f0;
-            background: #f8fafc; font-family: inherit; font-size: 0.76rem; margin-bottom: 8px;
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(90, 31, 224, 0.12);
+            background: #f7f4ff;
+            font-family: inherit;
+            font-size: 0.78rem;
+            margin-bottom: 10px;
+            color: var(--ink);
+            outline: none;
         }
-        .gad-chat-input-row { display: flex; align-items: flex-end; gap: 8px; }
+        .gad-chat-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
         .gad-chat-input-row textarea {
-            flex: 1; resize: none; max-height: 110px; min-height: 42px;
-            padding: 11px 14px; border-radius: 20px; border: 1px solid #e2e8f0;
-            font-family: inherit; font-size: 0.88rem; background: #f8fafc; outline: none;
+            flex: 1;
+            min-width: 0;
+            min-height: 48px;
+            max-height: 110px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            border: 1px solid rgba(90, 31, 224, 0.12);
+            background: #f7f4ff;
+            outline: none;
+            font: inherit;
+            font-size: 0.92rem;
+            resize: none;
+            color: var(--ink);
         }
-        .gad-chat-input-row textarea:focus { border-color: #5a1fe0; background: #fff; }
+        .gad-chat-input-row textarea:focus {
+            border-color: #5a1fe0;
+            background: #fff;
+        }
         .gad-chat-send {
-            width: 44px; height: 44px; border-radius: 50%; border: none; flex-shrink: 0;
-            background: linear-gradient(135deg, #5a1fe0, #4311c5); color: #fff;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-            box-shadow: 0 8px 18px rgba(90,31,224,0.3);
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            border: none;
+            background: #5a1fe0;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            cursor: pointer;
+            box-shadow: 0 6px 16px rgba(90, 31, 224, 0.25);
         }
-        .gad-chat-send:disabled { opacity: 0.55; cursor: default; }
+        .gad-chat-send:disabled {
+            opacity: 0.55;
+            cursor: default;
+        }
     </style>
     <div class="status-modal" id="gadPmModal">
         <div class="gad-chat-card" id="gadChatCard">
+            <!-- (2026-07-13) Match GAD header to guardian support; was desk avatar -->
             <div class="gad-chat-header">
-                <div class="gad-chat-avatar"><span class="material-symbols-outlined">support_agent</span></div>
-                <div>
-                    <strong style="font-size:1rem; display:block; font-family:'Sora',sans-serif;">GAD Desk</strong>
-                    <span style="font-size:0.72rem; opacity:0.85;">Confidential chat · replies appear here</span>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <span class="material-symbols-outlined" style="font-size:24px;">support_agent</span>
+                    <strong style="font-family:'Sora',sans-serif; font-size:1.05rem;">GAD Support</strong>
                 </div>
                 <button type="button" id="closeGadPmModalBtn" class="gad-chat-close" aria-label="Close chat">
                     <span class="material-symbols-outlined">close</span>
@@ -11823,7 +11935,7 @@
                 </select>
                 <input type="hidden" id="gadSubjectInput" value="">
                 <div class="gad-chat-input-row">
-                    <textarea id="gadMessageBody" rows="1" placeholder="Type a message..."></textarea>
+                    <textarea id="gadMessageBody" rows="1" placeholder="Type your message..."></textarea>
                     <button type="button" id="submitGadPmBtn" class="gad-chat-send" aria-label="Send message">
                         <span class="material-symbols-outlined">send</span>
                     </button>
