@@ -6537,7 +6537,8 @@
             } catch (e) { }
         }
 
-        async function triggerDevicePushNotification(title, body) {
+        // (2026-07-13) Support Securo logo and priorities in push notifications; was basic
+        async function triggerDevicePushNotification(title, body, options = {}) {
             try {
                 if (window.Capacitor?.Plugins?.LocalNotifications) {
                     const LocalNotifications = window.Capacitor.Plugins.LocalNotifications;
@@ -6547,12 +6548,14 @@
                             {
                                 title,
                                 body,
-                                id: Math.floor(Date.now() % 100000),
-                                schedule: { at: new Date(Date.now() + 150) },
-                                sound: null,
-                                attachments: null,
+                                id: Math.floor(Date.now() % 100000) + Math.floor(Math.random() * 1000),
+                                schedule: { at: new Date(Date.now() + 100) },
+                                smallIcon: "ic_stat_securo",
+                                largeIcon: "logo.png",
+                                iconColor: options.urgent ? "#e11d48" : "#5b21b6",
+                                sound: options.urgent ? "alarm.mp3" : null,
                                 actionTypeId: "",
-                                extra: null
+                                extra: options
                             }
                         ]
                     });
@@ -6564,11 +6567,11 @@
 
             if ("Notification" in window) {
                 if (Notification.permission === "granted") {
-                    try { new Notification(title, { body, icon: "logo.png" }); } catch (e) { }
+                    try { new Notification(title, { body, icon: "logo.png", badge: "logo.png" }); } catch (e) { }
                 } else if (Notification.permission !== "denied") {
                     Notification.requestPermission().then(perm => {
                         if (perm === "granted") {
-                            try { new Notification(title, { body, icon: "logo.png" }); } catch (e) { }
+                            try { new Notification(title, { body, icon: "logo.png", badge: "logo.png" }); } catch (e) { }
                         }
                     });
                 }
@@ -9190,8 +9193,13 @@
             }, { passive: true });
         }
 
-        // (2026-07-13) Route unauth users to login page; prev: landing or onboarding
+        // (2026-07-13) Request push notification permissions on user auth; was missing
         onAuthStateChanged(auth, async (user) => {
+            if (window.Capacitor?.Plugins?.LocalNotifications) {
+                window.Capacitor.Plugins.LocalNotifications.requestPermissions().catch(() => {});
+            } else if ("Notification" in window && Notification.permission === "default") {
+                Notification.requestPermission().catch(() => {});
+            }
             // (2026-07-13) Skip auth redirect if desktop landing pending; was unchecked
             if (window.__securoDesktopPending) {
                 return;

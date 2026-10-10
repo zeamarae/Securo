@@ -2269,24 +2269,51 @@
         }
 
         const _notifiedAccountEventIds = new Set();
-        function triggerBrowserNotification(title, body) {
-            if (!("Notification" in window)) return;
-            if (Notification.permission === "granted") {
-                try {
-                    new Notification(title, { body, icon: "logo.png" });
-                } catch (e) {
-                    console.warn("Push error:", e);
+        // (2026-07-13) Add device push notifications with Securo icon; was web only
+        async function triggerDevicePushNotification(title, body, options = {}) {
+            try {
+                if (window.Capacitor?.Plugins?.LocalNotifications) {
+                    const LocalNotifications = window.Capacitor.Plugins.LocalNotifications;
+                    await LocalNotifications.requestPermissions().catch(() => { });
+                    await LocalNotifications.schedule({
+                        notifications: [
+                            {
+                                title,
+                                body,
+                                id: Math.floor(Date.now() % 100000) + Math.floor(Math.random() * 1000),
+                                schedule: { at: new Date(Date.now() + 100) },
+                                smallIcon: "ic_stat_securo",
+                                largeIcon: "logo.png",
+                                iconColor: options.urgent ? "#e11d48" : "#5b21b6",
+                                sound: options.urgent ? "alarm.mp3" : null,
+                                actionTypeId: "",
+                                extra: options
+                            }
+                        ]
+                    });
+                    return;
                 }
-            } else if (Notification.permission !== "denied") {
-                Notification.requestPermission().then(permission => {
-                    if (permission === "granted") {
-                        try {
-                            new Notification(title, { body, icon: "logo.png" });
-                        } catch (e) {}
-                    }
-                });
+            } catch (e) {
+                console.warn("Capacitor notification error:", e);
+            }
+
+            if ("Notification" in window) {
+                if (Notification.permission === "granted") {
+                    try {
+                        new Notification(title, { body, icon: "logo.png", badge: "logo.png" });
+                    } catch (e) { }
+                } else if (Notification.permission !== "denied") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") {
+                            try {
+                                new Notification(title, { body, icon: "logo.png", badge: "logo.png" });
+                            } catch (e) {}
+                        }
+                    });
+                }
             }
         }
+        const triggerBrowserNotification = triggerDevicePushNotification;
 
         function renderGuardianNotificationHistory(notifications = []) {
             const container = document.getElementById('notificationHistory');
@@ -2463,6 +2490,12 @@
         // (2026-07-13) Resolve guardian name & initials live; was uid only
         async function initDashboard(user) {
             console.log("Initializing dashboard for:", user.email);
+            // (2026-07-13) Request push notification permissions on init; was deferred
+            if (window.Capacitor?.Plugins?.LocalNotifications) {
+                window.Capacitor.Plugins.LocalNotifications.requestPermissions().catch(() => {});
+            } else if ("Notification" in window && Notification.permission === "default") {
+                Notification.requestPermission().catch(() => {});
+            }
             try {
                 guardianProfile = await getUserProfile(user.uid);
                 const emailPrefix = (user.email || '').split('@')[0].toLowerCase();
@@ -3146,12 +3179,33 @@
                 updateStudentMap(loc);
             });
 
+            let _initialAttendanceLoaded = false;
+            let _lastNotifiedAttendanceId = null;
+            // (2026-07-13) Push alerts for student time-in, time-out, SOS; was silent
             attendanceUnsub = subscribeToStudentAttendance(studentUid, (logs) => {
                 monitoredStudentAttendance = Array.isArray(logs) ? logs : [];
                 renderAlerts(logs);
+                if (monitoredStudentAttendance.length > 0) {
+                    const latest = monitoredStudentAttendance[0];
+                    const latestId = latest.id || `${latest.type}_${latest.clientTimestamp || ''}_${latest.timestamp?.seconds || ''}`;
+                    if (!_initialAttendanceLoaded) {
+                        _initialAttendanceLoaded = true;
+                        _lastNotifiedAttendanceId = latestId;
+                    } else if (latestId !== _lastNotifiedAttendanceId) {
+                        _lastNotifiedAttendanceId = latestId;
+                        const cName = document.getElementById('activeStudentName')?.textContent?.trim() || activeLink?.studentName || 'Your child';
+                        const isTimeIn = latest.type === 'in';
+                        const title = isTimeIn ? `Campus Ingress: ${cName}` : `Campus Egress: ${cName}`;
+                        const locText = latest.location?.address || 'Campus Grounds';
+                        const body = isTimeIn
+                            ? `${cName} has timed in at ${locText}.`
+                            : `${cName} has timed out from ${locText}.`;
+                        triggerDevicePushNotification(title, body, { type: latest.type });
+                    }
+                }
             });
 
-            // (2026-07-13) Render full student SOS details on alert; was basic status line
+            let _lastNotifiedSosId = null;
             sosUnsub = subscribeToStudentSOS(studentUid, (activeSos) => {
                 const card = document.getElementById('sosEmergencyCard');
                 const text = document.getElementById('sosEmergencyText');
@@ -3162,7 +3216,13 @@
                 }) : [];
                 if (recentSos.length > 0) {
                     const alert = recentSos[0];
-                    // (2026-07-13) Display active resolved student name in SOS; was stale link
+                    const alertId = alert.id || `${alert.timestamp?.seconds || Date.now()}`;
+                    if (alertId !== _lastNotifiedSosId && alert.status !== 'resolved') {
+                        _lastNotifiedSosId = alertId;
+                        const sName = document.getElementById('activeStudentName')?.textContent?.trim() || activeLink?.studentName || alert.userName || alert.studentName || 'Your child';
+                        const sLoc = alert.location?.address || (alert.location?.lat ? `${alert.location.lat.toFixed(4)}, ${alert.location.lng.toFixed(4)}` : 'Campus Grounds');
+                        triggerDevicePushNotification(`EMERGENCY SOS: ${sName}`, `CRITICAL ALERT: ${sName} triggered Emergency SOS at ${sLoc}! Open Securo immediately to view live coordinates.`, { urgent: true, type: 'sos' });
+                    }
                     const sName = document.getElementById('activeStudentName')?.textContent?.trim() || activeLink?.studentName || alert.userName || alert.studentName || 'Your child';
                     const sTime = alert.timestamp?.toDate?.() ? alert.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active now';
                     const sLoc = alert.location?.address || (alert.location?.lat ? `${alert.location.lat.toFixed(4)}, ${alert.location.lng.toFixed(4)}` : 'Campus Grounds');
@@ -3210,9 +3270,16 @@
                 processChildAutoAttendance(activeLink.studentUid, loc, isInside);
                 const currentChild = linkedChildrenData.find(c => c.id === activeLink.studentUid);
                 if (currentChild) {
+                    const prevInside = currentChild.isInside;
                     currentChild.isInside = isInside;
                     currentChild.timestamp = loc.updatedAt?.toDate ? loc.updatedAt.toDate().getTime() : Date.now();
                     updateGuardianTrackingChip();
+                    if (prevInside !== undefined && prevInside !== isInside) {
+                        const cName = currentChild.name || 'Your child';
+                        const gTitle = isInside ? `Campus Entry: ${cName}` : `Campus Exit: ${cName}`;
+                        const gBody = isInside ? `${cName} entered CTU campus grounds.` : `${cName} exited CTU campus grounds. Tracking is paused for privacy.`;
+                        triggerDevicePushNotification(gTitle, gBody, { urgent: !isInside, type: 'geofence' });
+                    }
                 }
             }
 
