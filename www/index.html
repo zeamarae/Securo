@@ -1666,7 +1666,6 @@
         }
 
         #page-vault,
-        #page-sos,
         #page-gad,
         #page-attendance,
         #page-history {
@@ -3469,8 +3468,11 @@
             display: none !important;
         }
 
+        /* (2026-07-13) Remove bottom padding on SOS page; was 90px bottom padding */
+        .page.page-sos-shell,
+        .page.page-sos-shell.active,
         #page-sos {
-            padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)) !important;
+            padding-bottom: 0 !important;
             overflow: hidden !important;
         }
 
