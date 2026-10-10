@@ -6578,14 +6578,15 @@
         let _autoAttendanceBusy = false;
         let _lastAutoAttendanceTime = 0;
 
+        // (2026-07-13) Auto time out only when exiting campus; was auto timing in
         async function processAutoAttendance(type, lat, lng) {
+            if (type !== 'out') return;
             if (!appState.user?.uid || _autoAttendanceBusy) return;
-            if (type === 'in' && appState.isTimedIn) return;
-            if (type === 'out' && !appState.isTimedIn) return;
+            if (!appState.isTimedIn) return;
             if (Date.now() - _lastAutoAttendanceTime < 15000) return;
 
             const recent = _fullAttendanceHistory?.[0];
-            if (recent && recent.type === type) {
+            if (recent && recent.type === 'out') {
                 const ts = getAttendanceLogDate(recent).getTime();
                 if (Date.now() - ts < 30000) return;
             }
@@ -6599,34 +6600,32 @@
                 const location = {
                     lat,
                     lng,
-                    address: landmark || (type === 'in' ? 'Inside Campus Bounds' : 'Outside Campus Bounds')
+                    address: landmark || 'Outside Campus Bounds',
+                    isInside: false,
+                    auto: true
                 };
 
                 queueAttendanceLog(appState.user.uid, {
                     localId: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-                    type,
+                    type: 'out',
                     location,
                     clientTimestamp: capturedAt.toISOString(),
                     auto: true
                 });
 
-                const updatedHistory = getMergedAttendanceHistory([], appState.user.uid);
-                setAttendanceState(type === 'in');
+                const updatedHistory = getMergedAttendanceHistory(_fullAttendanceHistory, appState.user.uid);
+                setAttendanceState(false);
                 renderAttendanceHistory(updatedHistory);
                 calculateStats(updatedHistory);
                 updateAttendanceSummary(updatedHistory);
                 syncPendingAttendanceLogs().catch((e) => console.warn("Auto attendance sync failed:", e));
-                updateStudentLiveLocation(appState.user.uid, { lat, lng }).catch(() => { });
-                notifyGuardiansOfGeofenceEvent(appState.user.uid, appState.user.name || appState.user.displayName || 'Student', type, location).catch(() => { });
+                updateStudentLiveLocation(appState.user.uid, { lat, lng, isInside: false }).catch(() => { });
+                notifyGuardiansOfGeofenceEvent(appState.user.uid, appState.user.name || appState.user.displayName || 'Student', 'out', location).catch(() => { });
 
-                const notifTitle = type === 'in' ? "Campus Entry" : "Campus Exit";
-                const notifMsg = type === 'in'
-                    ? "You've entered the campus, successfully timed in."
-                    : "You've exited the campus, successfully timed out.";
-                triggerDevicePushNotification(notifTitle, notifMsg);
+                triggerDevicePushNotification("Campus Exit", "You've exited the campus, automatically timed out.");
 
                 if (typeof showToast === 'function') {
-                    showToast(type === 'in' ? "Auto Timed In: Entered campus bounds" : "Auto Timed Out: Left campus bounds");
+                    showToast("Auto Timed Out: Left campus bounds");
                 }
             } catch (err) {
                 Logger.warn("Attendance", "Auto attendance failed", err);
@@ -6673,7 +6672,6 @@
                 appState.campusEntryTs = entryTs;
                 appState.campusExitTs = null;
                 appState.campusExitDuration = "";
-                processAutoAttendance('in', lat, lng);
             } else {
                 try { localStorage.removeItem(userEntryKey); } catch (e) {}
                 appState.isInsideCampus = false;
@@ -6684,7 +6682,9 @@
                 }
                 appState.campusExitTs = exitTs;
                 appState.campusEntryTs = null;
-                processAutoAttendance('out', lat, lng);
+                if (appState.isTimedIn) {
+                    processAutoAttendance('out', lat, lng);
+                }
             }
             updateTrackingStatusBanner();
         }
@@ -10927,6 +10927,14 @@
                 const capturedAt = new Date();
                 const location = await resolveAttendanceLocation();
 
+                // (2026-07-13) Disallow time in outside campus bounds; was allowing time in
+                if (type === 'in') {
+                    if (!location.isInside) {
+                        await showStatus("Outside Campus", "You cannot time in because you are outside CTU campus grounds. Attendance is only permitted inside the campus.", "error");
+                        return;
+                    }
+                }
+
                 const confirmed = await openAttendanceActionModal(type, {
                     time: formatDateTime12(capturedAt),
                     location: location.address
@@ -10942,7 +10950,7 @@
                     location,
                     clientTimestamp: capturedAt.toISOString()
                 });
-                const updatedHistory = getMergedAttendanceHistory([], appState.user.uid);
+                const updatedHistory = getMergedAttendanceHistory(_fullAttendanceHistory, appState.user.uid);
                 setAttendanceState(type === 'in');
                 renderAttendanceHistory(updatedHistory);
                 calculateStats(updatedHistory);
@@ -11185,7 +11193,8 @@
                         timestamp: new Date()
                     };
                     appState.isLocationTrackingActive = true;
-                    // (2026-07-13) Keep campus centered & sync live SOS location; was auto-flying
+                    // (2026-07-13) Sync geofence auto-out with live GPS tracker; was missing sync
+                    checkCampusGeofence(pos.coords.latitude, pos.coords.longitude);
                     updateOwnLocationHighlight([pos.coords.latitude, pos.coords.longitude], false);
                     updateSosLocationDisplay(pos.coords.latitude, pos.coords.longitude);
                     updateTrackingStatusBanner();
@@ -11193,7 +11202,8 @@
                     if (appState.user.uid) {
                         updateStudentLiveLocation(appState.user.uid, {
                             lat: pos.coords.latitude,
-                            lng: pos.coords.longitude
+                            lng: pos.coords.longitude,
+                            isInside: appState.isInsideCampus
                         }).catch(e => console.warn("Live tracking sync failed:", e));
                     }
                 },
@@ -11233,20 +11243,23 @@
             updateTrackingStatusBanner();
         }
 
-        // (2026-07-13) Use real GPS coordinates without fake fallback; was hardcoded
+        // (2026-07-13) Include campus boundary check in attendance GPS; was lat lng
         function getFallbackAttendanceLocation() {
             if (appState.lastLocation?.lat && appState.lastLocation?.lng) {
+                const isInside = isPointInPolygon([appState.lastLocation.lat, appState.lastLocation.lng], getCampusGeofencePolygon());
                 return {
                     lat: appState.lastLocation.lat,
                     lng: appState.lastLocation.lng,
-                    address: `Lat ${appState.lastLocation.lat.toFixed(5)}, Lng ${appState.lastLocation.lng.toFixed(5)}`
+                    address: `Lat ${appState.lastLocation.lat.toFixed(5)}, Lng ${appState.lastLocation.lng.toFixed(5)}`,
+                    isInside
                 };
             }
 
             return {
                 lat: null,
                 lng: null,
-                address: "Location unavailable"
+                address: "Location unavailable",
+                isInside: false
             };
         }
 
@@ -11298,7 +11311,8 @@
             return {
                 lat,
                 lng,
-                address
+                address,
+                isInside
             };
         }
 

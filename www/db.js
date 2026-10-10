@@ -2114,12 +2114,26 @@ export const subscribeToStudentAttendance = (studentUid, callback) => {
  * @param {string} studentUid
  * @param {object} location { lat, lng }
  */
+// (2026-07-13) Pause location sharing when outside campus; was broadcasting
 export const updateStudentLiveLocation = async (studentUid, location) => {
     try {
+        const isInside = location.isInside !== false;
+        if (!isInside) {
+            await setDoc(doc(db, "student_locations", studentUid), {
+                studentUid,
+                isInside: false,
+                sharingEnabled: false,
+                sharingState: "outside_campus",
+                sharingMessage: "Student is outside campus bounds. Tracking paused.",
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+            return;
+        }
         await setDoc(doc(db, "student_locations", studentUid), {
             studentUid,
             lat: location.lat,
             lng: location.lng,
+            isInside: true,
             sharingEnabled: true,
             sharingState: "live",
             sharingMessage: "",

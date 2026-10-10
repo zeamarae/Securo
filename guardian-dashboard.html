@@ -3103,17 +3103,16 @@
         let childAutoAttendanceBusy = false;
         let lastChildAutoAttendanceTime = 0;
 
-        // (2026-07-13) Auto time in/out for monitored child; was map marker update
+        // (2026-07-13) Auto time out only when child outside campus; was auto timing in
         async function processChildAutoAttendance(studentUid, loc, isInside) {
-            if (!studentUid || !loc?.lat || !loc?.lng || childAutoAttendanceBusy) return;
+            if (!studentUid || childAutoAttendanceBusy) return;
+            if (isInside) return; // Do not auto time in; student must time in inside campus
             const currentTimedIn = monitoredStudentAttendance[0]?.type === 'in';
-            if (isInside && currentTimedIn) return;
-            if (!isInside && !currentTimedIn) return;
+            if (!currentTimedIn) return;
             if (Date.now() - lastChildAutoAttendanceTime < 15000) return;
 
             const recent = monitoredStudentAttendance[0];
-            const targetType = isInside ? 'in' : 'out';
-            if (recent && recent.type === targetType) {
+            if (recent && recent.type === 'out') {
                 const recentTs = recent.timestamp?.toDate ? recent.timestamp.toDate().getTime() : new Date(recent.timestamp || recent.clientTimestamp || 0).getTime();
                 if (Date.now() - recentTs < 30000) return;
             }
@@ -3121,15 +3120,16 @@
             childAutoAttendanceBusy = true;
             lastChildAutoAttendanceTime = Date.now();
             try {
-                const address = isInside ? 'Inside Campus Bounds (Auto Time In)' : 'Outside Campus Bounds (Auto Time Out)';
-                await logAttendance(studentUid, targetType, {
-                    lat: loc.lat,
-                    lng: loc.lng,
-                    address,
+                const lat = loc?.lat || CAMPUS_CENTER[0];
+                const lng = loc?.lng || CAMPUS_CENTER[1];
+                await logAttendance(studentUid, 'out', {
+                    lat,
+                    lng,
+                    address: 'Outside Campus Bounds (Auto Time Out)',
                     auto: true
                 });
                 const childName = document.getElementById('activeStudentName')?.textContent?.trim() || activeLink?.studentName || 'Child';
-                showToast(`Auto ${targetType === 'in' ? 'Time In' : 'Time Out'} recorded for ${childName}.`);
+                showToast(`Auto Time Out recorded for ${childName}.`);
             } catch (err) {
                 console.warn("Child auto attendance error:", err);
             } finally {
@@ -3187,7 +3187,7 @@
             });
         }
 
-// (2026-07-13) Add campus geofence and exit duration tracking; was basic marker pan
+        // (2026-07-13) Hide marker and pause tracking when child outside; was tracking
         function updateStudentMap(loc) {
             if (!map) return;
             const unavailableReason = getLocationUnavailableReason(loc);
@@ -3201,10 +3201,9 @@
                 return;
             }
 
-            latestStudentLocation = loc;
-            const pos = [loc.lat, loc.lng];
-// (2026-07-13) Check point-in-polygon for child location; was radius check
-            const isInside = isPointInPolygon([loc.lat, loc.lng], CAMPUS_GEOFENCE_POLYGON);
+            const isInside = (loc && loc.isInside !== false && typeof loc.lat === 'number' && typeof loc.lng === 'number')
+                ? isPointInPolygon([loc.lat, loc.lng], getCampusGeofencePolygon())
+                : false;
 
             // (2026-07-13) Update child chip status and color live; was card only
             if (activeLink?.studentUid) {
@@ -3217,10 +3216,27 @@
                 }
             }
 
+            const locateBtn = document.getElementById('locateBtn');
+            if (!isInside) {
+                latestStudentLocation = null;
+                clearStudentMarker();
+                if (locateBtn) locateBtn.disabled = true;
+
+                const time = loc.updatedAt?.toDate() || new Date();
+                const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('lastSeen').innerHTML = `<span style="color:#d11f34; font-weight:700;">Outside Campus</span> · Tracking paused (Privacy)`;
+                document.getElementById('statusDot').style.background = 'var(--red)';
+                return;
+            }
+
+            latestStudentLocation = loc;
+            const pos = [loc.lat, loc.lng];
+            if (locateBtn) locateBtn.disabled = false;
+
             if (!studentMarker) {
                 const icon = L.divIcon({
                     className: 'custom-div-icon',
-                    html: `<div style="width:22px;height:22px;background:${isInside ? '#0f9b67' : '#d11f34'};border:3px solid white;border-radius:50%;box-shadow:0 0 20px ${isInside ? 'rgba(15,155,103,0.5)' : 'rgba(209,31,52,0.5)'};"></div>`,
+                    html: `<div style="width:22px;height:22px;background:#0f9b67;border:3px solid white;border-radius:50%;box-shadow:0 0 20px rgba(15,155,103,0.5);"></div>`,
                     iconSize: [22, 22],
                     iconAnchor: [11, 11]
                 });
@@ -3232,21 +3248,8 @@
             map.panTo(pos);
             const time = loc.updatedAt?.toDate() || new Date();
             const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-            if (isInside) {
-                document.getElementById('lastSeen').innerHTML = `<span style="color:#0f9b67; font-weight:700;">Inside Campus</span> · Active ${timeStr}`;
-                document.getElementById('statusDot').style.background = 'var(--green)';
-            } else {
-                const diffMs = Math.max(0, Date.now() - time.getTime());
-                const diffMins = Math.floor(diffMs / 60000);
-                const diffHours = Math.floor(diffMins / 60);
-                const exitText = diffHours >= 1
-                    ? `Left campus ${diffHours}h ago`
-                    : (diffMins >= 1 ? `Left campus ${diffMins}m ago` : `Outside campus bounds`);
-
-                document.getElementById('lastSeen').innerHTML = `<span style="color:#d11f34; font-weight:700;">${exitText}</span> · Active ${timeStr}`;
-                document.getElementById('statusDot').style.background = 'var(--red)';
-            }
+            document.getElementById('lastSeen').innerHTML = `<span style="color:#0f9b67; font-weight:700;">Inside Campus</span> · Active ${timeStr}`;
+            document.getElementById('statusDot').style.background = 'var(--green)';
         }
 
         document.getElementById('requestLocationBtn')?.addEventListener('click', async () => {
