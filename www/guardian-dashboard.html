@@ -1966,7 +1966,8 @@
                 if (map) setTimeout(() => map.invalidateSize(), 300);
             }
             if (viewId === 'vault' && activeLink?.studentUid) loadSharedVault(activeLink.studentUid);
-            if (viewId === 'alerts' && monitoredStudentAttendance) renderAlerts(monitoredStudentAttendance);
+            // (2026-07-13) Render combined safety alerts; was attendance only
+            if (viewId === 'alerts') renderAlerts();
             if (viewId === 'gad') loadGADPosts();
             window.scrollTo({ top: 0, behavior: 'instant' });
         }
@@ -2257,8 +2258,9 @@
                 .replace(/'/g, '&#39;');
         }
 
-        // (2026-07-13) Add push alerts for campus entry/exit; was in-app list only
+        // (2026-07-13) Return emergency icon for SOS; was fallback info
         function getGuardianNotificationIcon(type) {
+            if (type === 'sos') return 'emergency';
             if (type === 'campus_entry') return 'login';
             if (type === 'campus_exit') return 'logout';
             if (type === 'location_request_sent') return 'notifications_active';
@@ -3133,6 +3135,8 @@
         }
 
         let monitoredStudentAttendance = [];
+        // (2026-07-13) Track student SOS records; was attendance only
+        let monitoredStudentSos = [];
         let childAutoAttendanceBusy = false;
         let lastChildAutoAttendanceTime = 0;
 
@@ -3184,7 +3188,7 @@
             // (2026-07-13) Push alerts for student time-in, time-out, SOS; was silent
             attendanceUnsub = subscribeToStudentAttendance(studentUid, (logs) => {
                 monitoredStudentAttendance = Array.isArray(logs) ? logs : [];
-                renderAlerts(logs);
+                renderAlerts();
                 if (monitoredStudentAttendance.length > 0) {
                     const latest = monitoredStudentAttendance[0];
                     const latestId = latest.id || `${latest.type}_${latest.clientTimestamp || ''}_${latest.timestamp?.seconds || ''}`;
@@ -3206,18 +3210,22 @@
             });
 
             let _lastNotifiedSosId = null;
-            sosUnsub = subscribeToStudentSOS(studentUid, (activeSos) => {
+            // (2026-07-13) Listen to all SOS logs & render alerts; was card only
+            sosUnsub = subscribeToStudentSOS(studentUid, (sosLogs) => {
+                monitoredStudentSos = Array.isArray(sosLogs) ? sosLogs : [];
+                renderAlerts();
+
                 const card = document.getElementById('sosEmergencyCard');
                 const text = document.getElementById('sosEmergencyText');
                 const FORTY_EIGHT_HOURS = 48 * 60 * 60 * 1000;
-                const recentSos = Array.isArray(activeSos) ? activeSos.filter(s => {
+                const activeAlerts = monitoredStudentSos.filter(s => {
                     const ts = s.timestamp?.toDate?.() || (s.timestamp ? new Date(s.timestamp) : null);
-                    return ts && (Date.now() - ts.getTime()) <= FORTY_EIGHT_HOURS;
-                }) : [];
-                if (recentSos.length > 0) {
-                    const alert = recentSos[0];
+                    return s.status === 'active' && ts && (Date.now() - ts.getTime()) <= FORTY_EIGHT_HOURS;
+                });
+                if (activeAlerts.length > 0) {
+                    const alert = activeAlerts[0];
                     const alertId = alert.id || `${alert.timestamp?.seconds || Date.now()}`;
-                    if (alertId !== _lastNotifiedSosId && alert.status !== 'resolved') {
+                    if (alertId !== _lastNotifiedSosId) {
                         _lastNotifiedSosId = alertId;
                         const sName = document.getElementById('activeStudentName')?.textContent?.trim() || activeLink?.studentName || alert.userName || alert.studentName || 'Your child';
                         const sLoc = alert.location?.address || (alert.location?.lat ? `${alert.location.lat.toFixed(4)}, ${alert.location.lng.toFixed(4)}` : 'Campus Grounds');
@@ -3239,6 +3247,7 @@
                             if (map) map.setView([alert.location.lat, alert.location.lng], 18);
                         };
                     }
+                    if (card) card.style.display = 'block';
                     updateGuardianNotifBadge();
                 } else {
                     if (card) card.style.display = 'none';
@@ -3378,33 +3387,73 @@
             downloadVaultViewerBtn.onclick = null;
         }
 
-        function renderAlerts(logs) {
+        // (2026-07-13) Render merged SOS & attendance logs; was attendance only
+        function renderAlerts(passedLogs) {
             const container = document.getElementById('alertHistory');
             const empty = document.getElementById('alertsEmpty');
+            if (!container || !empty) return;
 
-            // Filter only SOS or critical events if any
-            const sosLogs = logs.filter(l => l.type === 'sos' || l.type === 'in' || l.type === 'out');
+            const sosItems = (Array.isArray(monitoredStudentSos) ? monitoredStudentSos : []).map(s => ({
+                ...s,
+                type: 'sos',
+                isSosRecord: true
+            }));
 
-            if (sosLogs.length === 0) {
+            const attendanceItems = Array.isArray(passedLogs) ? passedLogs : (Array.isArray(monitoredStudentAttendance) ? monitoredStudentAttendance : []);
+
+            const filteredAttendance = attendanceItems.filter(a => {
+                if (a.type !== 'sos') return true;
+                return !sosItems.some(s => s.id === a.id || (s.timestamp?.seconds && a.timestamp?.seconds && Math.abs(s.timestamp.seconds - a.timestamp.seconds) < 5));
+            });
+
+            const allEvents = [...sosItems, ...filteredAttendance].filter(l => l.type === 'sos' || l.type === 'in' || l.type === 'out');
+
+            allEvents.sort((a, b) => {
+                const getMillis = (item) => {
+                    if (item.timestamp?.toDate) return item.timestamp.toDate().getTime();
+                    if (item.timestamp?.seconds) return item.timestamp.seconds * 1000;
+                    if (item.timestamp) return new Date(item.timestamp).getTime();
+                    if (item.clientTimestamp) return new Date(item.clientTimestamp).getTime();
+                    return 0;
+                };
+                return getMillis(b) - getMillis(a);
+            });
+
+            if (allEvents.length === 0) {
                 container.innerHTML = '';
                 empty.style.display = 'block';
                 return;
             }
 
             empty.style.display = 'none';
-            container.innerHTML = sosLogs.map(log => {
-                const date = log.timestamp?.toDate() || new Date();
+            container.innerHTML = allEvents.map(log => {
+                let date = new Date();
+                if (log.timestamp?.toDate) date = log.timestamp.toDate();
+                else if (log.timestamp?.seconds) date = new Date(log.timestamp.seconds * 1000);
+                else if (log.timestamp) date = new Date(log.timestamp);
+                else if (log.clientTimestamp) date = new Date(log.clientTimestamp);
+
                 const isSOS = log.type === 'sos';
+                const locText = log.location?.address || (log.location?.lat ? `${log.location.lat.toFixed(4)}, ${log.location.lng.toFixed(4)}` : 'Campus Location');
+                const sosStatus = (log.status || 'Active').toUpperCase();
+                const isResolved = sosStatus === 'RESOLVED';
+                const hasCoordinates = !!(log.location?.lat && log.location?.lng);
+
                 return `
-                    <div class="alert-item">
+                    <div class="alert-item ${isSOS ? 'alert-item-sos' : ''}" style="${isSOS ? 'background:rgba(255,235,238,0.7); border:1px solid rgba(239,68,68,0.25);' + (hasCoordinates ? ' cursor:pointer;' : '') : ''}" ${isSOS && hasCoordinates ? `onclick="if(typeof setActiveView==='function'){setActiveView('map'); if(map) map.setView([${log.location.lat}, ${log.location.lng}], 18);}"` : ''}>
                         <div class="alert-icon ${isSOS ? 'icon-sos' : 'icon-attendance'}">
                             <span class="material-symbols-outlined">${isSOS ? 'emergency' : (log.type === 'in' ? 'login' : 'logout')}</span>
                         </div>
                         <div style="flex:1;">
-                            <div style="font-weight:700;">${isSOS ? 'EMERGENCY ALERT' : (log.type === 'in' ? 'Timed In' : 'Timed Out')}</div>
-                            <div style="font-size:0.8rem; color:var(--muted);">${log.location?.address || 'Campus Location'}</div>
+                            <div style="font-weight:700; ${isSOS ? 'color:var(--red); display:flex; align-items:center; gap:6px; flex-wrap:wrap;' : ''}">
+                                ${isSOS ? `<span>EMERGENCY ALERT</span><span style="font-size:0.65rem; background:${isResolved ? '#6b7280' : 'var(--red)'}; color:#fff; padding:1px 6px; border-radius:10px; font-weight:800;">${escapeHtml(sosStatus)}</span>` : (log.type === 'in' ? 'Timed In' : 'Timed Out')}
+                            </div>
+                            <div style="font-size:0.8rem; color:var(--muted); margin-top:2px;">${escapeHtml(locText)}</div>
                         </div>
-                        <div style="font-size:0.75rem; font-weight:700; color:var(--muted);">${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        <div style="font-size:0.75rem; font-weight:700; color:var(--muted); text-align:right;">
+                            <div>${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                            <div style="font-size:0.7rem; font-weight:500;">${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}</div>
+                        </div>
                     </div>
                 `;
             }).join('');

@@ -2511,12 +2511,18 @@ export const notifyGuardiansSOS = async (studentUid, studentName, location = {},
     }
 };
 
+// (2026-07-13) Query all student SOS logs; was active only
 export const subscribeToStudentSOS = (studentUid, callback) => {
     if (!studentUid) return () => {};
     try {
-        const q = query(collection(db, "sos_logs"), where("userId", "==", studentUid), where("status", "==", "active"));
+        const q = query(collection(db, "sos_logs"), where("userId", "==", studentUid));
         return onSnapshot(q, (snap) => {
             const logs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            logs.sort((a, b) => {
+                const ta = a.timestamp?.seconds || (a.timestamp?.toDate ? a.timestamp.toDate().getTime() / 1000 : 0);
+                const tb = b.timestamp?.seconds || (b.timestamp?.toDate ? b.timestamp.toDate().getTime() / 1000 : 0);
+                return tb - ta;
+            });
             callback(logs);
         }, (err) => {
             console.warn("SOS listener error:", err);
