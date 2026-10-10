@@ -12251,6 +12251,98 @@
                 card.addEventListener('touchcancel', () => card.classList.remove('anim-pop-up'));
             });
         });
+
+        // (2026-07-13) Handle universal back button to close modals; was exiting app
+        function handleUniversalBackClose() {
+            const cameraOverlay = document.getElementById("cameraOverlay");
+            if (cameraOverlay && (cameraOverlay.classList.contains("active") || getComputedStyle(cameraOverlay).display !== "none")) {
+                closeEmergencyCameraPanel();
+                return true;
+            }
+            const chatOverlay = document.getElementById("chatOverlay");
+            if (chatOverlay && chatOverlay.classList.contains("active")) {
+                closeChat();
+                return true;
+            }
+            const gadPmModal = document.getElementById("gadPmModal");
+            if (gadPmModal && gadPmModal.classList.contains("active")) {
+                gadPmModal.classList.remove("active");
+                return true;
+            }
+            const vaultOverlay = document.getElementById("vaultDetailsOverlay");
+            if (vaultOverlay && vaultOverlay.classList.contains("active")) {
+                const closeBtn = document.getElementById("closeDetailsBtn");
+                if (closeBtn) closeBtn.click();
+                else {
+                    const v = document.getElementById("detailsMediaWrap")?.querySelector("video");
+                    if (v) { v.pause(); v.src = ""; }
+                    vaultOverlay.classList.remove("active");
+                }
+                return true;
+            }
+            const attModal = document.getElementById("attendanceActionModal");
+            if (attModal && attModal.classList.contains("active")) {
+                const cancelBtn = document.getElementById("attendanceCancelBtn");
+                if (cancelBtn) cancelBtn.click();
+                else attModal.classList.remove("active");
+                return true;
+            }
+            const statusModal = document.getElementById("statusModal");
+            if (statusModal && statusModal.classList.contains("active")) {
+                statusModal.classList.remove("active");
+                return true;
+            }
+            const mandatoryModal = document.getElementById("mandatoryModal");
+            if (mandatoryModal && mandatoryModal.classList.contains("active")) {
+                mandatoryModal.classList.remove("active");
+                return true;
+            }
+            const profileDropdown = document.getElementById("profileDropdown");
+            if (profileDropdown && profileDropdown.classList.contains("active")) {
+                profileDropdown.classList.remove("active");
+                return true;
+            }
+            const notifDropdown = document.getElementById("notifDropdown");
+            if (notifDropdown && notifDropdown.classList.contains("active")) {
+                notifDropdown.classList.remove("active");
+                return true;
+            }
+            const activeModal = document.querySelector(".modal.active, .overlay.active, .status-modal.active, [role='dialog'].active");
+            if (activeModal && activeModal !== document.body) {
+                const modalClose = activeModal.querySelector(".btn-close, .modal-close, [data-dismiss], .close-btn");
+                if (modalClose) modalClose.click();
+                else activeModal.classList.remove("active");
+                return true;
+            }
+            if (typeof appState !== "undefined" && appState.currentPage && appState.currentPage !== "map") {
+                if (typeof setActiveView === "function") {
+                    setActiveView("map");
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        try {
+            const AppPlugin = window.Capacitor?.Plugins?.App;
+            if (AppPlugin?.addListener) {
+                AppPlugin.addListener('backButton', ({ canGoBack }) => {
+                    const handled = handleUniversalBackClose();
+                    if (!handled) {
+                        if (canGoBack) window.history.back();
+                        else if (AppPlugin.exitApp) AppPlugin.exitApp();
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn("Capacitor backButton setup failed:", e);
+        }
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') handleUniversalBackClose();
+        });
+        window.addEventListener('popstate', () => {
+            handleUniversalBackClose();
+        });
     </script>
 </body>
 
