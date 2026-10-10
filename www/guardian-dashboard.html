@@ -406,68 +406,137 @@
             transform: scale(0.98);
         }
 
-        .download-btn {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.9);
-            color: var(--primary);
+        /* (2026-07-13) 3-column vault grid & tile matching student; was 2-column */
+        .vault-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .vault-tile {
+            position: relative;
+            min-height: 136px;
+            aspect-ratio: 1 / 1.25;
+            border-radius: 20px;
+            overflow: hidden;
+            padding: 10px;
             display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            color: #fff;
+            background:
+                linear-gradient(180deg, rgba(9, 8, 15, 0.02), rgba(9, 8, 15, 0.88)),
+                linear-gradient(135deg, #0284c7, #1e1b4b);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            transition: transform 0.16s ease, box-shadow 0.16s ease;
+        }
+
+        .vault-tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+        }
+
+        .vault-tile .download-btn {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 28px;
+            height: 28px;
+            border-radius: 10px;
+            background: rgba(209, 31, 52, 0.85);
+            color: white;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            border: none;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 12px rgba(209, 31, 52, 0.2);
             cursor: pointer;
-            transition: all 0.2s;
+            z-index: 5;
+            transition: transform 0.2s ease, opacity 0.2s ease;
         }
 
-        .download-btn:hover {
-            background: var(--primary);
-            color: white;
+        .vault-tile .download-btn:hover {
             transform: scale(1.1);
+            opacity: 0.9;
         }
 
-        .download-btn span {
-            font-size: 18px;
-            font-weight: bold;
+        .vault-tile .download-btn .material-symbols-outlined {
+            font-size: 16px;
+            font-weight: 700;
         }
 
-        .vault-media-trigger {
-            width: 100%;
-            height: 100%;
-            padding: 0;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            display: block;
+        .vault-tile .tile-corner {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 26px;
+            height: 26px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.24);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 4;
+            color: white;
         }
 
-        .vault-media-trigger video,
-        .vault-media-trigger img {
+        .vault-tile .tile-corner .material-symbols-outlined {
+            font-size: 16px;
+        }
+
+        .vault-tile .vault-preview {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            display: block;
         }
 
-        /* (2026-07-13) Hide native video controls/poster on video thumbnails; was unhidden */
-        .vault-media-trigger video::-webkit-media-controls,
-        .vault-media-trigger video::-webkit-media-controls-start-playback-button,
-        .vault-media-trigger video::-webkit-media-controls-enclosure,
-        .vault-video-thumb-container video::-webkit-media-controls,
-        .vault-video-thumb-container video::-webkit-media-controls-start-playback-button,
-        .vault-video-thumb-container video::-webkit-media-controls-enclosure {
+        .vault-tile .vault-video-badge {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1.5px solid rgba(255, 255, 255, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            z-index: 3;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+        }
+
+        .vault-tile .vault-video-badge .material-symbols-outlined {
+            font-size: 22px;
+            margin-left: 2px;
+        }
+
+        .vault-tile .tile-meta {
+            position: relative;
+            z-index: 3;
+            opacity: 0.85;
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .vault-tile video::-webkit-media-controls,
+        .vault-tile video::-webkit-media-controls-start-playback-button,
+        .vault-tile video::-webkit-media-controls-enclosure {
             display: none !important;
             -webkit-appearance: none !important;
-            opacity: 0 !important;
-            visibility: hidden !important;
-            width: 0 !important;
-            height: 0 !important;
-            pointer-events: none !important;
         }
 
         .vault-viewer-card {
@@ -1649,7 +1718,8 @@
                     <h2>Child Vault</h2>
                 </div>
                 <p style="color:var(--muted); font-size:0.9rem; margin-bottom:20px;">Images and videos from your child's vault appear here for guardian review.</p>
-                <div id="sharedVaultGrid" class="row g-3">
+                <!-- (2026-07-13) 3-column vault grid container; was bootstrap row -->
+                <div id="sharedVaultGrid" class="vault-grid">
                     <!-- Media items -->
                 </div>
                 <div id="vaultEmpty" class="empty-state">
@@ -2951,36 +3021,35 @@
                     }
                 }
 
+                // (2026-07-13) Render 3-column vault tiles matching student; was col-6 cards
+                const formatTime12 = (d) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+                const formatDateShort = (d) => d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
                 container.innerHTML = currentSharedVaultItems.map((item, index) => {
-                    const date = item.timestamp?.toDate() || new Date();
+                    const date = item.timestamp?.toDate ? item.timestamp.toDate() : (item.timestamp ? new Date(item.timestamp) : new Date());
                     const isVideo = item.kind === 'video';
+                    const icon = isVideo ? 'videocam' : 'image';
                     const playableUrl = isVideo ? getPlayableVideoUrl(item.src) : '';
+                    const preview = isVideo
+                        ? (item.thumbnail
+                            ? `<img class="vault-preview" src="${item.thumbnail}" alt="Video thumbnail">
+                               <div class="vault-video-badge"><span class="material-symbols-outlined">play_arrow</span></div>`
+                            : `<div class="vault-preview" style="background:linear-gradient(135deg, #181528, #2a1f47); overflow:hidden;">
+                                   <video class="vault-preview" src="${playableUrl}" muted playsinline webkit-playsinline preload="metadata" style="pointer-events:none;"></video>
+                                   <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.5));"></div>
+                                   <div class="vault-video-badge"><span class="material-symbols-outlined">play_arrow</span></div>
+                               </div>`)
+                        : `<img class="vault-preview" src="${item.src}" alt="${item.label || 'Vault image'}">`;
+
                     return `
-                        <div class="col-6">
-                            <div class="card" style="padding:0; overflow:hidden; position:relative; aspect-ratio:1/1; background:#121024; border-radius:18px;">
-                                <button class="download-btn" type="button" data-download-index="${index}">
-                                    <span class="material-symbols-outlined">download</span>
-                                </button>
-                                <button class="vault-media-trigger" type="button" data-vault-index="${index}" style="width:100%; height:100%; border:none; padding:0; background:transparent;">
-                                    ${isVideo ?
-                                        (item.thumbnail ?
-                                            `<img src="${item.thumbnail}" alt="Video thumbnail" style="width:100%; height:100%; object-fit:cover; display:block;">` :
-                                            `<div class="vault-video-thumb-container" style="position:relative; width:100%; height:100%; background:linear-gradient(135deg, #181528, #2a1f47); display:flex; align-items:center; justify-content:center; overflow:hidden;">
-                                                <video class="vault-preview" src="${playableUrl}" muted playsinline webkit-playsinline preload="metadata" style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; pointer-events:none;"></video>
-                                                <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.5));"></div>
-                                                <div style="width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,0.2); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1.5px solid rgba(255,255,255,0.6); display:flex; align-items:center; justify-content:center; color:#fff; z-index:2; box-shadow:0 4px 16px rgba(0,0,0,0.4);">
-                                                    <span class="material-symbols-outlined" style="font-size:24px; margin-left:2px;">play_arrow</span>
-                                                </div>
-                                            </div>`
-                                        ) :
-                                        `<img src="${item.src}" alt="${item.label || 'Vault image'}" style="width:100%; height:100%; object-fit:cover; display:block;">`
-                                    }
-                                </button>
-                                <div style="position:absolute; bottom:0; left:0; right:0; padding:8px; background:linear-gradient(transparent, rgba(0,0,0,0.7)); color:white; font-size:0.7rem; pointer-events:none; z-index:3;">
-                                    ${date.toLocaleDateString()}
-                                </div>
-                            </div>
-                        </div>
+                        <article class="vault-tile" data-vault-index="${index}">
+                            <button class="download-btn" type="button" data-download-index="${index}" aria-label="Download media">
+                                <span class="material-symbols-outlined">download</span>
+                            </button>
+                            <div class="tile-corner"><span class="material-symbols-outlined">${icon}</span></div>
+                            ${preview}
+                            <div class="tile-meta">${formatDateShort(date)} ${formatTime12(date)}</div>
+                        </article>
                     `;
                 }).join('');
 
