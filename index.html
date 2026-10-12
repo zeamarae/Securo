@@ -44,7 +44,8 @@
             const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
             const isDesktop = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-            if (isTargetHost && isRootUrl && isDesktop) {
+            // (2026-07-13) Bypass desktop landing redirect if authenticated; was unconditional
+            if (isTargetHost && isRootUrl && isDesktop && sessionStorage.getItem('securo_authenticated') !== '1') {
                 window.__securoDesktopPending = true;
                 sessionStorage.setItem('securo_allow_landing', '1');
                 window.location.replace('landing.html');

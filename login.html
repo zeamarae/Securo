@@ -890,8 +890,13 @@
         import { Validation, UI, Logger, Permissions } from './utils.js';
         import './install-sw.js'; // Initialize offline support
 
-        // Check if already logged in
-        checkAuth(false);
+        // (2026-07-13) Retain login view on role selection entry; was checkAuth
+        if (sessionStorage.getItem('securo_from_role_selection') === '1') {
+            sessionStorage.removeItem('securo_from_role_selection');
+            auth.signOut().catch(() => {});
+        } else {
+            checkAuth(false);
+        }
 
         // (2026-07-13) Always start on login first; prev: auto-redirect permissions
 
@@ -1418,7 +1423,8 @@
                         throw new Error("Please enter your password.");
                     }
                     const userCredential = await login(identifier, password, preferredRole);
-                    const loggedInUser = userCredential.user;
+                    // (2026-07-13) Resolve user object and route to app; was userCredential.user
+                    const loggedInUser = userCredential?.user || userCredential;
                     
                     // Check if profile exists and has completed onboarding
                     // Wrapped separately so a Firestore error never blocks a valid login
@@ -1427,6 +1433,7 @@
                         profile = await getUserProfile(loggedInUser.uid);
                     } catch (_) {
                         // Profile fetch failed — proceed to dashboard anyway
+                        sessionStorage.setItem('securo_authenticated', '1');
                         window.location.href = 'index.html';
                         return;
                     }
@@ -1442,10 +1449,11 @@
                         return;
                     }
 
-                    // (2026-07-13) Route to permissions or dashboard; prev: index.html
+                    sessionStorage.setItem('securo_authenticated', '1');
+                    const isNativeApk = Boolean(window.Capacitor?.isNativePlatform?.() || window.Capacitor?.platform !== 'web');
                     const camOk = localStorage.getItem('securo_camera_granted') === 'true';
                     const locOk = localStorage.getItem('securo_location_granted') === 'true';
-                    window.location.href = (!camOk || !locOk) ? 'permissions-onboarding.html' : 'index.html';
+                    window.location.href = (isNativeApk && (!camOk || !locOk)) ? 'permissions-onboarding.html' : 'index.html';
                 } else {
                     const studentId = signupIdInput.value.trim();
                     const confirmPassword = document.getElementById('confirmPasswordSignup').value;
@@ -1474,11 +1482,13 @@
                     });
 
                     setButtonBusy(submitBtn, false);
-                    // (2026-07-13) Route registration to onboarding; prev: index.html
+                    // (2026-07-13) Set auth session and route signup to app; was permissions
                     sessionStorage.setItem('securo_just_registered', '1');
+                    sessionStorage.setItem('securo_authenticated', '1');
+                    const isNativeApk = Boolean(window.Capacitor?.isNativePlatform?.() || window.Capacitor?.platform !== 'web');
                     const camOk = localStorage.getItem('securo_camera_granted') === 'true';
                     const locOk = localStorage.getItem('securo_location_granted') === 'true';
-                    window.location.href = (!camOk || !locOk) ? 'permissions-onboarding.html' : 'index.html';
+                    window.location.href = (isNativeApk && (!camOk || !locOk)) ? 'permissions-onboarding.html' : 'index.html';
                 }
             } catch (error) {
                 const friendlyMessage = getFriendlyAuthMessage(error, isLoginMode ? "login" : "signup", roleLabel);

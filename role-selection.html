@@ -316,6 +316,8 @@
     <script>
         function selectRole(role) {
             localStorage.setItem('securo_preferred_role', role);
+            // (2026-07-13) Set role transition flag to enter login page; was no flag
+            sessionStorage.setItem('securo_from_role_selection', '1');
             if (role === 'student' || role === 'staff') {
                 window.location.href = 'login.html';
             } else {
