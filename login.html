@@ -615,7 +615,8 @@
     <div class="toast-stack" id="toastStack" aria-live="polite"></div>
 
     <!-- Main Auth Card (loginHub) -->
-    <div class="login-card" id="loginHub">
+    <div class="login-card" id="loginHub" style="position: relative;">
+        <!-- (2026-07-13) Remove staff terms button; was top-left anchor -->
         <div class="brand-section">
             <img src="logo.png" alt="Securo Logo" class="brand-logo-img">
             <h1 class="brand-name">Securo</h1>
@@ -1068,6 +1069,18 @@
             errorMsg.textContent = '';
         };
 
+        // (2026-07-13) Set blue staff theme, hide signup, sync terms; was purple
+        if (isStaffRole) {
+            document.documentElement.style.setProperty('--primary', '#2563eb');
+            document.documentElement.style.setProperty('--primary-strong', '#1d4ed8');
+            document.documentElement.style.setProperty('--primary-soft', '#eff6ff');
+            if (signupTab) signupTab.style.display = 'none';
+        }
+        if (localStorage.getItem('securo_terms_agreed') === 'true') {
+            const termsBox = document.getElementById('termsCheckbox');
+            if (termsBox) termsBox.checked = true;
+        }
+
         if (loginTitle) loginTitle.textContent = isStaffRole ? 'Securo Staff' : 'Securo';
         if (subtitle) subtitle.textContent = isStaffRole ? 'Staff access portal' : 'Student access portal';
         if (identifierLabel) identifierLabel.textContent = `${roleLabel} ID Number`;
@@ -1080,7 +1093,7 @@
 
         // (2026-07-13) Auto-select signup tab on request; was login tab only
         const authUrlParams = new URLSearchParams(window.location.search);
-        if (authUrlParams.get('mode') === 'register' || window.location.hash === '#register') {
+        if (!isStaffRole && (authUrlParams.get('mode') === 'register' || window.location.hash === '#register')) {
             setMode('signup');
         }
 
@@ -1417,8 +1430,13 @@
                     if (!password) {
                         throw new Error("Please enter your password.");
                     }
-                    const userCredential = await login(identifier, password, preferredRole);
-                    const loggedInUser = userCredential.user;
+                    // (2026-07-13) Set session token and resolve user object; was undefined
+                    const userResult = await login(identifier, password, preferredRole);
+                    const loggedInUser = userResult?.user || userResult;
+                    if (loggedInUser?.uid) {
+                        localStorage.setItem('securo_session_token', loggedInUser.uid);
+                        sessionStorage.setItem('securo_login_pending', '1');
+                    }
                     
                     // Check if profile exists and has completed onboarding
                     // Wrapped separately so a Firestore error never blocks a valid login
@@ -1466,6 +1484,11 @@
 
                     const generatedEmail = roleIdToEmail(studentId, preferredRole);
                     const user = await signUp(generatedEmail, password);
+                    // (2026-07-13) Set session token on successful signup; was missing
+                    if (user?.uid) {
+                        localStorage.setItem('securo_session_token', user.uid);
+                        sessionStorage.setItem('securo_login_pending', '1');
+                    }
                     
                     saveLocalUserDirectoryEntry(user.uid, {
                         studentId,

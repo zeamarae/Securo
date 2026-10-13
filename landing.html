@@ -7,7 +7,10 @@
     <meta name="description" content="Securo is the shared campus safety, attendance, and emergency protection platform connecting students, parents, and security in real time.">
     <link rel="icon" type="image/png" href="logo.png">
 
-    <!-- (2026-07-13) Route mobile view and APK to index; was landing for all -->
+    <!-- (2026-07-13) Preloader & redirect mobile to role-selection; was index redirect -->
+    <link rel="stylesheet" href="preloader.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="preloader.js"></script>
     <script>
         (function () {
             const isApk = Boolean(
@@ -17,9 +20,12 @@
                 window.location.protocol === 'capacitor:'
             );
             const isMobile = window.innerWidth <= 768 || window.screen.width <= 768 || (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            const urlParams = new URLSearchParams(window.location.search);
-            const allowLanding = urlParams.has('trailer') || urlParams.has('preview') || sessionStorage.getItem('securo_allow_landing') === '1';
-            if ((isApk || isMobile) && !allowLanding) {
+            if (isApk || isMobile) {
+                window.location.replace("role-selection.html");
+                return;
+            }
+            const token = localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_session_token');
+            if (token) {
                 window.location.replace("index.html");
             }
         })();
@@ -61,8 +67,10 @@
             padding: 0;
         }
 
+        /* (2026-07-13) Set smooth scrolling and header scroll padding; was bare */
         html {
             scroll-behavior: smooth;
+            scroll-padding-top: 88px;
         }
 
         body {
@@ -155,8 +163,10 @@
             transition: color 0.2s ease;
         }
 
-        .nav-links a:hover {
+        .nav-links a:hover,
+        .nav-links a.active {
             color: var(--primary);
+            font-weight: 700;
         }
 
         .nav-actions {
@@ -1300,6 +1310,23 @@
 </head>
 <body>
 
+    <!-- (2026-07-13) Preloader & signup nav button; was demo access & enter portal -->
+    <div id="securo-preloader-overlay">
+        <div class="securo-preloader-bg"></div>
+        <div class="securo-preloader-content">
+            <div class="securo-preloader-logo-wrap">
+                <img src="logo with text.png" alt="Securo" class="securo-preloader-logo">
+                <div class="securo-preloader-shimmer"></div>
+            </div>
+            <div class="securo-preloader-indicator">
+                <span class="securo-preloader-status-text">INITIALIZING SECURE SYSTEMS</span>
+                <div class="securo-preloader-progress-track">
+                    <div class="securo-preloader-progress-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Ambient Gradient Blobs -->
     <div class="ambient-glow-top"></div>
     <div class="ambient-glow-bottom"></div>
@@ -1307,24 +1334,23 @@
     <!-- Navigation Header -->
     <header class="navbar-main">
         <div class="page-container nav-content">
-            <a href="landing.html" class="brand-logo-wrap" title="Securo Safety Platform">
+            <a href="javascript:void(0)" onclick="if(window.history.length>1){window.history.back();}else{window.location.href='role-selection.html';}" class="brand-logo-wrap" title="Securo Safety Platform">
                 <img src="logo with text.png" alt="Securo Logo" class="brand-logo-img">
             </a>
 
             <nav>
                 <ul class="nav-links">
                     <li><a href="#hero">Overview</a></li>
-                    <li><a href="#trailer">App Trailer</a></li>
                     <li><a href="#features">Features</a></li>
                     <li><a href="#dual-view">Student vs Guardian</a></li>
-                    <li><a href="#roles">Role Portals</a></li>
+                    <li><a href="#about-us">About Us</a></li>
+                    <li><a href="#roles">Enter Portal</a></li>
                 </ul>
             </nav>
 
             <div class="nav-actions">
-                <a href="#roles" class="btn-ghost">Demo Access</a>
-                <a href="#roles" class="btn-primary">
-                    <span>Enter Portal</span>
+                <a href="role-selection.html" class="btn-primary">
+                    <span>Sign Up</span>
                     <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
                 </a>
             </div>
@@ -1499,7 +1525,8 @@
                         <h3>Confidential GAD Support Chat</h3>
                         <p>Direct real-time communication channel for student guidance, mental health counseling, and anti-sexual harassment (COSH) safe reporting.</p>
                         <div class="feature-badge-row">
-                            <span class="feature-tag">Anonymous Option</span>
+                            <!-- (2026-07-13) Remove anonymous option tag; was anonymous option -->
+                            <span class="feature-tag">Verified Direct</span>
                             <span class="feature-tag">Live Thread</span>
                         </div>
                     </div>
@@ -1559,42 +1586,67 @@
             </div>
         </section>
 
-        <!-- Role Selection Portal Section (Bottom Requirement with Demo Credentials) -->
-        <section class="roles-section" id="roles">
+        <!-- (2026-07-13) About Us section & rework portal cards; was demo credentials -->
+        <section class="about-us-section" id="about-us" style="padding: 70px 0 40px;">
+            <div class="page-container">
+                <div class="section-header" style="text-align: center; margin-bottom: 36px;">
+                    <span class="section-eyebrow">Development Team</span>
+                    <h2 class="section-title">About Us</h2>
+                    <p class="section-lead">The dedicated creators and engineering team behind the Securo Campus Safety Platform.</p>
+                </div>
+                <div class="team-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1040px; margin: 0 auto;">
+                    <div class="team-member-card" style="background: white; border: 1px solid rgba(90,31,224,0.1); border-radius: 20px; padding: 22px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
+                        <div style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">RZ</div>
+                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Ramil, Zea Marae</h4>
+                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Core Developer</p>
+                    </div>
+                    <div class="team-member-card" style="background: white; border: 1px solid rgba(90,31,224,0.1); border-radius: 20px; padding: 22px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
+                        <div style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">SA</div>
+                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Santosidad, Angel Mae</h4>
+                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & Researcher</p>
+                    </div>
+                    <div class="team-member-card" style="background: white; border: 1px solid rgba(90,31,224,0.1); border-radius: 20px; padding: 22px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
+                        <div style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">LA</div>
+                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Loon, Alexa Suzane</h4>
+                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & QA</p>
+                    </div>
+                    <div class="team-member-card" style="background: white; border: 1px solid rgba(90,31,224,0.1); border-radius: 20px; padding: 22px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
+                        <div style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">DB</div>
+                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Delos Santos, Bea</h4>
+                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & UI/UX</p>
+                    </div>
+                    <div class="team-member-card" style="background: white; border: 1px solid rgba(90,31,224,0.1); border-radius: 20px; padding: 22px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
+                        <div style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">TK</div>
+                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Tangkay, Kenneth Brian</h4>
+                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & Systems</p>
+                    </div>
+                    <div class="team-member-card" style="background: white; border: 1px solid rgba(90,31,224,0.1); border-radius: 20px; padding: 22px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
+                        <div style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">LL</div>
+                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Ledesma, Lawrence</h4>
+                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & Technical Lead</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Role Selection Portal Section -->
+        <section class="roles-section" id="roles" style="padding-top: 30px;">
             <div class="page-container">
                 <div class="section-header">
                     <span class="section-eyebrow">Enterprise Access</span>
-                    <h2 class="section-title">Select Your Securo Experience</h2>
-                    <p class="section-lead">Choose your portal to enter the Securo live deployment. Use the verified demo accounts below for an instant walkthrough.</p>
+                    <h2 class="section-title">Enter Portal</h2>
+                    <p class="section-lead">Choose your authorized portal to sign in or access your dedicated Securo workspace.</p>
                 </div>
 
-                <div class="roles-grid">
+                <div class="roles-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
                     <!-- Student Card -->
                     <div class="role-portal-card featured">
                         <div class="role-avatar-circle student">
                             <span class="material-symbols-outlined" style="font-size:32px;">school</span>
                         </div>
                         <h3>Student Portal</h3>
-                        <p class="role-desc">Live radar, parent watcher bar, SOS alarm trigger, geofenced attendance, and GAD chat.</p>
-
-                        <!-- Demo Credentials Box -->
-                        <!-- (2026-07-13) Update demo student and guardian credentials; was legacy -->
-                        <div class="demo-credentials-box">
-                            <div class="box-title">
-                                <span class="material-symbols-outlined" style="font-size:14px;">key</span>
-                                Demo Student Login
-                            </div>
-                            <div class="demo-row">
-                                <span class="key">Student ID:</span>
-                                <span class="val">8230537</span>
-                            </div>
-                            <div class="demo-row">
-                                <span class="key">Password:</span>
-                                <span class="val">8230537</span>
-                            </div>
-                        </div>
-
-                        <a href="login.html" class="role-cta-btn student">
+                        <p class="role-desc">Live radar, guardian watcher bar, SOS alarm trigger, geofenced attendance, and GAD chat.</p>
+                        <a href="login.html" class="role-cta-btn student" style="margin-top:auto;">
                             <span>Launch Student App</span>
                             <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
                         </a>
@@ -1607,26 +1659,21 @@
                         </div>
                         <h3>Guardian Portal</h3>
                         <p class="role-desc">Child live tracking radar, gate entry/exit push alerts, and shared incident evidence vault.</p>
-
-                        <!-- Demo Credentials Box -->
-                        <div class="demo-credentials-box">
-                            <div class="box-title">
-                                <span class="material-symbols-outlined" style="font-size:14px;">key</span>
-                                Demo Guardian Login
-                            </div>
-                            <div class="demo-row">
-                                <span class="key">Email:</span>
-                                <span class="val">kiyokoshimizu611@gmail.com</span>
-                            </div>
-                            <!-- (2026-07-13) Set demo guardian password parent123; was blank -->
-                            <div class="demo-row">
-                                <span class="key">Password:</span>
-                                <span class="val">parent123</span>
-                            </div>
-                        </div>
-
-                        <a href="guardian.html" class="role-cta-btn guardian">
+                        <a href="guardian.html" class="role-cta-btn guardian" style="margin-top:auto;">
                             <span>Launch Guardian Portal</span>
+                            <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
+                        </a>
+                    </div>
+
+                    <!-- Staff Card -->
+                    <div class="role-portal-card">
+                        <div class="role-avatar-circle" style="background:#eff6ff; color:#2563eb;">
+                            <span class="material-symbols-outlined" style="font-size:32px;">badge</span>
+                        </div>
+                        <h3>Securo Staff</h3>
+                        <p class="role-desc">Faculty attendance verification, campus assistance, and direct workplace security communications.</p>
+                        <a href="login.html" class="role-cta-btn" style="background:#2563eb; color:white; margin-top:auto;" onclick="localStorage.setItem('securo_preferred_role','staff')">
+                            <span>Launch Staff Portal</span>
                             <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
                         </a>
                     </div>
@@ -1638,44 +1685,10 @@
                         </div>
                         <h3>Admin Terminal</h3>
                         <p class="role-desc">Campus security dispatch console, attendance analytics, student verification, and audit logs.</p>
-
-                        <!-- Demo Credentials Box -->
-                        <div class="demo-credentials-box">
-                            <div class="box-title">
-                                <span class="material-symbols-outlined" style="font-size:14px;">security</span>
-                                Campus Dispatch Terminal
-                            </div>
-                            <div class="demo-row">
-                                <span class="key">Access:</span>
-                                <span class="val">Authorized Personnel</span>
-                            </div>
-                            <div class="demo-row">
-                                <span class="key">Console:</span>
-                                <span class="val">Security Desk</span>
-                            </div>
-                        </div>
-
-                        <a href="admin-login.html" class="role-cta-btn admin">
+                        <a href="admin-login.html" class="role-cta-btn admin" style="margin-top:auto;">
                             <span>Access Security Console</span>
                             <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
                         </a>
-                    </div>
-                </div>
-
-                <!-- Instant One-Click Jump Banner -->
-                <div class="demo-instant-banner">
-                    <div class="banner-info">
-                        <div class="banner-icon">
-                            <span class="material-symbols-outlined">bolt</span>
-                        </div>
-                        <div class="banner-text">
-                            <h4>Ready for an Instant Interactive Demo?</h4>
-                            <p>Pre-configured test accounts are live. Simply click to load student or parent credentials.</p>
-                        </div>
-                    </div>
-                    <div class="banner-actions">
-                        <a href="login.html" class="banner-btn student">Sign In as Student (1234567)</a>
-                        <a href="guardian.html" class="banner-btn guardian">Sign In as Guardian</a>
                     </div>
                 </div>
 
@@ -1786,6 +1799,48 @@
                 pillText.textContent = data.text;
             }
         }
+
+        // (2026-07-13) Smooth scrolling for all page anchors; was default jump
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const targetId = this.getAttribute('href');
+                if (!targetId || targetId === '#') return;
+                const targetEl = document.querySelector(targetId);
+                if (targetEl) {
+                    e.preventDefault();
+                    const navHeight = 84;
+                    const targetPosition = targetEl.getBoundingClientRect().top + window.pageYOffset - navHeight;
+                    window.scrollTo({
+                        top: Math.max(0, targetPosition),
+                        behavior: 'smooth'
+                    });
+                    if (history.pushState) {
+                        history.pushState(null, null, targetId);
+                    }
+                }
+            });
+        });
+
+        // (2026-07-13) Sync active nav link on scroll; was unmonitored scroll
+        const landingSections = document.querySelectorAll('section[id], header[id]');
+        const landingNavLinks = document.querySelectorAll('.nav-links a');
+        window.addEventListener('scroll', () => {
+            let currentSec = '';
+            const scrollPos = window.pageYOffset + 120;
+            landingSections.forEach(sec => {
+                const top = sec.offsetTop;
+                const height = sec.offsetHeight;
+                if (scrollPos >= top && scrollPos < top + height) {
+                    currentSec = '#' + sec.getAttribute('id');
+                }
+            });
+            landingNavLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === currentSec) {
+                    link.classList.add('active');
+                }
+            });
+        }, { passive: true });
     </script>
 </body>
 </html>

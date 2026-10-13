@@ -29,28 +29,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="preloader.js"></script>
 
-    <!-- (2026-07-13) Redirect desktop root to landing; was delayed/blocked -->
-    <script>
-        (() => {
-            const isTargetHost = window.location.hostname === '127.0.0.1' ||
-                                 window.location.hostname === 'localhost' ||
-                                 window.location.hostname === 'securo.cebutech.digital' ||
-                                 window.location.host === '127.0.0.1:5508' ||
-                                 window.location.host === 'localhost:5508';
-            const pathname = window.location.pathname;
-            const isRootUrl = (pathname === '/' || pathname === '/index.html' || pathname.endsWith('/index.html') || !pathname) &&
-                              !window.location.search &&
-                              (!window.location.hash || window.location.hash === '#' || window.location.hash === '');
-            const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
-            const isDesktop = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-            if (isTargetHost && isRootUrl && isDesktop) {
-                window.__securoDesktopPending = true;
-                sessionStorage.setItem('securo_allow_landing', '1');
-                window.location.replace('landing.html');
-            }
-        })();
-    </script>
+    <!-- (2026-07-13) Remove premature head gate; was causing redirect loop -->
 
     <style>
         :root {
@@ -9230,9 +9209,15 @@
                 return;
             }
             if (!user) {
+                localStorage.removeItem('securo_session_token');
+                sessionStorage.removeItem('securo_login_pending');
                 window.location.replace("login.html");
                 return;
             }
+
+            // (2026-07-13) Sync session token on auth state change; was unsynced
+            localStorage.setItem('securo_session_token', user.uid);
+            sessionStorage.removeItem('securo_login_pending');
 
             // (2026-07-13) Role-based auth routing and onboarding gate; was hardcoded
             appState.user.uid = user.uid;
@@ -9718,9 +9703,10 @@
         logoutLink.addEventListener("click", async () => {
             const confirmed = await showLogoutConfirm();
             if (confirmed) {
-                // (2026-07-13) Redirect to landing page on logout; was login.html
+                // (2026-07-13) Redirect to login.html on logout; was landing.html
+                if (typeof stopTracking === "function") stopTracking();
                 await logout();
-                window.location.href = "landing.html";
+                window.location.href = "login.html";
             }
         });
 

@@ -287,64 +287,112 @@
             transform: translateY(-1px);
         }
 
+        /* (2026-07-13) Collapsible icon sidebar with hover expansion; was static 240px */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: 240px minmax(0, 1fr);
+            grid-template-columns: 74px minmax(0, 1fr);
             height: 100%;
             min-height: 0;
             overflow: hidden;
+            position: relative;
         }
 
         .sidebar {
             border-right: 1px solid rgba(0,0,0,0.05);
-            background: rgba(var(--glass-white),0.4);
+            background: rgba(var(--glass-white),0.96);
             display: flex;
             flex-direction: column;
             overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            width: 74px;
+            transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            z-index: 25;
+            white-space: nowrap;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .sidebar:hover {
+            width: 240px;
+            box-shadow: 4px 0 24px rgba(24,20,40,0.08);
         }
 
         .sidebar-inner {
-            padding: 18px 14px;
+            padding: 16px 10px;
+            width: 240px;
         }
 
         .sidebar-label {
-            font-size: 0.68rem;
+            font-size: 0.65rem;
             text-transform: uppercase;
-            letter-spacing: 0.16em;
+            letter-spacing: 0.14em;
             color: var(--muted);
-            margin: 0 10px 12px;
+            margin: 0 8px 10px;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar:hover .sidebar-label {
+            opacity: 1;
         }
 
         .nav-stack {
             display: grid;
-            gap: 10px;
+            gap: 8px;
         }
 
         .tab-btn {
             width: 100%;
-            min-height: 54px;
-            padding: 11px 13px;
+            min-height: 46px;
+            padding: 8px 10px;
             border: 0;
-            border-radius: 16px;
+            border-radius: 14px;
             background: transparent;
             color: var(--muted);
             display: flex;
             align-items: center;
             gap: 12px;
             text-align: left;
-            font-weight: 700;
-            font-size: 0.88rem;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            overflow: hidden;
         }
 
         .tab-btn .material-symbols-outlined {
             width: 34px;
             height: 34px;
-            border-radius: 12px;
+            min-width: 34px;
+            border-radius: 10px;
             background: rgba(var(--glass-white),0.62);
             display: inline-flex;
             align-items: center;
             justify-content: center;
             color: var(--primary);
+            font-size: 20px;
+        }
+
+        .tab-btn span:not(.material-symbols-outlined):not(.capsule) {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar:hover .tab-btn span:not(.material-symbols-outlined):not(.capsule) {
+            opacity: 1;
+        }
+
+        .tab-btn .capsule {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar:hover .tab-btn .capsule {
+            opacity: 1;
         }
 
         .tab-btn.active {
@@ -358,6 +406,15 @@
             padding: 16px;
             border-radius: 16px;
             background: linear-gradient(180deg, rgba(var(--glass-white),0.74), rgba(244,240,255,0.64));
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            pointer-events: none;
+        }
+
+        .sidebar:hover .sidebar-note {
+            opacity: 1;
+            pointer-events: auto;
+        }
             border: 1px solid rgba(var(--glass-white),0.68);
         }
 
@@ -1390,13 +1447,24 @@
                 justify-content: flex-start;
             }
 
+            /* (2026-07-13) Responsive sidebar full-width reveal; was collapsed style */
             .sidebar {
                 border-right: 0;
                 border-bottom: 1px solid rgba(var(--glass-white),0.5);
+                width: 100% !important;
             }
 
             .sidebar-inner {
                 position: static;
+                width: 100% !important;
+            }
+
+            .sidebar-label,
+            .tab-btn span:not(.material-symbols-outlined):not(.capsule),
+            .tab-btn .capsule,
+            .sidebar-note {
+                opacity: 1 !important;
+                pointer-events: auto !important;
             }
         }
 
@@ -1571,10 +1639,11 @@
             color: rgba(var(--glass-white),0.8);
         }
 
+        /* (2026-07-13) Full-height messages container; was 68vh fixed shell */
         .messages-shell {
             padding: 0 !important;
-            min-height: 68vh;
-            height: 68vh;
+            height: calc(100vh - 120px);
+            min-height: 580px;
             display: grid;
             grid-template-columns: 340px minmax(0, 1fr);
             overflow: hidden;
@@ -1983,9 +2052,11 @@
     <div class="admin-shell">
         <div class="glass-shell">
             <header class="topbar">
-                <!-- (2026-07-13) Topbar brand using logo with text.png; was icon box -->
-                <div class="brand-wrap" style="display:flex; align-items:center; gap:14px;">
-                    <img src="logo with text.png" alt="Securo" style="height: 32px; max-height: 32px; object-fit: contain; display: block;">
+                <!-- (2026-07-13) Topbar brand wrapper and logo; was unclosed tag -->
+                <div class="brand-wrap">
+                    <a href="javascript:void(0)" onclick="if(window.history.length>1){window.history.back();}else{window.location.href='admin.html';}" title="Navigate Back" style="cursor: pointer; display: inline-block;">
+                        <img src="logo with text.png" alt="Securo" style="height: 32px; max-height: 32px; object-fit: contain; display: block;">
+                    </a>
                     <div style="border-left: 1px solid rgba(0,0,0,0.1); padding-left: 14px;">
                         <h1 style="margin:0; font-size:1.08rem; font-family:'Sora', sans-serif; font-weight:800; color:var(--ink);">Command Center</h1>
                         <p style="margin:0; font-size:0.75rem; color:var(--muted);">Campus safety operations & dispatch management</p>
@@ -4070,30 +4141,50 @@
             }
         }
 
+        // (2026-07-13) Load cache and directory fallback; was unpopulated cache
         function loadFromLocalCache() {
             try {
                 const raw = localStorage.getItem(SECURO_CACHE_KEY);
-                if (!raw) return false;
-                const data = JSON.parse(raw);
-                if (!data) return false;
-                if (Array.isArray(data.posts) && data.posts.length) cachedPosts = data.posts;
-                if (Array.isArray(data.users) && data.users.length) cachedUsers = data.users;
-                if (Array.isArray(data.threads) && data.threads.length) cachedThreads = data.threads;
-                if (Array.isArray(data.guardianLinks)) cachedGuardianLinks = data.guardianLinks;
-                if (Array.isArray(data.sosLogs)) cachedSosLogs = data.sosLogs;
-                if (Array.isArray(data.emergencyPosts)) cachedEmergencyPosts = data.emergencyPosts;
-                if (Array.isArray(data.attendanceLogs)) cachedAttendance = data.attendanceLogs;
-                if (data.savedAdminName && adminDropdownName) {
-                    adminDropdownName.textContent = data.savedAdminName;
-                    if (adminInitials) {
-                        adminInitials.textContent = data.savedAdminName
-                            .split(/\s+/)
-                            .filter(Boolean)
-                            .slice(0, 2)
-                            .map((p) => p[0])
-                            .join('')
-                            .toUpperCase() || 'AD';
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    if (data) {
+                        if (Array.isArray(data.posts) && data.posts.length) cachedPosts = data.posts;
+                        if (Array.isArray(data.users) && data.users.length) cachedUsers = data.users;
+                        if (Array.isArray(data.threads) && data.threads.length) cachedThreads = data.threads;
+                        if (Array.isArray(data.guardianLinks)) cachedGuardianLinks = data.guardianLinks;
+                        if (Array.isArray(data.sosLogs)) cachedSosLogs = data.sosLogs;
+                        if (Array.isArray(data.emergencyPosts)) cachedEmergencyPosts = data.emergencyPosts;
+                        if (Array.isArray(data.attendanceLogs)) cachedAttendance = data.attendanceLogs;
+                        if (data.savedAdminName && adminDropdownName) {
+                            adminDropdownName.textContent = data.savedAdminName;
+                            if (adminInitials) {
+                                adminInitials.textContent = data.savedAdminName
+                                    .split(/\s+/)
+                                    .filter(Boolean)
+                                    .slice(0, 2)
+                                    .map((p) => p[0])
+                                    .join('')
+                                    .toUpperCase() || 'AD';
+                            }
+                        }
                     }
+                }
+                if (!cachedUsers.length) {
+                    try {
+                        const dirRaw = localStorage.getItem("securo_user_directory");
+                        if (dirRaw) {
+                            const dir = JSON.parse(dirRaw);
+                            const dirUsers = Object.entries(dir).map(([uid, u]) => ({
+                                id: uid,
+                                userId: uid,
+                                name: u.name || (u.studentId ? `Student ${u.studentId}` : (u.email ? u.email.split('@')[0] : 'User')),
+                                email: u.email || '',
+                                studentId: u.studentId || '',
+                                role: u.role || 'student'
+                            }));
+                            if (dirUsers.length) cachedUsers = dirUsers;
+                        }
+                    } catch (e) {}
                 }
                 applyFilters();
                 if (typeof renderDailyReport === 'function') renderDailyReport();
@@ -4108,7 +4199,9 @@
             }
         }
 
-        // (2026-07-13) Defer local cache load after declarations; was TDZ reference
+        // (2026-07-13) Auto-save on refresh and instant cache load; was uncalled
+        window.addEventListener('beforeunload', saveToLocalCache);
+        loadFromLocalCache();
 
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
@@ -4149,6 +4242,8 @@
                     }, 900);
                     return;
                 }
+                // (2026-07-13) Instant cache render and 2.5s network timeout; was 6s wait
+                loadFromLocalCache();
                 loadAllData().then(() => {
                     showToast("Admin ready", `Command center synced successfully. Welcome ${currentAdminName}.`, "success");
                 }).catch(err => {
@@ -4161,36 +4256,71 @@
             }
         });
 
-        // (2026-07-13) Safe parallel fetch with timeouts; was blocking full sync
+        // (2026-07-13) Progressive streaming fetch with live caching; was blocking
         async function loadAllData() {
-            const timeoutFetch = (promise, ms = 6000, fallback = []) => 
+            const timeoutFetch = (promise, ms = 12000, fallback = []) => 
                 Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
 
-            const [posts, users, threads, guardianLinks, sosLogs, emergencyPosts, attendance] = await Promise.all([
-                timeoutFetch(getGADPosts().catch(err => { console.warn("getGADPosts fallback:", err); return []; })),
-                timeoutFetch(getAllUsers().catch(err => { console.warn("getAllUsers fallback:", err); return []; })),
-                timeoutFetch(getAllChatThreadsOnce(currentAdminUid).catch(err => { console.warn("getAllChatThreadsOnce fallback:", err); return []; })),
-                timeoutFetch(getAllGuardianLinksAdmin().catch(err => { console.warn("getAllGuardianLinksAdmin fallback:", err); return []; })),
-                timeoutFetch(getAllSOSLogs().catch(err => { console.warn("getAllSOSLogs fallback:", err); return []; })),
-                timeoutFetch(getAllEmergencyPosts().catch(err => { console.warn("getAllEmergencyPosts fallback:", err); return []; })),
-                timeoutFetch(getAllAttendance().catch(err => { console.warn("getAllAttendance fallback:", err); return []; }))
-            ]);
-            
-            // Explicitly sort posts by date descending
-            if (Array.isArray(posts) && posts.length) {
-                cachedPosts = posts.sort((a, b) => {
-                    const dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.timestamp || 0).getTime();
-                    const dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.timestamp || 0).getTime();
-                    return dateB - dateA;
-                });
-            }
+            const pPosts = timeoutFetch(getGADPosts()).then(posts => {
+                if (Array.isArray(posts) && posts.length) {
+                    cachedPosts = posts.sort((a, b) => {
+                        const dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.timestamp || 0).getTime();
+                        const dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.timestamp || 0).getTime();
+                        return dateB - dateA;
+                    });
+                    applyFilters();
+                    saveToLocalCache();
+                }
+            }).catch(e => console.warn("Posts sync error:", e));
 
-            if (Array.isArray(users) && users.length) cachedUsers = users;
-            if (Array.isArray(threads) && threads.length) cachedThreads = threads;
-            if (Array.isArray(guardianLinks) && guardianLinks.length) cachedGuardianLinks = guardianLinks;
-            if (Array.isArray(sosLogs) && sosLogs.length) cachedSosLogs = sosLogs;
-            if (Array.isArray(emergencyPosts) && emergencyPosts.length) cachedEmergencyPosts = emergencyPosts;
-            if (Array.isArray(attendance) && attendance.length) cachedAttendance = attendance;
+            const pUsers = timeoutFetch(getAllUsers()).then(users => {
+                if (Array.isArray(users) && users.length) {
+                    cachedUsers = users;
+                    applyFilters();
+                    saveToLocalCache();
+                }
+            }).catch(e => console.warn("Users sync error:", e));
+
+            const pThreads = timeoutFetch(getAllChatThreadsOnce(currentAdminUid)).then(threads => {
+                if (Array.isArray(threads) && threads.length) {
+                    cachedThreads = threads;
+                    renderStatistics(cachedUsers);
+                    if (typeof renderThreads === 'function') renderThreads(cachedThreads);
+                    saveToLocalCache();
+                }
+            }).catch(e => console.warn("Threads sync error:", e));
+
+            const pLinks = timeoutFetch(getAllGuardianLinksAdmin()).then(links => {
+                if (Array.isArray(links) && links.length) {
+                    cachedGuardianLinks = links;
+                    saveToLocalCache();
+                }
+            }).catch(e => console.warn("Links sync error:", e));
+
+            const pSos = timeoutFetch(getAllSOSLogs()).then(sos => {
+                if (Array.isArray(sos) && sos.length) {
+                    cachedSosLogs = sos;
+                    if (typeof renderAdminSosQueue === 'function') renderAdminSosQueue(cachedSosLogs);
+                    saveToLocalCache();
+                }
+            }).catch(e => console.warn("SOS sync error:", e));
+
+            const pEmerg = timeoutFetch(getAllEmergencyPosts()).then(ep => {
+                if (Array.isArray(ep) && ep.length) {
+                    cachedEmergencyPosts = ep;
+                    saveToLocalCache();
+                }
+            }).catch(e => console.warn("Emerg sync error:", e));
+
+            const pAtt = timeoutFetch(getAllAttendance()).then(att => {
+                if (Array.isArray(att) && att.length) {
+                    cachedAttendance = att;
+                    if (typeof renderDailyReport === 'function') renderDailyReport();
+                    saveToLocalCache();
+                }
+            }).catch(e => console.warn("Attendance sync error:", e));
+
+            await Promise.allSettled([pPosts, pUsers, pThreads, pLinks, pSos, pEmerg, pAtt]);
             saveToLocalCache();
             applyFilters();
             if (typeof renderDailyReport === 'function') renderDailyReport();
@@ -4434,13 +4564,23 @@
             adminBuildingMarkers = [];
 
             currentAdminBuildings.forEach((b) => {
+                // (2026-07-13) Life360 circular landmark radius & marker; was pin only
+                const landmarkCircle = L.circle(b.coords, {
+                    radius: b.radius || 22,
+                    color: '#7c3aed',
+                    weight: 1.5,
+                    opacity: 0.65,
+                    fillColor: '#8b5cf6',
+                    fillOpacity: 0.12
+                }).addTo(adminSosLeafletMap);
+                adminBuildingMarkers.push(landmarkCircle);
+
                 const bIcon = L.divIcon({
                     className: 'campus-facility-icon-marker',
                     html: `<div style="background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 3px 10px rgba(24,20,40,0.16); border:2px solid #5a1fe0; display:flex; align-items:center; justify-content:center; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:16px; color:#5a1fe0;">${b.icon || 'location_on'}</span></div>`,
                     iconSize: [30, 30],
                     iconAnchor: [15, 15]
                 });
-                // (2026-07-13) Single clean popup on marker click; was duplicate tooltip + popup
                 const marker = L.marker(b.coords, { icon: bIcon }).addTo(adminSosLeafletMap);
                 marker.bindPopup(`
                     <div style="padding:4px 2px; min-width:140px;">
@@ -5359,11 +5499,27 @@
             return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
         }
 
+        // (2026-07-13) Deduplicate to one thread per user; was multiple raw threads
         function renderThreads(threads) {
             const rawThreads = Array.isArray(threads) ? threads : [];
             const query = currentMsgSearchQuery.trim().toLowerCase();
 
-            const filteredThreads = rawThreads.filter((thread) => {
+            const dedupedMap = new Map();
+            rawThreads.forEach(t => {
+                const parts = (t.threadId || '').split('_');
+                const otherUserId = t.ownerId || (parts[0] === ADMIN_ID ? parts[1] : parts[0]) || t.senderEmail || t.threadId;
+                const existing = dedupedMap.get(otherUserId);
+                if (!existing) {
+                    dedupedMap.set(otherUserId, t);
+                } else {
+                    const timeNew = new Date(t.updatedAt || t.timestamp || t.lastMessageAt || 0).getTime();
+                    const timeOld = new Date(existing.updatedAt || existing.timestamp || existing.lastMessageAt || 0).getTime();
+                    if (timeNew > timeOld) dedupedMap.set(otherUserId, t);
+                }
+            });
+            const uniqueThreads = Array.from(dedupedMap.values());
+
+            const filteredThreads = uniqueThreads.filter((thread) => {
                 const parts = (thread.threadId || '').split('_');
                 const otherUserId = thread.ownerId || (parts[0] === ADMIN_ID ? parts[1] : parts[0]);
                 const userObj = cachedUsers.find(u => u.id === otherUserId || (u.email && thread.senderEmail && u.email.toLowerCase() === thread.senderEmail.toLowerCase()));
@@ -5384,7 +5540,7 @@
             });
 
             if (threadCountBadge) {
-                threadCountBadge.textContent = String(rawThreads.length);
+                threadCountBadge.textContent = String(uniqueThreads.length);
             }
 
             if (filteredThreads.length === 0) {
@@ -5563,7 +5719,9 @@
             let lastDateLabel = "";
             messages.forEach(msg => {
                 const isSent = msg.senderId === ADMIN_ID;
+                // (2026-07-13) Define dateStr for message date divider; was undefined
                 const date = msg.timestamp?.toDate?.() || new Date(msg.localTime || Date.now());
+                const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
                 const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
 
                 if (dateStr !== lastDateLabel) {

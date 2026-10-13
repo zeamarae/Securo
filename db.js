@@ -1420,13 +1420,11 @@ export const createGuardianLinkRequest = async (linkData) => {
             studentName: studentRecord.name || linkData.studentName || "Student",
             relationshipType: linkData.relationshipType || "parent",
             permissions: linkData.permissions || { sosAlerts: true, attendanceAlerts: true, liveLocation: true },
-            status: "accepted",
-            createdAt: serverTimestamp(),
-            approvedAt: serverTimestamp(),
-            respondedAt: serverTimestamp()
+            // (2026-07-13) Set pending status for student confirmation; was accepted
+            status: "pending",
+            createdAt: serverTimestamp()
         };
 
-        // (2026-07-13) Instant link creation & re-add support; was strict pending
         const existingLink = await findExistingGuardianStudentLink({
             guardianId: enrichedLinkData.guardianId,
             guardianEmail: enrichedLinkData.guardianEmail,
@@ -1446,14 +1444,14 @@ export const createGuardianLinkRequest = async (linkData) => {
         await sendAccountNotification({
             userId: studentRecord.uid,
             recipientUid: studentRecord.uid,
-            type: "guardian_request_accepted",
-            title: "Parent / Guardian Connected",
-            message: `${enrichedLinkData.guardianName || "A parent or guardian"} is now connected to your account.`,
+            type: "guardian_request",
+            title: "Guardian Link Request",
+            message: `${enrichedLinkData.guardianName || "A parent or guardian"} wants to link to your account.`,
             sourceUserId: enrichedLinkData.guardianId,
             sourceName: enrichedLinkData.guardianName,
             requestId: linkId,
             studentId: enrichedLinkData.studentId,
-            priority: "normal"
+            priority: "high"
         }).catch((err) => console.warn("Guardian request notification skipped:", err));
 
         try {

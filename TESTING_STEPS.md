@@ -2,6 +2,18 @@
 
 This guide covers end-to-end verification steps for all newly implemented features and fixes across the Securo Campus Safety System.
 
+<!-- (2026-07-13) Add quick testing summary checklist; was header only -->
+## Quick Testing Summary Checklist
+- **Terms & Conditions**: Verify removal of close button, centered agreement checkbox, Agree/Decline buttons, and automatic pre-check on registration.
+- **Staff Role Experience**: Verify blue accent theme, hidden registration tab, and visible terms button.
+- **Landing Page & Team Showcase**: Verify preloader, smooth scrolling, team member roster, credential-free portals, and back navigation via logo.
+- **Mobile Routing & Student Logout**: Verify mobile auto-redirect to role selection and student logout routing to login.html.
+- **Student-Guardian Link Consent**: Verify invitations start in pending status and require explicit student acceptance prompt.
+- **Guardian Desktop View & SOS Alerting**: Verify 4-column vault desktop layout, hidden profile card, removed notification history, and siren audio + haptic vibration on SOS.
+- **Geofence Offline Protection**: Verify tracking pauses with offline indicator when student signs out or goes offline.
+- **Admin Command Center**: Verify clickable back logo, instant local cache population, 2.5s network timeout, collapsible icon sidebar, circular landmark radiuses, and working message replies.
+- **Daily Reports & Native Hardware**: Verify real-date Excel report downloads and native Capacitor camera support.
+
 ---
 
 ### 1. About Us Page
@@ -121,3 +133,110 @@ This guide covers end-to-end verification steps for all newly implemented featur
    - Verify preview and upload complete successfully.
 2. On browser / desktop:
    - Verify graceful fallback to web camera / canvas stream without crashing.
+
+<!-- (2026-07-13) Add sections 11-18 testing steps; was sections 1-10 only -->
+---
+
+### 11. Terms and Conditions Agreement Flow
+1. Open `terms.html`.
+2. Verify that there is no close "X" button in the corner.
+3. Scroll to the bottom and verify that the "back to registration" link has been removed.
+4. Verify the centered "I agree to the terms and conditions" checkbox with explicit "I Agree" and "Decline" buttons.
+5. Check the box and click "I Agree":
+   - Verify agreement status is saved to local storage (`securo_terms_agreed`).
+   - Verify smooth redirect to registration or back to login.
+6. Open `login.html` and verify the registration terms checkbox is automatically pre-checked.
+
+<!-- (2026-07-13) Remove top-left terms button test steps; was included -->
+---
+
+### 12. Securo Staff Role Styling & Access
+1. Open `login.html` and select the "Securo Staff" role tab:
+   - Verify the accent color adapts to vibrant blue theme (`#2563eb`).
+   - Verify the registration tab and "Create Account" links are completely hidden (staff cannot self-register).
+2. Open `role-selection.html`:
+   - Verify the "Securo Staff" card features the vibrant blue icon styling.
+   - Verify clicking it navigates to `login.html?role=staff`.
+
+---
+
+### 13. Landing Page Overhaul & Team Members Showcase
+1. Open `landing.html` in a web browser:
+   - Verify the preloader overlay appears while assets initialize.
+   - Verify the "App Trailer" link is removed from the navigation.
+   - Verify "Demo Access" and "Enter Portal" in the topbar are replaced by a "Sign Up" button linking to `role-selection.html`.
+   - Verify smooth scrolling when clicking navigation anchors (Features, Safety, GAD, About Us, Portals).
+   - Verify active navigation items highlight with purple styling.
+2. Click the Securo logo in the topbar:
+   - Verify it navigates back in browser history (or falls back to landing top).
+3. Scroll down above the "Enter Portal" section:
+   - Verify the "About Us" team showcase is visible listing the 6 members:
+     - Ramil, Zea Marae
+     - Santosidad, Angel Mae
+     - Loon, Alexa Suzane
+     - Delos Santos, Bea
+     - Tangkay, Kenneth Brian
+     - Ledesma, Lawrence
+4. Inspect the "Enter Portal" cards:
+   - Verify all credentials (emails, passwords, demo logins) have been completely removed.
+   - Verify 4 clean role cards: Student, Parent / Guardian, Securo Staff, and Campus Administrator.
+5. Check GAD features section:
+   - Verify the "Anonymous Option" tag has been removed.
+
+---
+
+### 14. Mobile View Redirection & Student Logout Flow
+1. Open `landing.html` or `index.html` on a mobile viewport (screen width < 768px or Capacitor Android environment):
+   - If not authenticated, verify immediate redirection to `role-selection.html` (the landing page is never presented to mobile users).
+   - If a student session is active, verify immediate redirection into `index.html`.
+2. In the student dashboard (`index.html`), click "Log Out":
+   - Verify live location tracking is stopped and online status is cleared in Firebase.
+   - Verify redirect leads directly to `login.html` (not `landing.html`).
+
+---
+
+### 15. Student-Guardian Invitation Consent Verification
+1. From a Parent/Guardian account, submit a student link request using the 7-digit Student ID.
+2. Verify in Firebase `guardian_links` that the request status is `pending` (no automatic linking).
+3. Log into the student account:
+   - Verify the student receives a real-time prompt/notification asking to Accept or Decline the guardian link.
+   - Verify the link is only activated once the student explicitly approves.
+
+---
+
+### 16. Guardian Dashboard Desktop View & Alert Sirens
+1. Open `guardian-dashboard.html` on a desktop viewport (width >= 992px):
+   - Verify the mobile bottom navigation bar is hidden.
+   - Verify topbar desktop navigation tabs appear (Dashboard, Student Vault, Safety, GAD Support).
+   - Verify Student Vault renders in a wide 4-column responsive grid.
+2. In the Safety section:
+   - Verify "Notification History" has been removed from parent view.
+3. Open `profile.html` with a guardian account:
+   - Verify the "My Profile" (`profile-card`) container is hidden for guardians.
+4. Trigger an SOS alert on the linked student account:
+   - Verify the guardian phone triggers Capacitor Haptics vibration.
+   - Verify an audible audio siren synthesizer sounds on the parent dashboard.
+
+---
+
+### 17. Real-Time Geofence Tracking Protection
+1. Log a student out or close/uninstall the student session:
+   - In `guardian-dashboard.html`, observe the student map view.
+   - Verify real-time tracking is paused/disabled with an offline indicator when the student is not logged in, even if their last coordinates were within campus geofence.
+
+---
+
+### 18. Admin Command Center Enhancements
+1. Log into `admin.html`:
+   - Verify topbar logo image (`logo with text.png`) is clickable and navigates back.
+   - Verify initial values load immediately from local cache without delays, and network timeouts are reduced to 2.5 seconds.
+2. Inspect the sidebar:
+   - Verify sidebar is collapsed to 74px showing only minimalist icons by default.
+   - Hover over sidebar and verify it smoothly expands to 240px to reveal labels and navigation names.
+3. Open Campus Map in Admin:
+   - Verify all 9 campus landmarks display Life360-style circular boundary radiuses (`L.circle`) around facility markers.
+4. Open Admin Messages tab:
+   - Verify `.messages-shell` occupies the full container height (`calc(100vh - 120px)`).
+   - Verify conversations are deduplicated to one thread per student/guardian Messenger-style.
+   - Select a conversation and click Send Reply:
+     - Verify reply dispatches without `dateStr` JavaScript errors.
