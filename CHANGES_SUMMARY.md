@@ -1,79 +1,58 @@
-<!-- (2026-07-13) Replication summary guide for team; was absent -->
-# Securo Changes Summary & Replication Guide
+<!-- (2026-07-13) Simplified quick testing guide; was verbose guide -->
+# Securo Quick Test & Replication Guide
 
-This guide summarizes all updates and bug fixes implemented today across the Securo repository so group members can easily replicate and test the changes.
-
----
-
-## 1. Terms & Conditions (`terms.html`)
-- **Close Button Removed**: Eliminated the top-right close "X" button.
-- **Agreement Section**: Centered the agreement container with an "I agree to the terms and conditions" checkbox.
-- **Explicit Action Buttons**: Replaced the "back to registration" link with "I Agree" and "Decline" buttons.
-- **Persistence**: Clicking "I Agree" stores `securo_terms_agreed = true` in `localStorage` and returns to registration/login.
+Use this checklist to quickly verify and replicate all updates implemented today.
 
 ---
 
-## 2. Authentication & Staff Styling (`login.html`)
-- **Staff Accent Theme**: Updated Securo Staff UI tokens to vibrant blue (`#2563eb`).
-- **Staff Registration Disabled**: Hidden the registration tab and signup toggle when `role=staff` is selected.
-- **Automatic Terms Pre-Check**: Checks `localStorage` for `securo_terms_agreed` and automatically ticks the registration terms checkbox if already accepted.
-- **Session Token Persistence**: Persists `securo_session_token` upon successful login and signup to maintain active sessions.
+### 1. Terms & Conditions (`terms.html`)
+- [ ] **No Close Button**: Open `terms.html`, verify the top-right "X" button is removed.
+- [ ] **Agreement Box**: Scroll to bottom, check "I agree to the terms and conditions".
+- [ ] **Buttons**: Click "I Agree" to save agreement and return; click "Decline" to cancel.
 
 ---
 
-## 3. Role Selector (`role-selection.html`)
-- **Staff Card Redesign**: Styled the Securo Staff card with the vibrant blue palette (`#2563eb`).
-- **Footer Updates**: Replaced the app trailer link with a direct About Us link.
+### 2. Staff Role Experience (`login.html` & `role-selection.html`)
+- [ ] **Blue Theme**: Select "Securo Staff" on `role-selection.html` or `login.html?role=staff` -> verify blue accent theme (`#2563eb`).
+- [ ] **No Registration**: Verify registration tab is completely hidden for staff.
+- [ ] **Terms Pre-Check**: Registration terms checkbox auto-checks if previously agreed in Step 1.
 
 ---
 
-## 4. Landing Page Experience (`landing.html`)
-- **Preloader**: Integrated intro preloader overlay with GSAP animation.
-- **Smooth Scrolling**: Added smooth scrolling with 88px header offset and scrollspy highlighting active links in purple.
-- **Logo Navigation**: Clicking the Securo brand logo navigates back in history or returns to top.
-- **Team Showcase (About Us)**: Added the 6 group members above the portal section:
-  1. Ramil, Zea Marae
-  2. Santosidad, Angel Mae
-  3. Loon, Alexa Suzane
-  4. Delos Santos, Bea
-  5. Tangkay, Kenneth Brian
-  6. Ledesma, Lawrence
-- **Enter Portal Rework**: Renamed section to "Enter Portal", removed all demo credentials/passwords, and added clean cards for all 4 roles (Student, Guardian, Staff, Admin).
-- **Navigation Action**: Replaced "Demo Access" and "Enter Portal" header buttons with a single "Sign Up" button linking to `role-selection.html`.
-- **Mobile Routing**: Screen widths < 768px or Capacitor apps immediately redirect to `role-selection.html`.
+### 3. Landing Page (`landing.html`)
+- [ ] **Preloader & Smooth Scroll**: Page shows intro preloader, glides smoothly when clicking navigation links, and highlights active items in purple.
+- [ ] **About Us Roster**: Above "Enter Portal", verify the 6 team members:
+  - Ramil, Zea Marae | Santosidad, Angel Mae | Loon, Alexa Suzane
+  - Delos Santos, Bea | Tangkay, Kenneth Brian | Ledesma, Lawrence
+- [ ] **Enter Portal Rework**: Verify 4 clean portal cards (Student, Guardian, Staff, Admin) with no credentials/passwords displayed.
+- [ ] **Logo & Mobile Gate**: Clicking the logo navigates back; opening on mobile (< 768px) routes to `role-selection.html`.
 
 ---
 
-## 5. Student Dashboard & Linking Consent (`index.html`, `auth.js`, `db.js`)
-- **Resolved Redirect Loop**: Removed premature synchronous `<head>` script in `index.html` so Firebase Auth session properly resolves from IndexedDB.
-- **Student Logout Routing**: Logging out calls `stopTracking()`, signs out, and routes directly to `login.html` (not landing).
-- **Explicit Guardian Linking Consent**: In `db.js`, initial status of guardian link requests is set to `pending` and dispatches a notification so students must explicitly Accept or Decline connection requests.
+### 4. Student Flow & Auth Fix (`index.html`)
+- [ ] **No Redirect Loop**: Logged-in students load `index.html` directly without bouncing to role selection.
+- [ ] **Logout Flow**: Logging out stops location tracking and routes to `login.html`.
+- [ ] **Guardian Consent**: When a guardian requests a link, student receives an explicit Accept / Decline prompt (no automatic linking).
 
 ---
 
-## 6. Guardian Dashboard (`guardian-dashboard.html`, `profile.html`)
-- **Desktop View**: Added `@media (min-width: 992px)` desktop layout hiding bottom mobile nav, expanding vault into a 4-column grid, and adding topbar navigation tabs.
-- **Removed Unneeded Elements**: Hidden "Notification History" on Safety page and removed "My Profile" (`profile-card`) container for guardians.
-- **Offline Tracking Protection**: Stopped real-time tracking with an offline badge when student logs out or is offline.
-- **SOS Siren & Haptics**: Emergency alerts trigger Capacitor Haptics vibration and an audible audio siren synthesizer.
+### 5. Guardian Dashboard (`guardian-dashboard.html` & `profile.html`)
+- [ ] **Desktop View**: On screens >= 992px, bottom mobile nav is hidden, vault expands to 4 columns, and topbar navigation appears.
+- [ ] **Clean Layout**: "Notification History" is removed from Safety page, and "My Profile" card is hidden on `profile.html`.
+- [ ] **Offline Guard**: Student logging out pauses parent tracking and displays offline status.
+<!-- (2026-07-13) 5s alarm on 1+ picture within 24h limit or 4h recent; was alarm on SOS trigger -->
+- [ ] **Guardian 5-Second SOS Alarm (1+ Photo or Past 4 Hours, 24h Cooldown)**: When a student triggers SOS, the student device stays silent. The guardian's device sounds the 5-second emergency alarm and vibrates only once the student reports at least 1 photo or has a recent photo within the past 4 hours; multiple photos captured within a 24-hour window will not produce duplicate alarms.
 
 ---
 
-## 7. Admin Command Center (`admin.html`)
-- **Fixed Header Layout**: Restored `<div class="brand-wrap">` container, aligning logo, title, and action buttons cleanly.
-- **Collapsible Sidebar**: Sidebar starts collapsed at 74px showing only minimalist icons, smoothly expanding to 240px on hover to reveal labels.
-- **Campus Landmarks**: Added Life360-style circular boundary radiuses (`L.circle`) around all 9 campus facility markers.
-- **Messaging Reply Bug Fix**: Defined `dateStr` in message rendering so admin replies dispatch without errors, deduplicating conversations to one thread per user.
-- **Instant Caching & Faster Data Loading**:
-  - Auto-saves cache on page refresh (`beforeunload`).
-  - Calls `loadFromLocalCache()` immediately on page load (0ms paint).
-  - Implemented progressive streaming fetch so users, threads, and SOS logs populate immediately without waiting for slow queries.
+### 6. Admin Command Center (`admin.html`)
+- [ ] **Header & Back**: Clickable logo navigates back; header and action buttons align cleanly.
+- [ ] **Icon Sidebar**: Sidebar starts collapsed (74px, icons only) and smoothly expands on hover (240px) with minimalist text.
+- [ ] **Landmark Circles**: Campus map facilities feature Life360-style circular boundary radiuses.
+- [ ] **Messages**: Full container height; replies send without `dateStr` errors.
+- [ ] **Fast Cache**: Refreshing page (`F5`) renders cached stats in 0ms; streaming fetch updates values without blocking.
 
 ---
 
-## 8. Build & Sync Instructions
-To replicate and synchronize changes to the Capacitor Android build:
-```bash
-npm run build
-```
-This runs the node sync script, copying all `.html`, `.js`, `.css`, and asset files from root into `www/`.
+### 7. Sync Build
+Run `npm run build` to sync all updated files to `www/` for Android.

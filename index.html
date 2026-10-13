@@ -6217,8 +6217,9 @@
             sendGADMessage,
             subscribeToGADMessages,
             subscribeToCampusMapConfig,
-            // (2026-07-13) Import notifyGuardiansOfGeofenceEvent; was map config only
+            // (2026-07-13) Import attachPhotoToActiveSOS; was geofence notify only
             notifyGuardiansOfGeofenceEvent,
+            attachPhotoToActiveSOS,
             fetchLatestCampusMapConfig
         } from './db.js';
 
@@ -10426,6 +10427,10 @@
                     attachments: [item],
                     location
                 });
+                // (2026-07-13) Link captured photo to active SOS; was saveEmergencyPost only
+                if (item?.kind === "image") {
+                    attachPhotoToActiveSOS(appState.user.uid, item).catch(() => {});
+                }
 
                 showToast("Evidence captured & saved.", "success");
             } catch (err) {
