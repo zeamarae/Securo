@@ -9256,18 +9256,16 @@
                 return;
             }
 
-            // (2026-07-13) Skip onboarding if desktop detected; was redirecting
+            // (2026-07-13) Skip permissions check on desktop; was halting on return
             const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
             const isDesktopDevice = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-            if (window.__securoDesktopPending || isDesktopDevice) {
-                return;
-            }
-
-            const camAllowed = localStorage.getItem('securo_camera_granted') === 'true';
-            const locAllowed = localStorage.getItem('securo_location_granted') === 'true';
-            if (!camAllowed || !locAllowed) {
-                window.location.replace('permissions-onboarding.html');
-                return;
+            if (!isDesktopDevice) {
+                const camAllowed = localStorage.getItem('securo_camera_granted') === 'true';
+                const locAllowed = localStorage.getItem('securo_location_granted') === 'true';
+                if (!camAllowed || !locAllowed) {
+                    window.location.replace('permissions-onboarding.html');
+                    return;
+                }
             }
 
             // (2026-07-13) Watch for web permission revocation; prev: unmonitored
