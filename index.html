@@ -29,7 +29,29 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="preloader.js"></script>
 
-    <!-- (2026-07-13) Remove premature head gate; was causing redirect loop -->
+    <!-- (2026-07-13) Redirect desktop root to landing if unauthenticated; was conflict -->
+    <script>
+        (() => {
+            const isTargetHost = window.location.hostname === '127.0.0.1' ||
+                                 window.location.hostname === 'localhost' ||
+                                 window.location.hostname === 'securo.cebutech.digital' ||
+                                 window.location.host === '127.0.0.1:5508' ||
+                                 window.location.host === 'localhost:5508';
+            const pathname = window.location.pathname;
+            const isRootUrl = (pathname === '/' || pathname === '/index.html' || pathname.endsWith('/index.html') || !pathname) &&
+                              !window.location.search &&
+                              (!window.location.hash || window.location.hash === '#' || window.location.hash === '');
+            const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
+            const isDesktop = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|webOS|iPhone|iPad|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            // (2026-07-13) Bypass desktop landing redirect if authenticated; was unconditional
+            if (isTargetHost && isRootUrl && isDesktop && sessionStorage.getItem('securo_authenticated') !== '1') {
+                window.__securoDesktopPending = true;
+                sessionStorage.setItem('securo_allow_landing', '1');
+                window.location.replace('landing.html');
+            }
+        })();
+    </script>
 
     <style>
         :root {
@@ -9241,18 +9263,16 @@
                 return;
             }
 
-            // (2026-07-13) Skip onboarding if desktop detected; was redirecting
+            // (2026-07-13) Skip permissions check on desktop; was halting on return
             const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
             const isDesktopDevice = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-            if (window.__securoDesktopPending || isDesktopDevice) {
-                return;
-            }
-
-            const camAllowed = localStorage.getItem('securo_camera_granted') === 'true';
-            const locAllowed = localStorage.getItem('securo_location_granted') === 'true';
-            if (!camAllowed || !locAllowed) {
-                window.location.replace('permissions-onboarding.html');
-                return;
+            if (!isDesktopDevice) {
+                const camAllowed = localStorage.getItem('securo_camera_granted') === 'true';
+                const locAllowed = localStorage.getItem('securo_location_granted') === 'true';
+                if (!camAllowed || !locAllowed) {
+                    window.location.replace('permissions-onboarding.html');
+                    return;
+                }
             }
 
             // (2026-07-13) Watch for web permission revocation; prev: unmonitored

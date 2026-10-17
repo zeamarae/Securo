@@ -2937,9 +2937,11 @@
             input.value = '';
 
             try {
+                // (2026-07-13) Set senderRole to guardian; was omitted
                 await sendChatMessage(guardianProfile.uid, supportState.adminId, text, guardianProfile.name || 'Guardian', {
                     threadId: currentGuardianSupportThreadId,
                     supportMode: 'gad_support',
+                    senderRole: 'guardian',
                     senderLabel: guardianProfile.name || 'Guardian',
                     ownerId: guardianProfile.uid
                 });

@@ -1829,6 +1829,41 @@
             border-color: #dc2626 !important;
         }
 
+        /* (2026-07-13) User directory role filter button styling; was absent */
+        .user-filter-btn {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: var(--muted);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+
+        .user-filter-btn:hover,
+        .user-filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .user-filter-btn[data-user-filter="student"]:hover,
+        .user-filter-btn[data-user-filter="student"].active {
+            background: #5a1fe0 !important;
+            color: #ffffff !important;
+            border-color: #5a1fe0 !important;
+        }
+
+        .user-filter-btn[data-user-filter="guardian"]:hover,
+        .user-filter-btn[data-user-filter="guardian"].active {
+            background: #dc2626 !important;
+            color: #ffffff !important;
+            border-color: #dc2626 !important;
+        }
+
         .messages-canned-bar {
             padding: 8px 18px;
             background: #f8fafc;
@@ -2076,10 +2111,7 @@
                         <span class="material-symbols-outlined">info</span>
                         <span>About Us</span>
                     </a>
-                    <a href="index.html" class="ghost-btn" style="text-decoration:none;">
-                        <span class="material-symbols-outlined">arrow_back</span>
-                        <span>Back to App</span>
-                    </a>
+                    <!-- (2026-07-13) Remove back to app link; was index link -->
                     <button class="action-btn" id="topbarDirectLogoutBtn" type="button" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecdd3; padding:8px 14px; border-radius:12px; font-weight:700; font-size:0.82rem; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Sign out of command center">
                         <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
                         <span>Log Out</span>
@@ -2300,9 +2332,16 @@
                                     <div class="eyebrow">Directory</div>
                                     <h2 class="chart-title">User Directory</h2>
                                     <p class="chart-copy">Review users first, then use the 3-dot action button to edit each account in a modal.</p>
-                                </div>
-                                <div class="section-actions">
-                                    <input type="search" id="managementUserSearch" class="glass-input search-input" placeholder="Search users">
+                                <div class="section-actions" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+                                    <input type="search" id="managementUserSearch" class="glass-input search-input" placeholder="Search users (students, parents, staff)...">
+                                    <!-- (2026-07-13) Add directory role filter chips for user and parent; was absent -->
+                                    <div class="user-role-filter-chips" style="display:inline-flex; gap:6px;">
+                                        <!-- (2026-07-13) User and parent filter chips; was absent -->
+                                        <button type="button" class="user-filter-btn active" data-user-filter="all">All</button>
+                                        <button type="button" class="user-filter-btn" data-user-filter="student">Students</button>
+                                        <button type="button" class="user-filter-btn" data-user-filter="guardian">Parents</button>
+                                        <button type="button" class="user-filter-btn" data-user-filter="staff">Staff</button>
+                                    </div>
                                     <!-- (2026-07-13) Add bulk user import button; was single user create only -->
                                     <button class="ghost-btn" id="bulkImportUsersBtn" type="button" style="border: 1px solid var(--line); background: white; border-radius: 14px; padding: 0 16px; font-weight: 700; height: 42px;">
                                         <span class="material-symbols-outlined">upload_file</span>
@@ -2554,6 +2593,8 @@
                                     <label for="reportCategoryFilter" style="display:block; font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--muted); margin-bottom:6px;">Record Category</label>
                                     <select id="reportCategoryFilter" class="glass-input" style="width:100%; padding:9px 12px; border-radius:10px; font-weight:600; background:white; font-size:0.86rem;">
                                         <option value="all">All Records (Comprehensive Daily)</option>
+                                        <!-- (2026-07-13) Add incident evidence records category; was absent -->
+                                        <option value="incident">Evidence Vault Incidents</option>
                                         <option value="sos">Emergency SOS Incidents</option>
                                         <option value="attendance">Campus Attendance Logs</option>
                                         <option value="gad">GAD Safety Posts</option>
@@ -3321,17 +3362,26 @@
             }
         }
 
+        let currentManagementRoleFilter = 'all';
+
+        // (2026-07-13) Filter directory by user and parent roles; was text search only
         function renderManagedUsers() {
             if (!managementUserList) return;
             const term = (managementUserSearch?.value || '').trim().toLowerCase();
             const users = cachedUsers.filter((user) => {
                 if (getRoleKey(user) === 'admin') return false;
-                const haystack = `${user.name || ''} ${user.email || ''} ${user.studentId || ''} ${user.role || ''}`.toLowerCase();
+                const roleKey = getRoleKey(user);
+                if (currentManagementRoleFilter === 'student' && roleKey !== 'student') return false;
+                if (currentManagementRoleFilter === 'guardian' && roleKey !== 'guardian') return false;
+                if (currentManagementRoleFilter === 'staff' && roleKey !== 'staff') return false;
+
+                const roleAliases = roleKey === 'guardian' ? 'guardian parent ' : (roleKey === 'student' ? 'student user ' : '');
+                const haystack = `${user.name || ''} ${user.email || ''} ${user.studentId || ''} ${roleKey} ${roleAliases}`.toLowerCase();
                 return haystack.includes(term);
             });
 
             if (!users.length) {
-                renderEmpty(managementUserList, 'manage_accounts', 'No saved users match this search.');
+                renderEmpty(managementUserList, 'manage_accounts', 'No saved users match this search or filter.');
                 return;
             }
 
@@ -3481,7 +3531,24 @@
             return `${y}-${m}-${d}`;
         }
 
+        // (2026-07-13) Base safety records from live database collections; was local
         async function fetchAllSafetyRecords() {
+            if (!cachedSosLogs || !cachedSosLogs.length) {
+                try { cachedSosLogs = await getAllSOSLogs(); } catch (e) { cachedSosLogs = []; }
+            }
+            if (!cachedAttendance || !cachedAttendance.length) {
+                try { cachedAttendance = await getAllAttendance(); } catch (e) { cachedAttendance = []; }
+            }
+            if (!cachedEmergencyPosts || !cachedEmergencyPosts.length) {
+                try { cachedEmergencyPosts = await getAllEmergencyPosts(); } catch (e) { cachedEmergencyPosts = []; }
+            }
+            if (!cachedPosts || !cachedPosts.length) {
+                try { cachedPosts = await getGADPosts(); } catch (e) { cachedPosts = []; }
+            }
+            if (!cachedUsers || !cachedUsers.length) {
+                try { cachedUsers = await getAllUsers(); } catch (e) { cachedUsers = []; }
+            }
+
             const records = [];
             let counter = 1;
 
@@ -3511,17 +3578,8 @@
                 });
             });
 
-            // (2026-07-13) Use cached attendance logs; was un-cached await network
-            let attendanceLogs = (Array.isArray(cachedAttendance) && cachedAttendance.length) ? cachedAttendance : [];
-            if (!attendanceLogs.length) {
-                try {
-                    attendanceLogs = await getAllAttendance();
-                    cachedAttendance = attendanceLogs;
-                } catch (e) {
-                    attendanceLogs = [];
-                }
-            }
-            (attendanceLogs || []).forEach(att => {
+            // 2. Attendance Logs
+            (cachedAttendance || []).forEach(att => {
                 const dateObj = att.timestamp?.toDate ? att.timestamp.toDate() : (att.timestamp ? new Date(att.timestamp) : new Date());
                 const dateStr = getLocalDateString(dateObj);
                 const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
@@ -3548,7 +3606,33 @@
                 });
             });
 
-            // 3. GAD Safety Posts
+            // 3. Incident Vault Reports
+            (cachedEmergencyPosts || []).forEach(post => {
+                const dateObj = post.createdAt?.toDate ? post.createdAt.toDate() : (post.timestamp?.toDate ? post.timestamp.toDate() : (post.createdAt || post.timestamp ? new Date(post.createdAt || post.timestamp) : new Date()));
+                const dateStr = getLocalDateString(dateObj);
+                const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+                const user = (cachedUsers || []).find(u => String(u.id) === String(post.userId || post.studentUid)) || {};
+                const reportNo = `SEC-${dateStr.replace(/-/g, '')}-${String(counter++).padStart(4, '0')}`;
+
+                let locationStr = 'Campus Grounds';
+                if (post.location?.address) locationStr = post.location.address;
+                else if (post.location?.lat && post.location?.lng) locationStr = `${Number(post.location.lat).toFixed(5)}, ${Number(post.location.lng).toFixed(5)}`;
+
+                records.push({
+                    reportNo,
+                    studentId: post.studentId || user.studentId || post.userId || 'N/A',
+                    studentName: post.studentName || post.author || user.name || 'Student',
+                    location: locationStr,
+                    status: (post.status || 'VERIFIED').toUpperCase(),
+                    date: dateStr,
+                    time: timeStr,
+                    reportType: `Incident Vault: ${post.title || post.category || 'Incident Evidence'}`,
+                    category: 'incident',
+                    rawTimestamp: dateObj.getTime()
+                });
+            });
+
+            // 4. GAD Safety Posts
             (cachedPosts || []).forEach(post => {
                 const dateObj = post.createdAt?.toDate ? post.createdAt.toDate() : (post.createdAt || post.timestamp ? new Date(post.createdAt || post.timestamp) : new Date());
                 const dateStr = getLocalDateString(dateObj);
@@ -3579,18 +3663,19 @@
             const searchFilter = (document.getElementById('reportSearchInput')?.value || '').trim().toLowerCase();
             const container = document.getElementById('dailyReportTableContainer');
 
-            if (!datePicker) return;
-            if (!datePicker.value) {
-                datePicker.value = getLocalDateString(new Date());
+            const allRecords = await fetchAllSafetyRecords();
+            cachedDailyReportRecords = allRecords;
+
+            if (datePicker && !datePicker.value) {
+                datePicker.value = (allRecords.length > 0) ? allRecords[0].date : getLocalDateString(new Date());
             }
-            const selectedDate = datePicker.value;
+            let selectedDate = datePicker?.value || '';
 
             if (container) {
                 container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><p style="margin:8px 0 0; font-size:0.85rem;">Retrieving Firebase records for ' + selectedDate + '...</p></div>';
             }
 
-            const allRecords = await fetchAllSafetyRecords();
-            cachedDailyReportRecords = allRecords;
+            // (2026-07-13) Filter safety records by selected date; was duplicated const
 
             // Filter by date
             let filtered = allRecords.filter(r => r.date === selectedDate);
@@ -5499,15 +5584,47 @@
             return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
         }
 
-        // (2026-07-13) Deduplicate to one thread per user; was multiple raw threads
+        // (2026-07-13) Accurately resolve client UID from thread; was conflict
+        function getOtherUserIdFromThread(thread) {
+            if (!thread) return '';
+            if (thread.ownerId && thread.ownerId !== ADMIN_ID && thread.ownerId !== currentAdminUid) return thread.ownerId;
+            const candidateIds = [thread.senderId, thread.senderUid, thread.receiverId, thread.recipientUid];
+            for (const id of candidateIds) {
+                if (id && id !== ADMIN_ID && id !== currentAdminUid && id !== 'admin' && !id.startsWith('support_') && id !== 'system') {
+                    return id;
+                }
+            }
+            const tId = thread.threadId || '';
+            if (tId.includes(ADMIN_ID)) {
+                const cleaned = tId.replace(ADMIN_ID, '').replace(/^_+|_+$/g, '');
+                if (cleaned) return cleaned;
+            }
+            if (currentAdminUid && tId.includes(currentAdminUid)) {
+                const cleaned = tId.replace(currentAdminUid, '').replace(/^_+|_+$/g, '');
+                if (cleaned) return cleaned;
+            }
+            const parts = tId.split('_').filter(p => p && p !== 'system' && p !== 'admin' && p !== 'securo' && p !== 'support');
+            return parts.length > 0 ? parts.join('_') : (thread.senderId || thread.ownerId || '');
+        }
+
+        // (2026-07-13) Classify user or parent role for thread filters; was default
+        function getThreadParticipantRole(thread, userObj) {
+            if (userObj?.role) return userObj.role;
+            if (thread?.senderRole && thread.senderRole !== 'admin') return thread.senderRole;
+            if (thread?.recipientRole && thread.recipientRole !== 'admin') return thread.recipientRole;
+            const searchStr = `${userObj?.name || ''} ${userObj?.email || ''} ${thread?.senderName || ''} ${thread?.senderEmail || ''} ${thread?.senderLabel || ''}`.toLowerCase();
+            if (searchStr.includes('parent') || searchStr.includes('guardian')) return 'guardian';
+            return 'student';
+        }
+
         function renderThreads(threads) {
             const rawThreads = Array.isArray(threads) ? threads : [];
             const query = currentMsgSearchQuery.trim().toLowerCase();
 
+            // (2026-07-13) Deduplicate threads and filter by user role; was conflict
             const dedupedMap = new Map();
             rawThreads.forEach(t => {
-                const parts = (t.threadId || '').split('_');
-                const otherUserId = t.ownerId || (parts[0] === ADMIN_ID ? parts[1] : parts[0]) || t.senderEmail || t.threadId;
+                const otherUserId = getOtherUserIdFromThread(t);
                 const existing = dedupedMap.get(otherUserId);
                 if (!existing) {
                     dedupedMap.set(otherUserId, t);
@@ -5520,13 +5637,12 @@
             const uniqueThreads = Array.from(dedupedMap.values());
 
             const filteredThreads = uniqueThreads.filter((thread) => {
-                const parts = (thread.threadId || '').split('_');
-                const otherUserId = thread.ownerId || (parts[0] === ADMIN_ID ? parts[1] : parts[0]);
-                const userObj = cachedUsers.find(u => u.id === otherUserId || (u.email && thread.senderEmail && u.email.toLowerCase() === thread.senderEmail.toLowerCase()));
+                const otherUserId = getOtherUserIdFromThread(thread);
+                const userObj = cachedUsers.find(u => (otherUserId && u.id === otherUserId) || (u.email && thread.senderEmail && u.email.toLowerCase() === thread.senderEmail.toLowerCase()) || (u.email && thread.senderLabel && u.email.toLowerCase() === thread.senderLabel.toLowerCase()));
                 const displayName = (userObj?.name || thread.senderLabel || thread.senderName || 'Anonymous').toLowerCase();
                 const text = (thread.text || '').toLowerCase();
                 const unread = isThreadUnread(thread);
-                const role = userObj?.role || thread.senderRole || 'student';
+                const role = getThreadParticipantRole(thread, userObj);
 
                 if (query && !displayName.includes(query) && !text.includes(query)) {
                     return false;
@@ -5554,14 +5670,13 @@
             }
 
             threadList.innerHTML = filteredThreads.map(thread => {
-                const parts = (thread.threadId || '').split('_');
-                const otherUserId = thread.ownerId || (parts[0] === ADMIN_ID ? parts[1] : parts[0]);
-                const userObj = cachedUsers.find(u => u.id === otherUserId || (u.email && thread.senderEmail && u.email.toLowerCase() === thread.senderEmail.toLowerCase()));
+                const otherUserId = getOtherUserIdFromThread(thread);
+                const userObj = cachedUsers.find(u => (otherUserId && u.id === otherUserId) || (u.email && thread.senderEmail && u.email.toLowerCase() === thread.senderEmail.toLowerCase()) || (u.email && thread.senderLabel && u.email.toLowerCase() === thread.senderLabel.toLowerCase()));
                 const isActive = currentActiveThreadId === thread.threadId;
                 const unread = isThreadUnread(thread);
                 const displayName = userObj?.name || thread.senderLabel || thread.senderName || 'Anonymous';
                 const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || 'U';
-                const role = userObj?.role || thread.senderRole || 'student';
+                const role = getThreadParticipantRole(thread, userObj);
                 const isGuardian = role === 'guardian';
                 const timeStr = formatThreadTimestamp(thread.updatedAt || thread.timestamp || thread.lastMessageAt);
                 return `
@@ -5627,16 +5742,24 @@
             });
         }
 
+        // (2026-07-13) Open thread with resolved UID and role styling; was naive ID
         window.openAdminThread = function(threadId, userId, userName) {
             currentActiveThreadId = threadId;
-            currentActiveUserId = userId;
+            let resolvedUserId = userId;
+            if (!resolvedUserId || resolvedUserId === 'system' || resolvedUserId === 'support') {
+                const threadObj = cachedThreads.find(t => t.threadId === threadId);
+                resolvedUserId = getOtherUserIdFromThread(threadObj) || userId;
+            }
+            currentActiveUserId = resolvedUserId;
             seenAdminThreads.set(threadId, Date.now());
 
-            const userObj = cachedUsers.find(u => u.id === userId || (u.email && u.email.toLowerCase() === (userName || '').toLowerCase()));
+            const userObj = cachedUsers.find(u => (resolvedUserId && u.id === resolvedUserId) || (u.email && u.email.toLowerCase() === (userName || '').toLowerCase()));
             const displayName = userName || userObj?.name || 'User';
             activeUserName.textContent = displayName;
-            // (2026-07-13) Red guardian and purple student avatar; was text initials
-            const isGuardian = userObj?.role === 'guardian';
+            const threadObj = cachedThreads.find(t => t.threadId === threadId);
+            const role = getThreadParticipantRole(threadObj, userObj);
+            const isGuardian = role === 'guardian';
+            const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || 'U';
             activeUserAvatar.className = 'thread-avatar ' + (isGuardian ? 'guardian' : 'student');
             if (userObj?.photoURL) {
                 activeUserAvatar.innerHTML = `<img src="${escapeHtml(userObj.photoURL)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"><span id="activeUserBeacon" style="position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%; background:#10b981; border:2px solid #fff;"></span>`;
@@ -5647,7 +5770,7 @@
             if (activeUserRoleBadge) {
                 activeUserRoleBadge.style.display = 'inline-block';
                 activeUserRoleBadge.className = 'role-pill ' + (isGuardian ? 'guardian' : 'student');
-                activeUserRoleBadge.textContent = isGuardian ? 'Guardian' : (userObj?.role === 'staff' ? 'Staff' : 'Student');
+                activeUserRoleBadge.textContent = isGuardian ? 'Guardian' : (role === 'staff' ? 'Staff' : 'Student');
             }
 
             if (activeUserIdTag) {
@@ -5669,7 +5792,7 @@
             if (dossierStudentId) dossierStudentId.textContent = userObj?.studentId || userObj?.id || 'N/A';
             if (dossierEmail) dossierEmail.textContent = userObj?.email || 'No email on record';
             if (dossierSosCount) {
-                const userSos = cachedSosLogs.filter(l => l.userId === userId || (l.studentName && l.studentName.toLowerCase() === displayName.toLowerCase()));
+                const userSos = cachedSosLogs.filter(l => l.userId === resolvedUserId || (l.studentName && l.studentName.toLowerCase() === displayName.toLowerCase()));
                 if (userSos.length > 0) {
                     dossierSosCount.textContent = `${userSos.length} alerts logged (${userSos[0].status || 'Logged'})`;
                     dossierSosCount.style.color = '#dc2626';
@@ -5679,11 +5802,11 @@
                 }
             }
             if (dossierGuardianInfo) {
-                const links = cachedGuardianLinks.filter(g => g.studentId === userId || (userObj?.email && g.studentEmail && g.studentEmail.toLowerCase() === userObj.email.toLowerCase()));
+                const links = cachedGuardianLinks.filter(g => g.studentId === resolvedUserId || (userObj?.email && g.studentEmail && g.studentEmail.toLowerCase() === userObj.email.toLowerCase()));
                 if (links.length > 0) {
                     dossierGuardianInfo.textContent = links.map(l => l.guardianName || l.guardianEmail || 'Linked Guardian').join(', ');
                 } else if (isGuardian) {
-                    const studentLinks = cachedGuardianLinks.filter(g => g.guardianId === userId || (userObj?.email && g.guardianEmail && g.guardianEmail.toLowerCase() === userObj.email.toLowerCase()));
+                    const studentLinks = cachedGuardianLinks.filter(g => g.guardianId === resolvedUserId || (userObj?.email && g.guardianEmail && g.guardianEmail.toLowerCase() === userObj.email.toLowerCase()));
                     dossierGuardianInfo.textContent = studentLinks.length > 0 ? studentLinks.map(l => l.studentName || l.studentEmail).join(', ') : 'Registered Guardian';
                 } else {
                     dossierGuardianInfo.textContent = 'None linked';
@@ -5704,6 +5827,7 @@
             renderThreads(cachedThreads);
         };
 
+        // (2026-07-13) Fix dateStr definition and detect admin sender; was ReferenceError
         function renderAdminMessages(messages) {
             adminChatMessages.innerHTML = "";
             if (!messages || messages.length === 0) {
@@ -5718,8 +5842,8 @@
 
             let lastDateLabel = "";
             messages.forEach(msg => {
-                const isSent = msg.senderId === ADMIN_ID;
-                // (2026-07-13) Define dateStr for message date divider; was undefined
+                // (2026-07-13) Identify admin sent message with role check; was conflict
+                const isSent = msg.senderId === ADMIN_ID || msg.senderId === currentAdminUid || msg.senderRole === 'admin';
                 const date = msg.timestamp?.toDate?.() || new Date(msg.localTime || Date.now());
                 const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
                 const timeStr = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -5736,10 +5860,10 @@
                 msgEl.className = `admin-msg ${isSent ? 'sent' : 'received'}`;
                 if (msg.isPending) msgEl.style.opacity = "0.7";
                 
-                const senderTag = isSent ? 'Command Desk' : escapeHtml(activeUserName.textContent || 'Student');
+                const senderTag = isSent ? 'Command Desk' : escapeHtml(activeUserName.textContent || (msg.senderRole === 'guardian' ? 'Guardian' : 'Student'));
                 msgEl.innerHTML = `
                     <span style="font-size:0.67rem; font-weight:800; display:block; margin-bottom:2px; opacity:0.8;">${senderTag}</span>
-                    <div>${escapeHtml(msg.text)}</div>
+                    <div>${escapeHtml(msg.text || msg.message || '')}</div>
                     <span class="msg-time">${timeStr}</span>
                 `;
                 adminChatMessages.appendChild(msgEl);
@@ -5747,9 +5871,18 @@
             adminChatMessages.scrollTo({ top: adminChatMessages.scrollHeight, behavior: 'smooth' });
         }
 
+        // (2026-07-13) Dispatch reply with admin role & target UID; was missing options
         async function handleAdminSendMessage() {
             const text = adminChatInput.value.trim();
-            if (!text || !currentActiveUserId) return;
+            if (!text) return;
+            let targetUserId = currentActiveUserId;
+            if (!targetUserId || targetUserId === 'system' || targetUserId === 'support') {
+                const threadObj = cachedThreads.find(t => t.threadId === currentActiveThreadId);
+                targetUserId = getOtherUserIdFromThread(threadObj) || currentActiveUserId;
+            }
+            if (!targetUserId) return;
+            currentActiveUserId = targetUserId;
+            const adminSenderId = currentAdminUid || ADMIN_ID;
 
             const msgEl = document.createElement("div");
             msgEl.className = "admin-msg sent";
@@ -5766,10 +5899,11 @@
             adminChatInput.value = "";
 
             try {
-                await sendChatMessage(ADMIN_ID, currentActiveUserId, text, "GAD Office", {
+                await sendChatMessage(adminSenderId, targetUserId, text, "GAD Office", {
                     threadId: currentActiveThreadId,
                     supportMode: "gad_support",
-                    ownerId: currentActiveUserId
+                    senderRole: "admin",
+                    ownerId: targetUserId
                 });
             } catch (err) {
                 console.warn("Failed to send admin message:", err);
@@ -5837,6 +5971,16 @@
                 chip.classList.add('active');
                 currentMsgFilter = chip.dataset.msgFilter || 'all';
                 renderThreads(cachedThreads);
+            });
+        });
+
+        // (2026-07-13) User and parent directory filter listeners; was absent
+        document.querySelectorAll('.user-filter-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.user-filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentManagementRoleFilter = btn.dataset.userFilter || 'all';
+                renderManagedUsers();
             });
         });
 
