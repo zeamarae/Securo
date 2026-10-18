@@ -427,29 +427,42 @@
             Last Updated: September 28, 2026
         </div>
 
-        <div style="text-align: center;">
-            <button class="back-btn" onclick="goBack()">
-                <span class="material-symbols-outlined">arrow_back</span>
-                Back to Registration
-            </button>
+        <!-- (2026-07-13) Add agree choices & no close X; was back to registration -->
+        <div class="terms-action-panel" style="text-align: center; margin: 24px auto 16px; max-width: 420px; display: flex; flex-direction: column; align-items: center; gap: 14px;">
+            <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.92rem; font-weight: 600; color: #171428;">
+                <input type="checkbox" id="termsAgreeCheckbox" style="width: 20px; height: 20px; accent-color: #5a1fe0; cursor: pointer;">
+                <span>I agree to the terms and conditions</span>
+            </label>
+            <div style="display: flex; gap: 10px; width: 100%; justify-content: center;">
+                <button type="button" class="back-btn" id="btnAgreeTerms" onclick="handleAgree(true)" style="flex: 1; max-width: 170px; background: #5a1fe0; color: white;">
+                    <span class="material-symbols-outlined">check_circle</span>
+                    I Agree
+                </button>
+                <button type="button" class="back-btn" id="btnDisagreeTerms" onclick="handleAgree(false)" style="flex: 1; max-width: 170px; background: #e2e8f0; color: #475569;">
+                    <span class="material-symbols-outlined">cancel</span>
+                    Decline
+                </button>
+            </div>
         </div>
     </div>
 
     <script>
-        function goBack() {
-            // Use the SPA Router
-            if (window.goBack) {
-                window.goBack('login');
-            } else if (window.SPARouter) {
-                window.SPARouter.back('login');
+        function handleAgree(agreed) {
+            if (agreed) {
+                const box = document.getElementById('termsAgreeCheckbox');
+                if (box) box.checked = true;
+                localStorage.setItem('securo_terms_agreed', 'true');
             } else {
-                // Fallback
-                if (window.history.length > 1) {
-                    window.history.back();
-                } else {
-                    window.location.href = 'login.html';
-                }
+                localStorage.removeItem('securo_terms_agreed');
             }
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
+        function goBack() {
+            handleAgree(false);
         }
     </script>
 </body>

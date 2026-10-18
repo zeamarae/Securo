@@ -289,6 +289,36 @@ export const logSOS = async (userId, location, metadata = {}) => {
     }
 };
 
+// (2026-07-13) Close logSOS before attachPhotoToActiveSOS; was unclosed function
+export const attachPhotoToActiveSOS = async (userId, photoItem) => {
+    if (!userId) return false;
+    try {
+        localStorage.setItem(`securo_student_sos_photo_${userId}`, JSON.stringify({ hasPhoto: true, timestamp: Date.now() }));
+        const q = query(collection(db, "sos_logs"), where("userId", "==", userId));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+            const activeDocs = snap.docs.filter(d => (d.data()?.status || 'active') === 'active');
+            const targetDocs = activeDocs.length > 0 ? activeDocs : [snap.docs[0]];
+            for (const d of targetDocs) {
+                const cur = d.data() || {};
+                const photos = Array.isArray(cur.photos) ? [...cur.photos] : [];
+                if (photoItem?.src) photos.push(photoItem.src);
+                await updateDoc(doc(db, "sos_logs", d.id), {
+                    hasPhoto: true,
+                    photos,
+                    lastPhoto: photoItem?.src || "",
+                    lastPhotoAt: serverTimestamp()
+                });
+            }
+            return true;
+        }
+    } catch (e) {
+        console.warn("Attach photo to SOS fallback:", e);
+    }
+    return false;
+};
+
+
 /**
  * Save a posted emergency capture package
  * @param {object} payload
@@ -1420,13 +1450,11 @@ export const createGuardianLinkRequest = async (linkData) => {
             studentName: studentRecord.name || linkData.studentName || "Student",
             relationshipType: linkData.relationshipType || "parent",
             permissions: linkData.permissions || { sosAlerts: true, attendanceAlerts: true, liveLocation: true },
-            status: "accepted",
-            createdAt: serverTimestamp(),
-            approvedAt: serverTimestamp(),
-            respondedAt: serverTimestamp()
+            // (2026-07-13) Set pending status for student confirmation; was accepted
+            status: "pending",
+            createdAt: serverTimestamp()
         };
 
-        // (2026-07-13) Instant link creation & re-add support; was strict pending
         const existingLink = await findExistingGuardianStudentLink({
             guardianId: enrichedLinkData.guardianId,
             guardianEmail: enrichedLinkData.guardianEmail,
@@ -1446,14 +1474,14 @@ export const createGuardianLinkRequest = async (linkData) => {
         await sendAccountNotification({
             userId: studentRecord.uid,
             recipientUid: studentRecord.uid,
-            type: "guardian_request_accepted",
-            title: "Parent / Guardian Connected",
-            message: `${enrichedLinkData.guardianName || "A parent or guardian"} is now connected to your account.`,
+            type: "guardian_request",
+            title: "Guardian Link Request",
+            message: `${enrichedLinkData.guardianName || "A parent or guardian"} wants to link to your account.`,
             sourceUserId: enrichedLinkData.guardianId,
             sourceName: enrichedLinkData.guardianName,
             requestId: linkId,
             studentId: enrichedLinkData.studentId,
-            priority: "normal"
+            priority: "high"
         }).catch((err) => console.warn("Guardian request notification skipped:", err));
 
         try {

@@ -1,0 +1,5664 @@
+{
+  "nodes": [
+    {
+      "id": "g0",
+      "type": "group",
+      "label": "Community 0",
+      "x": 0,
+      "y": 0,
+      "width": 1540,
+      "height": 820,
+      "color": "1"
+    },
+    {
+      "id": "n_db_attachphototoactivesos",
+      "type": "file",
+      "file": "attachPhotoToActiveSOS().md",
+      "x": 20,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db",
+      "type": "file",
+      "file": "db.js.md",
+      "x": 220,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_deleteconversationthread",
+      "type": "file",
+      "file": "deleteConversationThread().md",
+      "x": 420,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_deletegadpost",
+      "type": "file",
+      "file": "deleteGADPost().md",
+      "x": 620,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_deletenotification",
+      "type": "file",
+      "file": "deleteNotification().md",
+      "x": 820,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_fetchlatestcampusmapconfig",
+      "type": "file",
+      "file": "fetchLatestCampusMapConfig().md",
+      "x": 1020,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getacceptedlinksforguardian",
+      "type": "file",
+      "file": "getAcceptedLinksForGuardian().md",
+      "x": 1220,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getallattendance",
+      "type": "file",
+      "file": "getAllAttendance().md",
+      "x": 20,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getallauditlogs",
+      "type": "file",
+      "file": "getAllAuditLogs().md",
+      "x": 220,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getallchatthreads",
+      "type": "file",
+      "file": "getAllChatThreads().md",
+      "x": 420,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getallchatthreadsonce",
+      "type": "file",
+      "file": "getAllChatThreadsOnce().md",
+      "x": 620,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getallguardianlinksadmin",
+      "type": "file",
+      "file": "getAllGuardianLinksAdmin().md",
+      "x": 820,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getalllinksforguardian",
+      "type": "file",
+      "file": "getAllLinksForGuardian().md",
+      "x": 1020,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getallsoslogs",
+      "type": "file",
+      "file": "getAllSOSLogs().md",
+      "x": 1220,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getattendancestats",
+      "type": "file",
+      "file": "getAttendanceStats().md",
+      "x": 20,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getcampusmarkers",
+      "type": "file",
+      "file": "getCampusMarkers().md",
+      "x": 220,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getgadposts",
+      "type": "file",
+      "file": "getGADPosts().md",
+      "x": 420,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getlatestattendance",
+      "type": "file",
+      "file": "getLatestAttendance().md",
+      "x": 620,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getofflinequeuesize",
+      "type": "file",
+      "file": "getOfflineQueueSize().md",
+      "x": 820,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getsosstats",
+      "type": "file",
+      "file": "getSOSStats().md",
+      "x": 1020,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getstudentlivelocationonce",
+      "type": "file",
+      "file": "getStudentLiveLocationOnce().md",
+      "x": 1220,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getuserauditlogs",
+      "type": "file",
+      "file": "getUserAuditLogs().md",
+      "x": 20,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getusernotifications",
+      "type": "file",
+      "file": "getUserNotifications().md",
+      "x": 220,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_isstudentidtaken",
+      "type": "file",
+      "file": "isStudentIdTaken().md",
+      "x": 420,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_markaccountnotificationread",
+      "type": "file",
+      "file": "markAccountNotificationRead().md",
+      "x": 620,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_markallnotificationsasread",
+      "type": "file",
+      "file": "markAllNotificationsAsRead().md",
+      "x": 820,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_marknotificationasread",
+      "type": "file",
+      "file": "markNotificationAsRead().md",
+      "x": 1020,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_mergeusers",
+      "type": "file",
+      "file": "mergeUsers().md",
+      "x": 1220,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_queueofflineoperation",
+      "type": "file",
+      "file": "queueOfflineOperation().md",
+      "x": 20,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_removeguardianlink",
+      "type": "file",
+      "file": "removeGuardianLink().md",
+      "x": 220,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_saveadminuserpassword",
+      "type": "file",
+      "file": "saveAdminUserPassword().md",
+      "x": 420,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_savecampusmapconfig",
+      "type": "file",
+      "file": "saveCampusMapConfig().md",
+      "x": 620,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_saveuserdirectorymarker",
+      "type": "file",
+      "file": "saveUserDirectoryMarker().md",
+      "x": 820,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_sendguardianlocationreminder",
+      "type": "file",
+      "file": "sendGuardianLocationReminder().md",
+      "x": 1020,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_setstudentlocationsharingstatus",
+      "type": "file",
+      "file": "setStudentLocationSharingStatus().md",
+      "x": 1220,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_subscribetoaccountnotifications",
+      "type": "file",
+      "file": "subscribeToAccountNotifications().md",
+      "x": 20,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_subscribetocampusmapconfig",
+      "type": "file",
+      "file": "subscribeToCampusMapConfig().md",
+      "x": 220,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_subscribetoguardianrequests",
+      "type": "file",
+      "file": "subscribeToGuardianRequests().md",
+      "x": 420,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_subscribetomessages",
+      "type": "file",
+      "file": "subscribeToMessages().md",
+      "x": 620,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_subscribetomessagesbythread",
+      "type": "file",
+      "file": "subscribeToMessagesByThread().md",
+      "x": 820,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_subscribetonotifications",
+      "type": "file",
+      "file": "subscribeToNotifications().md",
+      "x": 1020,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_subscribetostudentattendance",
+      "type": "file",
+      "file": "subscribeToStudentAttendance().md",
+      "x": 1220,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_subscribetostudentlocation",
+      "type": "file",
+      "file": "subscribeToStudentLocation().md",
+      "x": 20,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_subscribetostudentsos",
+      "type": "file",
+      "file": "subscribeToStudentSOS().md",
+      "x": 220,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_togglelikegadpost",
+      "type": "file",
+      "file": "toggleLikeGADPost().md",
+      "x": 420,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_updategadpost",
+      "type": "file",
+      "file": "updateGADPost().md",
+      "x": 620,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_updateguardianlinkstudentid",
+      "type": "file",
+      "file": "updateGuardianLinkStudentId().md",
+      "x": 820,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_updatestudentlivelocation",
+      "type": "file",
+      "file": "updateStudentLiveLocation().md",
+      "x": 1020,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g1",
+      "type": "group",
+      "label": "Community 1",
+      "x": 1620,
+      "y": 0,
+      "width": 1540,
+      "height": 820,
+      "color": "2"
+    },
+    {
+      "id": "n_www_db_attachphototoactivesos",
+      "type": "file",
+      "file": "attachPhotoToActiveSOS()_1.md",
+      "x": 1640,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_deleteconversationthread",
+      "type": "file",
+      "file": "deleteConversationThread()_1.md",
+      "x": 1840,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_deletegadpost",
+      "type": "file",
+      "file": "deleteGADPost()_1.md",
+      "x": 2040,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_deletenotification",
+      "type": "file",
+      "file": "deleteNotification()_1.md",
+      "x": 2240,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_fetchlatestcampusmapconfig",
+      "type": "file",
+      "file": "fetchLatestCampusMapConfig()_1.md",
+      "x": 2440,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getacceptedlinksforguardian",
+      "type": "file",
+      "file": "getAcceptedLinksForGuardian()_1.md",
+      "x": 2640,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getallattendance",
+      "type": "file",
+      "file": "getAllAttendance()_1.md",
+      "x": 2840,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getallauditlogs",
+      "type": "file",
+      "file": "getAllAuditLogs()_1.md",
+      "x": 1640,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getallchatthreads",
+      "type": "file",
+      "file": "getAllChatThreads()_1.md",
+      "x": 1840,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getallchatthreadsonce",
+      "type": "file",
+      "file": "getAllChatThreadsOnce()_1.md",
+      "x": 2040,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getallguardianlinksadmin",
+      "type": "file",
+      "file": "getAllGuardianLinksAdmin()_1.md",
+      "x": 2240,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getalllinksforguardian",
+      "type": "file",
+      "file": "getAllLinksForGuardian()_1.md",
+      "x": 2440,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getallsoslogs",
+      "type": "file",
+      "file": "getAllSOSLogs()_1.md",
+      "x": 2640,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getattendancestats",
+      "type": "file",
+      "file": "getAttendanceStats()_1.md",
+      "x": 2840,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getcampusmarkers",
+      "type": "file",
+      "file": "getCampusMarkers()_1.md",
+      "x": 1640,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getgadposts",
+      "type": "file",
+      "file": "getGADPosts()_1.md",
+      "x": 1840,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getlatestattendance",
+      "type": "file",
+      "file": "getLatestAttendance()_1.md",
+      "x": 2040,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getofflinequeuesize",
+      "type": "file",
+      "file": "getOfflineQueueSize()_1.md",
+      "x": 2240,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getsosstats",
+      "type": "file",
+      "file": "getSOSStats()_1.md",
+      "x": 2440,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getstudentlivelocationonce",
+      "type": "file",
+      "file": "getStudentLiveLocationOnce()_1.md",
+      "x": 2640,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getuserauditlogs",
+      "type": "file",
+      "file": "getUserAuditLogs()_1.md",
+      "x": 2840,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getusernotifications",
+      "type": "file",
+      "file": "getUserNotifications()_1.md",
+      "x": 1640,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_isstudentidtaken",
+      "type": "file",
+      "file": "isStudentIdTaken()_1.md",
+      "x": 1840,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_markaccountnotificationread",
+      "type": "file",
+      "file": "markAccountNotificationRead()_1.md",
+      "x": 2040,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_markallnotificationsasread",
+      "type": "file",
+      "file": "markAllNotificationsAsRead()_1.md",
+      "x": 2240,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_marknotificationasread",
+      "type": "file",
+      "file": "markNotificationAsRead()_1.md",
+      "x": 2440,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_mergeusers",
+      "type": "file",
+      "file": "mergeUsers()_1.md",
+      "x": 2640,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_queueofflineoperation",
+      "type": "file",
+      "file": "queueOfflineOperation()_1.md",
+      "x": 2840,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_removeguardianlink",
+      "type": "file",
+      "file": "removeGuardianLink()_1.md",
+      "x": 1640,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_saveadminuserpassword",
+      "type": "file",
+      "file": "saveAdminUserPassword()_1.md",
+      "x": 1840,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_savecampusmapconfig",
+      "type": "file",
+      "file": "saveCampusMapConfig()_1.md",
+      "x": 2040,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_saveuserdirectorymarker",
+      "type": "file",
+      "file": "saveUserDirectoryMarker()_1.md",
+      "x": 2240,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_sendguardianlocationreminder",
+      "type": "file",
+      "file": "sendGuardianLocationReminder()_1.md",
+      "x": 2440,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_setstudentlocationsharingstatus",
+      "type": "file",
+      "file": "setStudentLocationSharingStatus()_1.md",
+      "x": 2640,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_subscribetoaccountnotifications",
+      "type": "file",
+      "file": "subscribeToAccountNotifications()_1.md",
+      "x": 2840,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_subscribetocampusmapconfig",
+      "type": "file",
+      "file": "subscribeToCampusMapConfig()_1.md",
+      "x": 1640,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_subscribetoguardianrequests",
+      "type": "file",
+      "file": "subscribeToGuardianRequests()_1.md",
+      "x": 1840,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_subscribetomessages",
+      "type": "file",
+      "file": "subscribeToMessages()_1.md",
+      "x": 2040,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_subscribetomessagesbythread",
+      "type": "file",
+      "file": "subscribeToMessagesByThread()_1.md",
+      "x": 2240,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_subscribetonotifications",
+      "type": "file",
+      "file": "subscribeToNotifications()_1.md",
+      "x": 2440,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_subscribetostudentattendance",
+      "type": "file",
+      "file": "subscribeToStudentAttendance()_1.md",
+      "x": 2640,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_subscribetostudentlocation",
+      "type": "file",
+      "file": "subscribeToStudentLocation()_1.md",
+      "x": 2840,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_subscribetostudentsos",
+      "type": "file",
+      "file": "subscribeToStudentSOS()_1.md",
+      "x": 1640,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_togglelikegadpost",
+      "type": "file",
+      "file": "toggleLikeGADPost()_1.md",
+      "x": 1840,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_updategadpost",
+      "type": "file",
+      "file": "updateGADPost()_1.md",
+      "x": 2040,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_updateguardianlinkstudentid",
+      "type": "file",
+      "file": "updateGuardianLinkStudentId()_1.md",
+      "x": 2240,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_updatestudentlivelocation",
+      "type": "file",
+      "file": "updateStudentLiveLocation()_1.md",
+      "x": 2440,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db",
+      "type": "file",
+      "file": "wwwdb.js.md",
+      "x": 2640,
+      "y": 560,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g2",
+      "type": "group",
+      "label": "Community 2",
+      "x": 3240,
+      "y": 0,
+      "width": 1320,
+      "height": 720,
+      "color": "3"
+    },
+    {
+      "id": "n_emergency_contacts_default_contacts",
+      "type": "file",
+      "file": "DEFAULT_CONTACTS.md",
+      "x": 3260,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_utils_device",
+      "type": "file",
+      "file": "Device.md",
+      "x": 3460,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_utils_format",
+      "type": "file",
+      "file": "Format.md",
+      "x": 3660,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_utils_logger",
+      "type": "file",
+      "file": "Logger.md",
+      "x": 3860,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_utils_network",
+      "type": "file",
+      "file": "Network.md",
+      "x": 4060,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_utils_permissions",
+      "type": "file",
+      "file": "Permissions.md",
+      "x": 4260,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_utils_storage",
+      "type": "file",
+      "file": "Storage.md",
+      "x": 3260,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_utils_ui",
+      "type": "file",
+      "file": "UI.md",
+      "x": 3460,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_utils_validation",
+      "type": "file",
+      "file": "Validation.md",
+      "x": 3660,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_emergency_contacts_addemergencycontact",
+      "type": "file",
+      "file": "addEmergencyContact().md",
+      "x": 3860,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_emergency_contacts_createsosfabwithcontacts",
+      "type": "file",
+      "file": "createSOSFabWithContacts().md",
+      "x": 4060,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_utils_debounce",
+      "type": "file",
+      "file": "debounce().md",
+      "x": 4260,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_emergency_contacts",
+      "type": "file",
+      "file": "emergency-contacts.js.md",
+      "x": 3260,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_emergency_contacts_getcampuscontacts",
+      "type": "file",
+      "file": "getCampusContacts().md",
+      "x": 3460,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_emergency_contacts_getemergencycontacts",
+      "type": "file",
+      "file": "getEmergencyContacts().md",
+      "x": 3660,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_install_sw_initializeofflinesupport",
+      "type": "file",
+      "file": "initializeOfflineSupport().md",
+      "x": 3860,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_emergency_contacts_initiatecall",
+      "type": "file",
+      "file": "initiateCall().md",
+      "x": 4060,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_install_sw",
+      "type": "file",
+      "file": "install-sw.js.md",
+      "x": 4260,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_install_sw_isserviceworkerready",
+      "type": "file",
+      "file": "isServiceWorkerReady().md",
+      "x": 3260,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_install_sw_registerserviceworker",
+      "type": "file",
+      "file": "registerServiceWorker().md",
+      "x": 3460,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_emergency_contacts_removeemergencycontact",
+      "type": "file",
+      "file": "removeEmergencyContact().md",
+      "x": 3660,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_emergency_contacts_renderemergencycontactwidget",
+      "type": "file",
+      "file": "renderEmergencyContactWidget().md",
+      "x": 3860,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_install_sw_requestbackgroundsync",
+      "type": "file",
+      "file": "requestBackgroundSync().md",
+      "x": 4060,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_install_sw_requestnotificationpermission",
+      "type": "file",
+      "file": "requestNotificationPermission().md",
+      "x": 4260,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_emergency_contacts_sendemergencysms",
+      "type": "file",
+      "file": "sendEmergencySMS().md",
+      "x": 3260,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_install_sw_setupconnectivitylisteners",
+      "type": "file",
+      "file": "setupConnectivityListeners().md",
+      "x": 3460,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_install_sw_setupserviceworkerlisteners",
+      "type": "file",
+      "file": "setupServiceWorkerListeners().md",
+      "x": 3660,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_emergency_contacts_showaddcontactmodal",
+      "type": "file",
+      "file": "showAddContactModal().md",
+      "x": 3860,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_install_sw_showlocalnotification",
+      "type": "file",
+      "file": "showLocalNotification().md",
+      "x": 4060,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_install_sw_showupdatenotification",
+      "type": "file",
+      "file": "showUpdateNotification().md",
+      "x": 4260,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_utils_throttle",
+      "type": "file",
+      "file": "throttle().md",
+      "x": 3260,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_emergency_contacts_updatecampuscontacts",
+      "type": "file",
+      "file": "updateCampusContacts().md",
+      "x": 3460,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_install_sw_updateofflinequeueindicator",
+      "type": "file",
+      "file": "updateOfflineQueueIndicator().md",
+      "x": 3660,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_utils",
+      "type": "file",
+      "file": "utils.js.md",
+      "x": 3860,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g3",
+      "type": "group",
+      "label": "Community 3",
+      "x": 4640,
+      "y": 0,
+      "width": 1320,
+      "height": 720,
+      "color": "4"
+    },
+    {
+      "id": "n_www_emergency_contacts_default_contacts",
+      "type": "file",
+      "file": "DEFAULT_CONTACTS_1.md",
+      "x": 4660,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_utils_device",
+      "type": "file",
+      "file": "Device_1.md",
+      "x": 4860,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_utils_format",
+      "type": "file",
+      "file": "Format_1.md",
+      "x": 5060,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_utils_logger",
+      "type": "file",
+      "file": "Logger_1.md",
+      "x": 5260,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_utils_network",
+      "type": "file",
+      "file": "Network_1.md",
+      "x": 5460,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_utils_permissions",
+      "type": "file",
+      "file": "Permissions_1.md",
+      "x": 5660,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_utils_storage",
+      "type": "file",
+      "file": "Storage_1.md",
+      "x": 4660,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_utils_ui",
+      "type": "file",
+      "file": "UI_1.md",
+      "x": 4860,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_utils_validation",
+      "type": "file",
+      "file": "Validation_1.md",
+      "x": 5060,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_emergency_contacts_addemergencycontact",
+      "type": "file",
+      "file": "addEmergencyContact()_1.md",
+      "x": 5260,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_emergency_contacts_createsosfabwithcontacts",
+      "type": "file",
+      "file": "createSOSFabWithContacts()_1.md",
+      "x": 5460,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_utils_debounce",
+      "type": "file",
+      "file": "debounce()_1.md",
+      "x": 5660,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_emergency_contacts_getcampuscontacts",
+      "type": "file",
+      "file": "getCampusContacts()_1.md",
+      "x": 4660,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_emergency_contacts_getemergencycontacts",
+      "type": "file",
+      "file": "getEmergencyContacts()_1.md",
+      "x": 4860,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_install_sw_initializeofflinesupport",
+      "type": "file",
+      "file": "initializeOfflineSupport()_1.md",
+      "x": 5060,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_emergency_contacts_initiatecall",
+      "type": "file",
+      "file": "initiateCall()_1.md",
+      "x": 5260,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_install_sw_isserviceworkerready",
+      "type": "file",
+      "file": "isServiceWorkerReady()_1.md",
+      "x": 5460,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_install_sw_registerserviceworker",
+      "type": "file",
+      "file": "registerServiceWorker()_1.md",
+      "x": 5660,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_emergency_contacts_removeemergencycontact",
+      "type": "file",
+      "file": "removeEmergencyContact()_1.md",
+      "x": 4660,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_emergency_contacts_renderemergencycontactwidget",
+      "type": "file",
+      "file": "renderEmergencyContactWidget()_1.md",
+      "x": 4860,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_install_sw_requestbackgroundsync",
+      "type": "file",
+      "file": "requestBackgroundSync()_1.md",
+      "x": 5060,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_install_sw_requestnotificationpermission",
+      "type": "file",
+      "file": "requestNotificationPermission()_1.md",
+      "x": 5260,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_emergency_contacts_sendemergencysms",
+      "type": "file",
+      "file": "sendEmergencySMS()_1.md",
+      "x": 5460,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_install_sw_setupconnectivitylisteners",
+      "type": "file",
+      "file": "setupConnectivityListeners()_1.md",
+      "x": 5660,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_install_sw_setupserviceworkerlisteners",
+      "type": "file",
+      "file": "setupServiceWorkerListeners()_1.md",
+      "x": 4660,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_emergency_contacts_showaddcontactmodal",
+      "type": "file",
+      "file": "showAddContactModal()_1.md",
+      "x": 4860,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_install_sw_showlocalnotification",
+      "type": "file",
+      "file": "showLocalNotification()_1.md",
+      "x": 5060,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_install_sw_showupdatenotification",
+      "type": "file",
+      "file": "showUpdateNotification()_1.md",
+      "x": 5260,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_utils_throttle",
+      "type": "file",
+      "file": "throttle()_1.md",
+      "x": 5460,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_emergency_contacts_updatecampuscontacts",
+      "type": "file",
+      "file": "updateCampusContacts()_1.md",
+      "x": 5660,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_install_sw_updateofflinequeueindicator",
+      "type": "file",
+      "file": "updateOfflineQueueIndicator()_1.md",
+      "x": 4660,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_emergency_contacts",
+      "type": "file",
+      "file": "wwwemergency-contacts.js.md",
+      "x": 4860,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_install_sw",
+      "type": "file",
+      "file": "wwwinstall-sw.js.md",
+      "x": 5060,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_utils",
+      "type": "file",
+      "file": "wwwutils.js.md",
+      "x": 5260,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g4",
+      "type": "group",
+      "label": "Community 4",
+      "x": 6040,
+      "y": 0,
+      "width": 1320,
+      "height": 720,
+      "color": "5"
+    },
+    {
+      "id": "n_package_dependencies_capacitor_android",
+      "type": "file",
+      "file": "@capacitorandroid.md",
+      "x": 6060,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_capacitor_android",
+      "type": "file",
+      "file": "@capacitorandroid_1.md",
+      "x": 6260,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_capacitor_app",
+      "type": "file",
+      "file": "@capacitorapp.md",
+      "x": 6460,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_capacitor_app",
+      "type": "file",
+      "file": "@capacitorapp_1.md",
+      "x": 6660,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_capacitor_camera",
+      "type": "file",
+      "file": "@capacitorcamera.md",
+      "x": 6860,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_capacitor_camera",
+      "type": "file",
+      "file": "@capacitorcamera_1.md",
+      "x": 7060,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_capacitor_cli",
+      "type": "file",
+      "file": "@capacitorcli.md",
+      "x": 6060,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_capacitor_cli",
+      "type": "file",
+      "file": "@capacitorcli_1.md",
+      "x": 6260,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_capacitor_core",
+      "type": "file",
+      "file": "@capacitorcore.md",
+      "x": 6460,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_capacitor_core",
+      "type": "file",
+      "file": "@capacitorcore_1.md",
+      "x": 6660,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_capacitor_geolocation",
+      "type": "file",
+      "file": "@capacitorgeolocation.md",
+      "x": 6860,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_capacitor_geolocation",
+      "type": "file",
+      "file": "@capacitorgeolocation_1.md",
+      "x": 7060,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_capacitor_local_notifications",
+      "type": "file",
+      "file": "@capacitorlocal-notifications.md",
+      "x": 6060,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_capacitor_local_notifications",
+      "type": "file",
+      "file": "@capacitorlocal-notifications_1.md",
+      "x": 6260,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_author",
+      "type": "file",
+      "file": "author.md",
+      "x": 6460,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_scripts_build",
+      "type": "file",
+      "file": "build.md",
+      "x": 6660,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies",
+      "type": "file",
+      "file": "dependencies.md",
+      "x": 6860,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_description",
+      "type": "file",
+      "file": "description.md",
+      "x": 7060,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_scripts_dev",
+      "type": "file",
+      "file": "dev.md",
+      "x": 6060,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_keywords",
+      "type": "file",
+      "file": "keywords.md",
+      "x": 6260,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_license",
+      "type": "file",
+      "file": "license.md",
+      "x": 6460,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_main",
+      "type": "file",
+      "file": "main.md",
+      "x": 6660,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_name",
+      "type": "file",
+      "file": "name.md",
+      "x": 6860,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package",
+      "type": "file",
+      "file": "package.json.md",
+      "x": 7060,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_dependencies_puppeteer",
+      "type": "file",
+      "file": "puppeteer.md",
+      "x": 6060,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_puppeteer",
+      "type": "file",
+      "file": "puppeteer_3.md",
+      "x": 6260,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tester_puppeteer",
+      "type": "file",
+      "file": "puppeteer_1.md",
+      "x": 6460,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_tester_puppeteer",
+      "type": "file",
+      "file": "puppeteer_2.md",
+      "x": 6660,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_scripts",
+      "type": "file",
+      "file": "scripts.md",
+      "x": 6860,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_scripts_test",
+      "type": "file",
+      "file": "test.md",
+      "x": 7060,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_tester",
+      "type": "file",
+      "file": "tester.js.md",
+      "x": 6060,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_package_version",
+      "type": "file",
+      "file": "version.md",
+      "x": 6260,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_tester",
+      "type": "file",
+      "file": "wwwtester.js.md",
+      "x": 6460,
+      "y": 480,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g5",
+      "type": "group",
+      "label": "Community 5",
+      "x": 7440,
+      "y": 0,
+      "width": 1320,
+      "height": 620,
+      "color": "6"
+    },
+    {
+      "id": "n_firebase_config_analytics",
+      "type": "file",
+      "file": "analytics.md",
+      "x": 7460,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_firebase_config_app",
+      "type": "file",
+      "file": "app.md",
+      "x": 7660,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_firebase_config_auth",
+      "type": "file",
+      "file": "auth.md",
+      "x": 7860,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth",
+      "type": "file",
+      "file": "auth.js.md",
+      "x": 8060,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_changepassword",
+      "type": "file",
+      "file": "changePassword().md",
+      "x": 8260,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_checkauth",
+      "type": "file",
+      "file": "checkAuth().md",
+      "x": 8460,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_firebase_config_db",
+      "type": "file",
+      "file": "db.md",
+      "x": 7460,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_extractstudentidfromemail",
+      "type": "file",
+      "file": "extractStudentIdFromEmail().md",
+      "x": 7660,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_firebase_config",
+      "type": "file",
+      "file": "firebase-config.js.md",
+      "x": 7860,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_firebase_config_firebaseconfig",
+      "type": "file",
+      "file": "firebaseConfig.md",
+      "x": 8060,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_forgotpassword",
+      "type": "file",
+      "file": "forgotPassword().md",
+      "x": 8260,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getadminuserpassword",
+      "type": "file",
+      "file": "getAdminUserPassword().md",
+      "x": 8460,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getemailbystudentid",
+      "type": "file",
+      "file": "getEmailByStudentId().md",
+      "x": 7460,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_getfriendlyauthmessage",
+      "type": "file",
+      "file": "getFriendlyAuthMessage().md",
+      "x": 7660,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_getpreferredauthrole",
+      "type": "file",
+      "file": "getPreferredAuthRole().md",
+      "x": 7860,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_googleprovider",
+      "type": "file",
+      "file": "googleProvider.md",
+      "x": 8060,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_logauditevent",
+      "type": "file",
+      "file": "logAuditEvent().md",
+      "x": 8260,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_login",
+      "type": "file",
+      "file": "login().md",
+      "x": 8460,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_loginwithgoogle",
+      "type": "file",
+      "file": "loginWithGoogle().md",
+      "x": 7460,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_logout",
+      "type": "file",
+      "file": "logout().md",
+      "x": 7660,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_ref_https",
+      "type": "file",
+      "file": "ref_https.md",
+      "x": 7860,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_roleidtoemail",
+      "type": "file",
+      "file": "roleIdToEmail().md",
+      "x": 8060,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_signup",
+      "type": "file",
+      "file": "signUp().md",
+      "x": 8260,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_staffidtoemail",
+      "type": "file",
+      "file": "staffIdToEmail().md",
+      "x": 8460,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_firebase_config_storage",
+      "type": "file",
+      "file": "storage_2.md",
+      "x": 7460,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_auth_studentidtoemail",
+      "type": "file",
+      "file": "studentIdToEmail().md",
+      "x": 7660,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g6",
+      "type": "group",
+      "label": "Community 6",
+      "x": 8840,
+      "y": 0,
+      "width": 1100,
+      "height": 620,
+      "color": "1"
+    },
+    {
+      "id": "n_www_firebase_config_analytics",
+      "type": "file",
+      "file": "analytics_1.md",
+      "x": 8860,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_firebase_config_app",
+      "type": "file",
+      "file": "app_1.md",
+      "x": 9060,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_firebase_config_auth",
+      "type": "file",
+      "file": "auth_1.md",
+      "x": 9260,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_changepassword",
+      "type": "file",
+      "file": "changePassword()_1.md",
+      "x": 9460,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_checkauth",
+      "type": "file",
+      "file": "checkAuth()_1.md",
+      "x": 9660,
+      "y": 80,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_firebase_config_db",
+      "type": "file",
+      "file": "db_1.md",
+      "x": 8860,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_extractstudentidfromemail",
+      "type": "file",
+      "file": "extractStudentIdFromEmail()_1.md",
+      "x": 9060,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_firebase_config_firebaseconfig",
+      "type": "file",
+      "file": "firebaseConfig_1.md",
+      "x": 9260,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_forgotpassword",
+      "type": "file",
+      "file": "forgotPassword()_1.md",
+      "x": 9460,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getadminuserpassword",
+      "type": "file",
+      "file": "getAdminUserPassword()_1.md",
+      "x": 9660,
+      "y": 160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getemailbystudentid",
+      "type": "file",
+      "file": "getEmailByStudentId()_1.md",
+      "x": 8860,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_getfriendlyauthmessage",
+      "type": "file",
+      "file": "getFriendlyAuthMessage()_1.md",
+      "x": 9060,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_getpreferredauthrole",
+      "type": "file",
+      "file": "getPreferredAuthRole()_1.md",
+      "x": 9260,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_googleprovider",
+      "type": "file",
+      "file": "googleProvider_1.md",
+      "x": 9460,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_logauditevent",
+      "type": "file",
+      "file": "logAuditEvent()_1.md",
+      "x": 9660,
+      "y": 240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_login",
+      "type": "file",
+      "file": "login()_1.md",
+      "x": 8860,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_loginwithgoogle",
+      "type": "file",
+      "file": "loginWithGoogle()_1.md",
+      "x": 9060,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_logout",
+      "type": "file",
+      "file": "logout()_1.md",
+      "x": 9260,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_roleidtoemail",
+      "type": "file",
+      "file": "roleIdToEmail()_1.md",
+      "x": 9460,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_signup",
+      "type": "file",
+      "file": "signUp()_1.md",
+      "x": 9660,
+      "y": 320,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_staffidtoemail",
+      "type": "file",
+      "file": "staffIdToEmail()_1.md",
+      "x": 8860,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_firebase_config_storage",
+      "type": "file",
+      "file": "storage_3.md",
+      "x": 9060,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth_studentidtoemail",
+      "type": "file",
+      "file": "studentIdToEmail()_1.md",
+      "x": 9260,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_auth",
+      "type": "file",
+      "file": "wwwauth.js.md",
+      "x": 9460,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_firebase_config",
+      "type": "file",
+      "file": "wwwfirebase-config.js.md",
+      "x": 9660,
+      "y": 400,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g7",
+      "type": "group",
+      "label": "Community 7",
+      "x": 0,
+      "y": 900,
+      "width": 880,
+      "height": 520,
+      "color": "2"
+    },
+    {
+      "id": "n_db_createguardianlinkrequest",
+      "type": "file",
+      "file": "createGuardianLinkRequest().md",
+      "x": 20,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_deletecurrentuseraccount",
+      "type": "file",
+      "file": "deleteCurrentUserAccount().md",
+      "x": 220,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_deleteuserrecord",
+      "type": "file",
+      "file": "deleteUserRecord().md",
+      "x": 420,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_findstudentuidbystudentid",
+      "type": "file",
+      "file": "findStudentUidByStudentId().md",
+      "x": 620,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getguardianrequestsforstudent",
+      "type": "file",
+      "file": "getGuardianRequestsForStudent().md",
+      "x": 20,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getstudentbootstrapprofile",
+      "type": "file",
+      "file": "getStudentBootstrapProfile().md",
+      "x": 220,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getuserprofile",
+      "type": "file",
+      "file": "getUserProfile().md",
+      "x": 420,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_ispermissiondeniederror",
+      "type": "file",
+      "file": "isPermissionDeniedError().md",
+      "x": 620,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_readlocalusers",
+      "type": "file",
+      "file": "readLocalUsers().md",
+      "x": 20,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_saveuserprofile",
+      "type": "file",
+      "file": "saveUserProfile().md",
+      "x": 220,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_subscribetostudentlinks",
+      "type": "file",
+      "file": "subscribeToStudentLinks().md",
+      "x": 420,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_syncguardianlinksforguardian",
+      "type": "file",
+      "file": "syncGuardianLinksForGuardian().md",
+      "x": 620,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_syncguardianlinksforstudent",
+      "type": "file",
+      "file": "syncGuardianLinksForStudent().md",
+      "x": 20,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_updateuserprofile",
+      "type": "file",
+      "file": "updateUserProfile().md",
+      "x": 220,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_upsertlocaluser",
+      "type": "file",
+      "file": "upsertLocalUser().md",
+      "x": 420,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_writelocalusers",
+      "type": "file",
+      "file": "writeLocalUsers().md",
+      "x": 620,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g8",
+      "type": "group",
+      "label": "Community 8",
+      "x": 1620,
+      "y": 900,
+      "width": 880,
+      "height": 520,
+      "color": "3"
+    },
+    {
+      "id": "n_www_db_createguardianlinkrequest",
+      "type": "file",
+      "file": "createGuardianLinkRequest()_1.md",
+      "x": 1640,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_deletecurrentuseraccount",
+      "type": "file",
+      "file": "deleteCurrentUserAccount()_1.md",
+      "x": 1840,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_deleteuserrecord",
+      "type": "file",
+      "file": "deleteUserRecord()_1.md",
+      "x": 2040,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_findstudentuidbystudentid",
+      "type": "file",
+      "file": "findStudentUidByStudentId()_1.md",
+      "x": 2240,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getguardianrequestsforstudent",
+      "type": "file",
+      "file": "getGuardianRequestsForStudent()_1.md",
+      "x": 1640,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getstudentbootstrapprofile",
+      "type": "file",
+      "file": "getStudentBootstrapProfile()_1.md",
+      "x": 1840,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getuserprofile",
+      "type": "file",
+      "file": "getUserProfile()_1.md",
+      "x": 2040,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_ispermissiondeniederror",
+      "type": "file",
+      "file": "isPermissionDeniedError()_1.md",
+      "x": 2240,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_readlocalusers",
+      "type": "file",
+      "file": "readLocalUsers()_1.md",
+      "x": 1640,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_saveuserprofile",
+      "type": "file",
+      "file": "saveUserProfile()_1.md",
+      "x": 1840,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_subscribetostudentlinks",
+      "type": "file",
+      "file": "subscribeToStudentLinks()_1.md",
+      "x": 2040,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_syncguardianlinksforguardian",
+      "type": "file",
+      "file": "syncGuardianLinksForGuardian()_1.md",
+      "x": 2240,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_syncguardianlinksforstudent",
+      "type": "file",
+      "file": "syncGuardianLinksForStudent()_1.md",
+      "x": 1640,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_updateuserprofile",
+      "type": "file",
+      "file": "updateUserProfile()_1.md",
+      "x": 1840,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_upsertlocaluser",
+      "type": "file",
+      "file": "upsertLocalUser()_1.md",
+      "x": 2040,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_writelocalusers",
+      "type": "file",
+      "file": "writeLocalUsers()_1.md",
+      "x": 2240,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g9",
+      "type": "group",
+      "label": "Community 9",
+      "x": 3240,
+      "y": 900,
+      "width": 880,
+      "height": 520,
+      "color": "4"
+    },
+    {
+      "id": "n_manifest_background_color",
+      "type": "file",
+      "file": "background_color.md",
+      "x": 3260,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_categories",
+      "type": "file",
+      "file": "categories.md",
+      "x": 3460,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_description",
+      "type": "file",
+      "file": "description_1.md",
+      "x": 3660,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_display",
+      "type": "file",
+      "file": "display.md",
+      "x": 3860,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_icons",
+      "type": "file",
+      "file": "icons.md",
+      "x": 3260,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest",
+      "type": "file",
+      "file": "manifest.json.md",
+      "x": 3460,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_name",
+      "type": "file",
+      "file": "name_1.md",
+      "x": 3660,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_orientation",
+      "type": "file",
+      "file": "orientation.md",
+      "x": 3860,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_prefer_related_applications",
+      "type": "file",
+      "file": "prefer_related_applications.md",
+      "x": 3260,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_scope",
+      "type": "file",
+      "file": "scope.md",
+      "x": 3460,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_screenshots",
+      "type": "file",
+      "file": "screenshots.md",
+      "x": 3660,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_short_name",
+      "type": "file",
+      "file": "short_name.md",
+      "x": 3860,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_shortcuts",
+      "type": "file",
+      "file": "shortcuts.md",
+      "x": 3260,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_start_url",
+      "type": "file",
+      "file": "start_url.md",
+      "x": 3460,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_manifest_theme_color",
+      "type": "file",
+      "file": "theme_color.md",
+      "x": 3660,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g10",
+      "type": "group",
+      "label": "Community 10",
+      "x": 4640,
+      "y": 900,
+      "width": 880,
+      "height": 520,
+      "color": "5"
+    },
+    {
+      "id": "n_db_deleteemergencypost",
+      "type": "file",
+      "file": "deleteEmergencyPost().md",
+      "x": 4660,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getallemergencyposts",
+      "type": "file",
+      "file": "getAllEmergencyPosts().md",
+      "x": 4860,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getattendancehistory",
+      "type": "file",
+      "file": "getAttendanceHistory().md",
+      "x": 5060,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getemergencypostbyid",
+      "type": "file",
+      "file": "getEmergencyPostById().md",
+      "x": 5260,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getuseractivitysummary",
+      "type": "file",
+      "file": "getUserActivitySummary().md",
+      "x": 4660,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getuseremergencyposts",
+      "type": "file",
+      "file": "getUserEmergencyPosts().md",
+      "x": 4860,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getusersoslogs",
+      "type": "file",
+      "file": "getUserSOSLogs().md",
+      "x": 5060,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_mergeemergencyposts",
+      "type": "file",
+      "file": "mergeEmergencyPosts().md",
+      "x": 5260,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_readlocalemergencyposts",
+      "type": "file",
+      "file": "readLocalEmergencyPosts().md",
+      "x": 4660,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_saveemergencypost",
+      "type": "file",
+      "file": "saveEmergencyPost().md",
+      "x": 4860,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_toggleemergencypostaccess",
+      "type": "file",
+      "file": "toggleEmergencyPostAccess().md",
+      "x": 5060,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_toggleemergencypostguardianaccess",
+      "type": "file",
+      "file": "toggleEmergencyPostGuardianAccess().md",
+      "x": 5260,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_updateemergencypostattachments",
+      "type": "file",
+      "file": "updateEmergencyPostAttachments().md",
+      "x": 4660,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_writelocalemergencyposts",
+      "type": "file",
+      "file": "writeLocalEmergencyPosts().md",
+      "x": 4860,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g11",
+      "type": "group",
+      "label": "Community 11",
+      "x": 6040,
+      "y": 900,
+      "width": 880,
+      "height": 520,
+      "color": "6"
+    },
+    {
+      "id": "n_www_db_deleteemergencypost",
+      "type": "file",
+      "file": "deleteEmergencyPost()_1.md",
+      "x": 6060,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getallemergencyposts",
+      "type": "file",
+      "file": "getAllEmergencyPosts()_1.md",
+      "x": 6260,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getattendancehistory",
+      "type": "file",
+      "file": "getAttendanceHistory()_1.md",
+      "x": 6460,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getemergencypostbyid",
+      "type": "file",
+      "file": "getEmergencyPostById()_1.md",
+      "x": 6660,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getuseractivitysummary",
+      "type": "file",
+      "file": "getUserActivitySummary()_1.md",
+      "x": 6060,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getuseremergencyposts",
+      "type": "file",
+      "file": "getUserEmergencyPosts()_1.md",
+      "x": 6260,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getusersoslogs",
+      "type": "file",
+      "file": "getUserSOSLogs()_1.md",
+      "x": 6460,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_mergeemergencyposts",
+      "type": "file",
+      "file": "mergeEmergencyPosts()_1.md",
+      "x": 6660,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_readlocalemergencyposts",
+      "type": "file",
+      "file": "readLocalEmergencyPosts()_1.md",
+      "x": 6060,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_saveemergencypost",
+      "type": "file",
+      "file": "saveEmergencyPost()_1.md",
+      "x": 6260,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_toggleemergencypostaccess",
+      "type": "file",
+      "file": "toggleEmergencyPostAccess()_1.md",
+      "x": 6460,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_toggleemergencypostguardianaccess",
+      "type": "file",
+      "file": "toggleEmergencyPostGuardianAccess()_1.md",
+      "x": 6660,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_updateemergencypostattachments",
+      "type": "file",
+      "file": "updateEmergencyPostAttachments()_1.md",
+      "x": 6060,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_writelocalemergencyposts",
+      "type": "file",
+      "file": "writeLocalEmergencyPosts()_1.md",
+      "x": 6260,
+      "y": 1220,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g12",
+      "type": "group",
+      "label": "Community 12",
+      "x": 7440,
+      "y": 900,
+      "width": 880,
+      "height": 420,
+      "color": "1"
+    },
+    {
+      "id": "n_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest_exampleunittest_addition_iscorrect",
+      "type": "file",
+      "file": "dot-addition_isCorrect().md",
+      "x": 7460,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest_useappcontext",
+      "type": "file",
+      "file": "dot-useAppContext().md",
+      "x": 7660,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest",
+      "type": "file",
+      "file": "ExampleInstrumentedTest.md",
+      "x": 7860,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest",
+      "type": "file",
+      "file": "ExampleInstrumentedTest.java.md",
+      "x": 8060,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest_exampleunittest",
+      "type": "file",
+      "file": "ExampleUnitTest.md",
+      "x": 7460,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest",
+      "type": "file",
+      "file": "ExampleUnitTest.java.md",
+      "x": 7660,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_androidx_test_ext_junit_runners_androidjunit4",
+      "type": "file",
+      "file": "androidx.test.ext.junit.runners.AndroidJUnit4.md",
+      "x": 7860,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_assert",
+      "type": "file",
+      "file": "assert.md",
+      "x": 8060,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_context",
+      "type": "file",
+      "file": "context.md",
+      "x": 7460,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_instrumentationregistry",
+      "type": "file",
+      "file": "instrumentationregistry.md",
+      "x": 7660,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_org_junit_test",
+      "type": "file",
+      "file": "org.junit.Test.md",
+      "x": 7860,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_org_junit_runner_runwith",
+      "type": "file",
+      "file": "org.junit.runner.RunWith.md",
+      "x": 8060,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g13",
+      "type": "group",
+      "label": "Community 13",
+      "x": 8840,
+      "y": 900,
+      "width": 660,
+      "height": 420,
+      "color": "2"
+    },
+    {
+      "id": "n_db_getlinksforstudent",
+      "type": "file",
+      "file": "getLinksForStudent().md",
+      "x": 8860,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_logattendance",
+      "type": "file",
+      "file": "logAttendance().md",
+      "x": 9060,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_logsos",
+      "type": "file",
+      "file": "logSOS().md",
+      "x": 9260,
+      "y": 980,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_notifyguardiansofgeofenceevent",
+      "type": "file",
+      "file": "notifyGuardiansOfGeofenceEvent().md",
+      "x": 8860,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_notifyguardianssos",
+      "type": "file",
+      "file": "notifyGuardiansSOS().md",
+      "x": 9060,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_processofflinequeue",
+      "type": "file",
+      "file": "processOfflineQueue().md",
+      "x": 9260,
+      "y": 1060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_savegadpost",
+      "type": "file",
+      "file": "saveGADPost().md",
+      "x": 8860,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_sendaccountnotification",
+      "type": "file",
+      "file": "sendAccountNotification().md",
+      "x": 9060,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_sendchatmessage",
+      "type": "file",
+      "file": "sendChatMessage().md",
+      "x": 9260,
+      "y": 1140,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g14",
+      "type": "group",
+      "label": "Community 14",
+      "x": 0,
+      "y": 1500,
+      "width": 660,
+      "height": 420,
+      "color": "3"
+    },
+    {
+      "id": "n_www_db_getlinksforstudent",
+      "type": "file",
+      "file": "getLinksForStudent()_1.md",
+      "x": 20,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_logattendance",
+      "type": "file",
+      "file": "logAttendance()_1.md",
+      "x": 220,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_logsos",
+      "type": "file",
+      "file": "logSOS()_1.md",
+      "x": 420,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_notifyguardiansofgeofenceevent",
+      "type": "file",
+      "file": "notifyGuardiansOfGeofenceEvent()_1.md",
+      "x": 20,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_notifyguardianssos",
+      "type": "file",
+      "file": "notifyGuardiansSOS()_1.md",
+      "x": 220,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_processofflinequeue",
+      "type": "file",
+      "file": "processOfflineQueue()_1.md",
+      "x": 420,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_savegadpost",
+      "type": "file",
+      "file": "saveGADPost()_1.md",
+      "x": 20,
+      "y": 1740,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_sendaccountnotification",
+      "type": "file",
+      "file": "sendAccountNotification()_1.md",
+      "x": 220,
+      "y": 1740,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_sendchatmessage",
+      "type": "file",
+      "file": "sendChatMessage()_1.md",
+      "x": 420,
+      "y": 1740,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g15",
+      "type": "group",
+      "label": "Community 15",
+      "x": 1620,
+      "y": 1500,
+      "width": 660,
+      "height": 420,
+      "color": "4"
+    },
+    {
+      "id": "n_db_assertguardiancapacityforrequest",
+      "type": "file",
+      "file": "assertGuardianCapacityForRequest().md",
+      "x": 1640,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_doesguardianlinkmatchstudent",
+      "type": "file",
+      "file": "doesGuardianLinkMatchStudent().md",
+      "x": 1840,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_findexistingguardianstudentlink",
+      "type": "file",
+      "file": "findExistingGuardianStudentLink().md",
+      "x": 2040,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getacceptedstudentguardianlinks",
+      "type": "file",
+      "file": "getAcceptedStudentGuardianLinks().md",
+      "x": 1640,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getguardianlinkrecords",
+      "type": "file",
+      "file": "getGuardianLinkRecords().md",
+      "x": 1840,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_normalizecomparablevalue",
+      "type": "file",
+      "file": "normalizeComparableValue().md",
+      "x": 2040,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_respondtoguardianlink",
+      "type": "file",
+      "file": "respondToGuardianLink().md",
+      "x": 1640,
+      "y": 1740,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g16",
+      "type": "group",
+      "label": "Community 16",
+      "x": 3240,
+      "y": 1500,
+      "width": 660,
+      "height": 420,
+      "color": "5"
+    },
+    {
+      "id": "n_db_createguardianlinkfromstudent",
+      "type": "file",
+      "file": "createGuardianLinkFromStudent().md",
+      "x": 3260,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_finduserbyemail",
+      "type": "file",
+      "file": "findUserByEmail().md",
+      "x": 3460,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getallusers",
+      "type": "file",
+      "file": "getAllUsers().md",
+      "x": 3660,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_getuseridentitykeys",
+      "type": "file",
+      "file": "getUserIdentityKeys().md",
+      "x": 3260,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_inferuserrole",
+      "type": "file",
+      "file": "inferUserRole().md",
+      "x": 3460,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_mergeusersbyidentity",
+      "type": "file",
+      "file": "mergeUsersByIdentity().md",
+      "x": 3660,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_normalizeemail",
+      "type": "file",
+      "file": "normalizeEmail().md",
+      "x": 3260,
+      "y": 1740,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g17",
+      "type": "group",
+      "label": "Community 17",
+      "x": 4640,
+      "y": 1500,
+      "width": 660,
+      "height": 420,
+      "color": "6"
+    },
+    {
+      "id": "n_router_cleanurl",
+      "type": "file",
+      "file": "cleanURL().md",
+      "x": 4660,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_router_getcurrentroute",
+      "type": "file",
+      "file": "getCurrentRoute().md",
+      "x": 4860,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_router_goback",
+      "type": "file",
+      "file": "goBack().md",
+      "x": 5060,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_router_interceptlinks",
+      "type": "file",
+      "file": "interceptLinks().md",
+      "x": 4660,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_router_navigate",
+      "type": "file",
+      "file": "navigate().md",
+      "x": 4860,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_router",
+      "type": "file",
+      "file": "router.js.md",
+      "x": 5060,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_router_showtoast",
+      "type": "file",
+      "file": "showToast().md",
+      "x": 4660,
+      "y": 1740,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g18",
+      "type": "group",
+      "label": "Community 18",
+      "x": 6040,
+      "y": 1500,
+      "width": 660,
+      "height": 420,
+      "color": "1"
+    },
+    {
+      "id": "n_www_app",
+      "type": "file",
+      "file": "app.js.md",
+      "x": 6060,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_app_cleanurl",
+      "type": "file",
+      "file": "cleanURL()_1.md",
+      "x": 6260,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_app_getcurrentpage",
+      "type": "file",
+      "file": "getCurrentPage().md",
+      "x": 6460,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_app_init",
+      "type": "file",
+      "file": "init().md",
+      "x": 6060,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_app_loadpage",
+      "type": "file",
+      "file": "loadPage().md",
+      "x": 6260,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_app_navigate",
+      "type": "file",
+      "file": "navigate()_1.md",
+      "x": 6460,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_app_updatelinks",
+      "type": "file",
+      "file": "updateLinks().md",
+      "x": 6060,
+      "y": 1740,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g19",
+      "type": "group",
+      "label": "Community 19",
+      "x": 7440,
+      "y": 1500,
+      "width": 660,
+      "height": 420,
+      "color": "2"
+    },
+    {
+      "id": "n_www_db_assertguardiancapacityforrequest",
+      "type": "file",
+      "file": "assertGuardianCapacityForRequest()_1.md",
+      "x": 7460,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_doesguardianlinkmatchstudent",
+      "type": "file",
+      "file": "doesGuardianLinkMatchStudent()_1.md",
+      "x": 7660,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_findexistingguardianstudentlink",
+      "type": "file",
+      "file": "findExistingGuardianStudentLink()_1.md",
+      "x": 7860,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getacceptedstudentguardianlinks",
+      "type": "file",
+      "file": "getAcceptedStudentGuardianLinks()_1.md",
+      "x": 7460,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getguardianlinkrecords",
+      "type": "file",
+      "file": "getGuardianLinkRecords()_1.md",
+      "x": 7660,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_normalizecomparablevalue",
+      "type": "file",
+      "file": "normalizeComparableValue()_1.md",
+      "x": 7860,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_respondtoguardianlink",
+      "type": "file",
+      "file": "respondToGuardianLink()_1.md",
+      "x": 7460,
+      "y": 1740,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g20",
+      "type": "group",
+      "label": "Community 20",
+      "x": 8840,
+      "y": 1500,
+      "width": 660,
+      "height": 420,
+      "color": "3"
+    },
+    {
+      "id": "n_www_db_createguardianlinkfromstudent",
+      "type": "file",
+      "file": "createGuardianLinkFromStudent()_1.md",
+      "x": 8860,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_finduserbyemail",
+      "type": "file",
+      "file": "findUserByEmail()_1.md",
+      "x": 9060,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getallusers",
+      "type": "file",
+      "file": "getAllUsers()_1.md",
+      "x": 9260,
+      "y": 1580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_getuseridentitykeys",
+      "type": "file",
+      "file": "getUserIdentityKeys()_1.md",
+      "x": 8860,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_inferuserrole",
+      "type": "file",
+      "file": "inferUserRole()_1.md",
+      "x": 9060,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_mergeusersbyidentity",
+      "type": "file",
+      "file": "mergeUsersByIdentity()_1.md",
+      "x": 9260,
+      "y": 1660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_normalizeemail",
+      "type": "file",
+      "file": "normalizeEmail()_1.md",
+      "x": 8860,
+      "y": 1740,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g21",
+      "type": "group",
+      "label": "Community 21",
+      "x": 0,
+      "y": 2000,
+      "width": 660,
+      "height": 420,
+      "color": "4"
+    },
+    {
+      "id": "n_www_router_cleanurl",
+      "type": "file",
+      "file": "cleanURL()_2.md",
+      "x": 20,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_router_getcurrentroute",
+      "type": "file",
+      "file": "getCurrentRoute()_1.md",
+      "x": 220,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_router_goback",
+      "type": "file",
+      "file": "goBack()_1.md",
+      "x": 420,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_router_interceptlinks",
+      "type": "file",
+      "file": "interceptLinks()_1.md",
+      "x": 20,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_router_navigate",
+      "type": "file",
+      "file": "navigate()_2.md",
+      "x": 220,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_router_showtoast",
+      "type": "file",
+      "file": "showToast()_1.md",
+      "x": 420,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_router",
+      "type": "file",
+      "file": "wwwrouter.js.md",
+      "x": 20,
+      "y": 2240,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g22",
+      "type": "group",
+      "label": "Community 22",
+      "x": 1620,
+      "y": 2000,
+      "width": 660,
+      "height": 400,
+      "color": "5"
+    },
+    {
+      "id": "n_jsconfig_compileroptions",
+      "type": "file",
+      "file": "compilerOptions.md",
+      "x": 1640,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_jsconfig_exclude",
+      "type": "file",
+      "file": "exclude.md",
+      "x": 1840,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_jsconfig",
+      "type": "file",
+      "file": "jsconfig.json.md",
+      "x": 2040,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_jsconfig_compileroptions_module",
+      "type": "file",
+      "file": "module.md",
+      "x": 1640,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_jsconfig_compileroptions_moduleresolution",
+      "type": "file",
+      "file": "moduleResolution.md",
+      "x": 1840,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_jsconfig_compileroptions_target",
+      "type": "file",
+      "file": "target.md",
+      "x": 2040,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g23",
+      "type": "group",
+      "label": "Community 23",
+      "x": 3240,
+      "y": 2000,
+      "width": 660,
+      "height": 400,
+      "color": "6"
+    },
+    {
+      "id": "n_www_spa_router_back",
+      "type": "file",
+      "file": "back().md",
+      "x": 3260,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_spa_router_converttohashurl",
+      "type": "file",
+      "file": "convertToHashURL().md",
+      "x": 3460,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_spa_router_init",
+      "type": "file",
+      "file": "init()_1.md",
+      "x": 3660,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_spa_router_interceptlinks",
+      "type": "file",
+      "file": "interceptLinks()_2.md",
+      "x": 3260,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_spa_router_navigate",
+      "type": "file",
+      "file": "navigate()_3.md",
+      "x": 3460,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_spa_router",
+      "type": "file",
+      "file": "spa-router.js.md",
+      "x": 3660,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g24",
+      "type": "group",
+      "label": "Community 24",
+      "x": 4640,
+      "y": 2000,
+      "width": 660,
+      "height": 400,
+      "color": "1"
+    },
+    {
+      "id": "n_db_readlocalgadmessages",
+      "type": "file",
+      "file": "readLocalGADMessages().md",
+      "x": 4660,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_replytogadmessage",
+      "type": "file",
+      "file": "replyToGADMessage().md",
+      "x": 4860,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_sendgadmessage",
+      "type": "file",
+      "file": "sendGADMessage().md",
+      "x": 5060,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_subscribetogadmessages",
+      "type": "file",
+      "file": "subscribeToGADMessages().md",
+      "x": 4660,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_db_writelocalgadmessages",
+      "type": "file",
+      "file": "writeLocalGADMessages().md",
+      "x": 4860,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g25",
+      "type": "group",
+      "label": "Community 25",
+      "x": 6040,
+      "y": 2000,
+      "width": 660,
+      "height": 400,
+      "color": "2"
+    },
+    {
+      "id": "n_www_db_readlocalgadmessages",
+      "type": "file",
+      "file": "readLocalGADMessages()_1.md",
+      "x": 6060,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_replytogadmessage",
+      "type": "file",
+      "file": "replyToGADMessage()_1.md",
+      "x": 6260,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_sendgadmessage",
+      "type": "file",
+      "file": "sendGADMessage()_1.md",
+      "x": 6460,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_subscribetogadmessages",
+      "type": "file",
+      "file": "subscribeToGADMessages()_1.md",
+      "x": 6060,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_db_writelocalgadmessages",
+      "type": "file",
+      "file": "writeLocalGADMessages()_1.md",
+      "x": 6260,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g26",
+      "type": "group",
+      "label": "Community 26",
+      "x": 7440,
+      "y": 2000,
+      "width": 600,
+      "height": 400,
+      "color": "3"
+    },
+    {
+      "id": "n_android_gradlew_die",
+      "type": "file",
+      "file": "die().md",
+      "x": 7460,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_android_gradlew",
+      "type": "file",
+      "file": "gradlew.md",
+      "x": 7660,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_android_gradlew__entry",
+      "type": "file",
+      "file": "gradlew script.md",
+      "x": 7460,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_android_gradlew_warn",
+      "type": "file",
+      "file": "warn().md",
+      "x": 7660,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g27",
+      "type": "group",
+      "label": "Community 27",
+      "x": 8840,
+      "y": 2000,
+      "width": 600,
+      "height": 400,
+      "color": "4"
+    },
+    {
+      "id": "n_preloader_dismissfallback",
+      "type": "file",
+      "file": "dismissFallback().md",
+      "x": 8860,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_preloader_ensuregsap",
+      "type": "file",
+      "file": "ensureGSAP().md",
+      "x": 9060,
+      "y": 2080,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_preloader",
+      "type": "file",
+      "file": "preloader.js.md",
+      "x": 8860,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_preloader_runanimation",
+      "type": "file",
+      "file": "runAnimation().md",
+      "x": 9060,
+      "y": 2160,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g28",
+      "type": "group",
+      "label": "Community 28",
+      "x": 0,
+      "y": 2500,
+      "width": 600,
+      "height": 400,
+      "color": "5"
+    },
+    {
+      "id": "n_www_preloader_dismissfallback",
+      "type": "file",
+      "file": "dismissFallback()_1.md",
+      "x": 20,
+      "y": 2580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_preloader_ensuregsap",
+      "type": "file",
+      "file": "ensureGSAP()_1.md",
+      "x": 220,
+      "y": 2580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_preloader_runanimation",
+      "type": "file",
+      "file": "runAnimation()_1.md",
+      "x": 20,
+      "y": 2660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_preloader",
+      "type": "file",
+      "file": "wwwpreloader.js.md",
+      "x": 220,
+      "y": 2660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g29",
+      "type": "group",
+      "label": "Community 29",
+      "x": 1620,
+      "y": 2500,
+      "width": 600,
+      "height": 400,
+      "color": "6"
+    },
+    {
+      "id": "n_android_app_src_main_java_com_securo_app_mainactivity_mainactivity",
+      "type": "file",
+      "file": "MainActivity.md",
+      "x": 1640,
+      "y": 2580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_android_app_src_main_java_com_securo_app_mainactivity",
+      "type": "file",
+      "file": "MainActivity.java.md",
+      "x": 1840,
+      "y": 2580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_com_getcapacitor_bridgeactivity",
+      "type": "file",
+      "file": "com.getcapacitor.BridgeActivity.md",
+      "x": 1640,
+      "y": 2660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g30",
+      "type": "group",
+      "label": "Community 30",
+      "x": 3240,
+      "y": 2500,
+      "width": 600,
+      "height": 400,
+      "color": "1"
+    },
+    {
+      "id": "n_service_worker_core_assets",
+      "type": "file",
+      "file": "CORE_ASSETS.md",
+      "x": 3260,
+      "y": 2580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_service_worker",
+      "type": "file",
+      "file": "service-worker.js.md",
+      "x": 3460,
+      "y": 2580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_service_worker_syncofflinequeue",
+      "type": "file",
+      "file": "syncOfflineQueue().md",
+      "x": 3260,
+      "y": 2660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g31",
+      "type": "group",
+      "label": "Community 31",
+      "x": 4640,
+      "y": 2500,
+      "width": 600,
+      "height": 400,
+      "color": "2"
+    },
+    {
+      "id": "n_www_service_worker_core_assets",
+      "type": "file",
+      "file": "CORE_ASSETS_1.md",
+      "x": 4660,
+      "y": 2580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_service_worker_syncofflinequeue",
+      "type": "file",
+      "file": "syncOfflineQueue()_1.md",
+      "x": 4860,
+      "y": 2580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "n_www_service_worker",
+      "type": "file",
+      "file": "wwwservice-worker.js.md",
+      "x": 4660,
+      "y": 2660,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g32",
+      "type": "group",
+      "label": "Community 32",
+      "x": 6040,
+      "y": 2500,
+      "width": 600,
+      "height": 400,
+      "color": "3"
+    },
+    {
+      "id": "n_android_app_build",
+      "type": "file",
+      "file": "appbuild.gradle.md",
+      "x": 6060,
+      "y": 2580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g33",
+      "type": "group",
+      "label": "Community 33",
+      "x": 7440,
+      "y": 2500,
+      "width": 600,
+      "height": 400,
+      "color": "4"
+    },
+    {
+      "id": "n_android_app_capacitor_build",
+      "type": "file",
+      "file": "capacitor.build.gradle.md",
+      "x": 7460,
+      "y": 2580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g34",
+      "type": "group",
+      "label": "Community 34",
+      "x": 8840,
+      "y": 2500,
+      "width": 600,
+      "height": 400,
+      "color": "5"
+    },
+    {
+      "id": "n_android_build",
+      "type": "file",
+      "file": "androidbuild.gradle.md",
+      "x": 8860,
+      "y": 2580,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g35",
+      "type": "group",
+      "label": "Community 35",
+      "x": 0,
+      "y": 2980,
+      "width": 600,
+      "height": 400,
+      "color": "6"
+    },
+    {
+      "id": "n_android_capacitor_settings",
+      "type": "file",
+      "file": "capacitor.settings.gradle.md",
+      "x": 20,
+      "y": 3060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g36",
+      "type": "group",
+      "label": "Community 36",
+      "x": 1620,
+      "y": 2980,
+      "width": 600,
+      "height": 400,
+      "color": "1"
+    },
+    {
+      "id": "n_android_settings",
+      "type": "file",
+      "file": "settings.gradle.md",
+      "x": 1640,
+      "y": 3060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g37",
+      "type": "group",
+      "label": "Community 37",
+      "x": 3240,
+      "y": 2980,
+      "width": 600,
+      "height": 400,
+      "color": "2"
+    },
+    {
+      "id": "n_android_variables",
+      "type": "file",
+      "file": "variables.gradle.md",
+      "x": 3260,
+      "y": 3060,
+      "width": 180,
+      "height": 60
+    },
+    {
+      "id": "g38",
+      "type": "group",
+      "label": "Community 38",
+      "x": 4640,
+      "y": 2980,
+      "width": 600,
+      "height": 400,
+      "color": "3"
+    },
+    {
+      "id": "n_p",
+      "type": "file",
+      "file": "p.ps1.md",
+      "x": 4660,
+      "y": 3060,
+      "width": 180,
+      "height": 60
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest_androidx_test_ext_junit_runners_androidjunit4",
+      "fromNode": "n_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest",
+      "toNode": "n_androidx_test_ext_junit_runners_androidjunit4",
+      "label": "references [EXTRACTED]"
+    },
+    {
+      "id": "e_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest_org_junit_runner_runwith",
+      "fromNode": "n_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest",
+      "toNode": "n_org_junit_runner_runwith",
+      "label": "references [EXTRACTED]"
+    },
+    {
+      "id": "e_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest",
+      "fromNode": "n_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest",
+      "toNode": "n_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest_useappcontext",
+      "fromNode": "n_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest",
+      "toNode": "n_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest_useappcontext",
+      "label": "method [EXTRACTED]"
+    },
+    {
+      "id": "e_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest_exampleunittest",
+      "fromNode": "n_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest",
+      "toNode": "n_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest_exampleunittest",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest_exampleunittest_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest_exampleunittest_addition_iscorrect",
+      "fromNode": "n_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest_exampleunittest",
+      "toNode": "n_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest_exampleunittest_addition_iscorrect",
+      "label": "method [EXTRACTED]"
+    },
+    {
+      "id": "e_android_app_src_main_java_com_securo_app_mainactivity_android_app_src_main_java_com_securo_app_mainactivity_mainactivity",
+      "fromNode": "n_android_app_src_main_java_com_securo_app_mainactivity",
+      "toNode": "n_android_app_src_main_java_com_securo_app_mainactivity_mainactivity",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_android_app_src_main_java_com_securo_app_mainactivity_mainactivity_com_getcapacitor_bridgeactivity",
+      "fromNode": "n_android_app_src_main_java_com_securo_app_mainactivity_mainactivity",
+      "toNode": "n_com_getcapacitor_bridgeactivity",
+      "label": "inherits [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_attachphototoactivesos",
+      "fromNode": "n_db",
+      "toNode": "n_db_attachphototoactivesos",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_deleteconversationthread",
+      "fromNode": "n_db",
+      "toNode": "n_db_deleteconversationthread",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_deletegadpost",
+      "fromNode": "n_db",
+      "toNode": "n_db_deletegadpost",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_deletenotification",
+      "fromNode": "n_db",
+      "toNode": "n_db_deletenotification",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_fetchlatestcampusmapconfig",
+      "fromNode": "n_db",
+      "toNode": "n_db_fetchlatestcampusmapconfig",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getacceptedlinksforguardian",
+      "fromNode": "n_db",
+      "toNode": "n_db_getacceptedlinksforguardian",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getallattendance",
+      "fromNode": "n_db",
+      "toNode": "n_db_getallattendance",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getallauditlogs",
+      "fromNode": "n_db",
+      "toNode": "n_db_getallauditlogs",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getallchatthreads",
+      "fromNode": "n_db",
+      "toNode": "n_db_getallchatthreads",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getallchatthreadsonce",
+      "fromNode": "n_db",
+      "toNode": "n_db_getallchatthreadsonce",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getallguardianlinksadmin",
+      "fromNode": "n_db",
+      "toNode": "n_db_getallguardianlinksadmin",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getalllinksforguardian",
+      "fromNode": "n_db",
+      "toNode": "n_db_getalllinksforguardian",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getallsoslogs",
+      "fromNode": "n_db",
+      "toNode": "n_db_getallsoslogs",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getattendancestats",
+      "fromNode": "n_db",
+      "toNode": "n_db_getattendancestats",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getcampusmarkers",
+      "fromNode": "n_db",
+      "toNode": "n_db_getcampusmarkers",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getgadposts",
+      "fromNode": "n_db",
+      "toNode": "n_db_getgadposts",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getlatestattendance",
+      "fromNode": "n_db",
+      "toNode": "n_db_getlatestattendance",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getofflinequeuesize",
+      "fromNode": "n_db",
+      "toNode": "n_db_getofflinequeuesize",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getsosstats",
+      "fromNode": "n_db",
+      "toNode": "n_db_getsosstats",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getstudentlivelocationonce",
+      "fromNode": "n_db",
+      "toNode": "n_db_getstudentlivelocationonce",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getuserauditlogs",
+      "fromNode": "n_db",
+      "toNode": "n_db_getuserauditlogs",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getusernotifications",
+      "fromNode": "n_db",
+      "toNode": "n_db_getusernotifications",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_isstudentidtaken",
+      "fromNode": "n_db",
+      "toNode": "n_db_isstudentidtaken",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_markaccountnotificationread",
+      "fromNode": "n_db",
+      "toNode": "n_db_markaccountnotificationread",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_markallnotificationsasread",
+      "fromNode": "n_db",
+      "toNode": "n_db_markallnotificationsasread",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_marknotificationasread",
+      "fromNode": "n_db",
+      "toNode": "n_db_marknotificationasread",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_mergeusers",
+      "fromNode": "n_db",
+      "toNode": "n_db_mergeusers",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_queueofflineoperation",
+      "fromNode": "n_db",
+      "toNode": "n_db_queueofflineoperation",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_removeguardianlink",
+      "fromNode": "n_db",
+      "toNode": "n_db_removeguardianlink",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_saveadminuserpassword",
+      "fromNode": "n_db",
+      "toNode": "n_db_saveadminuserpassword",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_savecampusmapconfig",
+      "fromNode": "n_db",
+      "toNode": "n_db_savecampusmapconfig",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_saveuserdirectorymarker",
+      "fromNode": "n_db",
+      "toNode": "n_db_saveuserdirectorymarker",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_sendguardianlocationreminder",
+      "fromNode": "n_db",
+      "toNode": "n_db_sendguardianlocationreminder",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_setstudentlocationsharingstatus",
+      "fromNode": "n_db",
+      "toNode": "n_db_setstudentlocationsharingstatus",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_subscribetoaccountnotifications",
+      "fromNode": "n_db",
+      "toNode": "n_db_subscribetoaccountnotifications",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_subscribetocampusmapconfig",
+      "fromNode": "n_db",
+      "toNode": "n_db_subscribetocampusmapconfig",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_subscribetoguardianrequests",
+      "fromNode": "n_db",
+      "toNode": "n_db_subscribetoguardianrequests",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_subscribetomessages",
+      "fromNode": "n_db",
+      "toNode": "n_db_subscribetomessages",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_subscribetomessagesbythread",
+      "fromNode": "n_db",
+      "toNode": "n_db_subscribetomessagesbythread",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_subscribetonotifications",
+      "fromNode": "n_db",
+      "toNode": "n_db_subscribetonotifications",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_subscribetostudentattendance",
+      "fromNode": "n_db",
+      "toNode": "n_db_subscribetostudentattendance",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_subscribetostudentlocation",
+      "fromNode": "n_db",
+      "toNode": "n_db_subscribetostudentlocation",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_subscribetostudentsos",
+      "fromNode": "n_db",
+      "toNode": "n_db_subscribetostudentsos",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_togglelikegadpost",
+      "fromNode": "n_db",
+      "toNode": "n_db_togglelikegadpost",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_updategadpost",
+      "fromNode": "n_db",
+      "toNode": "n_db_updategadpost",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_updateguardianlinkstudentid",
+      "fromNode": "n_db",
+      "toNode": "n_db_updateguardianlinkstudentid",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_updatestudentlivelocation",
+      "fromNode": "n_db",
+      "toNode": "n_db_updatestudentlivelocation",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_attachphototoactivesos",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_attachphototoactivesos",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_deleteconversationthread",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_deleteconversationthread",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_deletegadpost",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_deletegadpost",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_deletenotification",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_deletenotification",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_fetchlatestcampusmapconfig",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_fetchlatestcampusmapconfig",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getacceptedlinksforguardian",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getacceptedlinksforguardian",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getallattendance",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getallattendance",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getallauditlogs",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getallauditlogs",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getallchatthreads",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getallchatthreads",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getallchatthreadsonce",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getallchatthreadsonce",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getallguardianlinksadmin",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getallguardianlinksadmin",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getalllinksforguardian",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getalllinksforguardian",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getallsoslogs",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getallsoslogs",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getattendancestats",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getattendancestats",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getcampusmarkers",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getcampusmarkers",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getgadposts",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getgadposts",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getlatestattendance",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getlatestattendance",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getofflinequeuesize",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getofflinequeuesize",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getsosstats",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getsosstats",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getstudentlivelocationonce",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getstudentlivelocationonce",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getuserauditlogs",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getuserauditlogs",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getusernotifications",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getusernotifications",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_isstudentidtaken",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_isstudentidtaken",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_markaccountnotificationread",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_markaccountnotificationread",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_markallnotificationsasread",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_markallnotificationsasread",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_marknotificationasread",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_marknotificationasread",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_mergeusers",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_mergeusers",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_queueofflineoperation",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_queueofflineoperation",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_removeguardianlink",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_removeguardianlink",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_saveadminuserpassword",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_saveadminuserpassword",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_savecampusmapconfig",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_savecampusmapconfig",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_saveuserdirectorymarker",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_saveuserdirectorymarker",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_sendguardianlocationreminder",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_sendguardianlocationreminder",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_setstudentlocationsharingstatus",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_setstudentlocationsharingstatus",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_subscribetoaccountnotifications",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_subscribetoaccountnotifications",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_subscribetocampusmapconfig",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_subscribetocampusmapconfig",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_subscribetoguardianrequests",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_subscribetoguardianrequests",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_subscribetomessages",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_subscribetomessages",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_subscribetomessagesbythread",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_subscribetomessagesbythread",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_subscribetonotifications",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_subscribetonotifications",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_subscribetostudentattendance",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_subscribetostudentattendance",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_subscribetostudentlocation",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_subscribetostudentlocation",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_subscribetostudentsos",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_subscribetostudentsos",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_togglelikegadpost",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_togglelikegadpost",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_updategadpost",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_updategadpost",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_updateguardianlinkstudentid",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_updateguardianlinkstudentid",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_updatestudentlivelocation",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_updatestudentlivelocation",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_deleteemergencypost_db_readlocalemergencyposts",
+      "fromNode": "n_db_deleteemergencypost",
+      "toNode": "n_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_deleteemergencypost_db_writelocalemergencyposts",
+      "fromNode": "n_db_deleteemergencypost",
+      "toNode": "n_db_writelocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_deleteemergencypost",
+      "fromNode": "n_db",
+      "toNode": "n_db_deleteemergencypost",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_getallemergencyposts_db_readlocalemergencyposts",
+      "fromNode": "n_db_getallemergencyposts",
+      "toNode": "n_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_getallemergencyposts_db_mergeemergencyposts",
+      "fromNode": "n_db_getallemergencyposts",
+      "toNode": "n_db_mergeemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getallemergencyposts",
+      "fromNode": "n_db",
+      "toNode": "n_db_getallemergencyposts",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_getuseractivitysummary_db_getattendancehistory",
+      "fromNode": "n_db_getuseractivitysummary",
+      "toNode": "n_db_getattendancehistory",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getattendancehistory",
+      "fromNode": "n_db",
+      "toNode": "n_db_getattendancehistory",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_getemergencypostbyid_db_readlocalemergencyposts",
+      "fromNode": "n_db_getemergencypostbyid",
+      "toNode": "n_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getemergencypostbyid",
+      "fromNode": "n_db",
+      "toNode": "n_db_getemergencypostbyid",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_getuseractivitysummary_db_getusersoslogs",
+      "fromNode": "n_db_getuseractivitysummary",
+      "toNode": "n_db_getusersoslogs",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_getuseractivitysummary_db_getuseremergencyposts",
+      "fromNode": "n_db_getuseractivitysummary",
+      "toNode": "n_db_getuseremergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getuseractivitysummary",
+      "fromNode": "n_db",
+      "toNode": "n_db_getuseractivitysummary",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_getuseremergencyposts_db_readlocalemergencyposts",
+      "fromNode": "n_db_getuseremergencyposts",
+      "toNode": "n_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_getuseremergencyposts_db_mergeemergencyposts",
+      "fromNode": "n_db_getuseremergencyposts",
+      "toNode": "n_db_mergeemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getuseremergencyposts",
+      "fromNode": "n_db",
+      "toNode": "n_db_getuseremergencyposts",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getusersoslogs",
+      "fromNode": "n_db",
+      "toNode": "n_db_getusersoslogs",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_mergeemergencyposts",
+      "fromNode": "n_db",
+      "toNode": "n_db_mergeemergencyposts",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_saveemergencypost_db_readlocalemergencyposts",
+      "fromNode": "n_db_saveemergencypost",
+      "toNode": "n_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_toggleemergencypostaccess_db_readlocalemergencyposts",
+      "fromNode": "n_db_toggleemergencypostaccess",
+      "toNode": "n_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_toggleemergencypostguardianaccess_db_readlocalemergencyposts",
+      "fromNode": "n_db_toggleemergencypostguardianaccess",
+      "toNode": "n_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_updateemergencypostattachments_db_readlocalemergencyposts",
+      "fromNode": "n_db_updateemergencypostattachments",
+      "toNode": "n_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_readlocalemergencyposts",
+      "fromNode": "n_db",
+      "toNode": "n_db_readlocalemergencyposts",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_processofflinequeue_db_saveemergencypost",
+      "fromNode": "n_db_processofflinequeue",
+      "toNode": "n_db_saveemergencypost",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_saveemergencypost_db_writelocalemergencyposts",
+      "fromNode": "n_db_saveemergencypost",
+      "toNode": "n_db_writelocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_saveemergencypost",
+      "fromNode": "n_db",
+      "toNode": "n_db_saveemergencypost",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_toggleemergencypostaccess_db_writelocalemergencyposts",
+      "fromNode": "n_db_toggleemergencypostaccess",
+      "toNode": "n_db_writelocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_toggleemergencypostaccess",
+      "fromNode": "n_db",
+      "toNode": "n_db_toggleemergencypostaccess",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_toggleemergencypostguardianaccess_db_writelocalemergencyposts",
+      "fromNode": "n_db_toggleemergencypostguardianaccess",
+      "toNode": "n_db_writelocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_toggleemergencypostguardianaccess",
+      "fromNode": "n_db",
+      "toNode": "n_db_toggleemergencypostguardianaccess",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_updateemergencypostattachments_db_writelocalemergencyposts",
+      "fromNode": "n_db_updateemergencypostattachments",
+      "toNode": "n_db_writelocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_updateemergencypostattachments",
+      "fromNode": "n_db",
+      "toNode": "n_db_updateemergencypostattachments",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_writelocalemergencyposts",
+      "fromNode": "n_db",
+      "toNode": "n_db_writelocalemergencyposts",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_deleteemergencypost_www_db_readlocalemergencyposts",
+      "fromNode": "n_www_db_deleteemergencypost",
+      "toNode": "n_www_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_deleteemergencypost_www_db_writelocalemergencyposts",
+      "fromNode": "n_www_db_deleteemergencypost",
+      "toNode": "n_www_db_writelocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_deleteemergencypost",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_deleteemergencypost",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_getallemergencyposts_www_db_readlocalemergencyposts",
+      "fromNode": "n_www_db_getallemergencyposts",
+      "toNode": "n_www_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_getallemergencyposts_www_db_mergeemergencyposts",
+      "fromNode": "n_www_db_getallemergencyposts",
+      "toNode": "n_www_db_mergeemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getallemergencyposts",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getallemergencyposts",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_getuseractivitysummary_www_db_getattendancehistory",
+      "fromNode": "n_www_db_getuseractivitysummary",
+      "toNode": "n_www_db_getattendancehistory",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getattendancehistory",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getattendancehistory",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_getemergencypostbyid_www_db_readlocalemergencyposts",
+      "fromNode": "n_www_db_getemergencypostbyid",
+      "toNode": "n_www_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getemergencypostbyid",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getemergencypostbyid",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_getuseractivitysummary_www_db_getusersoslogs",
+      "fromNode": "n_www_db_getuseractivitysummary",
+      "toNode": "n_www_db_getusersoslogs",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_getuseractivitysummary_www_db_getuseremergencyposts",
+      "fromNode": "n_www_db_getuseractivitysummary",
+      "toNode": "n_www_db_getuseremergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getuseractivitysummary",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getuseractivitysummary",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_getuseremergencyposts_www_db_readlocalemergencyposts",
+      "fromNode": "n_www_db_getuseremergencyposts",
+      "toNode": "n_www_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_getuseremergencyposts_www_db_mergeemergencyposts",
+      "fromNode": "n_www_db_getuseremergencyposts",
+      "toNode": "n_www_db_mergeemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getuseremergencyposts",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getuseremergencyposts",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getusersoslogs",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getusersoslogs",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_mergeemergencyposts",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_mergeemergencyposts",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_saveemergencypost_www_db_readlocalemergencyposts",
+      "fromNode": "n_www_db_saveemergencypost",
+      "toNode": "n_www_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_toggleemergencypostaccess_www_db_readlocalemergencyposts",
+      "fromNode": "n_www_db_toggleemergencypostaccess",
+      "toNode": "n_www_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_toggleemergencypostguardianaccess_www_db_readlocalemergencyposts",
+      "fromNode": "n_www_db_toggleemergencypostguardianaccess",
+      "toNode": "n_www_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_updateemergencypostattachments_www_db_readlocalemergencyposts",
+      "fromNode": "n_www_db_updateemergencypostattachments",
+      "toNode": "n_www_db_readlocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_readlocalemergencyposts",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_readlocalemergencyposts",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_processofflinequeue_www_db_saveemergencypost",
+      "fromNode": "n_www_db_processofflinequeue",
+      "toNode": "n_www_db_saveemergencypost",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_saveemergencypost_www_db_writelocalemergencyposts",
+      "fromNode": "n_www_db_saveemergencypost",
+      "toNode": "n_www_db_writelocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_saveemergencypost",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_saveemergencypost",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_toggleemergencypostaccess_www_db_writelocalemergencyposts",
+      "fromNode": "n_www_db_toggleemergencypostaccess",
+      "toNode": "n_www_db_writelocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_toggleemergencypostaccess",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_toggleemergencypostaccess",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_toggleemergencypostguardianaccess_www_db_writelocalemergencyposts",
+      "fromNode": "n_www_db_toggleemergencypostguardianaccess",
+      "toNode": "n_www_db_writelocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_toggleemergencypostguardianaccess",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_toggleemergencypostguardianaccess",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_updateemergencypostattachments_www_db_writelocalemergencyposts",
+      "fromNode": "n_www_db_updateemergencypostattachments",
+      "toNode": "n_www_db_writelocalemergencyposts",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_updateemergencypostattachments",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_updateemergencypostattachments",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_writelocalemergencyposts",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_writelocalemergencyposts",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest_useappcontext_org_junit_test",
+      "fromNode": "n_android_app_src_androidtest_java_com_getcapacitor_myapp_exampleinstrumentedtest_exampleinstrumentedtest_useappcontext",
+      "toNode": "n_org_junit_test",
+      "label": "references [EXTRACTED]"
+    },
+    {
+      "id": "e_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest_exampleunittest_addition_iscorrect_org_junit_test",
+      "fromNode": "n_android_app_src_test_java_com_getcapacitor_myapp_exampleunittest_exampleunittest_addition_iscorrect",
+      "toNode": "n_org_junit_test",
+      "label": "references [EXTRACTED]"
+    },
+    {
+      "id": "e_db_logsos_db_getlinksforstudent",
+      "fromNode": "n_db_logsos",
+      "toNode": "n_db_getlinksforstudent",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_notifyguardiansofgeofenceevent_db_getlinksforstudent",
+      "fromNode": "n_db_notifyguardiansofgeofenceevent",
+      "toNode": "n_db_getlinksforstudent",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_notifyguardianssos_db_getlinksforstudent",
+      "fromNode": "n_db_notifyguardianssos",
+      "toNode": "n_db_getlinksforstudent",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_getlinksforstudent",
+      "fromNode": "n_db",
+      "toNode": "n_db_getlinksforstudent",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_processofflinequeue_db_logattendance",
+      "fromNode": "n_db_processofflinequeue",
+      "toNode": "n_db_logattendance",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_logattendance",
+      "fromNode": "n_db",
+      "toNode": "n_db_logattendance",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_logsos_db_readlocalusers",
+      "fromNode": "n_db_logsos",
+      "toNode": "n_db_readlocalusers",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_logsos_db_notifyguardianssos",
+      "fromNode": "n_db_logsos",
+      "toNode": "n_db_notifyguardianssos",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_processofflinequeue_db_logsos",
+      "fromNode": "n_db_processofflinequeue",
+      "toNode": "n_db_logsos",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_logsos",
+      "fromNode": "n_db",
+      "toNode": "n_db_logsos",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_notifyguardiansofgeofenceevent_db_sendaccountnotification",
+      "fromNode": "n_db_notifyguardiansofgeofenceevent",
+      "toNode": "n_db_sendaccountnotification",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_notifyguardiansofgeofenceevent",
+      "fromNode": "n_db",
+      "toNode": "n_db_notifyguardiansofgeofenceevent",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_notifyguardianssos_db_sendaccountnotification",
+      "fromNode": "n_db_notifyguardianssos",
+      "toNode": "n_db_sendaccountnotification",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_notifyguardianssos",
+      "fromNode": "n_db",
+      "toNode": "n_db_notifyguardianssos",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_processofflinequeue",
+      "fromNode": "n_db",
+      "toNode": "n_db_processofflinequeue",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_savegadpost_db_getallusers",
+      "fromNode": "n_db_savegadpost",
+      "toNode": "n_db_getallusers",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_savegadpost_db_sendaccountnotification",
+      "fromNode": "n_db_savegadpost",
+      "toNode": "n_db_sendaccountnotification",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_savegadpost",
+      "fromNode": "n_db",
+      "toNode": "n_db_savegadpost",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_createguardianlinkfromstudent_db_sendaccountnotification",
+      "fromNode": "n_db_createguardianlinkfromstudent",
+      "toNode": "n_db_sendaccountnotification",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_createguardianlinkrequest_db_sendaccountnotification",
+      "fromNode": "n_db_createguardianlinkrequest",
+      "toNode": "n_db_sendaccountnotification",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_respondtoguardianlink_db_sendaccountnotification",
+      "fromNode": "n_db_respondtoguardianlink",
+      "toNode": "n_db_sendaccountnotification",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_sendchatmessage_db_sendaccountnotification",
+      "fromNode": "n_db_sendchatmessage",
+      "toNode": "n_db_sendaccountnotification",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_sendgadmessage_db_sendaccountnotification",
+      "fromNode": "n_db_sendgadmessage",
+      "toNode": "n_db_sendaccountnotification",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_sendaccountnotification",
+      "fromNode": "n_db",
+      "toNode": "n_db_sendaccountnotification",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_db_db_sendchatmessage",
+      "fromNode": "n_db",
+      "toNode": "n_db_sendchatmessage",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_logsos_www_db_getlinksforstudent",
+      "fromNode": "n_www_db_logsos",
+      "toNode": "n_www_db_getlinksforstudent",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_notifyguardiansofgeofenceevent_www_db_getlinksforstudent",
+      "fromNode": "n_www_db_notifyguardiansofgeofenceevent",
+      "toNode": "n_www_db_getlinksforstudent",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_notifyguardianssos_www_db_getlinksforstudent",
+      "fromNode": "n_www_db_notifyguardianssos",
+      "toNode": "n_www_db_getlinksforstudent",
+      "label": "calls [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_www_db_getlinksforstudent",
+      "fromNode": "n_www_db",
+      "toNode": "n_www_db_getlinksforstudent",
+      "label": "contains [EXTRACTED]"
+    },
+    {
+      "id": "e_www_db_processofflinequeue_www_db_logattendance",
+      "fromNode": "n_www_db_processofflinequeue",
+      "toNode": "n_www_db_logattendance",
+      "label": "calls [EXTRACTED]"
+    }
+  ]
+}

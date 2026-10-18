@@ -190,6 +190,8 @@ export const login = async (identifier, password, roleOverride = getPreferredAut
             timestamp: new Date()
         }).catch(err => Logger.warn('Auth', 'Audit log failed', err));
 
+        // (2026-07-13) Set session token on successful login; was not setting
+        localStorage.setItem('securo_session_token', userCredential.user.uid);
         return userCredential.user;
     } catch (error) {
         Logger.error('Auth', 'Login failed', { identifier, error: error.message });
@@ -316,9 +318,9 @@ export const checkAuth = (redirectIfUnauth = true) => {
             if (!window.location.pathname.includes('login.html')) {
                 window.location.href = 'login.html';
             }
-        // (2026-07-13) Allow landing on auth; was redirecting user to index.html
+        // (2026-07-13) Set session token on auth redirect; was missing
         } else if (user && (window.location.pathname.includes('login.html') || window.location.pathname.includes('role-selection.html'))) {
-            // Redirect logged-in users to index.html
+            localStorage.setItem('securo_session_token', user.uid);
             window.location.href = 'index.html';
         }
     });

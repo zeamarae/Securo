@@ -1091,7 +1091,8 @@
                 </div>
             </section>
 
-            <section class="profile-card">
+            <!-- (2026-07-13) Set id on profile card; was anonymous profile-card -->
+            <section class="profile-card" id="myProfileCard">
                 <div class="card-head">
                     <div>
                         <h2 class="card-title">My Profile</h2>
@@ -1686,7 +1687,12 @@
             profileEmail.classList.remove('is-hidden');
             document.getElementById('myIdChip').classList.remove('is-hidden');
 
+            // (2026-07-13) Hide My Profile card for guardians; was visible card
+            const myProfCard = document.getElementById('myProfileCard');
+            if (myProfCard) myProfCard.classList.remove('is-hidden');
+
             if (state.role === 'guardian') {
+                if (myProfCard) myProfCard.classList.add('is-hidden');
                 document.body.classList.add('guardian-theme');
                 profileBackBtn.href = 'guardian-dashboard.html';
                 profileStudentId.textContent = 'Locked for guardian accounts';
