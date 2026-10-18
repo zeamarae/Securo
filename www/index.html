@@ -33,14 +33,14 @@
     <script>
         (() => {
             const isTargetHost = window.location.hostname === '127.0.0.1' ||
-                                 window.location.hostname === 'localhost' ||
-                                 window.location.hostname === 'securo.cebutech.digital' ||
-                                 window.location.host === '127.0.0.1:5508' ||
-                                 window.location.host === 'localhost:5508';
+                window.location.hostname === 'localhost' ||
+                window.location.hostname === 'securo.cebutech.digital' ||
+                window.location.host === '127.0.0.1:5508' ||
+                window.location.host === 'localhost:5508';
             const pathname = window.location.pathname;
             const isRootUrl = (pathname === '/' || pathname === '/index.html' || pathname.endsWith('/index.html') || !pathname) &&
-                              !window.location.search &&
-                              (!window.location.hash || window.location.hash === '#' || window.location.hash === '');
+                !window.location.search &&
+                (!window.location.hash || window.location.hash === '#' || window.location.hash === '');
             const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
             const isDesktop = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
@@ -3466,6 +3466,7 @@
             will-change: opacity, transform;
             transition: opacity 0.3s ease;
         }
+
         /* (2026-07-13) Hide contacts widget and lock SOS scroll; was scrollable */
         #emergencyContactsWidget,
         .emergency-contacts-widget {
@@ -3716,7 +3717,7 @@
             text-align: center;
             color: #fff;
             background: radial-gradient(circle at 50% 40%, rgba(90, 31, 224, 0.15) 0%, transparent 65%),
-                        linear-gradient(180deg, #14172a 0%, #080b18 100%);
+                linear-gradient(180deg, #14172a 0%, #080b18 100%);
             z-index: 2;
         }
 
@@ -5419,8 +5420,7 @@
                     <header class="topbar navbar navbar-expand border-0">
                         <div class="container-fluid px-0 content-frame">
                             <!-- (2026-07-13) Topbar logo redirects to map homepage; was static header -->
-                            <div class="topbar-left navbar-brand mb-0"
-                                id="topbarHomeBrand"
+                            <div class="topbar-left navbar-brand mb-0" id="topbarHomeBrand"
                                 onclick="if(window.setActiveView){window.setActiveView('map');}else{window.location.href='index.html';}"
                                 style="display:flex; align-items:center; gap:8px; cursor:pointer;"
                                 title="Go to Map Homepage">
@@ -5507,13 +5507,18 @@
 
                     <!-- (2026-07-13) Add parent invite link to header bar; was chip only -->
                     <div class="student-parent-bar" id="studentParentBar">
-                        <div id="studentParentChips" style="display:flex; gap:8px; overflow-x:auto; flex:1; align-items:center;">
-                            <div class="parent-selector-chip" id="noParentsChip" style="background: rgba(255, 255, 255, 0.85); border: 1px dashed rgba(90, 31, 224, 0.25); color: #64748b; font-weight: 500; cursor: pointer;" title="Tap to invite parents">
-                                <span class="material-symbols-outlined" style="font-size: 18px; color: var(--primary);">family_restroom</span>
+                        <div id="studentParentChips"
+                            style="display:flex; gap:8px; overflow-x:auto; flex:1; align-items:center;">
+                            <div class="parent-selector-chip" id="noParentsChip"
+                                style="background: rgba(255, 255, 255, 0.85); border: 1px dashed rgba(90, 31, 224, 0.25); color: #64748b; font-weight: 500; cursor: pointer;"
+                                title="Tap to invite parents">
+                                <span class="material-symbols-outlined"
+                                    style="font-size: 18px; color: var(--primary);">family_restroom</span>
                                 <span>No parents watching over you yet</span>
                             </div>
                         </div>
-                        <button type="button" class="invite-parent-bar-btn" id="inviteParentBarBtn" title="Invite a parent or guardian" style="display: none;">
+                        <button type="button" class="invite-parent-bar-btn" id="inviteParentBarBtn"
+                            title="Invite a parent or guardian" style="display: none;">
                             <span class="material-symbols-outlined">person_add</span>
                             <span>Invite Parent</span>
                         </button>
@@ -6039,8 +6044,12 @@
                                         </div>
                                         <!-- (2026-07-13) Add export buttons for history tab; was icon only -->
                                         <div style="display:flex; align-items:center; gap:8px;">
-                                            <button id="btnExportStudentAttendanceCsv" type="button" class="btn btn-sm" title="Export CSV" style="font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:8px; border:1px solid rgba(0,0,0,0.1); background:#f8fafc; color:var(--ink);">CSV</button>
-                                            <button id="btnExportStudentAttendanceJson" type="button" class="btn btn-sm" title="Export JSON" style="font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:8px; border:1px solid rgba(0,0,0,0.1); background:#f8fafc; color:var(--ink);">JSON</button>
+                                            <button id="btnExportStudentAttendanceCsv" type="button" class="btn btn-sm"
+                                                title="Export CSV"
+                                                style="font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:8px; border:1px solid rgba(0,0,0,0.1); background:#f8fafc; color:var(--ink);">CSV</button>
+                                            <button id="btnExportStudentAttendanceJson" type="button" class="btn btn-sm"
+                                                title="Export JSON"
+                                                style="font-size:0.72rem; font-weight:700; padding:3px 8px; border-radius:8px; border:1px solid rgba(0,0,0,0.1); background:#f8fafc; color:var(--ink);">JSON</button>
                                             <span class="material-symbols-outlined"
                                                 style="color: var(--primary); font-size: 22px;">history</span>
                                         </div>
@@ -6129,7 +6138,8 @@
                         <!-- Instagram style: modes removed, replaced with dynamic interaction -->
                         <div class="camera-preview-shell">
                             <!-- (2026-07-13) Dark poster on camera preview; prev: bare video tag -->
-                            <video id="cameraPreview" autoplay playsinline muted poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect width='1' height='1' fill='%23080b18'/%3E%3C/svg%3E"></video>
+                            <video id="cameraPreview" autoplay playsinline muted
+                                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect width='1' height='1' fill='%23080b18'/%3E%3C/svg%3E"></video>
                             <div class="camera-overlay-grid" aria-hidden="true"></div>
                             <div class="camera-status-pill" id="recordingStatus"
                                 style="display:none; background:rgba(209, 31, 52, 0.9);">
@@ -6671,7 +6681,7 @@
             try {
                 localStorage.removeItem("securo_campus_exit_ts");
                 localStorage.removeItem("securo_campus_entry_ts");
-            } catch (e) {}
+            } catch (e) { }
 
             const recentInLog = getSpecificUserLatestAttendanceLog('in');
             const recentOutLog = getSpecificUserLatestAttendanceLog('out');
@@ -6680,23 +6690,23 @@
 
             // (2026-07-13) Guard geofence timestamps against fake times; prev: Date.now()
             if (isInside) {
-                try { localStorage.removeItem(userExitKey); } catch (e) {}
+                try { localStorage.removeItem(userExitKey); } catch (e) { }
                 const storedEntry = localStorage.getItem(userEntryKey);
                 const entryTs = appState.campusEntryTs || recentInTs || (storedEntry ? parseInt(storedEntry, 10) : null);
                 if (entryTs) {
-                    try { localStorage.setItem(userEntryKey, String(entryTs)); } catch (e) {}
+                    try { localStorage.setItem(userEntryKey, String(entryTs)); } catch (e) { }
                 }
                 appState.isInsideCampus = true;
                 appState.campusEntryTs = entryTs;
                 appState.campusExitTs = null;
                 appState.campusExitDuration = "";
             } else {
-                try { localStorage.removeItem(userEntryKey); } catch (e) {}
+                try { localStorage.removeItem(userEntryKey); } catch (e) { }
                 appState.isInsideCampus = false;
                 const storedExit = localStorage.getItem(userExitKey);
                 const exitTs = appState.campusExitTs || recentOutTs || (storedExit ? parseInt(storedExit, 10) : null);
                 if (exitTs) {
-                    try { localStorage.setItem(userExitKey, String(exitTs)); } catch (e) {}
+                    try { localStorage.setItem(userExitKey, String(exitTs)); } catch (e) { }
                 }
                 appState.campusExitTs = exitTs;
                 appState.campusEntryTs = null;
@@ -6835,7 +6845,7 @@
                         const p = await navigator.permissions.query({ name: 'geolocation' }).catch(() => null);
                         isGranted = (p?.state === 'granted');
                     }
-                } catch (e) {}
+                } catch (e) { }
 
                 if (!isGranted) {
                     appState.isLocationTrackingActive = false;
@@ -8470,7 +8480,7 @@
 
             // (2026-07-13) Pre-fetch location on attendance tab open; was cold on click
             if (pageName === "attendance" && !appState.lastLocation) {
-                resolveAttendanceLocation().catch(() => {});
+                resolveAttendanceLocation().catch(() => { });
             }
 
             // Load history page data when navigating to it
@@ -9222,9 +9232,9 @@
         // (2026-07-13) Request push notification permissions on user auth; was missing
         onAuthStateChanged(auth, async (user) => {
             if (window.Capacitor?.Plugins?.LocalNotifications) {
-                window.Capacitor.Plugins.LocalNotifications.requestPermissions().catch(() => {});
+                window.Capacitor.Plugins.LocalNotifications.requestPermissions().catch(() => { });
             } else if ("Notification" in window && Notification.permission === "default") {
-                Notification.requestPermission().catch(() => {});
+                Notification.requestPermission().catch(() => { });
             }
             // (2026-07-13) Skip auth redirect if desktop landing pending; was unchecked
             if (window.__securoDesktopPending) {
@@ -9278,7 +9288,7 @@
                             window.location.replace('permissions-onboarding.html');
                         }
                     });
-                }).catch(() => {});
+                }).catch(() => { });
                 navigator.permissions.query({ name: 'geolocation' }).then(p => {
                     p.addEventListener('change', () => {
                         if (p.state === 'denied') {
@@ -9287,7 +9297,7 @@
                             window.location.replace('permissions-onboarding.html');
                         }
                     });
-                }).catch(() => {});
+                }).catch(() => { });
             }
 
             if (cachedProfile && !isJustRegistered && cachedProfile.onboardingCompleted) {
@@ -9459,7 +9469,7 @@
             accepted.forEach(link => {
                 const gid = link.guardianId || link.guardianUid;
                 const email = (link.guardianEmail || "").toLowerCase().trim();
-                const localMatch = localUsers.find(u => 
+                const localMatch = localUsers.find(u =>
                     (gid && String(u.id || u.uid || '') === String(gid)) ||
                     (email && (String(u.email || '').toLowerCase().trim() === email || String(u.personalEmail || '').toLowerCase().trim() === email))
                 );
@@ -9560,7 +9570,7 @@
                             title: "Securo Guardian Registration",
                             text: "Register as my guardian on Securo to monitor live safety and emergency alerts.",
                             url: guardianUrl
-                        }).catch(() => {});
+                        }).catch(() => { });
                     };
                 } else {
                     shareBtn.style.display = "none";
@@ -10475,9 +10485,9 @@
                     const minZ = caps.zoom.min || 1;
                     const maxZ = Math.min(caps.zoom.max || 4.5, 4.5);
                     const targetZ = minZ + (maxZ - minZ) * progress;
-                    track.applyConstraints({ advanced: [{ zoom: targetZ }] }).catch(() => {});
+                    track.applyConstraints({ advanced: [{ zoom: targetZ }] }).catch(() => { });
                 }
-            } catch (_) {}
+            } catch (_) { }
         }
 
         function resetCameraZoom() {
@@ -10501,9 +10511,9 @@
                 const caps = track?.getCapabilities?.();
                 if (caps && caps.zoom) {
                     const minZ = caps.zoom.min || 1;
-                    track.applyConstraints({ advanced: [{ zoom: minZ }] }).catch(() => {});
+                    track.applyConstraints({ advanced: [{ zoom: minZ }] }).catch(() => { });
                 }
-            } catch (_) {}
+            } catch (_) { }
         }
 
         async function handleCaptureStart(e) {
@@ -10667,7 +10677,7 @@
             captureTouchStartY = e.clientY;
             try {
                 captureAction.setPointerCapture(e.pointerId);
-            } catch (_) {}
+            } catch (_) { }
             handleCaptureStart(e);
         });
 
@@ -11439,7 +11449,7 @@
                         lng = pos.coords.longitude;
                         appState.lastLocation = { lat, lng, timestamp: new Date() };
                     }
-                } catch (_) {}
+                } catch (_) { }
             }
 
             if (!lat || !lng) {
@@ -11909,9 +11919,11 @@
             align-items: stretch;
             justify-content: center;
         }
+
         #gadPmModal.active {
             display: flex;
         }
+
         #gadPmModal .gad-chat-card {
             width: 100vw;
             height: 100dvh;
@@ -11927,6 +11939,7 @@
             position: relative;
             z-index: 100001;
         }
+
         /* (2026-07-13) Add top inset for universal topbar; was 16px max */
         .gad-chat-header {
             padding: 16px 20px;
@@ -11941,6 +11954,7 @@
             z-index: 10;
             flex-shrink: 0;
         }
+
         .gad-chat-close {
             background: transparent;
             border: none;
@@ -11952,6 +11966,7 @@
             justify-content: center;
             border-radius: 8px;
         }
+
         .gad-chat-anon {
             display: flex;
             align-items: center;
@@ -11965,6 +11980,7 @@
             cursor: pointer;
             flex-shrink: 0;
         }
+
         .gad-chat-thread {
             flex: 1;
             min-height: 0;
@@ -11975,6 +11991,7 @@
             flex-direction: column;
             gap: 12px;
         }
+
         .gad-bubble {
             max-width: 80%;
             padding: 12px 16px;
@@ -11984,12 +12001,14 @@
             word-break: break-word;
             white-space: pre-wrap;
         }
+
         .gad-bubble.me {
             align-self: flex-end;
             background: #5a1fe0;
             color: #fff;
             border-bottom-right-radius: 4px;
         }
+
         .gad-bubble.them {
             align-self: flex-start;
             background: #fff;
@@ -11998,6 +12017,7 @@
             border-bottom-left-radius: 4px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
         }
+
         .gad-bubble-meta {
             display: block;
             margin-top: 4px;
@@ -12005,9 +12025,11 @@
             opacity: 0.75;
             text-align: right;
         }
+
         .gad-bubble.them .gad-bubble-meta {
             text-align: left;
         }
+
         .gad-bubble-tag {
             display: inline-block;
             font-size: 0.6rem;
@@ -12019,6 +12041,7 @@
             margin-bottom: 4px;
             background: rgba(255, 255, 255, 0.2);
         }
+
         .gad-chat-pending {
             align-self: flex-start;
             font-size: 0.7rem;
@@ -12027,6 +12050,7 @@
             align-items: center;
             gap: 4px;
         }
+
         /* (2026-07-13) Add bottom inset for 3-button nav; was 14px bottom */
         .gad-chat-composer {
             padding: 14px;
@@ -12038,6 +12062,7 @@
             z-index: 2;
             flex-shrink: 0;
         }
+
         .gad-chat-composer select {
             width: 100%;
             padding: 8px 12px;
@@ -12050,11 +12075,13 @@
             color: var(--ink);
             outline: none;
         }
+
         .gad-chat-input-row {
             display: flex;
             gap: 10px;
             align-items: flex-end;
         }
+
         .gad-chat-input-row textarea {
             flex: 1;
             min-width: 0;
@@ -12070,10 +12097,12 @@
             resize: none;
             color: var(--ink);
         }
+
         .gad-chat-input-row textarea:focus {
             border-color: #5a1fe0;
             background: #fff;
         }
+
         .gad-chat-send {
             width: 48px;
             height: 48px;
@@ -12088,6 +12117,7 @@
             cursor: pointer;
             box-shadow: 0 6px 16px rgba(90, 31, 224, 0.25);
         }
+
         .gad-chat-send:disabled {
             opacity: 0.55;
             cursor: default;
@@ -12106,12 +12136,14 @@
                 </button>
             </div>
             <label class="gad-chat-anon">
-                <input type="checkbox" id="gadAnonToggle" checked style="width:16px; height:16px; accent-color:#5a1fe0;">
+                <input type="checkbox" id="gadAnonToggle" checked
+                    style="width:16px; height:16px; accent-color:#5a1fe0;">
                 <span class="material-symbols-outlined" style="font-size:16px;">visibility_off</span>
                 <span>Send anonymously (name &amp; ID hidden)</span>
             </label>
             <div class="gad-chat-thread" id="gadChatThread">
-                <div class="gad-bubble them">Hi! This is the GAD Desk. Tell us what's on your mind — your message is confidential.</div>
+                <div class="gad-bubble them">Hi! This is the GAD Desk. Tell us what's on your mind — your message is
+                    confidential.</div>
             </div>
             <div class="gad-chat-composer">
                 <select id="gadCategorySelect" aria-label="Topic">
@@ -12311,7 +12343,8 @@
                                 <div id="fsGuardianInviteLink"
                                     style="font-size: 0.82rem; color: #1e293b; font-weight: 600; word-break: break-all; line-height: 1.45; font-family: monospace; user-select: all; padding: 2px 0;">
                                     <!-- (2026-07-13) Dynamic link placeholder; prev: zea domain -->
-                                    Generating link...</div>
+                                    Generating link...
+                                </div>
                             </div>
 
                             <!-- Action buttons -->
