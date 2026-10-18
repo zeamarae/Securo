@@ -230,12 +230,76 @@
 
         .footer-note a:hover { opacity: 0.9; }
 
-        /* Mobile specific adjustments */
-        @media (max-width: 480px) {
-            h1 { font-size: 1.75rem; }
-            .subtitle { font-size: 1rem; }
-            .role-btn { padding: 20px; }
-            .icon-circle { width: 56px; height: 56px; }
+        /* (2026-07-13) Optimize mobile layout & role cards; was oversized & wrapping */
+        @media (max-width: 600px) {
+            body {
+                padding: 16px 12px;
+                min-height: 100dvh;
+            }
+            .selection-card {
+                padding: 0;
+                width: 100%;
+                max-width: 100%;
+            }
+            .logo-area {
+                margin-bottom: 20px;
+            }
+            .logo-icon {
+                width: 58px;
+                height: 58px;
+                border-radius: 18px;
+                margin: 0 auto 12px;
+            }
+            .logo-icon span {
+                font-size: 30px;
+            }
+            h1 {
+                font-size: 1.55rem;
+                margin-bottom: 6px;
+            }
+            .subtitle {
+                font-size: 0.9rem;
+                margin-bottom: 20px;
+            }
+            .role-grid {
+                gap: 12px;
+            }
+            .role-btn {
+                padding: 14px 16px;
+                gap: 14px;
+                border-radius: 20px;
+            }
+            .role-btn:active {
+                transform: scale(0.98);
+            }
+            .icon-circle {
+                width: 50px;
+                height: 50px;
+                border-radius: 16px;
+            }
+            .icon-circle span {
+                font-size: 24px;
+            }
+            .role-info {
+                flex: 1;
+                min-width: 0;
+            }
+            .role-info h2 {
+                font-size: 1.08rem;
+                margin-bottom: 2px;
+                white-space: nowrap;
+            }
+            .role-info p {
+                font-size: 0.82rem;
+                line-height: 1.35;
+            }
+            .arrow {
+                font-size: 18px;
+            }
+            .footer-note {
+                margin-top: 22px;
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
@@ -286,7 +350,8 @@
                 </div>
                 <div class="role-info">
                     <h2>I am a Staff Member</h2>
-                    <p>Use the campus map, SOS tools, attendance, and support without guardian linking.</p>
+                    <!-- (2026-07-13) Concise staff description; was verbose & uneven in height -->
+                    <p>Access campus map, SOS tools, attendance, and support.</p>
                 </div>
                 <span class="material-symbols-outlined arrow">arrow_forward_ios</span>
             </button>

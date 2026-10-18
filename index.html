@@ -6225,6 +6225,8 @@
             subscribeToMessagesByThread,
             subscribeToGuardianRequests,
             getLinksForStudent,
+            // (2026-07-13) Import createGuardianLinkFromStudent; was absent
+            createGuardianLinkFromStudent,
             respondToGuardianLink,
             // (2026-07-13) Import removeGuardianLink for unlink gesture; was absent
             removeGuardianLink,
@@ -9602,6 +9604,46 @@
                     }
                 };
             }
+            // (2026-07-13) Wire email input and invite sender; was copy link only
+            const sendEmailBtn = document.getElementById("sendGuardianInviteEmailBtn");
+            const emailInput = document.getElementById("guardianInviteEmailInput");
+            if (sendEmailBtn && emailInput) {
+                emailInput.value = "";
+                sendEmailBtn.onclick = async () => {
+                    const email = emailInput.value.trim().toLowerCase();
+                    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        showStatus("Invalid Email", "Please enter a valid email address for your guardian.");
+                        return;
+                    }
+                    sendEmailBtn.disabled = true;
+                    const prevBtnHtml = sendEmailBtn.innerHTML;
+                    sendEmailBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:18px;">sync</span><span>Sending...</span>`;
+                    try {
+                        await createGuardianLinkFromStudent({
+                            studentUid: appState.user?.uid,
+                            studentId: studentId,
+                            studentName: appState.profile?.name || appState.user?.name || "Student",
+                            guardianEmail: email
+                        });
+                        showStatus("Invitation Sent", `Guardian request successfully linked to ${email}.`);
+                        emailInput.value = "";
+                    } catch (err) {
+                        const subject = encodeURIComponent("Securo Guardian Invitation");
+                        const body = encodeURIComponent(`Hi, I'm inviting you to be my guardian on Securo so you can monitor my campus safety and receive live SOS alerts.\n\nPlease register or sign in here: ${guardianUrl}`);
+                        window.open(`mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`, '_blank');
+                        showStatus("Invite Ready", `Email draft opened to send the registration link to ${email}.`);
+                    } finally {
+                        sendEmailBtn.disabled = false;
+                        sendEmailBtn.innerHTML = prevBtnHtml;
+                    }
+                };
+                emailInput.onkeydown = (e) => {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        sendEmailBtn.click();
+                    }
+                };
+            }
             const closeBtn = document.getElementById("closeInviteParentBtn");
             if (closeBtn) {
                 closeBtn.onclick = () => modal.classList.remove("active");
@@ -11724,7 +11766,24 @@
             <h3 class="status-title" style="font-size: 1.25rem;">Invite Parent or Guardian</h3>
             <p class="status-msg" style="font-size: 0.85rem; margin-bottom: 14px;">
                 Share your unique link with your parents so they can monitor your safety and live SOS alerts.
-            </p>
+            <!-- (2026-07-13) Add guardian email input; prev: invite link box only -->
+            <div class="guardian-invite-email-wrap" style="width: 100%; margin-bottom: 14px;">
+                <label for="guardianInviteEmailInput" style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--ink); margin-bottom: 6px; text-align: left;">Guardian's Email Address</label>
+                <div style="display: flex; gap: 8px; width: 100%;">
+                    <input type="email" id="guardianInviteEmailInput" placeholder="e.g. parent@gmail.com" style="flex: 1; min-width: 0; height: 44px; border: 1.5px solid rgba(90, 31, 224, 0.22); border-radius: 12px; padding: 0 12px; font-size: 0.88rem; outline: none; font-family: inherit; background: #faf9fd; box-sizing: border-box;">
+                    <button type="button" class="invite-btn-primary" id="sendGuardianInviteEmailBtn" style="width: auto; padding: 0 16px; height: 44px; border-radius: 12px; white-space: nowrap; font-size: 0.88rem; flex-shrink: 0;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">send</span>
+                        <span>Send</span>
+                    </button>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; width: 100%; margin-bottom: 12px; gap: 10px;">
+                <div style="flex: 1; height: 1px; background: rgba(0,0,0,0.08);"></div>
+                <span style="font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase;">or share link</span>
+                <div style="flex: 1; height: 1px; background: rgba(0,0,0,0.08);"></div>
+            </div>
+
             <div class="invite-link-box" id="inviteLinkBox">
                 <span id="guardianInviteUrlText" class="invite-url-text">Generating link...</span>
             </div>

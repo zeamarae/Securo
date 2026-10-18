@@ -11,23 +11,18 @@
     <link rel="stylesheet" href="preloader.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="preloader.js"></script>
+    <!-- (2026-07-13) Redirect mobile view to index.html; was staying on landing -->
     <script>
         (function () {
-            const isApk = Boolean(
-                window.Capacitor?.isNativePlatform?.() ||
-                window.Capacitor ||
-                window.location.protocol === 'file:' ||
-                window.location.protocol === 'capacitor:'
-            );
-            const isMobile = window.innerWidth <= 768 || window.screen.width <= 768 || (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            if (isApk || isMobile) {
-                window.location.replace("role-selection.html");
-                return;
+            function checkMobileAndRedirect() {
+                const isMobile = window.innerWidth <= 768 || window.screen.width <= 768 || (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                if (isMobile) {
+                    window.location.replace("index.html");
+                }
             }
-            const token = localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_session_token');
-            if (token) {
-                window.location.replace("index.html");
-            }
+            checkMobileAndRedirect();
+            window.addEventListener('resize', checkMobileAndRedirect);
+            window.addEventListener('orientationchange', checkMobileAndRedirect);
         })();
     </script>
 
@@ -148,25 +143,35 @@
             display: block;
         }
 
+        /* (2026-07-13) Set purple bg on active nav link; was primary text color */
         .nav-links {
             display: flex;
             align-items: center;
-            gap: 32px;
+            gap: 8px;
             list-style: none;
         }
 
         .nav-links a {
             text-decoration: none;
             color: var(--ink-muted);
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             font-weight: 600;
-            transition: color 0.2s ease;
+            padding: 8px 16px;
+            border-radius: 999px;
+            transition: all 0.25s ease;
+            display: inline-block;
         }
 
-        .nav-links a:hover,
-        .nav-links a.active {
+        .nav-links a:hover {
             color: var(--primary);
+            background: rgba(90, 31, 224, 0.08);
+        }
+
+        .nav-links a.active {
+            color: #ffffff;
+            background: var(--primary);
             font-weight: 700;
+            box-shadow: 0 4px 14px rgba(90, 31, 224, 0.28);
         }
 
         .nav-actions {
@@ -746,11 +751,12 @@
             margin-bottom: 50px;
         }
 
+        /* (2026-07-13) Prevent badge wrap with nowrap; was wrapping across lines */
         .role-portal-card {
             background: var(--bg);
             border: 2px solid var(--line);
             border-radius: var(--radius-xl);
-            padding: 40px 32px;
+            padding: 38px 22px;
             display: flex;
             flex-direction: column;
             text-align: left;
@@ -776,6 +782,7 @@
             top: -14px;
             left: 50%;
             transform: translateX(-50%);
+            white-space: nowrap;
             background: linear-gradient(135deg, var(--primary), var(--primary-strong));
             color: #ffffff;
             font-size: 0.68rem;
@@ -825,7 +832,7 @@
             color: var(--ink-muted);
             line-height: 1.55;
             margin-bottom: 24px;
-            min-height: 44px;
+            min-height: 68px;
         }
 
         /* Demo Credentials Pill Box */
@@ -876,17 +883,20 @@
             border: 1px solid rgba(90, 31, 224, 0.12);
         }
 
+        /* (2026-07-13) Prevent button text break and unify sizing; was wrapping */
         .role-cta-btn {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
             width: 100%;
-            padding: 14px 20px;
+            padding: 13px 12px;
             border-radius: 14px;
             text-decoration: none;
             font-weight: 700;
-            font-size: 0.98rem;
+            font-size: 0.88rem;
+            white-space: nowrap;
+            box-sizing: border-box;
             transition: all 0.25s ease;
             margin-top: auto;
         }
@@ -1334,7 +1344,8 @@
     <!-- Navigation Header -->
     <header class="navbar-main">
         <div class="page-container nav-content">
-            <a href="javascript:void(0)" onclick="if(window.history.length>1){window.history.back();}else{window.location.href='role-selection.html';}" class="brand-logo-wrap" title="Securo Safety Platform">
+            <!-- (2026-07-13) Brand logo scrolls to hero; was history.back navigation -->
+            <a href="#hero" class="brand-logo-wrap" title="Securo Safety Platform">
                 <img src="logo with text.png" alt="Securo Logo" class="brand-logo-img">
             </a>
 
@@ -1349,9 +1360,8 @@
             </nav>
 
             <div class="nav-actions">
-                <a href="#roles" class="btn-ghost">Demo Access</a>
-                <!-- (2026-07-13) Link Enter Portal to role selection; was conflict -->
-                <a href="role-selection.html" class="btn-primary" id="enterPortalBtn">
+                <!-- (2026-07-13) Link enter portal to roles section; was role selection -->
+                <a href="#roles" class="btn-primary" id="enterPortalBtn">
                     <span>Enter Portal</span>
                     <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
                 </a>
@@ -1802,7 +1812,31 @@
             }
         }
 
-        // (2026-07-13) Smooth scrolling for all page anchors; was default jump
+        // (2026-07-13) Incremental slow smooth scroll; was default browser scroll
+        let scrollAnimationId = null;
+        function slowScrollTo(targetY) {
+            if (scrollAnimationId) cancelAnimationFrame(scrollAnimationId);
+            const startY = window.pageYOffset || document.documentElement.scrollTop;
+            const distance = targetY - startY;
+            if (Math.abs(distance) < 2) return;
+            const duration = Math.min(2200, Math.max(1000, Math.abs(distance) * 0.7));
+            const startTime = performance.now();
+            function easeInOutCubic(t) {
+                return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+            }
+            function step(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                window.scrollTo(0, startY + (distance * easeInOutCubic(progress)));
+                if (progress < 1) {
+                    scrollAnimationId = requestAnimationFrame(step);
+                } else {
+                    scrollAnimationId = null;
+                }
+            }
+            scrollAnimationId = requestAnimationFrame(step);
+        }
+
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 const targetId = this.getAttribute('href');
@@ -1811,13 +1845,11 @@
                 if (targetEl) {
                     e.preventDefault();
                     const navHeight = 84;
-                    const targetPosition = targetEl.getBoundingClientRect().top + window.pageYOffset - navHeight;
-                    window.scrollTo({
-                        top: Math.max(0, targetPosition),
-                        behavior: 'smooth'
-                    });
-                    if (history.pushState) {
-                        history.pushState(null, null, targetId);
+                    const targetPosition = Math.max(0, targetEl.getBoundingClientRect().top + window.pageYOffset - navHeight);
+                    // (2026-07-13) Trigger slow incremental smooth scroll; was missing call
+                    slowScrollTo(targetPosition);
+                    if (history.replaceState) {
+                        history.replaceState(null, null, targetId);
                     }
                 }
             });
@@ -1826,23 +1858,27 @@
         // (2026-07-13) Sync active nav link on scroll; was unmonitored scroll
         const landingSections = document.querySelectorAll('section[id], header[id]');
         const landingNavLinks = document.querySelectorAll('.nav-links a');
-        window.addEventListener('scroll', () => {
-            let currentSec = '';
-            const scrollPos = window.pageYOffset + 120;
-            landingSections.forEach(sec => {
-                const top = sec.offsetTop;
-                const height = sec.offsetHeight;
-                if (scrollPos >= top && scrollPos < top + height) {
-                    currentSec = '#' + sec.getAttribute('id');
-                }
-            });
+        function updateActiveNav() {
+            let currentSec = '#hero';
+            const scrollPos = window.pageYOffset + 140;
+            const nearBottom = (window.innerHeight + window.pageYOffset) >= (document.documentElement.scrollHeight - 60);
+            if (nearBottom) {
+                currentSec = '#roles';
+            } else {
+                landingSections.forEach(sec => {
+                    const top = sec.offsetTop;
+                    const height = sec.offsetHeight;
+                    if (scrollPos >= top && scrollPos < top + height) {
+                        currentSec = '#' + sec.getAttribute('id');
+                    }
+                });
+            }
             landingNavLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href') === currentSec) {
-                    link.classList.add('active');
-                }
+                link.classList.toggle('active', link.getAttribute('href') === currentSec);
             });
-        }, { passive: true });
+        }
+        window.addEventListener('scroll', updateActiveNav, { passive: true });
+        updateActiveNav();
     </script>
 </body>
 </html>
