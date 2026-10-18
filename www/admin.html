@@ -14,6 +14,10 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+    <!-- (2026-07-13) Add dramatic intro preloader; was no preloader -->
+    <link rel="stylesheet" href="preloader.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="preloader.js"></script>
     <style>
         /* (2026-07-13) Set light theme colors; was dark palette */
         :root {
@@ -2332,9 +2336,9 @@
                                     <div class="eyebrow">Directory</div>
                                     <h2 class="chart-title">User Directory</h2>
                                     <p class="chart-copy">Review users first, then use the 3-dot action button to edit each account in a modal.</p>
-                                </div>
                                 <div class="section-actions" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
                                     <input type="search" id="managementUserSearch" class="glass-input search-input" placeholder="Search users (students, parents, staff)...">
+                                    <!-- (2026-07-13) Add directory role filter chips for user and parent; was absent -->
                                     <div class="user-role-filter-chips" style="display:inline-flex; gap:6px;">
                                         <!-- (2026-07-13) User and parent filter chips; was absent -->
                                         <button type="button" class="user-filter-btn active" data-user-filter="all">All</button>
@@ -3362,8 +3366,9 @@
             }
         }
 
-        // (2026-07-13) Filter directory by user and parent roles; was text search only
         let currentManagementRoleFilter = 'all';
+
+        // (2026-07-13) Filter directory by user and parent roles; was text search only
         function renderManagedUsers() {
             if (!managementUserList) return;
             const term = (managementUserSearch?.value || '').trim().toLowerCase();
@@ -3633,7 +3638,7 @@
 
             // 4. GAD Safety Posts
             (cachedPosts || []).forEach(post => {
-                const dateObj = post.createdAt?.toDate ? post.createdAt.toDate() : (post.createdAt || post.timestamp ? new Date(post.createdAt || post.timestamp) : new Date()));
+                const dateObj = post.createdAt?.toDate ? post.createdAt.toDate() : (post.createdAt || post.timestamp ? new Date(post.createdAt || post.timestamp) : new Date());
                 const dateStr = getLocalDateString(dateObj);
                 const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
                 const reportNo = `SEC-${dateStr.replace(/-/g, '')}-${String(counter++).padStart(4, '0')}`;
@@ -3662,18 +3667,19 @@
             const searchFilter = (document.getElementById('reportSearchInput')?.value || '').trim().toLowerCase();
             const container = document.getElementById('dailyReportTableContainer');
 
-            if (!datePicker) return;
-            if (!datePicker.value) {
-                datePicker.value = getLocalDateString(new Date());
+            const allRecords = await fetchAllSafetyRecords();
+            cachedDailyReportRecords = allRecords;
+
+            if (datePicker && !datePicker.value) {
+                datePicker.value = (allRecords.length > 0) ? allRecords[0].date : getLocalDateString(new Date());
             }
-            const selectedDate = datePicker.value;
+            let selectedDate = datePicker?.value || '';
 
             if (container) {
                 container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8;"><p style="margin:8px 0 0; font-size:0.85rem;">Retrieving Firebase records for ' + selectedDate + '...</p></div>';
             }
 
-            const allRecords = await fetchAllSafetyRecords();
-            cachedDailyReportRecords = allRecords;
+            // (2026-07-13) Filter safety records by selected date; was duplicated const
 
             // Filter by date
             let filtered = allRecords.filter(r => r.date === selectedDate);

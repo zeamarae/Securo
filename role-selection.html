@@ -380,14 +380,15 @@
     </div>
 
     <script>
+        /* (2026-07-13) Load Securo animation on role selection; was immediate location change */
         function selectRole(role) {
             localStorage.setItem('securo_preferred_role', role);
-            // (2026-07-13) Set role transition flag to enter login page; was no flag
             sessionStorage.setItem('securo_from_role_selection', '1');
-            if (role === 'student' || role === 'staff') {
-                window.location.href = 'login.html';
+            const target = (role === 'student' || role === 'staff') ? 'login.html' : 'guardian.html';
+            if (window.showSecuroPreloader) {
+                window.showSecuroPreloader(target);
             } else {
-                window.location.href = 'guardian.html';
+                window.location.href = target;
             }
         }
 

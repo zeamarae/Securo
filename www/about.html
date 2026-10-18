@@ -11,6 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="logo.png">
+    <!-- (2026-07-13) Add dramatic intro preloader; was no preloader -->
+    <link rel="stylesheet" href="preloader.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="preloader.js"></script>
 
     <!-- (2026-07-13) Add About Us page styles matching Securo theme; was missing -->
     <style>
@@ -583,23 +587,8 @@
                 <p class="programs-subtitle">Empowering the next generation through diverse tech-focused disciplines</p>
             </div>
 
+            <!-- (2026-07-13) Reorder academic programs; was CS, Eng, IT, Arts, IndTech, Ed -->
             <div class="academic-programs-grid">
-                <div class="academic-card">
-                    <div class="academic-icon-wrap">
-                        <span class="material-symbols-outlined">laptop_mac</span>
-                    </div>
-                    <h3>Computer Science</h3>
-                    <p>Dive deep into algorithms, software engineering, and computational theory.</p>
-                </div>
-
-                <div class="academic-card">
-                    <div class="academic-icon-wrap">
-                        <span class="material-symbols-outlined">build</span>
-                    </div>
-                    <h3>Engineering</h3>
-                    <p>Build innovative solutions through practical engineering principles.</p>
-                </div>
-
                 <div class="academic-card">
                     <div class="academic-icon-wrap">
                         <span class="material-symbols-outlined">dns</span>
@@ -610,10 +599,18 @@
 
                 <div class="academic-card">
                     <div class="academic-icon-wrap">
-                        <span class="material-symbols-outlined">palette</span>
+                        <span class="material-symbols-outlined">water</span>
                     </div>
-                    <h3>Multimedia Arts</h3>
-                    <p>Design compelling digital narratives through animation, visual effects, and media production.</p>
+                    <h3>Fisheries</h3>
+                    <p>Pioneer sustainable marine resources, aquatic biology, and aquaculture technologies.</p>
+                </div>
+
+                <div class="academic-card">
+                    <div class="academic-icon-wrap">
+                        <span class="material-symbols-outlined">hotel</span>
+                    </div>
+                    <h3>Hospitality Management</h3>
+                    <p>Lead service excellence, global tourism, and modern hospitality operations.</p>
                 </div>
 
                 <div class="academic-card">
@@ -626,10 +623,18 @@
 
                 <div class="academic-card">
                     <div class="academic-icon-wrap">
+                        <span class="material-symbols-outlined">engineering</span>
+                    </div>
+                    <h3>Industrial Engineering</h3>
+                    <p>Optimize complex industrial operations, productivity systems, and modern facilities.</p>
+                </div>
+
+                <div class="academic-card">
+                    <div class="academic-icon-wrap">
                         <span class="material-symbols-outlined">school</span>
                     </div>
-                    <h3>Education & Sciences</h3>
-                    <p>Inspire future generations with rigorous scientific pedagogy and educational leadership.</p>
+                    <h3>Education</h3>
+                    <p>Inspire future generations with rigorous pedagogy, curriculum design, and educational leadership.</p>
                 </div>
             </div>
         </section>

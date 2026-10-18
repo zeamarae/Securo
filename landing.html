@@ -1,36 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Securo - The Next-Gen Campus Safety & Attendance Ecosystem</title>
-    <meta name="description" content="Securo is the shared campus safety, attendance, and emergency protection platform connecting students, parents, and security in real time.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <!-- (2026-07-13) Remove Ecosystem from title; was Campus Safety & Attendance Ecosystem -->
+    <title>Securo - The Next-Gen Campus Safety & Attendance Platform</title>
+    <meta name="description"
+        content="Securo is the shared campus safety, attendance, and emergency protection platform connecting students, parents, and security in real time.">
     <link rel="icon" type="image/png" href="logo.png">
 
     <!-- (2026-07-13) Preloader & redirect mobile to role-selection; was index redirect -->
     <link rel="stylesheet" href="preloader.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="preloader.js"></script>
-    <!-- (2026-07-13) Redirect mobile view to index.html; was staying on landing -->
+    <!-- (2026-07-13) Native app route check; was file-protocol redirect -->
     <script>
         (function () {
-            function checkMobileAndRedirect() {
-                const isMobile = window.innerWidth <= 768 || window.screen.width <= 768 || (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                if (isMobile) {
-                    window.location.replace("index.html");
-                }
+            const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web')) ||
+                window.location.protocol.startsWith('capacitor:') ||
+                !!window.cordova;
+            if (isNativeApk) {
+                const isLoggedIn = Boolean(localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated') === '1');
+                window.location.replace(isLoggedIn ? 'index.html' : 'role-selection.html');
             }
-            checkMobileAndRedirect();
-            window.addEventListener('resize', checkMobileAndRedirect);
-            window.addEventListener('orientationchange', checkMobileAndRedirect);
         })();
     </script>
 
     <!-- Typography & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
 
     <style>
         :root {
@@ -62,10 +66,12 @@
             padding: 0;
         }
 
-        /* (2026-07-13) Set smooth scrolling and header scroll padding; was bare */
+        /* (2026-07-13) Prevent viewport horizontal overflow on mobile; was body only */
         html {
             scroll-behavior: smooth;
             scroll-padding-top: 88px;
+            overflow-x: hidden;
+            width: 100%;
         }
 
         body {
@@ -74,6 +80,7 @@
             color: var(--ink);
             line-height: 1.6;
             overflow-x: hidden;
+            width: 100%;
             -webkit-font-smoothing: antialiased;
         }
 
@@ -214,12 +221,13 @@
             box-shadow: 0 12px 30px rgba(90, 31, 224, 0.36);
         }
 
-        /* Hero Section (Matching Reference Layout) */
+        /* (2026-07-13) Set explicit overview bg var(--bg); was unassigned */
         .hero-section {
             padding: 60px 0 100px;
             min-height: calc(100vh - 80px);
             display: flex;
             align-items: center;
+            background: var(--bg);
         }
 
         .hero-grid {
@@ -268,12 +276,12 @@
             border-radius: 12px;
             text-decoration: none;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
         }
 
         .store-badge-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 24px rgba(0,0,0,0.22);
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
         }
 
         .store-badge-btn svg {
@@ -340,8 +348,13 @@
         }
 
         @keyframes pulsePetals {
-            0% { transform: scale(1) rotate(0deg); }
-            100% { transform: scale(1.04) rotate(2deg); }
+            0% {
+                transform: scale(1) rotate(0deg);
+            }
+
+            100% {
+                transform: scale(1.04) rotate(2deg);
+            }
         }
 
         /* Hero Right: iPhone Showcase */
@@ -403,7 +416,7 @@
             font-size: 16px;
         }
 
-        /* Realistic iPhone Mockup Frame */
+        /* (2026-07-13) Set flex column for aspect-ratio responsive frame; was block */
         .iphone-mockup-wrap {
             position: relative;
             width: 340px;
@@ -413,6 +426,8 @@
             padding: 12px;
             box-shadow: var(--shadow-phone), 0 0 0 4px #423d5a, 0 0 0 8px #1e1b2e;
             transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
         }
 
         .iphone-mockup-wrap:hover {
@@ -451,10 +466,12 @@
             background: #111422;
         }
 
-        /* Screen Display Screen Frame */
+        /* (2026-07-13) Flex child fits aspect-ratio parent cleanly; was height 100% only */
         .iphone-screen {
             width: 100%;
             height: 100%;
+            flex: 1;
+            min-height: 0;
             border-radius: 44px;
             overflow: hidden;
             background: #ffffff;
@@ -487,8 +504,8 @@
             align-items: center;
             gap: 8px;
             white-space: nowrap;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             z-index: 50;
         }
 
@@ -502,8 +519,17 @@
         }
 
         @keyframes pulseGlow {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.3); opacity: 0.7; }
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.3);
+                opacity: 0.7;
+            }
         }
 
         /* Section Title Block */
@@ -649,10 +675,12 @@
             color: var(--ink-muted);
         }
 
-        /* Dual View Experience Showcase */
+        /* (2026-07-13) Match dual-view bg to overview var(--bg); was purple gradient */
         .dual-view-section {
             padding: 110px 0;
-            background: linear-gradient(180deg, var(--bg) 0%, #f6f2ff 100%);
+            background: var(--bg);
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
         }
 
         .dual-view-grid {
@@ -737,18 +765,54 @@
             transform: scale(1.03);
         }
 
-        /* Role Selection Portal Section (Bottom Requirement) */
+        /* (2026-07-13) Match roles bg to features #ffffff; was #ffffff */
         .roles-section {
-            padding: 120px 0 100px;
+            padding: 80px 0 50px;
             background: #ffffff;
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
             position: relative;
         }
 
+        /* (2026-07-13) Match about-us bg to overview var(--bg); was purple gradient */
+        .about-us-section {
+            padding: 80px 0 100px;
+            background: var(--bg);
+            border-top: 1px solid var(--line);
+            border-bottom: 1px solid var(--line);
+            position: relative;
+        }
+
+        /* (2026-07-13) Responsive 4-card grid for roles; was repeat(3, 1fr) */
         .roles-grid {
             display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        /* (2026-07-13) Set 3 containers per line for team grid; was auto-fit 4 cards */
+        .team-grid {
+            display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 32px;
-            margin-bottom: 50px;
+            gap: 24px;
+            max-width: 980px;
+            margin: 0 auto;
+        }
+
+        .team-member-card {
+            background: white;
+            border: 1px solid rgba(90, 31, 224, 0.1);
+            border-radius: 20px;
+            padding: 24px 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .team-member-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 14px 30px rgba(90, 31, 224, 0.08);
         }
 
         /* (2026-07-13) Prevent badge wrap with nowrap; was wrapping across lines */
@@ -1009,12 +1073,13 @@
             background: #100d20;
             color: #ffffff;
             padding: 70px 0 40px;
-            border-top: 1px solid rgba(255,255,255,0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
         }
 
+        /* (2026-07-13) 3-column footer grid without Ecosystem; was 4 columns */
         .footer-grid {
             display: grid;
-            grid-template-columns: 1.4fr 1fr 1fr 1fr;
+            grid-template-columns: 1.6fr 1fr 1fr;
             gap: 50px;
             margin-bottom: 60px;
         }
@@ -1064,9 +1129,10 @@
             color: #ffffff;
         }
 
+        /* (2026-07-13) Move hotlines to dedicated page; was inline in footer */
         .footer-bottom {
             padding-top: 30px;
-            border-top: 1px solid rgba(255,255,255,0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -1074,11 +1140,11 @@
             font-size: 0.85rem;
         }
 
-        /* Responsive Breakpoints */
+        /* (2026-07-13) Polished responsive breakpoints for tablet and mobile; was messy wrap */
         @media (max-width: 1080px) {
             .hero-grid {
                 grid-template-columns: 1fr;
-                gap: 50px;
+                gap: 40px;
                 text-align: center;
             }
 
@@ -1101,24 +1167,56 @@
                 display: none;
             }
 
-            .features-grid,
+            .features-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+
             .roles-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
             }
 
             .dual-view-grid {
                 grid-template-columns: 1fr;
+                gap: 28px;
+            }
+
+            .team-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
             }
 
             .footer-grid {
                 grid-template-columns: 1fr 1fr;
+                gap: 36px;
             }
         }
 
-        /* (2026-07-13) Add mobile responsive styles; was fixed desktop layout */
+        /* (2026-07-13) Refine mobile containers & cards; was bulky mobile layout */
         @media (max-width: 768px) {
+
+            html,
+            body {
+                overflow-x: hidden;
+                width: 100%;
+                max-width: 100vw;
+            }
+
+            .ambient-glow-top,
+            .ambient-glow-bottom {
+                display: none !important;
+            }
+
             .page-container {
-                padding: 0 20px;
+                padding: 0 16px;
+                width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+
+            .navbar-main {
+                padding: 10px 0;
             }
 
             .nav-links {
@@ -1126,7 +1224,8 @@
             }
 
             .brand-logo-img {
-                height: 32px;
+                height: 28px;
+                max-width: 130px;
             }
 
             .nav-actions .btn-ghost {
@@ -1134,152 +1233,456 @@
             }
 
             .nav-actions .btn-primary {
-                padding: 8px 16px;
-                font-size: 0.84rem;
+                padding: 7px 14px;
+                font-size: 0.8rem;
+                gap: 4px;
             }
 
+            /* Hero Section */
             .hero-section {
-                padding: 30px 0 50px;
+                padding: 20px 0 36px;
                 min-height: auto;
             }
 
             .hero-grid {
-                gap: 36px;
+                gap: 24px;
+                text-align: center;
+            }
+
+            .hero-left {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                width: 100%;
             }
 
             .hero-headline {
-                font-size: clamp(2.4rem, 8vw, 3.6rem);
-                margin-bottom: 20px;
+                order: 1;
+                font-size: clamp(1.85rem, 6.8vw, 2.3rem);
+                line-height: 1.15;
+                margin-bottom: 12px;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 4px 10px;
+            }
+
+            .hero-headline span {
+                display: inline-block;
             }
 
             .hero-subhead {
-                font-size: 1.25rem;
+                order: 2;
+                font-size: 1.02rem;
+                line-height: 1.35;
+                margin-bottom: 10px;
             }
 
             .hero-description {
-                font-size: 1rem;
-                margin-bottom: 24px;
+                order: 3;
+                font-size: 0.88rem;
+                line-height: 1.5;
+                margin-bottom: 18px;
+                max-width: 100%;
             }
 
             .app-store-badges {
-                flex-wrap: wrap;
+                order: 4;
+                display: flex;
+                flex-direction: row;
+                justify-content: center;
                 gap: 10px;
-                margin-bottom: 20px;
+                margin-bottom: 22px;
+                width: 100%;
             }
 
             .store-badge-btn {
-                padding: 8px 16px;
+                padding: 8px 14px;
+                font-size: 0.8rem;
+                border-radius: 10px;
+            }
+
+            /* Trailer Mockup */
+            .hero-right {
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
 
             .trailer-tabs-bar {
                 width: 100%;
                 max-width: 100%;
+                display: flex;
+                align-items: center;
                 justify-content: flex-start;
-                padding: 4px;
+                padding: 5px;
                 gap: 6px;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                margin-bottom: 16px;
+                background: rgba(255, 255, 255, 0.95);
+                border: 1px solid var(--line-primary);
+                border-radius: 14px;
+                box-shadow: 0 4px 14px rgba(90, 31, 224, 0.05);
+            }
+
+            .trailer-tabs-bar::-webkit-scrollbar {
+                display: none;
             }
 
             .trailer-pill {
+                flex-shrink: 0;
                 padding: 6px 12px;
-                font-size: 0.75rem;
+                font-size: 0.74rem;
+                gap: 4px;
+                border-radius: 9px;
+            }
+
+            .trailer-pill .material-symbols-outlined {
+                font-size: 15px;
             }
 
             .iphone-mockup-wrap {
-                width: min(320px, 86vw);
+                width: min(220px, 66vw);
                 height: auto;
                 aspect-ratio: 340 / 690;
-                border-radius: 46px;
-                padding: 10px;
-                box-shadow: 0 20px 50px rgba(18, 15, 38, 0.14), 0 0 0 3px #423d5a, 0 0 0 6px #1e1b2e;
+                border-radius: 36px;
+                padding: 7px;
+                box-shadow: 0 14px 36px rgba(18, 15, 38, 0.12), 0 0 0 2px #423d5a, 0 0 0 4px #1e1b2e;
+                display: flex;
+                flex-direction: column;
+                margin: 0 auto;
+                position: relative;
             }
 
             .iphone-screen {
-                border-radius: 38px;
+                flex: 1;
+                min-height: 0;
+                width: 100%;
+                height: 100%;
+                border-radius: 30px;
+                overflow: hidden;
+                position: relative;
+                background: #ffffff;
+            }
+
+            .iphone-screenshot-img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                object-position: top center;
+                display: block;
             }
 
             .iphone-island {
-                top: 14px;
-                width: 88px;
-                height: 22px;
+                top: 10px;
+                width: 70px;
+                height: 16px;
+                border-radius: 10px;
+                padding: 0 5px;
             }
 
             .island-camera {
-                width: 8px;
-                height: 8px;
+                width: 5px;
+                height: 5px;
             }
 
             .island-sensor {
-                width: 6px;
-                height: 6px;
+                width: 4px;
+                height: 4px;
             }
 
             .phone-floating-pill {
-                bottom: 16px;
-                font-size: 0.72rem;
-                padding: 6px 12px;
-                max-width: 88%;
+                bottom: 10px;
+                font-size: 0.65rem;
+                padding: 5px 10px;
+                gap: 5px;
+                max-width: calc(100% - 16px);
+                width: max-content;
                 white-space: normal;
                 text-align: center;
+                line-height: 1.25;
             }
 
-            .features-section,
-            .dual-view-section,
-            .roles-section {
-                padding: 60px 0;
+            /* Sections General */
+            .section-header {
+                text-align: center;
+                margin: 0 auto 22px;
+            }
+
+            .section-eyebrow {
+                font-size: 0.72rem;
+                padding: 4px 12px;
+                margin-bottom: 8px;
             }
 
             .section-title {
-                font-size: clamp(1.8rem, 6vw, 2.4rem);
+                font-size: clamp(1.6rem, 5.5vw, 1.95rem);
+                line-height: 1.18;
+                margin-bottom: 8px;
+                letter-spacing: -0.02em;
             }
 
-            .section-desc {
-                font-size: 0.98rem;
+            .section-lead {
+                font-size: 0.88rem;
+                line-height: 1.48;
             }
 
-            .perspective-card {
-                padding: 24px 20px;
+            /* Features Section */
+            .features-section,
+            .roles-section {
+                background: #ffffff;
+                padding: 40px 0;
             }
 
-            .perspective-card h3 {
-                font-size: 1.5rem;
+            .dual-view-section,
+            .about-us-section {
+                background: var(--bg);
+                padding: 40px 0;
             }
 
-            .perspective-screenshot-box {
-                height: 260px;
+            .features-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
             }
 
             .feature-card {
-                padding: 24px 20px;
+                padding: 18px 16px;
+                border-radius: 16px;
+                background: #ffffff;
+                border: 1px solid rgba(90, 31, 224, 0.12);
+                box-shadow: 0 4px 16px rgba(18, 15, 38, 0.04);
+            }
+
+            .feature-icon-box {
+                width: 42px;
+                height: 42px;
+                border-radius: 12px;
+                margin-bottom: 10px;
+            }
+
+            .feature-icon-box .material-symbols-outlined {
+                font-size: 22px;
+            }
+
+            .feature-card h3 {
+                font-size: 1.05rem;
+                line-height: 1.3;
+                margin-bottom: 6px;
+            }
+
+            .feature-card p {
+                font-size: 0.85rem;
+                line-height: 1.45;
+                margin-bottom: 12px;
+            }
+
+            .feature-badge-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+
+            .feature-tag {
+                font-size: 0.7rem;
+                padding: 3px 8px;
+                border-radius: 6px;
+            }
+
+            /* Dual View Section */
+            .dual-view-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .perspective-card {
+                padding: 20px 16px;
+                border-radius: 18px;
+                background: #ffffff;
+                border: 1px solid rgba(90, 31, 224, 0.14);
+                box-shadow: 0 6px 20px rgba(90, 31, 224, 0.05);
+            }
+
+            .perspective-tag {
+                font-size: 0.72rem;
+                padding: 4px 10px;
+                margin-bottom: 10px;
+            }
+
+            .perspective-card h3 {
+                font-size: 1.18rem;
+                line-height: 1.25;
+                margin-bottom: 6px;
+            }
+
+            .perspective-card p {
+                font-size: 0.86rem;
+                line-height: 1.45;
+                margin-bottom: 14px;
+            }
+
+            .perspective-screenshot-box {
+                width: 100%;
+                height: auto;
+                aspect-ratio: 16 / 10;
+                border-radius: 12px;
+                overflow: hidden;
+                border: 1px solid rgba(18, 15, 38, 0.08);
+                box-shadow: 0 4px 16px rgba(18, 15, 38, 0.06);
+            }
+
+            /* Roles Section */
+            .roles-section {
+                padding: 36px 0;
+            }
+
+            .roles-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                margin-top: 14px;
             }
 
             .role-portal-card {
-                padding: 28px 20px;
+                padding: 20px 16px;
+                border-radius: 18px;
+                background: #ffffff;
+                border: 1.5px solid rgba(18, 15, 38, 0.08);
+                box-shadow: 0 4px 16px rgba(18, 15, 38, 0.04);
             }
 
-            .demo-instant-banner {
-                flex-direction: column;
-                text-align: center;
+            .role-portal-card.featured {
+                border-color: var(--primary);
+                box-shadow: 0 6px 22px rgba(90, 31, 224, 0.1);
             }
 
-            .banner-info {
-                flex-direction: column;
+            .role-portal-card.featured::before {
+                font-size: 0.62rem;
+                padding: 3px 12px;
+                top: -11px;
+                letter-spacing: 0.06em;
             }
 
-            .banner-actions {
+            .role-avatar-circle {
+                width: 44px;
+                height: 44px;
+                border-radius: 12px;
+                margin-bottom: 10px;
+            }
+
+            .role-avatar-circle .material-symbols-outlined {
+                font-size: 24px !important;
+            }
+
+            .role-portal-card h3 {
+                font-size: 1.12rem;
+                margin-bottom: 4px;
+            }
+
+            .role-desc {
+                font-size: 0.84rem;
+                line-height: 1.42;
+                margin-bottom: 14px;
+            }
+
+            .role-cta-btn {
                 width: 100%;
+                padding: 11px 16px;
+                font-size: 0.85rem;
+                font-weight: 700;
+                justify-content: center;
+                border-radius: 11px;
+            }
+
+            /* About Us Section */
+            .about-us-section {
+                padding: 36px 0 44px;
+            }
+
+            .team-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .team-member-card {
+                padding: 14px 10px;
+                border-radius: 14px;
+                background: #ffffff;
+                border: 1px solid rgba(90, 31, 224, 0.1);
+                box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
                 justify-content: center;
             }
 
+            .team-member-card>div:first-child {
+                width: 42px !important;
+                height: 42px !important;
+                font-size: 0.95rem !important;
+                margin-bottom: 8px !important;
+            }
+
+            .team-member-card h4 {
+                font-size: 0.86rem !important;
+                line-height: 1.25;
+                margin: 0 !important;
+            }
+
+            .team-member-card p {
+                font-size: 0.72rem !important;
+                margin: 3px 0 0 !important;
+            }
+
+            /* Footer */
+            .footer-main {
+                padding: 36px 0 24px;
+            }
+
             .footer-grid {
-                grid-template-columns: 1fr;
+                display: flex;
+                flex-direction: column;
+                gap: 22px;
+                margin-bottom: 24px;
+            }
+
+            .footer-brand h2 {
+                font-size: 1.3rem;
+                margin-bottom: 6px;
+            }
+
+            .footer-brand p {
+                font-size: 0.84rem;
+                line-height: 1.48;
+            }
+
+            .footer-col h4 {
+                font-size: 0.88rem;
+                margin-bottom: 8px;
+            }
+
+            .footer-col ul li {
+                margin-bottom: 7px;
+            }
+
+            .footer-col ul li a {
+                font-size: 0.82rem;
             }
 
             .footer-bottom {
+                padding-top: 16px;
+                display: flex;
                 flex-direction: column;
-                gap: 16px;
+                gap: 6px;
                 text-align: center;
+                font-size: 0.75rem;
             }
         }
 
@@ -1289,35 +1692,31 @@
             }
 
             .hero-headline {
-                font-size: 2.2rem;
+                font-size: 1.8rem;
             }
 
             .store-badge-btn {
-                width: 100%;
-                justify-content: center;
+                flex: 1;
+                max-width: 165px;
+                padding: 7px 8px;
+                gap: 6px;
+            }
+
+            .store-title {
+                font-size: 0.74rem;
+            }
+
+            .caption {
+                font-size: 0.55rem;
             }
 
             .iphone-mockup-wrap {
-                width: min(290px, 88vw);
-                border-radius: 40px;
-                padding: 8px;
-            }
-
-            .iphone-screen {
-                border-radius: 32px;
-            }
-
-            .perspective-screenshot-box {
-                height: 220px;
-            }
-
-            .credentials-box {
-                padding: 12px;
-                font-size: 0.78rem;
+                width: min(210px, 68vw);
             }
         }
     </style>
 </head>
+
 <body>
 
     <!-- (2026-07-13) Preloader & signup nav button; was demo access & enter portal -->
@@ -1350,18 +1749,20 @@
             </a>
 
             <nav>
+                <!-- (2026-07-13) Reorder nav & rename Role Selection; was About Us first -->
                 <ul class="nav-links">
                     <li><a href="#hero">Overview</a></li>
                     <li><a href="#features">Features</a></li>
-                    <li><a href="#dual-view">Student vs Guardian</a></li>
+                    <li><a href="#dual-view">Student vs. Guardian</a></li>
+                    <li><a href="#roles">Role Selection</a></li>
                     <li><a href="#about-us">About Us</a></li>
-                    <li><a href="#roles">Enter Portal</a></li>
                 </ul>
             </nav>
 
             <div class="nav-actions">
-                <!-- (2026-07-13) Link enter portal to roles section; was role selection -->
-                <a href="#roles" class="btn-primary" id="enterPortalBtn">
+                <!-- (2026-07-13) Enter Portal loads preloader; was direct href -->
+                <a href="role-selection.html" class="btn-primary" id="enterPortalBtn"
+                    onclick="enterPortal('role-selection.html'); return false;">
                     <span>Enter Portal</span>
                     <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
                 </a>
@@ -1373,7 +1774,7 @@
         <!-- Hero Section: Editorial Headline + Apple Hardware Screenshot Showcase -->
         <section class="hero-section" id="hero">
             <div class="page-container hero-grid">
-                
+
                 <!-- Left Editorial Column -->
                 <div class="hero-left">
                     <h1 class="hero-headline">
@@ -1387,7 +1788,8 @@
                     <div class="app-store-badges">
                         <a href="#roles" class="store-badge-btn" title="Download on Apple App Store">
                             <svg viewBox="0 0 24 24">
-                                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.63-.76 1.05-1.82.93-2.87-1 .04-2.19.67-2.89 1.48-.56.64-1.05 1.71-.92 2.73 1.11.08 2.25-.58 2.88-1.34z"/>
+                                <path
+                                    d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.63-.76 1.05-1.82.93-2.87-1 .04-2.19.67-2.89 1.48-.56.64-1.05 1.71-.92 2.73 1.11.08 2.25-.58 2.88-1.34z" />
                             </svg>
                             <div class="store-badge-text">
                                 <span class="caption">Download on the</span>
@@ -1397,7 +1799,8 @@
 
                         <a href="#roles" class="store-badge-btn" title="Get it on Google Play">
                             <svg viewBox="0 0 24 24">
-                                <path d="M3.6 2.5C3.2 2.9 3 3.5 3 4.3v15.4c0 .8.2 1.4.6 1.8l9.6-9.6L3.6 2.5zm11.1 8.5l2.4-2.4-12.8-7.3c-.1 0-.2-.1-.3-.1l10.7 9.8zm0 2l-10.7 9.8c.1 0 .2-.1.3-.1l12.8-7.3-2.4-2.4zm1.4-1.4l3.1 1.8c.9.5.9 1.4 0 1.9l-3.1 1.8-1.9-1.9 1.9-1.9z"/>
+                                <path
+                                    d="M3.6 2.5C3.2 2.9 3 3.5 3 4.3v15.4c0 .8.2 1.4.6 1.8l9.6-9.6L3.6 2.5zm11.1 8.5l2.4-2.4-12.8-7.3c-.1 0-.2-.1-.3-.1l10.7 9.8zm0 2l-10.7 9.8c.1 0 .2-.1.3-.1l12.8-7.3-2.4-2.4zm1.4-1.4l3.1 1.8c.9.5.9 1.4 0 1.9l-3.1 1.8-1.9-1.9 1.9-1.9z" />
                             </svg>
                             <div class="store-badge-text">
                                 <span class="caption">GET IT ON</span>
@@ -1408,10 +1811,11 @@
 
                     <h2 class="hero-subhead">A secure student is an empowered student.</h2>
                     <p class="hero-description">
-                        Securo is your shared hub for student well-being, live campus safety, and rapid emergency intervention. Students and families stay connected through every moment of university life.
+                        Securo is your shared hub for student well-being, live campus safety, and rapid emergency
+                        intervention. Students and families stay connected through every moment of university life.
                     </p>
 
-                  
+
                 </div>
 
                 <!-- Right iPhone Interactive Trailer Mockup -->
@@ -1452,7 +1856,8 @@
                         </div>
 
                         <div class="iphone-screen">
-                            <img src="screenshots/student_map.png" alt="Securo App Live Interface" id="previewScreenImg" class="iphone-screenshot-img">
+                            <img src="screenshots/student_map.png" alt="Securo App Live Interface" id="previewScreenImg"
+                                class="iphone-screenshot-img">
                         </div>
 
                         <!-- Live Status Floating Chip -->
@@ -1473,7 +1878,8 @@
                 <div class="section-header">
                     <span class="section-eyebrow">Enterprise Architecture</span>
                     <h2 class="section-title">Engineered for Uncompromising Campus Safety</h2>
-                    <p class="section-lead">A unified multi-stakeholder platform replacing fragmented alert boxes with instant, verifiable defense.</p>
+                    <p class="section-lead">A unified multi-stakeholder platform replacing fragmented alert boxes with
+                        instant, verifiable defense.</p>
                 </div>
 
                 <div class="features-grid">
@@ -1483,7 +1889,8 @@
                             <span class="material-symbols-outlined">radar</span>
                         </div>
                         <h3>Live Geofenced Radar & Parent Watcher</h3>
-                        <p>Continuous boundary surveillance with sticky guardian presence indicators. Students instantly see which approved family members are watching over them.</p>
+                        <p>Continuous boundary surveillance with sticky guardian presence indicators. Students instantly
+                            see which approved family members are watching over them.</p>
                         <div class="feature-badge-row">
                             <span class="feature-tag">GPS Geofence</span>
                             <span class="feature-tag">Live Pulse</span>
@@ -1496,7 +1903,8 @@
                             <span class="material-symbols-outlined">emergency_home</span>
                         </div>
                         <h3>1-Tap SOS Beacon & Audio Alarm</h3>
-                        <p>High-priority incident trigger with a 5-second cancelable countdown, high-decibel audible siren, and real-time dispatcher coordinates beaconing.</p>
+                        <p>High-priority incident trigger with a 5-second cancelable countdown, high-decibel audible
+                            siren, and real-time dispatcher coordinates beaconing.</p>
                         <div class="feature-badge-row">
                             <span class="feature-tag">5s Countdown</span>
                             <span class="feature-tag">Instant Dispatch</span>
@@ -1509,7 +1917,8 @@
                             <span class="material-symbols-outlined">shield_lock</span>
                         </div>
                         <h3>Tamper-Proof Evidence Vault</h3>
-                        <p>Encrypted incident evidence repository. Upload and secure photos, audio notes, and video clips protected from unauthorized device-level deletion.</p>
+                        <p>Encrypted incident evidence repository. Upload and secure photos, audio notes, and video
+                            clips protected from unauthorized device-level deletion.</p>
                         <div class="feature-badge-row">
                             <span class="feature-tag">Encrypted Storage</span>
                             <span class="feature-tag">Tamper-Proof</span>
@@ -1522,7 +1931,8 @@
                             <span class="material-symbols-outlined">how_to_reg</span>
                         </div>
                         <h3>Contactless Gate Attendance</h3>
-                        <p>Automated arrival and departure verification at university gates without physical lines. Real-time logging delivers certainty to families.</p>
+                        <p>Automated arrival and departure verification at university gates without physical lines.
+                            Real-time logging delivers certainty to families.</p>
                         <div class="feature-badge-row">
                             <span class="feature-tag">Auto In/Out</span>
                             <span class="feature-tag">Zero Queues</span>
@@ -1535,7 +1945,8 @@
                             <span class="material-symbols-outlined">forum</span>
                         </div>
                         <h3>Confidential GAD Support Chat</h3>
-                        <p>Direct real-time communication channel for student guidance, mental health counseling, and anti-sexual harassment (COSH) safe reporting.</p>
+                        <p>Direct real-time communication channel for student guidance, mental health counseling, and
+                            anti-sexual harassment (COSH) safe reporting.</p>
                         <div class="feature-badge-row">
                             <!-- (2026-07-13) Remove anonymous option tag; was anonymous option -->
                             <span class="feature-tag">Verified Direct</span>
@@ -1549,7 +1960,8 @@
                             <span class="material-symbols-outlined">family_restroom</span>
                         </div>
                         <h3>Guardian 360° Safety Suite</h3>
-                        <p>Dedicated portal empowering parents to track multiple linked children, view gate timestamps, and access authorized emergency posts.</p>
+                        <p>Dedicated portal empowering parents to track multiple linked children, view gate timestamps,
+                            and access authorized emergency posts.</p>
                         <div class="feature-badge-row">
                             <span class="feature-tag">Multi-Child</span>
                             <span class="feature-tag">Push Alerts</span>
@@ -1563,9 +1975,11 @@
         <section class="dual-view-section" id="dual-view">
             <div class="page-container">
                 <div class="section-header">
-                    <span class="section-eyebrow">Synchronized Ecosystem</span>
-                    <h2 class="section-title">Two Perspectives. One Unified Safety Net.</h2>
-                    <p class="section-lead">See how Securo seamlessly bridges the student's personal defense on campus with the parent's peace of mind at home.</p>
+                    <!-- (2026-07-13) Rename eyebrow without Ecosystem; was Synchronized Ecosystem -->
+                    <span class="section-eyebrow">Synchronized Platform</span>
+                    <h2 class="section-title">Two Perspectives.<br>One Unified Safety Net.</h2>
+                    <p class="section-lead">See how Securo seamlessly bridges the student's personal defense on campus
+                        with the parent's peace of mind at home.</p>
                 </div>
 
                 <div class="dual-view-grid">
@@ -1576,7 +1990,8 @@
                             Student Experience
                         </span>
                         <h3>Active Defense & Campus Autonomy</h3>
-                        <p>Complete control over campus navigation, gate attendance, emergency SOS activation, and confidential counseling—all from one frictionless interface.</p>
+                        <p>Complete control over campus navigation, gate attendance, emergency SOS activation, and
+                            confidential counseling—all from one frictionless interface.</p>
                         <div class="perspective-screenshot-box">
                             <img src="screenshots/student_map.png" alt="Student Active Map View">
                         </div>
@@ -1589,7 +2004,8 @@
                             Guardian Experience
                         </span>
                         <h3>Continuous Peace of Mind</h3>
-                        <p>Real-time location breadcrumbs, automatic arrival and departure geofence notifications, and immediate shared emergency vault access.</p>
+                        <p>Real-time location breadcrumbs, automatic arrival and departure geofence notifications, and
+                            immediate shared emergency vault access.</p>
                         <div class="perspective-screenshot-box">
                             <img src="screenshots/guardian_dashboard.png" alt="Guardian Dashboard Monitoring View">
                         </div>
@@ -1598,67 +2014,28 @@
             </div>
         </section>
 
-        <!-- (2026-07-13) About Us section & rework portal cards; was demo credentials -->
-        <section class="about-us-section" id="about-us" style="padding: 70px 0 40px;">
-            <div class="page-container">
-                <div class="section-header" style="text-align: center; margin-bottom: 36px;">
-                    <span class="section-eyebrow">Development Team</span>
-                    <h2 class="section-title">About Us</h2>
-                    <p class="section-lead">The dedicated creators and engineering team behind the Securo Campus Safety Platform.</p>
-                </div>
-                <div class="team-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 1040px; margin: 0 auto;">
-                    <div class="team-member-card" style="background: white; border: 1px solid rgba(90,31,224,0.1); border-radius: 20px; padding: 22px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
-                        <div style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">RZ</div>
-                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Ramil, Zea Marae</h4>
-                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Core Developer</p>
-                    </div>
-                    <div class="team-member-card" style="background: white; border: 1px solid rgba(90,31,224,0.1); border-radius: 20px; padding: 22px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
-                        <div style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">SA</div>
-                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Santosidad, Angel Mae</h4>
-                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & Researcher</p>
-                    </div>
-                    <div class="team-member-card" style="background: white; border: 1px solid rgba(90,31,224,0.1); border-radius: 20px; padding: 22px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
-                        <div style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">LA</div>
-                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Loon, Alexa Suzane</h4>
-                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & QA</p>
-                    </div>
-                    <div class="team-member-card" style="background: white; border: 1px solid rgba(90,31,224,0.1); border-radius: 20px; padding: 22px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
-                        <div style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">DB</div>
-                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Delos Santos, Bea</h4>
-                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & UI/UX</p>
-                    </div>
-                    <div class="team-member-card" style="background: white; border: 1px solid rgba(90,31,224,0.1); border-radius: 20px; padding: 22px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
-                        <div style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">TK</div>
-                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Tangkay, Kenneth Brian</h4>
-                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & Systems</p>
-                    </div>
-                    <div class="team-member-card" style="background: white; border: 1px solid rgba(90,31,224,0.1); border-radius: 20px; padding: 22px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.03);">
-                        <div style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">LL</div>
-                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Ledesma, Lawrence</h4>
-                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & Technical Lead</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Role Selection Portal Section -->
-        <section class="roles-section" id="roles" style="padding-top: 30px;">
+        <!-- (2026-07-13) Remove inline padding on roles section; was inline style -->
+        <section class="roles-section" id="roles">
             <div class="page-container">
                 <div class="section-header">
                     <span class="section-eyebrow">Enterprise Access</span>
-                    <h2 class="section-title">Enter Portal</h2>
-                    <p class="section-lead">Choose your authorized portal to sign in or access your dedicated Securo workspace.</p>
+                    <h2 class="section-title">Choose Your Role</h2>
+                    <p class="section-lead">Choose your authorized portal to sign in or access your dedicated Securo
+                        workspace.</p>
                 </div>
 
-                <div class="roles-grid" style="grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));">
+                <!-- (2026-07-13) Responsive roles grid classes; was inline grid style -->
+                <div class="roles-grid">
                     <!-- Student Card -->
                     <div class="role-portal-card featured">
                         <div class="role-avatar-circle student">
                             <span class="material-symbols-outlined" style="font-size:32px;">school</span>
                         </div>
                         <h3>Student Portal</h3>
-                        <p class="role-desc">Live radar, guardian watcher bar, SOS alarm trigger, geofenced attendance, and GAD chat.</p>
-                        <a href="login.html" class="role-cta-btn student" style="margin-top:auto;">
+                        <p class="role-desc">Live radar, guardian watcher bar, SOS alarm trigger, geofenced attendance,
+                            and GAD chat.</p>
+                        <a href="login.html" class="role-cta-btn student" style="margin-top:auto;"
+                            onclick="enterPortal('login.html', 'student'); return false;">
                             <span>Launch Student App</span>
                             <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
                         </a>
@@ -1670,8 +2047,10 @@
                             <span class="material-symbols-outlined" style="font-size:32px;">family_restroom</span>
                         </div>
                         <h3>Guardian Portal</h3>
-                        <p class="role-desc">Child live tracking radar, gate entry/exit push alerts, and shared incident evidence vault.</p>
-                        <a href="guardian.html" class="role-cta-btn guardian" style="margin-top:auto;">
+                        <p class="role-desc">Child live tracking radar, gate entry/exit push alerts, and shared incident
+                            evidence vault.</p>
+                        <a href="guardian.html" class="role-cta-btn guardian" style="margin-top:auto;"
+                            onclick="enterPortal('guardian.html', 'guardian'); return false;">
                             <span>Launch Guardian Portal</span>
                             <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
                         </a>
@@ -1683,8 +2062,11 @@
                             <span class="material-symbols-outlined" style="font-size:32px;">badge</span>
                         </div>
                         <h3>Securo Staff</h3>
-                        <p class="role-desc">Faculty attendance verification, campus assistance, and direct workplace security communications.</p>
-                        <a href="login.html" class="role-cta-btn" style="background:#2563eb; color:white; margin-top:auto;" onclick="localStorage.setItem('securo_preferred_role','staff')">
+                        <p class="role-desc">Faculty attendance verification, campus assistance, and direct workplace
+                            security communications.</p>
+                        <a href="login.html" class="role-cta-btn"
+                            style="background:#2563eb; color:white; margin-top:auto;"
+                            onclick="enterPortal('login.html', 'staff'); return false;">
                             <span>Launch Staff Portal</span>
                             <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
                         </a>
@@ -1696,14 +2078,73 @@
                             <span class="material-symbols-outlined" style="font-size:32px;">admin_panel_settings</span>
                         </div>
                         <h3>Admin Terminal</h3>
-                        <p class="role-desc">Campus security dispatch console, attendance analytics, student verification, and audit logs.</p>
-                        <a href="admin-login.html" class="role-cta-btn admin" style="margin-top:auto;">
+                        <p class="role-desc">Campus security dispatch console, attendance analytics, student
+                            verification, and audit logs.</p>
+                        <a href="admin-login.html" class="role-cta-btn admin" style="margin-top:auto;"
+                            onclick="enterPortal('admin-login.html', 'admin'); return false;">
                             <span>Access Security Console</span>
                             <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
                         </a>
                     </div>
                 </div>
 
+            </div>
+        </section>
+
+        <!-- (2026-07-13) Remove inline styles on about-us and team cards; was inline styles -->
+        <section class="about-us-section" id="about-us">
+            <div class="page-container">
+                <div class="section-header">
+                    <span class="section-eyebrow">Development Team</span>
+                    <h2 class="section-title">About Us</h2>
+                    <p class="section-lead">The dedicated creators and engineering team behind the Securo Campus Safety
+                        Platform.</p>
+                </div>
+                <!-- (2026-07-13) Responsive team grid; was inline grid style -->
+                <div class="team-grid">
+                    <div class="team-member-card">
+                        <div
+                            style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">
+                            RZ</div>
+                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Ramil, Zea Marae</h4>
+                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Core Developer</p>
+                    </div>
+                    <div class="team-member-card">
+                        <div
+                            style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">
+                            SA</div>
+                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Santosidad, Angel Mae</h4>
+                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & Researcher</p>
+                    </div>
+                    <div class="team-member-card">
+                        <div
+                            style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">
+                            LA</div>
+                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Loon, Alexa Suzane</h4>
+                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & QA</p>
+                    </div>
+                    <div class="team-member-card">
+                        <div
+                            style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">
+                            DB</div>
+                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Delos Santos, Bea</h4>
+                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & UI/UX</p>
+                    </div>
+                    <div class="team-member-card">
+                        <div
+                            style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">
+                            TK</div>
+                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Tangkay, Kenneth Brian</h4>
+                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & Systems</p>
+                    </div>
+                    <div class="team-member-card">
+                        <div
+                            style="width: 54px; height: 54px; border-radius: 50%; background: #f2edff; color: #5a1fe0; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.15rem; margin-bottom: 12px;">
+                            LL</div>
+                        <h4 style="margin: 0; font-size: 1.02rem; color: #120f26;">Ledesma, Lawrence</h4>
+                        <p style="margin: 4px 0 0; font-size: 0.8rem; color: #625c75;">Developer & Technical Lead</p>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
@@ -1714,26 +2155,24 @@
             <div class="footer-grid">
                 <div class="footer-brand">
                     <h2>Securo</h2>
-                    <p>The mission-critical campus safety, automated attendance, and emergency defense infrastructure for higher education institutions.</p>
+                    <p>The mission-critical campus safety, automated attendance, and emergency defense infrastructure
+                        for higher education institutions.</p>
                 </div>
 
-                <div class="footer-col">
-                    <h4>Ecosystem</h4>
-                    <ul>
-                        <li><a href="#hero">Live Campus Radar</a></li>
-                        <li><a href="#features">1-Tap SOS Alarm</a></li>
-                        <li><a href="#features">Evidence Vault Locker</a></li>
-                        <li><a href="#features">Geofence Attendance</a></li>
-                    </ul>
-                </div>
-
+                <!-- (2026-07-13) Remove Ecosystem column & add preloader triggers; was Ecosystem col -->
                 <div class="footer-col">
                     <h4>Direct Access</h4>
                     <ul>
-                        <li><a href="login.html">Student Login</a></li>
-                        <li><a href="guardian.html">Guardian Portal</a></li>
-                        <li><a href="admin-login.html">Admin Terminal</a></li>
-                        <li><a href="role-selection.html">Role Selector</a></li>
+                        <li><a href="login.html" onclick="enterPortal('login.html', 'student'); return false;">Student
+                                Login</a></li>
+                        <li><a href="guardian.html"
+                                onclick="enterPortal('guardian.html', 'guardian'); return false;">Guardian Portal</a>
+                        </li>
+                        <li><a href="admin-login.html"
+                                onclick="enterPortal('admin-login.html', 'admin'); return false;">Admin Terminal</a>
+                        </li>
+                        <li><a href="role-selection.html"
+                                onclick="enterPortal('role-selection.html'); return false;">Role Selector</a></li>
                     </ul>
                 </div>
 
@@ -1741,9 +2180,10 @@
                     <h4>Safety & Compliance</h4>
                     <ul>
                         <li><a href="about.html">About Securo</a></li>
-                        <li><a href="terms.html">Terms of Service</a></li>
-                        <li><a href="permissions-onboarding.html">Privacy & Permissions</a></li>
-                        <li><a href="incident-report.html">Campus Hotlines</a></li>
+                        <!-- (2026-07-13) Rename to Terms and Conditions; was Terms of Service -->
+                        <li><a href="terms.html">Terms and Conditions</a></li>
+                        <!-- (2026-07-13) Link to separate hotlines.html page; was bottom embed -->
+                        <li><a href="hotlines.html">Daanbantayan Hotlines</a></li>
                     </ul>
                 </div>
             </div>
@@ -1838,7 +2278,7 @@
         }
 
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
+            anchor.addEventListener('click', function (e) {
                 const targetId = this.getAttribute('href');
                 if (!targetId || targetId === '#') return;
                 const targetEl = document.querySelector(targetId);
@@ -1862,8 +2302,9 @@
             let currentSec = '#hero';
             const scrollPos = window.pageYOffset + 140;
             const nearBottom = (window.innerHeight + window.pageYOffset) >= (document.documentElement.scrollHeight - 60);
+            // (2026-07-13) Bottom scroll target is about-us; was roles
             if (nearBottom) {
-                currentSec = '#roles';
+                currentSec = '#about-us';
             } else {
                 landingSections.forEach(sec => {
                     const top = sec.offsetTop;
@@ -1879,6 +2320,20 @@
         }
         window.addEventListener('scroll', updateActiveNav, { passive: true });
         updateActiveNav();
+
+        /* (2026-07-13) Load Securo animation when entering portals; was direct href */
+        function enterPortal(url, role) {
+            if (role) {
+                localStorage.setItem('securo_preferred_role', role);
+                sessionStorage.setItem('securo_from_role_selection', '1');
+            }
+            if (window.showSecuroPreloader) {
+                window.showSecuroPreloader(url);
+            } else {
+                window.location.href = url;
+            }
+        }
     </script>
 </body>
+
 </html>

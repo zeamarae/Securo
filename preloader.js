@@ -2,6 +2,31 @@
 (function () {
     const OVERLAY_ID = 'securo-preloader-overlay';
 
+    function ensureOverlay() {
+        let overlay = document.getElementById(OVERLAY_ID);
+        if (!overlay && document.body) {
+            overlay = document.createElement('div');
+            overlay.id = OVERLAY_ID;
+            overlay.innerHTML = `
+                <div class="securo-preloader-bg"></div>
+                <div class="securo-preloader-content">
+                    <div class="securo-preloader-logo-wrap">
+                        <img src="logo with text.png" alt="Securo" class="securo-preloader-logo">
+                        <div class="securo-preloader-shimmer"></div>
+                    </div>
+                    <div class="securo-preloader-indicator">
+                        <span class="securo-preloader-status-text">INITIALIZING SECURE SYSTEMS</span>
+                        <div class="securo-preloader-progress-track">
+                            <div class="securo-preloader-progress-bar"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.prepend(overlay);
+        }
+        return overlay;
+    }
+
     function ensureGSAP(callback) {
         if (window.gsap) {
             callback();
@@ -26,9 +51,15 @@
         }
     }
 
-    function runAnimation() {
-        const overlay = document.getElementById(OVERLAY_ID);
+    function runAnimation(onCompleteCallback) {
+        const overlay = ensureOverlay();
         if (!overlay) return;
+
+        overlay.style.display = 'flex';
+        overlay.style.visibility = 'visible';
+        overlay.style.opacity = '1';
+        overlay.style.pointerEvents = 'auto';
+        overlay.style.zIndex = '999999';
 
         document.body.setAttribute('data-preloader-active', 'true');
 
@@ -47,16 +78,18 @@
                     overlay.style.pointerEvents = 'none';
                     overlay.style.zIndex = '-99999';
                 }
+                if (typeof onCompleteCallback === 'function') {
+                    onCompleteCallback();
+                }
             }
         });
 
         // 1. Initial State
         gsap.set(logo, { opacity: 0, scale: 0.72, y: 35 });
-        // (2026-07-13) Set initial y offset for bottom indicator; was -10
         gsap.set(indicator, { opacity: 0, y: 10 });
         gsap.set(progressBar, { width: '0%' });
 
-        // (2026-07-13) Clean logo entrance without drop-shadow; was purple filter
+        // 2. Clean logo entrance
         tl.to(logo, {
             duration: 0.8,
             opacity: 1,
@@ -132,11 +165,61 @@
         }, '-=0.3');
     }
 
+    // (2026-07-13) Visual preloader on page transitions; was instant jump
+    window.showSecuroPreloader = function (targetUrl) {
+        const overlay = ensureOverlay();
+        if (overlay) {
+            overlay.style.display = 'flex';
+            overlay.style.visibility = 'visible';
+            overlay.style.opacity = '1';
+            overlay.style.pointerEvents = 'all';
+            overlay.style.zIndex = '999999';
+
+            const logo = overlay.querySelector('.securo-preloader-logo');
+            const bg = overlay.querySelector('.securo-preloader-bg');
+            const indicator = overlay.querySelector('.securo-preloader-indicator');
+            const progressBar = overlay.querySelector('.securo-preloader-progress-bar');
+
+            if (window.gsap) {
+                if (bg) gsap.set(bg, { opacity: 1 });
+                if (logo) gsap.fromTo(logo, { opacity: 0, scale: 0.85, y: 15 }, { opacity: 1, scale: 1, y: 0, duration: 0.35, ease: 'power2.out' });
+                if (indicator) gsap.set(indicator, { opacity: 1, y: 0 });
+                if (progressBar) gsap.fromTo(progressBar, { width: '0%' }, { width: '85%', duration: 0.4, ease: 'power1.inOut' });
+            } else {
+                if (bg) bg.style.opacity = '1';
+                if (logo) { logo.style.opacity = '1'; logo.style.transform = 'none'; }
+                if (indicator) indicator.style.opacity = '1';
+                if (progressBar) progressBar.style.width = '75%';
+            }
+        }
+        if (targetUrl) {
+            setTimeout(() => {
+                window.location.href = targetUrl;
+            }, 360);
+        }
+    };
+
+    // (2026-07-13) Intercept page link clicks to apply loading animation; was default jump
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('a[href]');
+        if (!link) return;
+        const href = link.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('tel:') || href.startsWith('mailto:') || href.startsWith('javascript:') || link.target === '_blank') {
+            return;
+        }
+        if (href.endsWith('.html') || (!href.includes('://') && !href.startsWith('//'))) {
+            e.preventDefault();
+            window.showSecuroPreloader(href);
+        }
+    }, true);
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
+            ensureOverlay();
             ensureGSAP(runAnimation);
         });
     } else {
+        ensureOverlay();
         ensureGSAP(runAnimation);
     }
 })();
