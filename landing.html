@@ -66,11 +66,11 @@
             padding: 0;
         }
 
-        /* (2026-07-13) Prevent viewport horizontal overflow on mobile; was body only */
+        /* (2026-07-13) Use clip overflow for sticky navbar; was overflow-x hidden */
         html {
             scroll-behavior: smooth;
             scroll-padding-top: 88px;
-            overflow-x: hidden;
+            overflow-x: clip;
             width: 100%;
         }
 
@@ -79,7 +79,7 @@
             background-color: var(--bg);
             color: var(--ink);
             line-height: 1.6;
-            overflow-x: hidden;
+            overflow-x: clip;
             width: 100%;
             -webkit-font-smoothing: antialiased;
         }

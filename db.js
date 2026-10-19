@@ -1205,15 +1205,22 @@ export const deleteUserRecord = async (userId) => {
     }
 };
 
-// (2026-07-13) Delete user auth and database records; was missing
+// (2026-07-13) Require verified password for account deletion; was optional pwd
 export const deleteCurrentUserAccount = async (password = "") => {
     const user = auth.currentUser;
     if (!user) throw new Error("No authenticated user to delete.");
 
-    if (password && user.email) {
-        const credential = EmailAuthProvider.credential(user.email, password);
-        await reauthenticateWithCredential(user, credential);
+    const trimmedPassword = typeof password === 'string' ? password.trim() : '';
+    if (!trimmedPassword) {
+        throw new Error("Please enter your current password to confirm deletion.");
     }
+
+    if (!user.email) {
+        throw new Error("User account does not have an associated email address.");
+    }
+
+    const credential = EmailAuthProvider.credential(user.email, trimmedPassword);
+    await reauthenticateWithCredential(user, credential);
 
     const uid = user.uid;
     await deleteUserRecord(uid).catch((err) => {

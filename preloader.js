@@ -165,8 +165,36 @@
         }, '-=0.3');
     }
 
-    // (2026-07-13) Visual preloader on page transitions; was instant jump
+    // (2026-07-13) Prevent duplicate preloader on page transitions; was replay all
+    function runTransitionDismiss() {
+        const overlay = document.getElementById(OVERLAY_ID);
+        if (!overlay) return;
+        document.body.removeAttribute('data-preloader-active');
+        if (window.gsap) {
+            const progressBar = overlay.querySelector('.securo-preloader-progress-bar');
+            if (progressBar) gsap.to(progressBar, { width: '100%', duration: 0.2, ease: 'power1.out' });
+            gsap.to(overlay, {
+                duration: 0.3,
+                opacity: 0,
+                delay: 0.1,
+                ease: 'power2.inOut',
+                onComplete: () => {
+                    overlay.style.display = 'none';
+                    overlay.style.visibility = 'hidden';
+                    overlay.style.pointerEvents = 'none';
+                    overlay.style.zIndex = '-99999';
+                }
+            });
+        } else {
+            dismissFallback();
+        }
+    }
+
+    let isTransitioning = false;
     window.showSecuroPreloader = function (targetUrl) {
+        if (isTransitioning) return;
+        isTransitioning = true;
+        sessionStorage.setItem('securo_transition_active', '1');
         const overlay = ensureOverlay();
         if (overlay) {
             overlay.style.display = 'flex';
@@ -213,13 +241,22 @@
         }
     }, true);
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            ensureOverlay();
-            ensureGSAP(runAnimation);
-        });
-    } else {
+    let hasInitialized = false;
+    function initPreloader() {
+        if (hasInitialized) return;
+        hasInitialized = true;
         ensureOverlay();
-        ensureGSAP(runAnimation);
+        if (sessionStorage.getItem('securo_transition_active') === '1') {
+            sessionStorage.removeItem('securo_transition_active');
+            ensureGSAP(runTransitionDismiss);
+        } else {
+            ensureGSAP(runAnimation);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPreloader);
+    } else {
+        initPreloader();
     }
 })();

@@ -418,7 +418,8 @@
                 <label class="form-label">Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">lock</span>
-                    <input type="password" id="passwordInput" placeholder="••••••••" required>
+                    <!-- (2026-07-13) Blank password placeholder; was bullet dots placeholder -->
+                    <input type="password" id="passwordInput" placeholder="" autocomplete="new-password" required>
                 </div>
             </div>
 
@@ -431,7 +432,8 @@
                 <label class="form-label">Confirm Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">verified_user</span>
-                    <input type="password" id="confirmPasswordSignup" placeholder="Confirm your password">
+                    <!-- (2026-07-13) Blank confirm password placeholder; was text placeholder -->
+                    <input type="password" id="confirmPasswordSignup" placeholder="" autocomplete="new-password">
                 </div>
             </div>
 
@@ -729,6 +731,16 @@
             emailInput.setAttribute('required', 'required');
             btnText.textContent = isLoginMode ? 'Enter Guardian Hub' : 'Create Guardian Account';
             errorMsg.textContent = '';
+            // (2026-07-13) Blank register inputs on switch; was persistent inputs
+            if (!isLoginMode) {
+                const fn = document.getElementById('fullNameSignup');
+                if (fn) fn.value = '';
+                if (emailInput) emailInput.value = '';
+                const pwd = document.getElementById('passwordInput');
+                if (pwd) pwd.value = '';
+                const cpwd = document.getElementById('confirmPasswordSignup');
+                if (cpwd) cpwd.value = '';
+            }
         };
 
         loginTab.addEventListener('click', () => setMode('login'));

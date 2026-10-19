@@ -410,6 +410,33 @@
             animation: zoomIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
         }
+        /* (2026-07-13) Apply terms content spacing; was default modal spacing */
+        #termsScrollBox h4, .terms-content h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 24px !important;
+            margin-bottom: 8px !important;
+        }
+        #termsScrollBox h4:first-of-type, .terms-content h4:first-of-type {
+            margin-top: 0 !important;
+        }
+        #termsScrollBox p, .terms-content p {
+            text-indent: 40px;
+            margin-bottom: 4px !important;
+            color: var(--ink);
+            font-size: 0.82rem;
+            line-height: 1.55;
+        }
+        #termsScrollBox ul, .terms-content ul {
+            margin-top: 2px !important;
+            margin-bottom: 20px !important;
+            padding-left: 45px !important;
+        }
+        #termsScrollBox li, .terms-content li {
+            margin-bottom: 2px;
+            font-size: 0.82rem;
+        }
         .onboarding-header { text-align: center; margin-bottom: 16px; }
         .onboarding-badge-icon {
             width: 48px;
@@ -646,8 +673,8 @@
                 <label class="form-label" id="signupIdLabel">Student ID Number</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">badge</span>
-                    <!-- (2026-07-13) Direct ID signup without full name field; was full name + id -->
-                    <input type="text" id="studentIdSignup" placeholder="1234567" maxlength="7" pattern="\d*" inputmode="numeric">
+                    <!-- (2026-07-13) Blank register inputs without defaults; was placeholder dots -->
+                    <input type="text" id="studentIdSignup" placeholder="" maxlength="7" pattern="\d*" inputmode="numeric" autocomplete="off">
                 </div>
             </div>
 
@@ -656,8 +683,7 @@
                 <label class="form-label">Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">lock</span>
-                    <!-- (2026-07-13) Fix password placeholder; was corrupted bytes -->
-                    <input type="password" id="password" placeholder="••••••••" required>
+                    <input type="password" id="password" placeholder="" autocomplete="new-password" required>
                     <button type="button" id="togglePassword" class="btn" style="background:none; border:none; color:var(--muted); padding:0;">
                         <span class="material-symbols-outlined">visibility</span>
                     </button>
@@ -668,7 +694,7 @@
                 <label class="form-label">Confirm Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">verified_user</span>
-                    <input type="password" id="confirmPasswordSignup" placeholder="Confirm your password">
+                    <input type="password" id="confirmPasswordSignup" placeholder="" autocomplete="new-password">
                 </div>
             </div>
 
@@ -887,8 +913,8 @@
                 <h3 class="onboarding-title" style="margin-bottom: 4px;">Terms and Conditions</h3>
                 <p class="onboarding-subtitle">Please review and agree to continue registration.</p>
             </div>
-            <!-- (2026-07-13) Full 1-15 terms in modal; was abbreviated 4 items -->
-            <div id="termsScrollBox" style="flex: 1; overflow-y: auto; background: #f8f7fc; border: 1px solid rgba(90, 31, 224, 0.12); border-radius: 16px; padding: 16px; margin-bottom: 16px; font-size: 0.82rem; color: var(--ink); line-height: 1.55; text-align: left; max-height: 320px;">
+            <!-- (2026-07-13) Add terms-content class for spacing; was unclassed container -->
+            <div id="termsScrollBox" class="terms-content" style="flex: 1; overflow-y: auto; background: #f8f7fc; border: 1px solid rgba(90, 31, 224, 0.12); border-radius: 16px; padding: 16px; margin-bottom: 16px; font-size: 0.82rem; color: var(--ink); line-height: 1.55; text-align: left; max-height: 320px;">
                 <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">1. Acceptance of Terms</h4>
                 <p style="margin-bottom: 10px;">By registering for and using the Securo campus safety application ("the App"), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the App.</p>
 
@@ -994,13 +1020,13 @@
                 <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">15. Acknowledgment</h4>
                 <p style="margin-bottom: 0;">By clicking "I Agree", you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.</p>
             </div>
-            <!-- (2026-07-13) Align Decline and I Agree buttons; prev: mismatched margins -->
+            <!-- (2026-07-13) Disable terms buttons until scrolled; was always active -->
             <div style="display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 4px;">
-                <button type="button" id="declineTermsBtn" style="flex: 1; height: 46px; margin: 0; border-radius: 14px; border: 1.5px solid rgba(0,0,0,0.1); background: #f1f0f7; color: #475569; font-weight: 700; font-size: 0.92rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; box-sizing: border-box;">
+                <button type="button" id="declineTermsBtn" disabled style="flex: 1; height: 46px; margin: 0; border-radius: 14px; border: 1.5px solid rgba(0,0,0,0.1); background: #f1f0f7; color: #475569; font-weight: 700; font-size: 0.92rem; cursor: not-allowed; opacity: 0.5; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; box-sizing: border-box;">
                     <span class="material-symbols-outlined" style="font-size: 18px;">cancel</span>
                     <span>Decline</span>
                 </button>
-                <button type="button" id="agreeTermsBtn" class="btn-action" style="flex: 1; height: 46px; margin: 0; border-radius: 14px; font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; box-sizing: border-box;">
+                <button type="button" id="agreeTermsBtn" class="btn-action" disabled style="flex: 1; height: 46px; margin: 0; border-radius: 14px; font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; box-sizing: border-box; opacity: 0.5; cursor: not-allowed;">
                     <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
                     <span>I Agree</span>
                 </button>
@@ -1016,13 +1042,9 @@
         import { Validation, UI, Logger, Permissions } from './utils.js';
         import './install-sw.js'; // Initialize offline support
 
-        // (2026-07-13) Retain login view on role selection entry; was checkAuth
-        if (sessionStorage.getItem('securo_from_role_selection') === '1') {
-            sessionStorage.removeItem('securo_from_role_selection');
-            auth.signOut().catch(() => {});
-        } else {
-            checkAuth(false);
-        }
+        // (2026-07-13) Keep session active on entry; was auto signOut on role select
+        sessionStorage.removeItem('securo_from_role_selection');
+        checkAuth(false);
 
         // (2026-07-13) Always start on login first; prev: auto-redirect permissions
 
@@ -1197,14 +1219,21 @@
             document.getElementById('forgotPassword').style.display = isLoginMode ? 'inline' : 'none';
             btnText.textContent = isLoginMode ? `Enter ${roleLabel} Hub` : `Register ${roleLabel} Account`;
             errorMsg.textContent = '';
+            // (2026-07-13) Clear register inputs on mode switch; was unmanaged inputs
+            if (!isLoginMode) {
+                if (signupIdInput) signupIdInput.value = '';
+                const pwd = document.getElementById('password');
+                if (pwd) pwd.value = '';
+                const cpwd = document.getElementById('confirmPasswordSignup');
+                if (cpwd) cpwd.value = '';
+            }
         };
 
-        // (2026-07-13) Set blue staff theme, hide signup, sync terms; was purple
+        // (2026-07-13) Enable staff register tab; was hidden signup tab for staff
         if (isStaffRole) {
             document.documentElement.style.setProperty('--primary', '#2563eb');
             document.documentElement.style.setProperty('--primary-strong', '#1d4ed8');
             document.documentElement.style.setProperty('--primary-soft', '#eff6ff');
-            if (signupTab) signupTab.style.display = 'none';
         }
         if (localStorage.getItem('securo_terms_agreed') === 'true') {
             const termsBox = document.getElementById('termsCheckbox');
@@ -1215,15 +1244,16 @@
         if (subtitle) subtitle.textContent = isStaffRole ? 'Staff access portal' : 'Student access portal';
         if (identifierLabel) identifierLabel.textContent = `${roleLabel} ID Number`;
         if (signupIdLabel) signupIdLabel.textContent = `${roleLabel} ID Number`;
-        if (signupIdInput) signupIdInput.placeholder = isStaffRole ? 'e.g. 7654321' : 'e.g. 1234567';
-        if (identifierInput) identifierInput.placeholder = isStaffRole ? 'Enter your 7-digit staff ID' : 'Enter your 7-digit student ID';
+        // (2026-07-13) Blank placeholders for ID inputs; was example strings
+        if (signupIdInput) signupIdInput.placeholder = '';
+        if (identifierInput) identifierInput.placeholder = '';
 
         loginTab.addEventListener('click', () => setMode('login'));
         signupTab.addEventListener('click', () => setMode('signup'));
 
-        // (2026-07-13) Auto-select signup tab on request; was login tab only
+        // (2026-07-13) Auto-select signup tab for all roles; was exclude staff role
         const authUrlParams = new URLSearchParams(window.location.search);
-        if (!isStaffRole && (authUrlParams.get('mode') === 'register' || window.location.hash === '#register')) {
+        if (authUrlParams.get('mode') === 'register' || window.location.hash === '#register') {
             setMode('signup');
         }
 
@@ -1629,7 +1659,10 @@
                     setButtonBusy(submitBtn, false);
                     // (2026-07-13) Open terms modal on register; was inline checkbox check
                     const termsModal = document.getElementById('termsModal');
-                    if (termsModal) termsModal.classList.add('active');
+                    if (termsModal) {
+                        termsModal.classList.add('active');
+                        resetTermsModalScroll();
+                    }
                 }
             } catch (error) {
                 const friendlyMessage = getFriendlyAuthMessage(error, isLoginMode ? "login" : "signup", roleLabel);
@@ -1639,10 +1672,36 @@
             }
         });
 
-        // (2026-07-13) Register account on terms agree; prev: direct submit signup
+        // (2026-07-13) Unlock terms buttons on scroll to bottom; was always enabled
         const termsModalEl = document.getElementById('termsModal');
         const declineTermsBtn = document.getElementById('declineTermsBtn');
         const agreeTermsBtn = document.getElementById('agreeTermsBtn');
+        const termsScrollBox = document.getElementById('termsScrollBox');
+
+        function setTermsButtonsEnabled(enabled) {
+            if (declineTermsBtn) {
+                declineTermsBtn.disabled = !enabled;
+                declineTermsBtn.style.opacity = enabled ? '1' : '0.5';
+                declineTermsBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+            }
+            if (agreeTermsBtn) {
+                agreeTermsBtn.disabled = !enabled;
+                agreeTermsBtn.style.opacity = enabled ? '1' : '0.5';
+                agreeTermsBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+            }
+        }
+
+        function resetTermsModalScroll() {
+            setTermsButtonsEnabled(false);
+            if (termsScrollBox) termsScrollBox.scrollTop = 0;
+        }
+
+        if (termsScrollBox) {
+            termsScrollBox.addEventListener('scroll', () => {
+                const atEnd = termsScrollBox.scrollHeight - termsScrollBox.scrollTop <= termsScrollBox.clientHeight + 15;
+                if (atEnd) setTermsButtonsEnabled(true);
+            });
+        }
 
         // (2026-07-13) Show decline terms error; was silent modal dismissal
         if (declineTermsBtn) {
