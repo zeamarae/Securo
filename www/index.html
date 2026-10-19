@@ -29,24 +29,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="preloader.js"></script>
 
-    <!-- (2026-07-13) Redirect desktop root to landing if unauthenticated; was conflict -->
+    <!-- (2026-07-13) Route web to landing and app to role-selection; was desktop only -->
     <script>
         (() => {
-            const isTargetHost = window.location.hostname === '127.0.0.1' ||
-                                 window.location.hostname === 'localhost' ||
-                                 window.location.hostname === 'securo.cebutech.digital' ||
-                                 window.location.host === '127.0.0.1:5508' ||
-                                 window.location.host === 'localhost:5508';
             const pathname = window.location.pathname;
             const isRootUrl = (pathname === '/' || pathname === '/index.html' || pathname.endsWith('/index.html') || !pathname) &&
                               !window.location.search &&
                               (!window.location.hash || window.location.hash === '#' || window.location.hash === '');
-            const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
-            const isDesktop = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|webOS|iPhone|iPad|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web')) ||
+                                window.location.protocol.startsWith('file:') ||
+                                window.location.protocol.startsWith('capacitor:') ||
+                                !!window.cordova;
+            const isLoggedIn = Boolean(localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated') === '1');
 
-            // (2026-07-13) Bypass desktop landing redirect if authenticated; was unconditional
-            if (isTargetHost && isRootUrl && isDesktop && sessionStorage.getItem('securo_authenticated') !== '1') {
-                window.__securoDesktopPending = true;
+            if (isNativeApk) {
+                if (!isLoggedIn) {
+                    window.__securoAppPending = true;
+                    window.location.replace('role-selection.html');
+                }
+            } else if (isRootUrl && !isLoggedIn) {
+                window.__securoLandingPending = true;
                 sessionStorage.setItem('securo_allow_landing', '1');
                 window.location.replace('landing.html');
             }
@@ -6225,6 +6227,8 @@
             subscribeToMessagesByThread,
             subscribeToGuardianRequests,
             getLinksForStudent,
+            // (2026-07-13) Import createGuardianLinkFromStudent; was absent
+            createGuardianLinkFromStudent,
             respondToGuardianLink,
             // (2026-07-13) Import removeGuardianLink for unlink gesture; was absent
             removeGuardianLink,
@@ -8513,6 +8517,10 @@
 
         // Alias for compatibility with existing code
         const setActiveView = window.setActiveView;
+        // (2026-07-13) Set map as default view on launch; was uninvoked until auth
+        if (typeof setActiveView === 'function') {
+            setActiveView('map');
+        }
 
 
         // [REMOVED] showApp, validateLogin, handleSuccessfulLogin, loginForm listeners (Date: 2026-05-01)
@@ -9227,14 +9235,18 @@
             } else if ("Notification" in window && Notification.permission === "default") {
                 Notification.requestPermission().catch(() => {});
             }
-            // (2026-07-13) Skip auth redirect if desktop landing pending; was unchecked
-            if (window.__securoDesktopPending) {
+            // (2026-07-13) Route app to role-selection & web to landing; was login.html
+            if (window.__securoLandingPending || window.__securoAppPending) {
                 return;
             }
             if (!user) {
                 localStorage.removeItem('securo_session_token');
                 sessionStorage.removeItem('securo_login_pending');
-                window.location.replace("login.html");
+                const isNative = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web')) ||
+                                 window.location.protocol.startsWith('file:') ||
+                                 window.location.protocol.startsWith('capacitor:') ||
+                                 !!window.cordova;
+                window.location.replace(isNative ? "role-selection.html" : "landing.html");
                 return;
             }
 
@@ -9599,6 +9611,46 @@
                         document.execCommand("copy");
                         document.body.removeChild(ta);
                         notifyCopied();
+                    }
+                };
+            }
+            // (2026-07-13) Wire email input and invite sender; was copy link only
+            const sendEmailBtn = document.getElementById("sendGuardianInviteEmailBtn");
+            const emailInput = document.getElementById("guardianInviteEmailInput");
+            if (sendEmailBtn && emailInput) {
+                emailInput.value = "";
+                sendEmailBtn.onclick = async () => {
+                    const email = emailInput.value.trim().toLowerCase();
+                    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                        showStatus("Invalid Email", "Please enter a valid email address for your guardian.");
+                        return;
+                    }
+                    sendEmailBtn.disabled = true;
+                    const prevBtnHtml = sendEmailBtn.innerHTML;
+                    sendEmailBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:18px;">sync</span><span>Sending...</span>`;
+                    try {
+                        await createGuardianLinkFromStudent({
+                            studentUid: appState.user?.uid,
+                            studentId: studentId,
+                            studentName: appState.profile?.name || appState.user?.name || "Student",
+                            guardianEmail: email
+                        });
+                        showStatus("Invitation Sent", `Guardian request successfully linked to ${email}.`);
+                        emailInput.value = "";
+                    } catch (err) {
+                        const subject = encodeURIComponent("Securo Guardian Invitation");
+                        const body = encodeURIComponent(`Hi, I'm inviting you to be my guardian on Securo so you can monitor my campus safety and receive live SOS alerts.\n\nPlease register or sign in here: ${guardianUrl}`);
+                        window.open(`mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`, '_blank');
+                        showStatus("Invite Ready", `Email draft opened to send the registration link to ${email}.`);
+                    } finally {
+                        sendEmailBtn.disabled = false;
+                        sendEmailBtn.innerHTML = prevBtnHtml;
+                    }
+                };
+                emailInput.onkeydown = (e) => {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        sendEmailBtn.click();
                     }
                 };
             }
@@ -11724,7 +11776,24 @@
             <h3 class="status-title" style="font-size: 1.25rem;">Invite Parent or Guardian</h3>
             <p class="status-msg" style="font-size: 0.85rem; margin-bottom: 14px;">
                 Share your unique link with your parents so they can monitor your safety and live SOS alerts.
-            </p>
+            <!-- (2026-07-13) Add guardian email input; prev: invite link box only -->
+            <div class="guardian-invite-email-wrap" style="width: 100%; margin-bottom: 14px;">
+                <label for="guardianInviteEmailInput" style="display: block; font-size: 0.78rem; font-weight: 700; color: var(--ink); margin-bottom: 6px; text-align: left;">Guardian's Email Address</label>
+                <div style="display: flex; gap: 8px; width: 100%;">
+                    <input type="email" id="guardianInviteEmailInput" placeholder="e.g. parent@gmail.com" style="flex: 1; min-width: 0; height: 44px; border: 1.5px solid rgba(90, 31, 224, 0.22); border-radius: 12px; padding: 0 12px; font-size: 0.88rem; outline: none; font-family: inherit; background: #faf9fd; box-sizing: border-box;">
+                    <button type="button" class="invite-btn-primary" id="sendGuardianInviteEmailBtn" style="width: auto; padding: 0 16px; height: 44px; border-radius: 12px; white-space: nowrap; font-size: 0.88rem; flex-shrink: 0;">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">send</span>
+                        <span>Send</span>
+                    </button>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; width: 100%; margin-bottom: 12px; gap: 10px;">
+                <div style="flex: 1; height: 1px; background: rgba(0,0,0,0.08);"></div>
+                <span style="font-size: 0.72rem; color: var(--muted); font-weight: 600; text-transform: uppercase;">or share link</span>
+                <div style="flex: 1; height: 1px; background: rgba(0,0,0,0.08);"></div>
+            </div>
+
             <div class="invite-link-box" id="inviteLinkBox">
                 <span id="guardianInviteUrlText" class="invite-url-text">Generating link...</span>
             </div>

@@ -50,8 +50,12 @@ export const extractStudentIdFromEmail = (email) => {
     return match ? match[1] : null;
 };
 
-// (2026-07-13) Guardian friendly auth error messages; was generic ID error
+// (2026-07-13) Return explicit error message; prev: generic fallback
 export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "account") => {
+    if (error?.message && !error?.code && !String(error.message).startsWith("Firebase:")) {
+        return error.message;
+    }
+
     const code = String(error?.code || error?.message || "").toLowerCase();
     const role = String(roleLabel || "account").trim().toLowerCase();
 
@@ -87,13 +91,19 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
     if (code.includes("auth/missing-email")) {
         return "Please enter your email address.";
     }
-    if (code.includes("auth/network-request-failed")) {
+    if (code.includes("auth/network-request-failed") || code.includes("network")) {
         return "Network error. Please check your internet connection.";
     }
     if (code.includes("auth/operation-not-allowed")) {
         return mode === "signup"
             ? "Account registration is not available right now."
             : "Sign in is not available right now.";
+    }
+    if (code.includes("auth/unauthorized-domain")) {
+        return "This app domain is not authorized in Firebase configuration.";
+    }
+    if (error?.message && !String(error.message).startsWith("Firebase:")) {
+        return error.message;
     }
     if (mode === "signup") {
         return "Could not create your account right now.";

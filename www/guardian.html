@@ -11,6 +11,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="logo.png">
+    <!-- (2026-07-13) Add dramatic intro preloader; was no preloader -->
+    <link rel="stylesheet" href="preloader.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="preloader.js"></script>
     <style>
         :root {
             --bg: #fff4f6;
@@ -530,6 +534,144 @@
         </div>
     </div>
 
+    <!-- (2026-07-13) Add Terms modal with I Agree button; was none -->
+    <div id="guardianTermsModal" class="otp-modal-backdrop" style="display: none;">
+        <div class="otp-modal-card" style="max-width: 460px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="otp-modal-header" style="margin-bottom: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="otp-icon-bubble">
+                        <span class="material-symbols-outlined">description</span>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.12rem; font-weight: 700; color: var(--ink);">Terms and Conditions</h3>
+                        <p style="margin: 0; font-size: 0.78rem; color: var(--muted);">Guardian Portal Terms of Service</p>
+                    </div>
+                </div>
+                <button type="button" id="closeGuardianTermsModalBtn" class="otp-close-btn" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <!-- (2026-07-13) Full 1-15 terms in modal; was abbreviated 4 items -->
+            <div id="guardianTermsScrollBox" style="flex: 1; overflow-y: auto; background: #fff5f7; border: 1px solid rgba(244, 63, 94, 0.15); border-radius: 16px; padding: 16px; margin-bottom: 16px; font-size: 0.82rem; color: var(--ink); line-height: 1.55; text-align: left; max-height: 320px;">
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">1. Acceptance of Terms</h4>
+                <p style="margin-bottom: 10px;">By registering for and using the Securo campus safety application ("the App"), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the App.</p>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">2. Purpose of the App</h4>
+                <p style="margin-bottom: 4px;">Securo is designed to enhance campus safety and security by providing:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Real-time incident reporting capabilities</li>
+                    <li>Emergency notifications and alerts</li>
+                    <li>Campus security communication tools</li>
+                    <li>Safety resource access for students, staff, and guardians</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">3. User Accounts and Registration</h4>
+                <p style="margin-bottom: 4px;">To use Securo, you must:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Provide accurate and complete registration information</li>
+                    <li>Use a valid student or staff ID number</li>
+                    <li>Maintain the confidentiality of your account credentials</li>
+                    <li>Notify us immediately of any unauthorized access to your account</li>
+                    <li>Be responsible for all activities that occur under your account</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">4. User Responsibilities</h4>
+                <p style="margin-bottom: 4px;">When using the App, you agree to:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Use the App only for legitimate campus safety purposes</li>
+                    <li>Provide truthful and accurate information when reporting incidents</li>
+                    <li>Not submit false reports or misuse emergency features</li>
+                    <li>Respect the privacy and rights of other users</li>
+                    <li>Comply with all applicable campus policies and local laws</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">5. Privacy and Data Protection</h4>
+                <p style="margin-bottom: 4px;">We take your privacy seriously. By using Securo:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>You consent to the collection and use of your personal information as described in our Privacy Policy</li>
+                    <li>Your profile information, including name, ID number, and photo (if provided), will be stored securely</li>
+                    <li>Incident reports and communications may be monitored by campus security personnel</li>
+                    <li>We will not share your personal information with third parties without your consent, except as required by law</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">6. Incident Reporting</h4>
+                <p style="margin-bottom: 4px;">When reporting incidents through the App:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Submit reports promptly and accurately</li>
+                    <li>False reporting is strictly prohibited and may result in disciplinary action</li>
+                    <li>Reports are reviewed by campus security and appropriate authorities</li>
+                    <li>Emergency situations should always be reported to campus security or local emergency services (911) immediately</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">7. Guardian Access</h4>
+                <p style="margin-bottom: 4px;">For guardian accounts:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Guardians must be invited and approved by the student</li>
+                    <li>Guardians have limited access to student safety information</li>
+                    <li>Guardian access can be revoked by the student at any time</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">8. Prohibited Activities</h4>
+                <p style="margin-bottom: 4px;">You may not:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Submit false or misleading information</li>
+                    <li>Attempt to access accounts or data that do not belong to you</li>
+                    <li>Interfere with the App's operation or security features</li>
+                    <li>Use the App to harass, threaten, or harm others</li>
+                    <li>Reverse engineer or attempt to extract source code from the App</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">9. Service Availability</h4>
+                <p style="margin-bottom: 4px;">While we strive to maintain reliable service:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>The App is provided "as is" without warranties of any kind</li>
+                    <li>We do not guarantee uninterrupted or error-free service</li>
+                    <li>We may modify, suspend, or discontinue features at any time</li>
+                    <li>In case of actual emergencies, always contact campus security or emergency services directly</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">10. Limitation of Liability</h4>
+                <p style="margin-bottom: 4px;">To the maximum extent permitted by law:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>We are not liable for any damages arising from your use of the App</li>
+                    <li>We are not responsible for the actions or inactions of campus security personnel</li>
+                    <li>The App is a tool to assist campus safety efforts, not a substitute for emergency services</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">11. Account Termination</h4>
+                <p style="margin-bottom: 4px;">We reserve the right to:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Suspend or terminate accounts that violate these terms</li>
+                    <li>Remove content that is inappropriate or violates policies</li>
+                    <li>Terminate accounts upon graduation, employment termination, or at the user's request</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">12. Changes to Terms</h4>
+                <p style="margin-bottom: 10px;">We may update these Terms and Conditions from time to time. Continued use of the App after changes are posted constitutes acceptance of the updated terms. We will notify users of significant changes through the App or email.</p>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">13. Governing Law</h4>
+                <p style="margin-bottom: 10px;">These Terms and Conditions are governed by applicable local laws and campus policies. Any disputes will be resolved according to the procedures established by the educational institution.</p>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">14. Contact Information</h4>
+                <p style="margin-bottom: 10px;">If you have questions about these Terms and Conditions, please contact campus security or the App administrator through the official campus channels.</p>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">15. Acknowledgment</h4>
+                <p style="margin-bottom: 0;">By clicking "I Agree", you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.</p>
+            </div>
+            <!-- (2026-07-13) Align Decline and I Agree buttons; prev: mismatched margins -->
+            <div style="display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 4px;">
+                <button type="button" id="declineGuardianTermsBtn" style="flex: 1; height: 46px; margin: 0; border-radius: 14px; border: 1.5px solid rgba(0,0,0,0.1); background: #f1f0f7; color: #475569; font-weight: 700; font-size: 0.92rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; box-sizing: border-box;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">cancel</span>
+                    <span>Decline</span>
+                </button>
+                <button type="button" id="agreeGuardianTermsBtn" class="btn-action" style="flex: 1; height: 46px; margin: 0; border-radius: 14px; font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; box-sizing: border-box;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
+                    <span>I Agree</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { login, signUp, forgotPassword, getFriendlyAuthMessage } from './auth.js';
         import { saveUserProfile } from './db.js';
@@ -762,6 +904,9 @@
                 if (name.length < 3) {
                     throw new Error('Please enter your full name.');
                 }
+                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    throw new Error('Please enter a valid email address.');
+                }
                 if (password.length < 8) {
                     throw new Error('Password must be at least 8 characters.');
                 }
@@ -769,17 +914,22 @@
                     throw new Error('Passwords do not match.');
                 }
 
-                const user = await signUp(email, password);
-                await saveUserProfile(user.uid, {
-                    name,
-                    email,
-                    role: 'guardian'
-                });
+                let emailTaken = false;
+                try {
+                    const raw = localStorage.getItem('securo_user_directory');
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        emailTaken = Object.values(parsed).some(u => String(u.email || '').toLowerCase() === email.toLowerCase());
+                    }
+                } catch (_) {}
+                if (emailTaken) {
+                    throw new Error('That guardian email is already registered. Please sign in.');
+                }
 
-                showToast('Account created', 'Your guardian account is ready. Add your child’s Student ID next in the dashboard.', 'success');
-                setTimeout(() => {
-                    window.location.href = 'guardian-dashboard.html';
-                }, 1200);
+                setButtonBusy(submitBtn, false);
+                // (2026-07-13) Open terms modal on register; was direct submit signup
+                const guardianTermsModal = document.getElementById('guardianTermsModal');
+                if (guardianTermsModal) guardianTermsModal.style.display = 'flex';
             } catch (error) {
                 const message = getFriendlyAuthMessage(error, isLoginMode ? 'login' : 'signup', 'guardian');
                 errorMsg.textContent = message;
@@ -787,6 +937,76 @@
                 setButtonBusy(submitBtn, false);
             }
         });
+
+        // (2026-07-13) Register guardian on Terms agree; prev: direct form signup
+        const guardianTermsModal = document.getElementById('guardianTermsModal');
+        const declineGuardianTermsBtn = document.getElementById('declineGuardianTermsBtn');
+        const agreeGuardianTermsBtn = document.getElementById('agreeGuardianTermsBtn');
+        const closeGuardianTermsModalBtn = document.getElementById('closeGuardianTermsModalBtn');
+
+        const closeGuardianTerms = () => {
+            if (guardianTermsModal) guardianTermsModal.style.display = 'none';
+        };
+
+        // (2026-07-13) Show decline terms error; was silent modal dismissal
+        const handleGuardianTermsDecline = () => {
+            closeGuardianTerms();
+            const declineMsg = "Can't proceed without agreeing to the terms and conditions.";
+            errorMsg.textContent = declineMsg;
+            showToast("Terms Required", declineMsg, "error");
+        };
+
+        if (declineGuardianTermsBtn) declineGuardianTermsBtn.addEventListener('click', handleGuardianTermsDecline);
+        if (closeGuardianTermsModalBtn) closeGuardianTermsModalBtn.addEventListener('click', handleGuardianTermsDecline);
+        if (guardianTermsModal) {
+            guardianTermsModal.addEventListener('click', (e) => {
+                if (e.target === guardianTermsModal) handleGuardianTermsDecline();
+            });
+        }
+
+        if (agreeGuardianTermsBtn) {
+            agreeGuardianTermsBtn.addEventListener('click', async () => {
+                setButtonBusy(agreeGuardianTermsBtn, true);
+                try {
+                    const email = emailInput.value.trim();
+                    const password = document.getElementById('passwordInput').value;
+                    const name = document.getElementById('fullNameSignup').value.trim();
+                    const confirmPassword = document.getElementById('confirmPasswordSignup').value;
+
+                    if (name.length < 3) throw new Error('Please enter your full name.');
+                    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Please enter a valid email address.');
+                    if (password.length < 8) throw new Error('Password must be at least 8 characters.');
+                    if (password !== confirmPassword) throw new Error('Passwords do not match.');
+
+                    const user = await signUp(email, password);
+                    await saveUserProfile(user.uid, {
+                        name,
+                        email,
+                        role: 'guardian'
+                    });
+
+                    try {
+                        const raw = localStorage.getItem('securo_user_directory');
+                        const dir = raw ? JSON.parse(raw) : {};
+                        dir[user.uid] = { ...(dir[user.uid] || {}), name, email, role: 'guardian', updatedAt: new Date().toISOString() };
+                        localStorage.setItem('securo_user_directory', JSON.stringify(dir));
+                    } catch (_) {}
+
+                    closeGuardianTerms();
+                    showToast('Account created', 'Your guardian account is ready. Add your child’s Student ID next in the dashboard.', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'guardian-dashboard.html';
+                    }, 1200);
+                } catch (error) {
+                    const message = getFriendlyAuthMessage(error, 'signup', 'guardian');
+                    errorMsg.textContent = message;
+                    showToast('Registration failed', message, 'error');
+                    closeGuardianTerms();
+                } finally {
+                    setButtonBusy(agreeGuardianTermsBtn, false);
+                }
+            });
+        }
     </script>
 </body>
 </html>

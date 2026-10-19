@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Daanbantayan Emergency Hotlines - Securo</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <!-- (2026-07-13) Add dramatic intro preloader; was no preloader -->
+    <link rel="stylesheet" href="preloader.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="preloader.js"></script>
+
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --surface: rgba(255, 255, 255, 0.88);
+            --surface-card: #ffffff;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --primary: #5a1fe0;
+            --primary-soft: #f2edff;
+            --primary-wash: rgba(90, 31, 224, 0.08);
+            --emerald: #0f9b67;
+            --emerald-soft: #ecfdf5;
+            --radius-xl: 28px;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --shadow: 0 20px 50px rgba(18, 15, 38, 0.08);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            font-family: "Outfit", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 12% 12%, rgba(90, 31, 224, 0.09) 0%, transparent 45%),
+                radial-gradient(circle at 88% 88%, rgba(244, 63, 94, 0.08) 0%, transparent 45%),
+                #f6f4fe;
+        }
+
+        .screen-container {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            padding: 16px 24px;
+            max-width: 1420px;
+            margin: 0 auto;
+        }
+
+        /* Top Header */
+        .top-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            flex-shrink: 0;
+        }
+
+        .brand-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: var(--ink);
+        }
+
+        .brand-pill img {
+            width: 34px;
+            height: 34px;
+            object-fit: contain;
+        }
+
+        .brand-name {
+            font-family: "Sora", sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.02em;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 18px;
+            background: #ffffff;
+            border: 1px solid rgba(90, 31, 224, 0.16);
+            border-radius: 999px;
+            color: var(--ink);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.86rem;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
+        }
+
+        .back-link:hover {
+            background: var(--primary-soft);
+            color: var(--primary);
+            border-color: var(--primary);
+            transform: translateX(-2px);
+        }
+
+        /* Split-View Main Body */
+        .split-stage {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1.25fr 0.75fr;
+            gap: 20px;
+            align-items: stretch;
+            min-height: 0;
+        }
+
+        /* Left Column: Hotlines & Quotes */
+        .info-pane {
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: var(--radius-xl);
+            padding: 20px 24px;
+            box-shadow: var(--shadow);
+            min-height: 0;
+            overflow: hidden;
+            gap: 12px;
+        }
+
+        .hero-headline-wrap {
+            flex-shrink: 0;
+        }
+
+        .badge-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+        }
+
+        .official-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #d11f34;
+            background: rgba(209, 31, 52, 0.1);
+            padding: 3px 10px;
+            border-radius: 999px;
+        }
+
+        .date-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--muted);
+            background: rgba(18, 15, 38, 0.05);
+            padding: 3px 10px;
+            border-radius: 999px;
+        }
+
+        .page-title {
+            font-family: "Sora", sans-serif;
+            font-size: clamp(1.25rem, 2vw, 1.6rem);
+            font-weight: 800;
+            color: var(--ink);
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+        }
+
+        /* Quotes Card */
+        .quotes-card {
+            flex-shrink: 0;
+            background: linear-gradient(135deg, rgba(90, 31, 224, 0.08) 0%, rgba(244, 63, 94, 0.05) 100%);
+            border-left: 4px solid var(--primary);
+            border-radius: var(--radius-md);
+            padding: 9px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quote-icon {
+            color: var(--primary);
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .quote-text {
+            font-size: 0.82rem;
+            font-style: italic;
+            color: #433878;
+            line-height: 1.3;
+        }
+
+        .quote-author {
+            font-weight: 700;
+            font-style: normal;
+            font-size: 0.75rem;
+            color: var(--ink);
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* Maximized Hotlines Grid: 2x2 filling remaining vertical space */
+        .hotlines-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 12px;
+            min-height: 0;
+        }
+
+        /* Category Card: Occupies full container slot */
+        .hotline-item {
+            background: var(--surface-card);
+            border: 1px solid rgba(90, 31, 224, 0.12);
+            border-radius: var(--radius-lg);
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.03);
+            transition: all 0.22s ease;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .hotline-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 26px rgba(90, 31, 224, 0.12);
+            border-color: rgba(90, 31, 224, 0.35);
+        }
+
+        .hotline-agency-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .agency-info-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .agency-icon-circle {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .icon-mdrrmo { background: #fee2e2; color: #dc2626; }
+        .icon-police { background: #dbeafe; color: #2563eb; }
+        .icon-bfp { background: #ffedd5; color: #ea580c; }
+        .icon-coastguard { background: #ccfbf1; color: #0d9488; }
+
+        .agency-name {
+            font-family: "Sora", sans-serif;
+            font-weight: 800;
+            font-size: 0.96rem;
+            color: var(--ink);
+            letter-spacing: -0.01em;
+            line-height: 1.1;
+        }
+
+        .agency-sub {
+            font-size: 0.72rem;
+            color: var(--muted);
+            display: block;
+            margin-top: 1px;
+        }
+
+        .status-chip {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: rgba(15, 155, 103, 0.1);
+            color: var(--emerald);
+        }
+
+        /* (2026-07-13) Maximize buttons to occupy category container; was fixed padding */
+        .number-buttons-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            justify-content: space-evenly;
+            margin-top: 6px;
+        }
+
+        .copy-btn {
+            width: 100%;
+            flex: 1;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            background: #f8fafc;
+            border: 1px solid rgba(15, 23, 42, 0.08);
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .number-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: "Sora", sans-serif;
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--ink);
+            letter-spacing: 0.02em;
+        }
+
+        .number-display .material-symbols-outlined {
+            font-size: 16px;
+            color: var(--primary);
+            transition: color 0.18s ease;
+        }
+
+        .copy-pill-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 9px;
+            border-radius: 6px;
+            background: rgba(90, 31, 224, 0.08);
+            color: var(--primary);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            transition: all 0.18s ease;
+        }
+
+        .copy-btn:hover {
+            background: #ffffff;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(90, 31, 224, 0.1);
+        }
+
+        .copy-btn:hover .copy-pill-indicator {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        .copy-btn:active {
+            transform: scale(0.985);
+        }
+
+        /* Copied State */
+        .copy-btn.copied {
+            background: var(--emerald-soft) !important;
+            border-color: var(--emerald) !important;
+        }
+
+        .copy-btn.copied .number-display {
+            color: #065f46 !important;
+        }
+
+        .copy-btn.copied .number-display .material-symbols-outlined {
+            color: var(--emerald) !important;
+        }
+
+        .copy-btn.copied .copy-pill-indicator {
+            background: var(--emerald) !important;
+            color: #ffffff !important;
+        }
+
+        /* (2026-07-13) Match single number note height to buttons; was 7px padding */
+        .single-number-hint {
+            flex: 1;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: rgba(13, 148, 136, 0.08);
+            border-radius: 12px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #0f766e;
+        }
+
+        /* Bottom Status Banner */
+        .safety-mini-banner {
+            flex-shrink: 0;
+            padding: 7px 12px;
+            border-radius: 10px;
+            background: rgba(15, 155, 103, 0.08);
+            border: 1px solid rgba(15, 155, 103, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.75rem;
+            color: #065f46;
+            font-weight: 600;
+        }
+
+        /* Right Column: Facebook Embed Card */
+        .embed-pane {
+            background: var(--surface-card);
+            border-radius: var(--radius-xl);
+            border: 1px solid rgba(90, 31, 224, 0.12);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            padding: 14px;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .embed-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 6px 10px;
+            border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+
+        .embed-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fb-logo-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #1877f2;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 15px;
+            font-family: sans-serif;
+        }
+
+        .embed-header-title {
+            font-family: "Sora", sans-serif;
+            font-size: 0.86rem;
+            font-weight: 700;
+            color: var(--ink);
+        }
+
+        .embed-source-tag {
+            font-size: 0.72rem;
+            color: var(--muted);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .embed-source-tag:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        .embed-frame-wrapper {
+            flex: 1;
+            width: 100%;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #f8fafc;
+            border-radius: var(--radius-md);
+        }
+
+        .embed-frame-wrapper iframe {
+            width: 100%;
+            height: 100%;
+            max-width: 500px;
+            border: none;
+            overflow: hidden;
+        }
+
+        /* Floating Toast Notification */
+        .hotline-toast {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%) translateY(30px);
+            background: #0f172a;
+            color: #ffffff;
+            padding: 9px 18px;
+            border-radius: 999px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 9999;
+        }
+
+        .hotline-toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Screen-Fitting Breakpoint */
+        @media (max-width: 960px) {
+            html, body {
+                overflow: hidden;
+            }
+
+            .split-stage {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .embed-pane {
+                display: none; /* Keep clean 1-screen fit on mobile */
+            }
+
+            .hotlines-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: repeat(4, 1fr);
+                gap: 8px;
+            }
+
+            .screen-container {
+                padding: 10px 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="screen-container">
+        <!-- Top Navigation -->
+        <header class="top-nav">
+            <a href="landing.html" class="brand-pill" title="Return to Securo">
+                <img src="logo.png" alt="Securo Logo">
+                <span class="brand-name">Securo</span>
+            </a>
+            <a href="landing.html" class="back-link">
+                <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span>
+                <span>Back to Portal</span>
+            </a>
+        </header>
+
+        <!-- Main Single-Screen Body -->
+        <main class="split-stage">
+            <!-- Left Column: Hotlines & Quotes -->
+            <section class="info-pane">
+                <div class="hero-headline-wrap">
+                    <div class="badge-row">
+                        <span class="official-badge">
+                            <span class="material-symbols-outlined" style="font-size:13px;">emergency</span>
+                            Emergency Broadcast
+                        </span>
+                        <span class="date-badge">
+                            <span class="material-symbols-outlined" style="font-size:13px;">schedule</span>
+                            Updated: September 25, 2025
+                        </span>
+                    </div>
+                    <h1 class="page-title">Daanbantayan Emergency Hotlines</h1>
+                </div>
+
+                <!-- Safety Quotes Card -->
+                <div class="quotes-card">
+                    <span class="material-symbols-outlined quote-icon">format_quote</span>
+                    <div class="quote-text">
+                        "Preparedness today is protection tomorrow. In moments of crisis, rapid coordination saves lives."
+                        <span class="quote-author">— Municipality of Daanbantayan Public Safety</span>
+                    </div>
+                </div>
+
+                <!-- Maximized Hotlines Grid -->
+                <div class="hotlines-grid">
+                    <!-- Category: MDRRMO -->
+                    <div class="hotline-item">
+                        <div class="hotline-agency-head">
+                            <div class="agency-info-left">
+                                <div class="agency-icon-circle icon-mdrrmo">
+                                    <span class="material-symbols-outlined">medical_services</span>
+                                </div>
+                                <div>
+                                    <h2 class="agency-name">MDRRMO</h2>
+                                    <span class="agency-sub">Disaster Risk & Emergency Response</span>
+                                </div>
+                            </div>
+                            <span class="status-chip">24/7 Active</span>
+                        </div>
+                        <div class="number-buttons-box">
+                            <button type="button" class="copy-btn" onclick="copyHotline('09268253800', this)" aria-label="Copy MDRRMO number 09268253800">
+                                <div class="number-display">
+                                    <span class="material-symbols-outlined">phone_android</span>
+                                    <span>0926 825 3800</span>
+                                </div>
+                                <span class="copy-pill-indicator">
+                                    <span class="material-symbols-outlined" style="font-size:13px;">content_copy</span> Copy
+                                </span>
+                            </button>
+                            <button type="button" class="copy-btn" onclick="copyHotline('09999897792', this)" aria-label="Copy MDRRMO number 09999897792">
+                                <div class="number-display">
+                                    <span class="material-symbols-outlined">phone_android</span>
+                                    <span>0999 989 7792</span>
+                                </div>
+                                <span class="copy-pill-indicator">
+                                    <span class="material-symbols-outlined" style="font-size:13px;">content_copy</span> Copy
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Category: POLICE -->
+                    <div class="hotline-item">
+                        <div class="hotline-agency-head">
+                            <div class="agency-info-left">
+                                <div class="agency-icon-circle icon-police">
+                                    <span class="material-symbols-outlined">local_police</span>
+                                </div>
+                                <div>
+                                    <h2 class="agency-name">POLICE</h2>
+                                    <span class="agency-sub">Philippine National Police Station</span>
+                                </div>
+                            </div>
+                            <span class="status-chip">24/7 Patrol</span>
+                        </div>
+                        <div class="number-buttons-box">
+                            <button type="button" class="copy-btn" onclick="copyHotline('4373783', this)" aria-label="Copy Police landline 4373783">
+                                <div class="number-display">
+                                    <span class="material-symbols-outlined">call</span>
+                                    <span>437 3783 (Landline)</span>
+                                </div>
+                                <span class="copy-pill-indicator">
+                                    <span class="material-symbols-outlined" style="font-size:13px;">content_copy</span> Copy
+                                </span>
+                            </button>
+                            <button type="button" class="copy-btn" onclick="copyHotline('09164233121', this)" aria-label="Copy Police mobile 09164233121">
+                                <div class="number-display">
+                                    <span class="material-symbols-outlined">phone_android</span>
+                                    <span>0916 423 3121</span>
+                                </div>
+                                <span class="copy-pill-indicator">
+                                    <span class="material-symbols-outlined" style="font-size:13px;">content_copy</span> Copy
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Category: BFP -->
+                    <div class="hotline-item">
+                        <div class="hotline-agency-head">
+                            <div class="agency-info-left">
+                                <div class="agency-icon-circle icon-bfp">
+                                    <span class="material-symbols-outlined">local_fire_department</span>
+                                </div>
+                                <div>
+                                    <h2 class="agency-name">BFP</h2>
+                                    <span class="agency-sub">Bureau of Fire Protection</span>
+                                </div>
+                            </div>
+                            <span class="status-chip">Fire & Rescue</span>
+                        </div>
+                        <div class="number-buttons-box">
+                            <button type="button" class="copy-btn" onclick="copyHotline('4373788', this)" aria-label="Copy BFP landline 4373788">
+                                <div class="number-display">
+                                    <span class="material-symbols-outlined">call</span>
+                                    <span>437 3788 (Landline)</span>
+                                </div>
+                                <span class="copy-pill-indicator">
+                                    <span class="material-symbols-outlined" style="font-size:13px;">content_copy</span> Copy
+                                </span>
+                            </button>
+                            <button type="button" class="copy-btn" onclick="copyHotline('09459663774', this)" aria-label="Copy BFP mobile 09459663774">
+                                <div class="number-display">
+                                    <span class="material-symbols-outlined">phone_android</span>
+                                    <span>0945 966 3774</span>
+                                </div>
+                                <span class="copy-pill-indicator">
+                                    <span class="material-symbols-outlined" style="font-size:13px;">content_copy</span> Copy
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Category: COASTGUARD -->
+                    <div class="hotline-item">
+                        <div class="hotline-agency-head">
+                            <div class="agency-info-left">
+                                <div class="agency-icon-circle icon-coastguard">
+                                    <span class="material-symbols-outlined">sailing</span>
+                                </div>
+                                <div>
+                                    <h2 class="agency-name">COASTGUARD</h2>
+                                    <span class="agency-sub">Philippine Coast Guard Sub-Station</span>
+                                </div>
+                            </div>
+                            <span class="status-chip">Maritime Watch</span>
+                        </div>
+                        <div class="number-buttons-box">
+                            <button type="button" class="copy-btn" onclick="copyHotline('09678978712', this)" aria-label="Copy Coast Guard number 09678978712">
+                                <div class="number-display">
+                                    <span class="material-symbols-outlined">phone_android</span>
+                                    <span>0967 897 8712</span>
+                                </div>
+                                <span class="copy-pill-indicator">
+                                    <span class="material-symbols-outlined" style="font-size:13px;">content_copy</span> Copy
+                                </span>
+                            </button>
+                            <div class="single-number-hint">
+                                <span class="material-symbols-outlined" style="font-size:15px;">radio</span>
+                                <span>24/7 Port surveillance & search and rescue dispatch</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Mini Note -->
+                <div class="safety-mini-banner">
+                    <span class="material-symbols-outlined" style="font-size:16px;">verified</span>
+                    <span>Clicking any number copies it directly to your clipboard for instant pasting.</span>
+                </div>
+            </section>
+
+            <!-- Right Column: Official Facebook Post Embed -->
+            <aside class="embed-pane">
+                <div class="embed-header">
+                    <div class="embed-header-left">
+                        <div class="fb-logo-icon">f</div>
+                        <div>
+                            <div class="embed-header-title">Municipality of Daanbantayan</div>
+                        </div>
+                    </div>
+                    <a href="https://www.facebook.com/municipalityofdaanbantayan/posts/pfbid0T6JjyVEeuJCuYWEx6Ea7fYKVTUrRenSkAKbqiXXJNEkzmiEbhSpQHd1wkkwnyxrAl" target="_blank" rel="noopener noreferrer" class="embed-source-tag">Official Post ↗</a>
+                </div>
+                <div class="embed-frame-wrapper">
+                    <!-- (2026-07-13) Official Facebook emergency hotlines post embed -->
+                    <iframe
+                        src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2Fmunicipalityofdaanbantayan%2Fposts%2Fpfbid0T6JjyVEeuJCuYWEx6Ea7fYKVTUrRenSkAKbqiXXJNEkzmiEbhSpQHd1wkkwnyxrAl&show_text=true&width=500"
+                        width="500"
+                        height="641"
+                        style="border:none;overflow:hidden"
+                        scrolling="no"
+                        frameborder="0"
+                        allowfullscreen="true"
+                        allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share">
+                    </iframe>
+                </div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Floating Copy Toast -->
+    <div id="hotlineToast" class="hotline-toast" role="status" aria-live="polite">
+        <span class="material-symbols-outlined" style="font-size:18px; color:#10b981;">check_circle</span>
+        <span id="toastMsg">Copied to clipboard</span>
+    </div>
+
+    <script>
+        let toastTimer = null;
+
+        function copyHotline(rawNumber, btnElement) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(rawNumber).then(() => {
+                    handleSuccess(rawNumber, btnElement);
+                }).catch(() => {
+                    execFallbackCopy(rawNumber, btnElement);
+                });
+            } else {
+                execFallbackCopy(rawNumber, btnElement);
+            }
+        }
+
+        function execFallbackCopy(text, btnElement) {
+            const input = document.createElement('input');
+            input.value = text;
+            input.style.position = 'fixed';
+            input.style.opacity = '0';
+            document.body.appendChild(input);
+            input.select();
+            try {
+                document.execCommand('copy');
+                handleSuccess(text, btnElement);
+            } catch (err) {
+                console.warn('Clipboard copy failed:', err);
+            }
+            document.body.removeChild(input);
+        }
+
+        function handleSuccess(numberStr, btn) {
+            const indicator = btn.querySelector('.copy-pill-indicator');
+            const originalHtml = indicator ? indicator.innerHTML : 'Copy';
+            btn.classList.add('copied');
+            if (indicator) {
+                indicator.innerHTML = '<span class="material-symbols-outlined" style="font-size:13px;">check_circle</span> Copied!';
+            }
+
+            const toast = document.getElementById('hotlineToast');
+            const toastMsg = document.getElementById('toastMsg');
+            if (toast && toastMsg) {
+                toastMsg.textContent = `Copied ${numberStr} to clipboard`;
+                toast.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2200);
+            }
+
+            setTimeout(() => {
+                btn.classList.remove('copied');
+                if (indicator) indicator.innerHTML = originalHtml;
+            }, 1800);
+        }
+    </script>
+</body>
+</html>

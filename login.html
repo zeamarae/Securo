@@ -410,6 +410,33 @@
             animation: zoomIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
         }
+        /* (2026-07-13) Apply terms content spacing; was default modal spacing */
+        #termsScrollBox h4, .terms-content h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-top: 24px !important;
+            margin-bottom: 8px !important;
+        }
+        #termsScrollBox h4:first-of-type, .terms-content h4:first-of-type {
+            margin-top: 0 !important;
+        }
+        #termsScrollBox p, .terms-content p {
+            text-indent: 40px;
+            margin-bottom: 4px !important;
+            color: var(--ink);
+            font-size: 0.82rem;
+            line-height: 1.55;
+        }
+        #termsScrollBox ul, .terms-content ul {
+            margin-top: 2px !important;
+            margin-bottom: 20px !important;
+            padding-left: 45px !important;
+        }
+        #termsScrollBox li, .terms-content li {
+            margin-bottom: 2px;
+            font-size: 0.82rem;
+        }
         .onboarding-header { text-align: center; margin-bottom: 16px; }
         .onboarding-badge-icon {
             width: 48px;
@@ -646,8 +673,8 @@
                 <label class="form-label" id="signupIdLabel">Student ID Number</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">badge</span>
-                    <!-- (2026-07-13) Direct ID signup without full name field; was full name + id -->
-                    <input type="text" id="studentIdSignup" placeholder="1234567" maxlength="7" pattern="\d*" inputmode="numeric">
+                    <!-- (2026-07-13) Blank register inputs without defaults; was placeholder dots -->
+                    <input type="text" id="studentIdSignup" placeholder="" maxlength="7" pattern="\d*" inputmode="numeric" autocomplete="off">
                 </div>
             </div>
 
@@ -656,8 +683,7 @@
                 <label class="form-label">Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">lock</span>
-                    <!-- (2026-07-13) Fix password placeholder; was corrupted bytes -->
-                    <input type="password" id="password" placeholder="••••••••" required>
+                    <input type="password" id="password" placeholder="" autocomplete="new-password" required>
                     <button type="button" id="togglePassword" class="btn" style="background:none; border:none; color:var(--muted); padding:0;">
                         <span class="material-symbols-outlined">visibility</span>
                     </button>
@@ -668,17 +694,11 @@
                 <label class="form-label">Confirm Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">verified_user</span>
-                    <input type="password" id="confirmPasswordSignup" placeholder="Confirm your password">
+                    <input type="password" id="confirmPasswordSignup" placeholder="" autocomplete="new-password">
                 </div>
             </div>
 
-            <!-- Terms and Conditions Checkbox (Signup Only) -->
-            <div class="form-group signup-only" style="margin-bottom: 18px;">
-                <label style="display: flex; align-items: start; gap: 10px; cursor: pointer; font-size: 0.85rem; color: var(--muted);">
-                    <input type="checkbox" id="termsCheckbox" style="margin-top: 3px; width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary);">
-                    <span>I agree to the <a href="terms.html" class="terms-link" style="color: var(--primary); text-decoration: none; font-weight: 600;">Terms and Conditions</a></span>
-                </label>
-            </div>
+            <!-- (2026-07-13) Remove terms checkbox from form; was inline checkbox -->
 
             <div style="text-align: right; margin-bottom: 15px;">
                 <a href="#" id="forgotPassword" style="color: var(--primary); text-decoration: none; font-size: 0.85rem; font-weight: 600;">Forgot Password?</a>
@@ -883,6 +903,137 @@
         </div>
     </div>
 
+    <!-- (2026-07-13) Add terms modal with I Agree button; was inline checkbox -->
+    <div id="termsModal" class="onboarding-modal-backdrop">
+        <div class="onboarding-modal-card" style="max-width: 460px; max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="onboarding-header" style="margin-bottom: 12px;">
+                <div class="onboarding-badge-icon" style="color: var(--primary);">
+                    <span class="material-symbols-outlined" style="font-size: 26px;">description</span>
+                </div>
+                <h3 class="onboarding-title" style="margin-bottom: 4px;">Terms and Conditions</h3>
+                <p class="onboarding-subtitle">Please review and agree to continue registration.</p>
+            </div>
+            <!-- (2026-07-13) Add terms-content class for spacing; was unclassed container -->
+            <div id="termsScrollBox" class="terms-content" style="flex: 1; overflow-y: auto; background: #f8f7fc; border: 1px solid rgba(90, 31, 224, 0.12); border-radius: 16px; padding: 16px; margin-bottom: 16px; font-size: 0.82rem; color: var(--ink); line-height: 1.55; text-align: left; max-height: 320px;">
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">1. Acceptance of Terms</h4>
+                <p style="margin-bottom: 10px;">By registering for and using the Securo campus safety application ("the App"), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the App.</p>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">2. Purpose of the App</h4>
+                <p style="margin-bottom: 4px;">Securo is designed to enhance campus safety and security by providing:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Real-time incident reporting capabilities</li>
+                    <li>Emergency notifications and alerts</li>
+                    <li>Campus security communication tools</li>
+                    <li>Safety resource access for students, staff, and guardians</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">3. User Accounts and Registration</h4>
+                <p style="margin-bottom: 4px;">To use Securo, you must:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Provide accurate and complete registration information</li>
+                    <li>Use a valid student or staff ID number</li>
+                    <li>Maintain the confidentiality of your account credentials</li>
+                    <li>Notify us immediately of any unauthorized access to your account</li>
+                    <li>Be responsible for all activities that occur under your account</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">4. User Responsibilities</h4>
+                <p style="margin-bottom: 4px;">When using the App, you agree to:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Use the App only for legitimate campus safety purposes</li>
+                    <li>Provide truthful and accurate information when reporting incidents</li>
+                    <li>Not submit false reports or misuse emergency features</li>
+                    <li>Respect the privacy and rights of other users</li>
+                    <li>Comply with all applicable campus policies and local laws</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">5. Privacy and Data Protection</h4>
+                <p style="margin-bottom: 4px;">We take your privacy seriously. By using Securo:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>You consent to the collection and use of your personal information as described in our Privacy Policy</li>
+                    <li>Your profile information, including name, ID number, and photo (if provided), will be stored securely</li>
+                    <li>Incident reports and communications may be monitored by campus security personnel</li>
+                    <li>We will not share your personal information with third parties without your consent, except as required by law</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">6. Incident Reporting</h4>
+                <p style="margin-bottom: 4px;">When reporting incidents through the App:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Submit reports promptly and accurately</li>
+                    <li>False reporting is strictly prohibited and may result in disciplinary action</li>
+                    <li>Reports are reviewed by campus security and appropriate authorities</li>
+                    <li>Emergency situations should always be reported to campus security or local emergency services (911) immediately</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">7. Guardian Access</h4>
+                <p style="margin-bottom: 4px;">For guardian accounts:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Guardians must be invited and approved by the student</li>
+                    <li>Guardians have limited access to student safety information</li>
+                    <li>Guardian access can be revoked by the student at any time</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">8. Prohibited Activities</h4>
+                <p style="margin-bottom: 4px;">You may not:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Submit false or misleading information</li>
+                    <li>Attempt to access accounts or data that do not belong to you</li>
+                    <li>Interfere with the App's operation or security features</li>
+                    <li>Use the App to harass, threaten, or harm others</li>
+                    <li>Reverse engineer or attempt to extract source code from the App</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">9. Service Availability</h4>
+                <p style="margin-bottom: 4px;">While we strive to maintain reliable service:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>The App is provided "as is" without warranties of any kind</li>
+                    <li>We do not guarantee uninterrupted or error-free service</li>
+                    <li>We may modify, suspend, or discontinue features at any time</li>
+                    <li>In case of actual emergencies, always contact campus security or emergency services directly</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">10. Limitation of Liability</h4>
+                <p style="margin-bottom: 4px;">To the maximum extent permitted by law:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>We are not liable for any damages arising from your use of the App</li>
+                    <li>We are not responsible for the actions or inactions of campus security personnel</li>
+                    <li>The App is a tool to assist campus safety efforts, not a substitute for emergency services</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">11. Account Termination</h4>
+                <p style="margin-bottom: 4px;">We reserve the right to:</p>
+                <ul style="margin: 0 0 10px 18px; padding: 0;">
+                    <li>Suspend or terminate accounts that violate these terms</li>
+                    <li>Remove content that is inappropriate or violates policies</li>
+                    <li>Terminate accounts upon graduation, employment termination, or at the user's request</li>
+                </ul>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">12. Changes to Terms</h4>
+                <p style="margin-bottom: 10px;">We may update these Terms and Conditions from time to time. Continued use of the App after changes are posted constitutes acceptance of the updated terms. We will notify users of significant changes through the App or email.</p>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">13. Governing Law</h4>
+                <p style="margin-bottom: 10px;">These Terms and Conditions are governed by applicable local laws and campus policies. Any disputes will be resolved according to the procedures established by the educational institution.</p>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">14. Contact Information</h4>
+                <p style="margin-bottom: 10px;">If you have questions about these Terms and Conditions, please contact campus security or the App administrator through the official campus channels.</p>
+
+                <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 0 0 6px;">15. Acknowledgment</h4>
+                <p style="margin-bottom: 0;">By clicking "I Agree", you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.</p>
+            </div>
+            <!-- (2026-07-13) Disable terms buttons until scrolled; was always active -->
+            <div style="display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 4px;">
+                <button type="button" id="declineTermsBtn" disabled style="flex: 1; height: 46px; margin: 0; border-radius: 14px; border: 1.5px solid rgba(0,0,0,0.1); background: #f1f0f7; color: #475569; font-weight: 700; font-size: 0.92rem; cursor: not-allowed; opacity: 0.5; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; box-sizing: border-box;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">cancel</span>
+                    <span>Decline</span>
+                </button>
+                <button type="button" id="agreeTermsBtn" class="btn-action" disabled style="flex: 1; height: 46px; margin: 0; border-radius: 14px; font-weight: 700; font-size: 0.92rem; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit; box-sizing: border-box; opacity: 0.5; cursor: not-allowed;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
+                    <span>I Agree</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase Scripts -->
     <script type="module">
         import { auth } from './firebase-config.js';
@@ -891,13 +1042,9 @@
         import { Validation, UI, Logger, Permissions } from './utils.js';
         import './install-sw.js'; // Initialize offline support
 
-        // (2026-07-13) Retain login view on role selection entry; was checkAuth
-        if (sessionStorage.getItem('securo_from_role_selection') === '1') {
-            sessionStorage.removeItem('securo_from_role_selection');
-            auth.signOut().catch(() => {});
-        } else {
-            checkAuth(false);
-        }
+        // (2026-07-13) Keep session active on entry; was auto signOut on role select
+        sessionStorage.removeItem('securo_from_role_selection');
+        checkAuth(false);
 
         // (2026-07-13) Always start on login first; prev: auto-redirect permissions
 
@@ -1072,14 +1219,21 @@
             document.getElementById('forgotPassword').style.display = isLoginMode ? 'inline' : 'none';
             btnText.textContent = isLoginMode ? `Enter ${roleLabel} Hub` : `Register ${roleLabel} Account`;
             errorMsg.textContent = '';
+            // (2026-07-13) Clear register inputs on mode switch; was unmanaged inputs
+            if (!isLoginMode) {
+                if (signupIdInput) signupIdInput.value = '';
+                const pwd = document.getElementById('password');
+                if (pwd) pwd.value = '';
+                const cpwd = document.getElementById('confirmPasswordSignup');
+                if (cpwd) cpwd.value = '';
+            }
         };
 
-        // (2026-07-13) Set blue staff theme, hide signup, sync terms; was purple
+        // (2026-07-13) Enable staff register tab; was hidden signup tab for staff
         if (isStaffRole) {
             document.documentElement.style.setProperty('--primary', '#2563eb');
             document.documentElement.style.setProperty('--primary-strong', '#1d4ed8');
             document.documentElement.style.setProperty('--primary-soft', '#eff6ff');
-            if (signupTab) signupTab.style.display = 'none';
         }
         if (localStorage.getItem('securo_terms_agreed') === 'true') {
             const termsBox = document.getElementById('termsCheckbox');
@@ -1090,15 +1244,16 @@
         if (subtitle) subtitle.textContent = isStaffRole ? 'Staff access portal' : 'Student access portal';
         if (identifierLabel) identifierLabel.textContent = `${roleLabel} ID Number`;
         if (signupIdLabel) signupIdLabel.textContent = `${roleLabel} ID Number`;
-        if (signupIdInput) signupIdInput.placeholder = isStaffRole ? 'e.g. 7654321' : 'e.g. 1234567';
-        if (identifierInput) identifierInput.placeholder = isStaffRole ? 'Enter your 7-digit staff ID' : 'Enter your 7-digit student ID';
+        // (2026-07-13) Blank placeholders for ID inputs; was example strings
+        if (signupIdInput) signupIdInput.placeholder = '';
+        if (identifierInput) identifierInput.placeholder = '';
 
         loginTab.addEventListener('click', () => setMode('login'));
         signupTab.addEventListener('click', () => setMode('signup'));
 
-        // (2026-07-13) Auto-select signup tab on request; was login tab only
+        // (2026-07-13) Auto-select signup tab for all roles; was exclude staff role
         const authUrlParams = new URLSearchParams(window.location.search);
-        if (!isStaffRole && (authUrlParams.get('mode') === 'register' || window.location.hash === '#register')) {
+        if (authUrlParams.get('mode') === 'register' || window.location.hash === '#register') {
             setMode('signup');
         }
 
@@ -1474,7 +1629,6 @@
                 } else {
                     const studentId = signupIdInput.value.trim();
                     const confirmPassword = document.getElementById('confirmPasswordSignup').value;
-                    const termsCheckbox = document.getElementById('termsCheckbox');
 
                     if (!/^\d{7}$/.test(studentId)) {
                         throw new Error(`Please enter a valid 7-digit ${roleLabel} ID number.`);
@@ -1485,32 +1639,30 @@
                     if (password !== confirmPassword) {
                         throw new Error("Passwords do not match.");
                     }
-                    if (!termsCheckbox.checked) {
-                        throw new Error("You must agree to the Terms and Conditions to register.");
-                    }
 
-                    const generatedEmail = roleIdToEmail(studentId, preferredRole);
-                    const user = await signUp(generatedEmail, password);
-                    // (2026-07-13) Set session token on successful signup; was missing
-                    if (user?.uid) {
-                        localStorage.setItem('securo_session_token', user.uid);
-                        sessionStorage.setItem('securo_login_pending', '1');
+                    // Check if ID is already registered
+                    let idTaken = false;
+                    try {
+                        const raw = localStorage.getItem('securo_user_directory');
+                        if (raw) {
+                            const parsed = JSON.parse(raw);
+                            idTaken = Object.values(parsed).some(u => String(u.studentId || '') === String(studentId));
+                        }
+                    } catch (_) {}
+                    if (!idTaken) {
+                        idTaken = await isStudentIdTaken(studentId).catch(() => false);
                     }
-                    
-                    saveLocalUserDirectoryEntry(user.uid, {
-                        studentId,
-                        email: generatedEmail,
-                        role: preferredRole
-                    });
+                    if (idTaken) {
+                        throw new Error(`That ${roleLabel} ID is already registered. Please sign in.`);
+                    }
 
                     setButtonBusy(submitBtn, false);
-                    // (2026-07-13) Set auth session and route signup to app; was permissions
-                    sessionStorage.setItem('securo_just_registered', '1');
-                    sessionStorage.setItem('securo_authenticated', '1');
-                    const isNativeApk = Boolean(window.Capacitor?.isNativePlatform?.() || window.Capacitor?.platform !== 'web');
-                    const camOk = localStorage.getItem('securo_camera_granted') === 'true';
-                    const locOk = localStorage.getItem('securo_location_granted') === 'true';
-                    window.location.href = (isNativeApk && (!camOk || !locOk)) ? 'permissions-onboarding.html' : 'index.html';
+                    // (2026-07-13) Open terms modal on register; was inline checkbox check
+                    const termsModal = document.getElementById('termsModal');
+                    if (termsModal) {
+                        termsModal.classList.add('active');
+                        resetTermsModalScroll();
+                    }
                 }
             } catch (error) {
                 const friendlyMessage = getFriendlyAuthMessage(error, isLoginMode ? "login" : "signup", roleLabel);
@@ -1519,6 +1671,121 @@
                 setButtonBusy(submitBtn, false);
             }
         });
+
+        // (2026-07-13) Unlock terms buttons on scroll to bottom; was always enabled
+        const termsModalEl = document.getElementById('termsModal');
+        const declineTermsBtn = document.getElementById('declineTermsBtn');
+        const agreeTermsBtn = document.getElementById('agreeTermsBtn');
+        const termsScrollBox = document.getElementById('termsScrollBox');
+
+        function setTermsButtonsEnabled(enabled) {
+            if (declineTermsBtn) {
+                declineTermsBtn.disabled = !enabled;
+                declineTermsBtn.style.opacity = enabled ? '1' : '0.5';
+                declineTermsBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+            }
+            if (agreeTermsBtn) {
+                agreeTermsBtn.disabled = !enabled;
+                agreeTermsBtn.style.opacity = enabled ? '1' : '0.5';
+                agreeTermsBtn.style.cursor = enabled ? 'pointer' : 'not-allowed';
+            }
+        }
+
+        function resetTermsModalScroll() {
+            setTermsButtonsEnabled(false);
+            if (termsScrollBox) termsScrollBox.scrollTop = 0;
+        }
+
+        if (termsScrollBox) {
+            termsScrollBox.addEventListener('scroll', () => {
+                const atEnd = termsScrollBox.scrollHeight - termsScrollBox.scrollTop <= termsScrollBox.clientHeight + 15;
+                if (atEnd) setTermsButtonsEnabled(true);
+            });
+        }
+
+        // (2026-07-13) Show decline terms error; was silent modal dismissal
+        if (declineTermsBtn) {
+            declineTermsBtn.addEventListener('click', () => {
+                if (termsModalEl) termsModalEl.classList.remove('active');
+                const declineMsg = "Can't proceed without agreeing to the terms and conditions.";
+                errorMsg.textContent = declineMsg;
+                showToast("Terms Required", declineMsg, "error");
+            });
+        }
+        if (termsModalEl) {
+            termsModalEl.addEventListener('click', (e) => {
+                if (e.target === termsModalEl) {
+                    termsModalEl.classList.remove('active');
+                    const declineMsg = "Can't proceed without agreeing to the terms and conditions.";
+                    errorMsg.textContent = declineMsg;
+                    showToast("Terms Required", declineMsg, "error");
+                }
+            });
+        }
+
+        if (agreeTermsBtn) {
+            agreeTermsBtn.addEventListener('click', async () => {
+                setButtonBusy(agreeTermsBtn, true);
+                try {
+                    const studentId = signupIdInput.value.trim();
+                    const password = document.getElementById('password').value;
+                    const confirmPassword = document.getElementById('confirmPasswordSignup').value;
+
+                    if (!/^\d{7}$/.test(studentId)) {
+                        throw new Error(`Please enter a valid 7-digit ${roleLabel} ID number.`);
+                    }
+                    if (password.length < 8) {
+                        throw new Error("Password must be at least 8 characters.");
+                    }
+                    if (password !== confirmPassword) {
+                        throw new Error("Passwords do not match.");
+                    }
+
+                    let idTaken = false;
+                    try {
+                        const raw = localStorage.getItem('securo_user_directory');
+                        if (raw) {
+                            const parsed = JSON.parse(raw);
+                            idTaken = Object.values(parsed).some(u => String(u.studentId || '') === String(studentId));
+                        }
+                    } catch (_) {}
+                    if (!idTaken) {
+                        idTaken = await isStudentIdTaken(studentId).catch(() => false);
+                    }
+                    if (idTaken) {
+                        throw new Error(`That ${roleLabel} ID is already registered. Please sign in.`);
+                    }
+
+                    const generatedEmail = roleIdToEmail(studentId, preferredRole);
+                    const user = await signUp(generatedEmail, password);
+                    if (user?.uid) {
+                        localStorage.setItem('securo_session_token', user.uid);
+                        sessionStorage.setItem('securo_login_pending', '1');
+                    }
+                    try {
+                        const raw = localStorage.getItem('securo_user_directory');
+                        const dir = raw ? JSON.parse(raw) : {};
+                        dir[user.uid] = { ...(dir[user.uid] || {}), studentId, email: generatedEmail, role: preferredRole, updatedAt: new Date().toISOString() };
+                        localStorage.setItem('securo_user_directory', JSON.stringify(dir));
+                    } catch (_) {}
+
+                    if (termsModalEl) termsModalEl.classList.remove('active');
+                    sessionStorage.setItem('securo_just_registered', '1');
+                    sessionStorage.setItem('securo_authenticated', '1');
+                    const isNativeApk = Boolean(window.Capacitor?.isNativePlatform?.() || window.Capacitor?.platform !== 'web');
+                    const camOk = localStorage.getItem('securo_camera_granted') === 'true';
+                    const locOk = localStorage.getItem('securo_location_granted') === 'true';
+                    window.location.href = (isNativeApk && (!camOk || !locOk)) ? 'permissions-onboarding.html' : 'index.html';
+                } catch (error) {
+                    const friendlyMessage = getFriendlyAuthMessage(error, "signup", roleLabel);
+                    errorMsg.textContent = friendlyMessage;
+                    showToast("Registration failed", friendlyMessage, "error");
+                    if (termsModalEl) termsModalEl.classList.remove('active');
+                } finally {
+                    setButtonBusy(agreeTermsBtn, false);
+                }
+            });
+        }
 
         // (2026-07-13) Prevent image drag across entire application; was draggable
         window.addEventListener('dragstart', (e) => {
