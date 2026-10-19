@@ -1,12 +1,12 @@
 ---
 source_file: "db.js"
 type: "code"
-community: "Community 0"
+community: "Database & Notification Store"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_0
+  - community/Database__Notification_Store
 ---
 
 # db.js
@@ -134,4 +134,4 @@ tags:
 - [[writeLocalGADMessages()]] - `contains` [EXTRACTED]
 - [[writeLocalUsers()]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_0
+#graphify/code #graphify/EXTRACTED #community/Database__Notification_Store

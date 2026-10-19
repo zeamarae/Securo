@@ -1,11 +1,11 @@
 ---
 source_file: ""
 type: "concept"
-community: "Community 5"
+community: "Authentication & Role Management"
 tags:
   - graphify/concept
   - graphify/EXTRACTED
-  - community/Community_5
+  - community/Authentication__Role_Management
 ---
 
 # ref_https
@@ -18,4 +18,4 @@ tags:
 - [[wwwdb.js]] - `imports_from` [EXTRACTED]
 - [[wwwfirebase-config.js]] - `imports_from` [EXTRACTED]
 
-#graphify/concept #graphify/EXTRACTED #community/Community_5
+#graphify/concept #graphify/EXTRACTED #community/Authentication__Role_Management

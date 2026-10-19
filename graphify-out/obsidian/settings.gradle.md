@@ -1,14 +1,14 @@
 ---
 source_file: "android/settings.gradle"
 type: "code"
-community: "Community 36"
+community: "Gradle Project Settings"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_36
+  - community/Gradle_Project_Settings
 ---
 
 # settings.gradle
 
-#graphify/code #graphify/EXTRACTED #community/Community_36
+#graphify/code #graphify/EXTRACTED #community/Gradle_Project_Settings

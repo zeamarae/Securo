@@ -1,12 +1,12 @@
 ---
 source_file: "db.js"
 type: "code"
-community: "Community 24"
+community: "GAD Messaging Subscriptions"
 location: "L2667"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_24
+  - community/GAD_Messaging_Subscriptions
 ---
 
 # replyToGADMessage()
@@ -16,4 +16,4 @@ tags:
 - [[readLocalGADMessages()]] - `calls` [EXTRACTED]
 - [[writeLocalGADMessages()]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_24
+#graphify/code #graphify/EXTRACTED #community/GAD_Messaging_Subscriptions

@@ -1,12 +1,12 @@
 ---
 source_file: "www/spa-router.js"
 type: "code"
-community: "Community 23"
+community: "SPA Hash Router"
 location: "L71"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_23
+  - community/SPA_Hash_Router
 ---
 
 # back()
@@ -16,4 +16,4 @@ tags:
 - [[navigate()_3]] - `calls` [EXTRACTED]
 - [[spa-router.js]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_23
+#graphify/code #graphify/EXTRACTED #community/SPA_Hash_Router

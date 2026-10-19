@@ -1,12 +1,12 @@
 ---
 source_file: "db.js"
 type: "code"
-community: "Community 0"
+community: "Database & Notification Store"
 location: "L858"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_0
+  - community/Database__Notification_Store
 ---
 
 # getAllSOSLogs()
@@ -14,4 +14,4 @@ tags:
 ## Connections
 - [[db.js]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_0
+#graphify/code #graphify/EXTRACTED #community/Database__Notification_Store

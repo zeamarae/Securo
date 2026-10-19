@@ -1,12 +1,12 @@
 ---
 source_file: "www/db.js"
 type: "code"
-community: "Community 20"
+community: "User Lookup & Roles"
 location: "L117"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_20
+  - community/User_Lookup__Roles
 ---
 
 # getUserIdentityKeys()
@@ -16,4 +16,4 @@ tags:
 - [[normalizeEmail()_1]] - `calls` [EXTRACTED]
 - [[wwwdb.js]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_20
+#graphify/code #graphify/EXTRACTED #community/User_Lookup__Roles

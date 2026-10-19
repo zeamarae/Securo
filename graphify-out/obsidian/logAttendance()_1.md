@@ -1,12 +1,12 @@
 ---
 source_file: "www/db.js"
 type: "code"
-community: "Community 14"
+community: "Guardian Notifications"
 location: "L767"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_14
+  - community/Guardian_Notifications
 ---
 
 # logAttendance()
@@ -15,4 +15,4 @@ tags:
 - [[processOfflineQueue()_1]] - `calls` [EXTRACTED]
 - [[wwwdb.js]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_14
+#graphify/code #graphify/EXTRACTED #community/Guardian_Notifications

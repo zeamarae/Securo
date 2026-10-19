@@ -1,12 +1,12 @@
 ---
 source_file: "www/app.js"
 type: "code"
-community: "Community 18"
+community: "App Lifecycle & Navigation"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_18
+  - community/App_Lifecycle__Navigation
 ---
 
 # app.js
@@ -19,4 +19,4 @@ tags:
 - [[navigate()_1]] - `contains` [EXTRACTED]
 - [[updateLinks()]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_18
+#graphify/code #graphify/EXTRACTED #community/App_Lifecycle__Navigation

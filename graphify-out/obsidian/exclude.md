@@ -1,12 +1,12 @@
 ---
 source_file: "jsconfig.json"
 type: "code"
-community: "Community 22"
+community: "JS Compiler Configuration"
 location: "L7"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_22
+  - community/JS_Compiler_Configuration
 ---
 
 # exclude
@@ -14,4 +14,4 @@ tags:
 ## Connections
 - [[jsconfig.json]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_22
+#graphify/code #graphify/EXTRACTED #community/JS_Compiler_Configuration

@@ -1,12 +1,12 @@
 ---
 source_file: "www/router.js"
 type: "code"
-community: "Community 21"
+community: "Web Routing Navigation"
 location: "L113"
 tags:
   - graphify/code
   - graphify/INFERRED
-  - community/Community_21
+  - community/Web_Routing_Navigation
 ---
 
 # showToast()
@@ -14,4 +14,4 @@ tags:
 ## Connections
 - [[wwwrouter.js]] - `indirect_call` [INFERRED]
 
-#graphify/code #graphify/INFERRED #community/Community_21
+#graphify/code #graphify/INFERRED #community/Web_Routing_Navigation

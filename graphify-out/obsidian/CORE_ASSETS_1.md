@@ -1,12 +1,12 @@
 ---
 source_file: "www/service-worker.js"
 type: "code"
-community: "Community 31"
+community: "Offline Sync Service Worker"
 location: "L11"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_31
+  - community/Offline_Sync_Service_Worker
 ---
 
 # CORE_ASSETS
@@ -14,4 +14,4 @@ tags:
 ## Connections
 - [[wwwservice-worker.js]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_31
+#graphify/code #graphify/EXTRACTED #community/Offline_Sync_Service_Worker

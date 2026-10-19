@@ -1,12 +1,12 @@
 ---
 source_file: "www/db.js"
 type: "code"
-community: "Community 8"
+community: "Student Profile Services"
 location: "L226"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_8
+  - community/Student_Profile_Services
 ---
 
 # getUserProfile()
@@ -21,4 +21,4 @@ tags:
 - [[wwwdb.js]] - `contains` [EXTRACTED]
 - [[wwwemergency-contacts.js]] - `imports` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_8
+#graphify/code #graphify/EXTRACTED #community/Student_Profile_Services

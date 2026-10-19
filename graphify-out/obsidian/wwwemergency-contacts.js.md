@@ -1,12 +1,12 @@
 ---
 source_file: "www/emergency-contacts.js"
 type: "code"
-community: "Community 3"
+community: "Campus SOS Dispatcher"
 location: "L1"
 tags:
   - graphify/code
   - graphify/INFERRED
-  - community/Community_3
+  - community/Campus_SOS_Dispatcher
 ---
 
 # www/emergency-contacts.js
@@ -30,4 +30,4 @@ tags:
 - [[wwwdb.js]] - `imports_from` [EXTRACTED]
 - [[wwwutils.js]] - `imports_from` [EXTRACTED]
 
-#graphify/code #graphify/INFERRED #community/Community_3
+#graphify/code #graphify/INFERRED #community/Campus_SOS_Dispatcher

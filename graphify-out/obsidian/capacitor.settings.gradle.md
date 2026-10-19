@@ -1,14 +1,14 @@
 ---
 source_file: "android/capacitor.settings.gradle"
 type: "code"
-community: "Community 35"
+community: "Capacitor Gradle Settings"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_35
+  - community/Capacitor_Gradle_Settings
 ---
 
 # capacitor.settings.gradle
 
-#graphify/code #graphify/EXTRACTED #community/Community_35
+#graphify/code #graphify/EXTRACTED #community/Capacitor_Gradle_Settings

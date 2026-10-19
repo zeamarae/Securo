@@ -1,12 +1,12 @@
 ---
 source_file: "android/app/src/test/java/com/getcapacitor/myapp/ExampleUnitTest.java"
 type: "code"
-community: "Community 12"
+community: "Android Unit Tests"
 location: "L14"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_12
+  - community/Android_Unit_Tests
 ---
 
 # .addition_isCorrect()
@@ -15,4 +15,4 @@ tags:
 - [[ExampleUnitTest]] - `method` [EXTRACTED]
 - [[org.junit.Test]] - `references` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_12
+#graphify/code #graphify/EXTRACTED #community/Android_Unit_Tests

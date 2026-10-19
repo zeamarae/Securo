@@ -1,12 +1,12 @@
 ---
 source_file: "www/emergency-contacts.js"
 type: "code"
-community: "Community 3"
+community: "Campus SOS Dispatcher"
 location: "L45"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_3
+  - community/Campus_SOS_Dispatcher
 ---
 
 # getEmergencyContacts()
@@ -17,4 +17,4 @@ tags:
 - [[renderEmergencyContactWidget()_1]] - `calls` [EXTRACTED]
 - [[wwwemergency-contacts.js]] - `indirect_call` [INFERRED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_3
+#graphify/code #graphify/EXTRACTED #community/Campus_SOS_Dispatcher

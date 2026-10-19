@@ -1,12 +1,12 @@
 ---
 source_file: "tester.js"
 type: "code"
-community: "Community 4"
+community: "Project Dependencies & Capacitor"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_4
+  - community/Project_Dependencies__Capacitor
 ---
 
 # puppeteer
@@ -14,4 +14,4 @@ tags:
 ## Connections
 - [[tester.js]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_4
+#graphify/code #graphify/EXTRACTED #community/Project_Dependencies__Capacitor

@@ -1,12 +1,12 @@
 ---
 source_file: "package.json"
 type: "concept"
-community: "Community 4"
+community: "Project Dependencies & Capacitor"
 location: "L20"
 tags:
   - graphify/concept
   - graphify/EXTRACTED
-  - community/Community_4
+  - community/Project_Dependencies__Capacitor
 ---
 
 # @capacitor/geolocation
@@ -14,4 +14,4 @@ tags:
 ## Connections
 - [[package.json]] - `imports` [EXTRACTED]
 
-#graphify/concept #graphify/EXTRACTED #community/Community_4
+#graphify/concept #graphify/EXTRACTED #community/Project_Dependencies__Capacitor

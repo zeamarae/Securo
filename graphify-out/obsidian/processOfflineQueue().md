@@ -1,12 +1,12 @@
 ---
 source_file: "db.js"
 type: "code"
-community: "Community 13"
+community: "Offline Queue & Alerts"
 location: "L2998"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_13
+  - community/Offline_Queue__Alerts
 ---
 
 # processOfflineQueue()
@@ -17,4 +17,4 @@ tags:
 - [[logSOS()]] - `calls` [EXTRACTED]
 - [[saveEmergencyPost()]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_13
+#graphify/code #graphify/EXTRACTED #community/Offline_Queue__Alerts

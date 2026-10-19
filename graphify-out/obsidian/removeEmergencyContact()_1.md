@@ -1,12 +1,12 @@
 ---
 source_file: "www/emergency-contacts.js"
 type: "code"
-community: "Community 3"
+community: "Campus SOS Dispatcher"
 location: "L114"
 tags:
   - graphify/code
   - graphify/INFERRED
-  - community/Community_3
+  - community/Campus_SOS_Dispatcher
 ---
 
 # removeEmergencyContact()
@@ -14,4 +14,4 @@ tags:
 ## Connections
 - [[wwwemergency-contacts.js]] - `indirect_call` [INFERRED]
 
-#graphify/code #graphify/INFERRED #community/Community_3
+#graphify/code #graphify/INFERRED #community/Campus_SOS_Dispatcher

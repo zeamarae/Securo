@@ -1,12 +1,12 @@
 ---
 source_file: "android/app/src/androidTest/java/com/getcapacitor/myapp/ExampleInstrumentedTest.java"
 type: "code"
-community: "Community 12"
+community: "Android Unit Tests"
 location: "L16"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_12
+  - community/Android_Unit_Tests
 ---
 
 # ExampleInstrumentedTest
@@ -17,4 +17,4 @@ tags:
 - [[androidx.test.ext.junit.runners.AndroidJUnit4]] - `references` [EXTRACTED]
 - [[org.junit.runner.RunWith]] - `references` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_12
+#graphify/code #graphify/EXTRACTED #community/Android_Unit_Tests

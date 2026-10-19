@@ -1,12 +1,12 @@
 ---
 source_file: "www/db.js"
 type: "code"
-community: "Community 20"
+community: "User Lookup & Roles"
 location: "L131"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_20
+  - community/User_Lookup__Roles
 ---
 
 # mergeUsersByIdentity()
@@ -17,4 +17,4 @@ tags:
 - [[inferUserRole()_1]] - `calls` [EXTRACTED]
 - [[wwwdb.js]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_20
+#graphify/code #graphify/EXTRACTED #community/User_Lookup__Roles

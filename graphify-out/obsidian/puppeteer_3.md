@@ -1,12 +1,12 @@
 ---
 source_file: "package.json"
 type: "concept"
-community: "Community 4"
+community: "Project Dependencies & Capacitor"
 location: "L22"
 tags:
   - graphify/concept
   - graphify/EXTRACTED
-  - community/Community_4
+  - community/Project_Dependencies__Capacitor
 ---
 
 # puppeteer
@@ -16,4 +16,4 @@ tags:
 - [[tester.js]] - `imports_from` [EXTRACTED]
 - [[wwwtester.js]] - `imports_from` [EXTRACTED]
 
-#graphify/concept #graphify/EXTRACTED #community/Community_4
+#graphify/concept #graphify/EXTRACTED #community/Project_Dependencies__Capacitor

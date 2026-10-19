@@ -1,12 +1,12 @@
 ---
 source_file: "android/gradlew"
 type: "code"
-community: "Community 26"
+community: "Gradle Wrapper Script"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_26
+  - community/Gradle_Wrapper_Script
 ---
 
 # gradlew script
@@ -16,4 +16,4 @@ tags:
 - [[gradlew]] - `contains` [EXTRACTED]
 - [[warn()]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_26
+#graphify/code #graphify/EXTRACTED #community/Gradle_Wrapper_Script

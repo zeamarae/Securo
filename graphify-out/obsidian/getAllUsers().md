@@ -1,12 +1,12 @@
 ---
 source_file: "db.js"
 type: "code"
-community: "Community 16"
+community: "User Identity & Merging"
 location: "L902"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_16
+  - community/User_Identity__Merging
 ---
 
 # getAllUsers()
@@ -21,4 +21,4 @@ tags:
 - [[readLocalUsers()]] - `calls` [EXTRACTED]
 - [[saveGADPost()]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_16
+#graphify/code #graphify/EXTRACTED #community/User_Identity__Merging

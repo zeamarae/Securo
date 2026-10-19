@@ -1,12 +1,12 @@
 ---
 source_file: "www/db.js"
 type: "code"
-community: "Community 1"
+community: "Firestore Operations"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_1
+  - community/Firestore_Operations
 ---
 
 # www/db.js
@@ -134,4 +134,4 @@ tags:
 - [[wwwinstall-sw.js]] - `dynamic_import` [EXTRACTED]
 - [[wwwutils.js]] - `imports_from` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_1
+#graphify/code #graphify/EXTRACTED #community/Firestore_Operations

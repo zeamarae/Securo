@@ -1,12 +1,12 @@
 ---
 source_file: "www/router.js"
 type: "code"
-community: "Community 21"
+community: "Web Routing Navigation"
 location: "L72"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_21
+  - community/Web_Routing_Navigation
 ---
 
 # goBack()
@@ -15,4 +15,4 @@ tags:
 - [[navigate()_2]] - `calls` [EXTRACTED]
 - [[wwwrouter.js]] - `indirect_call` [INFERRED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_21
+#graphify/code #graphify/EXTRACTED #community/Web_Routing_Navigation

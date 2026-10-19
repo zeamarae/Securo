@@ -1,12 +1,12 @@
 ---
 source_file: "www/firebase-config.js"
 type: "code"
-community: "Community 6"
+community: "Auth Providers & Sessions"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_6
+  - community/Auth_Providers__Sessions
 ---
 
 # www/firebase-config.js
@@ -22,4 +22,4 @@ tags:
 - [[wwwauth.js]] - `imports_from` [EXTRACTED]
 - [[wwwdb.js]] - `imports_from` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_6
+#graphify/code #graphify/EXTRACTED #community/Auth_Providers__Sessions
