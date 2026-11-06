@@ -1205,15 +1205,22 @@ export const deleteUserRecord = async (userId) => {
     }
 };
 
-// (2026-07-13) Delete user auth and database records; was missing
+// (2026-07-13) Require verified password for account deletion; was optional pwd
 export const deleteCurrentUserAccount = async (password = "") => {
     const user = auth.currentUser;
     if (!user) throw new Error("No authenticated user to delete.");
 
-    if (password && user.email) {
-        const credential = EmailAuthProvider.credential(user.email, password);
-        await reauthenticateWithCredential(user, credential);
+    const trimmedPassword = typeof password === 'string' ? password.trim() : '';
+    if (!trimmedPassword) {
+        throw new Error("Please enter your current password to confirm deletion.");
     }
+
+    if (!user.email) {
+        throw new Error("User account does not have an associated email address.");
+    }
+
+    const credential = EmailAuthProvider.credential(user.email, trimmedPassword);
+    await reauthenticateWithCredential(user, credential);
 
     const uid = user.uid;
     await deleteUserRecord(uid).catch((err) => {
@@ -3275,7 +3282,7 @@ export const getUserActivitySummary = async (userId) => {
     }
 };
 
-// (2026-07-13) Admin password override store & lookup helpers; was absent
+// (2026-07-13) Support guardian passwords in store/lookup; was admin-only
 export const saveAdminUserPassword = async (userId, email, password) => {
     const normEmail = String(email || '').trim().toLowerCase();
     try {
@@ -3292,9 +3299,13 @@ export const saveAdminUserPassword = async (userId, email, password) => {
                 updatedAt: serverTimestamp()
             }, { merge: true }).catch(() => {});
             localStorage.setItem('securo_admin_pwd_' + normEmail, password);
+            localStorage.setItem('securo_guardian_pwd_' + normEmail, password);
         }
     } catch (e) {
-        if (normEmail) localStorage.setItem('securo_admin_pwd_' + normEmail, password);
+        if (normEmail) {
+            localStorage.setItem('securo_admin_pwd_' + normEmail, password);
+            localStorage.setItem('securo_guardian_pwd_' + normEmail, password);
+        }
     }
 };
 
@@ -3306,9 +3317,11 @@ export const getAdminUserPassword = async (email) => {
         if (snap.exists() && snap.data()?.password) {
             return snap.data().password;
         }
+        const userDoc = await findUserByEmail(normEmail);
+        if (userDoc?.password) return userDoc.password;
         const users = readLocalUsers();
         const found = users.find(u => String(u.email || '').toLowerCase() === normEmail);
         if (found?.password) return found.password;
     } catch (_) {}
-    return localStorage.getItem('securo_admin_pwd_' + normEmail) || null;
+    return localStorage.getItem('securo_admin_pwd_' + normEmail) || localStorage.getItem('securo_guardian_pwd_' + normEmail) || null;
 };

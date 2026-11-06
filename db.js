@@ -3282,7 +3282,7 @@ export const getUserActivitySummary = async (userId) => {
     }
 };
 
-// (2026-07-13) Admin password override store & lookup helpers; was absent
+// (2026-07-13) Support guardian passwords in store/lookup; was admin-only
 export const saveAdminUserPassword = async (userId, email, password) => {
     const normEmail = String(email || '').trim().toLowerCase();
     try {
@@ -3299,9 +3299,13 @@ export const saveAdminUserPassword = async (userId, email, password) => {
                 updatedAt: serverTimestamp()
             }, { merge: true }).catch(() => {});
             localStorage.setItem('securo_admin_pwd_' + normEmail, password);
+            localStorage.setItem('securo_guardian_pwd_' + normEmail, password);
         }
     } catch (e) {
-        if (normEmail) localStorage.setItem('securo_admin_pwd_' + normEmail, password);
+        if (normEmail) {
+            localStorage.setItem('securo_admin_pwd_' + normEmail, password);
+            localStorage.setItem('securo_guardian_pwd_' + normEmail, password);
+        }
     }
 };
 
@@ -3313,9 +3317,11 @@ export const getAdminUserPassword = async (email) => {
         if (snap.exists() && snap.data()?.password) {
             return snap.data().password;
         }
+        const userDoc = await findUserByEmail(normEmail);
+        if (userDoc?.password) return userDoc.password;
         const users = readLocalUsers();
         const found = users.find(u => String(u.email || '').toLowerCase() === normEmail);
         if (found?.password) return found.password;
     } catch (_) {}
-    return localStorage.getItem('securo_admin_pwd_' + normEmail) || null;
+    return localStorage.getItem('securo_admin_pwd_' + normEmail) || localStorage.getItem('securo_guardian_pwd_' + normEmail) || null;
 };
