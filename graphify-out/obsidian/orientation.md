@@ -1,12 +1,12 @@
 ---
 source_file: "manifest.json"
 type: "code"
-community: "Community 9"
+community: "Web App Manifest"
 location: "L9"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_9
+  - community/Web_App_Manifest
 ---
 
 # orientation
@@ -14,4 +14,4 @@ tags:
 ## Connections
 - [[manifest.json]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_9
+#graphify/code #graphify/EXTRACTED #community/Web_App_Manifest

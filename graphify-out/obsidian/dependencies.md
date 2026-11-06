@@ -1,12 +1,12 @@
 ---
 source_file: "package.json"
 type: "code"
-community: "Community 4"
+community: "Project Dependencies & Capacitor"
 location: "L14"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_4
+  - community/Project_Dependencies__Capacitor
 ---
 
 # dependencies
@@ -22,4 +22,4 @@ tags:
 - [[package.json]] - `contains` [EXTRACTED]
 - [[puppeteer]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_4
+#graphify/code #graphify/EXTRACTED #community/Project_Dependencies__Capacitor

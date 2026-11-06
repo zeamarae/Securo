@@ -1,12 +1,12 @@
 ---
 source_file: "auth.js"
 type: "code"
-community: "Community 5"
+community: "Authentication & Role Management"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_5
+  - community/Authentication__Role_Management
 ---
 
 # auth.js
@@ -38,4 +38,4 @@ tags:
 - [[studentIdToEmail()]] - `contains` [EXTRACTED]
 - [[utils.js]] - `imports_from` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_5
+#graphify/code #graphify/EXTRACTED #community/Authentication__Role_Management

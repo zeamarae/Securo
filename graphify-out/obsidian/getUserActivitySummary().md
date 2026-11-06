@@ -1,12 +1,12 @@
 ---
 source_file: "db.js"
 type: "code"
-community: "Community 10"
+community: "Emergency Posts & Activity"
 location: "L3254"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_10
+  - community/Emergency_Posts__Activity
 ---
 
 # getUserActivitySummary()
@@ -17,4 +17,4 @@ tags:
 - [[getUserEmergencyPosts()]] - `calls` [EXTRACTED]
 - [[getUserSOSLogs()]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_10
+#graphify/code #graphify/EXTRACTED #community/Emergency_Posts__Activity

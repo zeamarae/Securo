@@ -1,12 +1,12 @@
 ---
 source_file: "emergency-contacts.js"
 type: "code"
-community: "Community 2"
+community: "Emergency Contacts & SOS"
 location: "L45"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_2
+  - community/Emergency_Contacts__SOS
 ---
 
 # getEmergencyContacts()
@@ -17,4 +17,4 @@ tags:
 - [[getUserProfile()]] - `calls` [EXTRACTED]
 - [[renderEmergencyContactWidget()]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_2
+#graphify/code #graphify/EXTRACTED #community/Emergency_Contacts__SOS

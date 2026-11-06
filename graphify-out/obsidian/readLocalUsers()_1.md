@@ -1,12 +1,12 @@
 ---
 source_file: "www/db.js"
 type: "code"
-community: "Community 8"
+community: "Student Profile Services"
 location: "L51"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_8
+  - community/Student_Profile_Services
 ---
 
 # readLocalUsers()
@@ -22,4 +22,4 @@ tags:
 - [[upsertLocalUser()_1]] - `calls` [EXTRACTED]
 - [[wwwdb.js]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_8
+#graphify/code #graphify/EXTRACTED #community/Student_Profile_Services

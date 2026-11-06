@@ -1,11 +1,11 @@
 ---
 source_file: ""
 type: "code"
-community: "Community 12"
+community: "Android Unit Tests"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_12
+  - community/Android_Unit_Tests
 ---
 
 # androidx.test.ext.junit.runners.AndroidJUnit4
@@ -14,4 +14,4 @@ tags:
 - [[ExampleInstrumentedTest]] - `references` [EXTRACTED]
 - [[ExampleInstrumentedTest.java]] - `imports` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_12
+#graphify/code #graphify/EXTRACTED #community/Android_Unit_Tests

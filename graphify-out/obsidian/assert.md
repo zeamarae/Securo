@@ -1,11 +1,11 @@
 ---
 source_file: ""
 type: "concept"
-community: "Community 12"
+community: "Android Unit Tests"
 tags:
   - graphify/concept
   - graphify/EXTRACTED
-  - community/Community_12
+  - community/Android_Unit_Tests
 ---
 
 # assert
@@ -14,4 +14,4 @@ tags:
 - [[ExampleInstrumentedTest.java]] - `imports` [EXTRACTED]
 - [[ExampleUnitTest.java]] - `imports` [EXTRACTED]
 
-#graphify/concept #graphify/EXTRACTED #community/Community_12
+#graphify/concept #graphify/EXTRACTED #community/Android_Unit_Tests

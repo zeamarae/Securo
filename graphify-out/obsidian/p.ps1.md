@@ -1,14 +1,14 @@
 ---
 source_file: "p.ps1"
 type: "code"
-community: "Community 38"
+community: "PowerShell Setup Script"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_38
+  - community/PowerShell_Setup_Script
 ---
 
 # p.ps1
 
-#graphify/code #graphify/EXTRACTED #community/Community_38
+#graphify/code #graphify/EXTRACTED #community/PowerShell_Setup_Script

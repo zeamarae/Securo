@@ -1,12 +1,12 @@
 ---
 source_file: "install-sw.js"
 type: "code"
-community: "Community 2"
+community: "Emergency Contacts & SOS"
 location: "L130"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_2
+  - community/Emergency_Contacts__SOS
 ---
 
 # updateOfflineQueueIndicator()
@@ -18,4 +18,4 @@ tags:
 - [[setupConnectivityListeners()]] - `calls` [EXTRACTED]
 - [[updateOfflineQueueIndicator()]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_2
+#graphify/code #graphify/EXTRACTED #community/Emergency_Contacts__SOS

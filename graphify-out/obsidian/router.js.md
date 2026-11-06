@@ -1,12 +1,12 @@
 ---
 source_file: "router.js"
 type: "code"
-community: "Community 17"
+community: "Client-Side Router"
 location: "L1"
 tags:
   - graphify/code
   - graphify/INFERRED
-  - community/Community_17
+  - community/Client-Side_Router
 ---
 
 # router.js
@@ -19,4 +19,4 @@ tags:
 - [[navigate()]] - `indirect_call` [INFERRED]
 - [[showToast()]] - `indirect_call` [INFERRED]
 
-#graphify/code #graphify/INFERRED #community/Community_17
+#graphify/code #graphify/INFERRED #community/Client-Side_Router

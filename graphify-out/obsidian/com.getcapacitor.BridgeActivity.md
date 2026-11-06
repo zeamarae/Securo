@@ -1,11 +1,11 @@
 ---
 source_file: ""
 type: "code"
-community: "Community 29"
+community: "Android Capacitor Activity"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_29
+  - community/Android_Capacitor_Activity
 ---
 
 # com.getcapacitor.BridgeActivity
@@ -14,4 +14,4 @@ tags:
 - [[MainActivity]] - `inherits` [EXTRACTED]
 - [[MainActivity.java]] - `imports` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_29
+#graphify/code #graphify/EXTRACTED #community/Android_Capacitor_Activity

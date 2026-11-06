@@ -1,12 +1,12 @@
 ---
 source_file: "router.js"
 type: "code"
-community: "Community 17"
+community: "Client-Side Router"
 location: "L59"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_17
+  - community/Client-Side_Router
 ---
 
 # navigate()
@@ -16,4 +16,4 @@ tags:
 - [[interceptLinks()]] - `calls` [EXTRACTED]
 - [[router.js]] - `indirect_call` [INFERRED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_17
+#graphify/code #graphify/EXTRACTED #community/Client-Side_Router

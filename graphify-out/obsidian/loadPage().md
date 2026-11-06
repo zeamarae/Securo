@@ -1,12 +1,12 @@
 ---
 source_file: "www/app.js"
 type: "code"
-community: "Community 18"
+community: "App Lifecycle & Navigation"
 location: "L35"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_18
+  - community/App_Lifecycle__Navigation
 ---
 
 # loadPage()
@@ -14,4 +14,4 @@ tags:
 ## Connections
 - [[app.js]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_18
+#graphify/code #graphify/EXTRACTED #community/App_Lifecycle__Navigation

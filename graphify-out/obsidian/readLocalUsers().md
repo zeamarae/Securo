@@ -1,12 +1,12 @@
 ---
 source_file: "db.js"
 type: "code"
-community: "Community 7"
+community: "Guardian Link Requests"
 location: "L51"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_7
+  - community/Guardian_Link_Requests
 ---
 
 # readLocalUsers()
@@ -22,4 +22,4 @@ tags:
 - [[subscribeToStudentLinks()]] - `calls` [EXTRACTED]
 - [[upsertLocalUser()]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_7
+#graphify/code #graphify/EXTRACTED #community/Guardian_Link_Requests

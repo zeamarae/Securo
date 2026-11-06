@@ -1,12 +1,12 @@
 ---
 source_file: "www/app.js"
 type: "code"
-community: "Community 18"
+community: "App Lifecycle & Navigation"
 location: "L78"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_18
+  - community/App_Lifecycle__Navigation
 ---
 
 # init()
@@ -17,4 +17,4 @@ tags:
 - [[getCurrentPage()]] - `calls` [EXTRACTED]
 - [[updateLinks()]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_18
+#graphify/code #graphify/EXTRACTED #community/App_Lifecycle__Navigation

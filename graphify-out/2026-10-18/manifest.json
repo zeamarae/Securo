@@ -1,0 +1,230 @@
+{
+  ".vscode/settings.json": {
+    "mtime": 1791300324.8599622,
+    "seen": 1792182506.7327824,
+    "ast_hash": "e103e6fc6405cc37e9520de4ccf45125",
+    "semantic_hash": "e103e6fc6405cc37e9520de4ccf45125"
+  },
+  "android/app/build.gradle": {
+    "mtime": 1791549018.871848,
+    "seen": 1792182506.7327912,
+    "ast_hash": "d0f1f0fb777519059a4094fe8f1dd7f3",
+    "semantic_hash": "d0f1f0fb777519059a4094fe8f1dd7f3"
+  },
+  "android/app/capacitor.build.gradle": {
+    "mtime": 1791910627.664593,
+    "seen": 1792182506.7327948,
+    "ast_hash": "516d536a0c9d07055eca932231079211",
+    "semantic_hash": "516d536a0c9d07055eca932231079211"
+  },
+  "android/app/src/androidTest/java/com/getcapacitor/myapp/ExampleInstrumentedTest.java": {
+    "mtime": 1776351320.0,
+    "seen": 1792182506.7327971,
+    "ast_hash": "fbaf7cc870c663eb52dcf218531c439d",
+    "semantic_hash": "fbaf7cc870c663eb52dcf218531c439d"
+  },
+  "android/app/src/main/java/com/securo/app/MainActivity.java": {
+    "mtime": 1777739123.0,
+    "seen": 1792182506.7327993,
+    "ast_hash": "80f956996474f66a0bbb3daed046af2a",
+    "semantic_hash": "80f956996474f66a0bbb3daed046af2a"
+  },
+  "android/app/src/test/java/com/getcapacitor/myapp/ExampleUnitTest.java": {
+    "mtime": 1776351320.0,
+    "seen": 1792182506.7328007,
+    "ast_hash": "e91b4501c14da821682fa5c26a16d616",
+    "semantic_hash": "e91b4501c14da821682fa5c26a16d616"
+  },
+  "android/build.gradle": {
+    "mtime": 1786973533.5258605,
+    "seen": 1792182506.7328026,
+    "ast_hash": "0f43a37220a2ce66f6b5b148842b985c",
+    "semantic_hash": "0f43a37220a2ce66f6b5b148842b985c"
+  },
+  "android/capacitor.settings.gradle": {
+    "mtime": 1791910627.6620717,
+    "seen": 1792182506.7328038,
+    "ast_hash": "84b29eceed7aafdd2e9bf040e47bbf56",
+    "semantic_hash": "84b29eceed7aafdd2e9bf040e47bbf56"
+  },
+  "android/gradlew": {
+    "mtime": 1776351320.0,
+    "seen": 1792182506.732805,
+    "ast_hash": "794669d78aef1dd5c7d889ef618b311a",
+    "semantic_hash": "794669d78aef1dd5c7d889ef618b311a"
+  },
+  "android/settings.gradle": {
+    "mtime": 1776351320.0,
+    "seen": 1792182506.7328064,
+    "ast_hash": "f6cd925b3f859e23c3d819fe2459e0e4",
+    "semantic_hash": "f6cd925b3f859e23c3d819fe2459e0e4"
+  },
+  "android/variables.gradle": {
+    "mtime": 1791540856.1093004,
+    "seen": 1792182506.7328079,
+    "ast_hash": "eda550f54a407296de63dca5ca8251bc",
+    "semantic_hash": "eda550f54a407296de63dca5ca8251bc"
+  },
+  "auth.js": {
+    "mtime": 1791908552.2387102,
+    "seen": 1792182506.73281,
+    "ast_hash": "2a8035c44cc9598a438a11bb84b20f63",
+    "semantic_hash": "2a8035c44cc9598a438a11bb84b20f63"
+  },
+  "capacitor.config.json": {
+    "mtime": 1791593766.740588,
+    "seen": 1792182506.7328112,
+    "ast_hash": "26614e48811fd22c4b56706fb0c1f799",
+    "semantic_hash": "26614e48811fd22c4b56706fb0c1f799"
+  },
+  "db.js": {
+    "mtime": 1791910282.847341,
+    "seen": 1792182506.7328126,
+    "ast_hash": "547cb7932528456ed8131a5b1470f975",
+    "semantic_hash": "547cb7932528456ed8131a5b1470f975"
+  },
+  "emergency-contacts.js": {
+    "mtime": 1791298957.5144398,
+    "seen": 1792182506.7328138,
+    "ast_hash": "b75ae264893a388b1ae5574b60d2abbc",
+    "semantic_hash": "b75ae264893a388b1ae5574b60d2abbc"
+  },
+  "firebase-config.js": {
+    "mtime": 1777913406.1845465,
+    "seen": 1792182506.7328153,
+    "ast_hash": "e2476ba5ce191be1b98473817a6469e3",
+    "semantic_hash": "e2476ba5ce191be1b98473817a6469e3"
+  },
+  "install-sw.js": {
+    "mtime": 1791302306.9165008,
+    "seen": 1792182506.7328167,
+    "ast_hash": "e5e80abe4e38787933811225d7ecb333",
+    "semantic_hash": "e5e80abe4e38787933811225d7ecb333"
+  },
+  "jsconfig.json": {
+    "mtime": 1786961611.0725858,
+    "seen": 1792182506.7328181,
+    "ast_hash": "0aa864f642727023acd92371839a71c0",
+    "semantic_hash": "0aa864f642727023acd92371839a71c0"
+  },
+  "manifest.json": {
+    "mtime": 1791298509.4827888,
+    "seen": 1792182506.7328193,
+    "ast_hash": "095e3c10735373232dbf76631d8c718f",
+    "semantic_hash": "095e3c10735373232dbf76631d8c718f"
+  },
+  "p.ps1": {
+    "mtime": 1791525486.8912146,
+    "seen": 1792182506.7328205,
+    "ast_hash": "82ff25011241a641e9cb2e048780b01d",
+    "semantic_hash": "82ff25011241a641e9cb2e048780b01d"
+  },
+  "package.json": {
+    "mtime": 1791594078.7130198,
+    "seen": 1792182506.7328217,
+    "ast_hash": "130faa5f2f72df1c0ad3084687fd14f6",
+    "semantic_hash": "130faa5f2f72df1c0ad3084687fd14f6"
+  },
+  "preloader.js": {
+    "mtime": 1791525422.7060459,
+    "seen": 1792182506.732823,
+    "ast_hash": "9a72917316d09c0598ee4cdc23d653b5",
+    "semantic_hash": "9a72917316d09c0598ee4cdc23d653b5"
+  },
+  "router.js": {
+    "mtime": 1791525422.7090452,
+    "seen": 1792182506.732825,
+    "ast_hash": "a489cfeb390603515945ad6a1252f33f",
+    "semantic_hash": "a489cfeb390603515945ad6a1252f33f"
+  },
+  "service-worker.js": {
+    "mtime": 1791298498.0909445,
+    "seen": 1792182506.7328265,
+    "ast_hash": "48fc43b8d63ac32e9829991bd8c65b0d",
+    "semantic_hash": "48fc43b8d63ac32e9829991bd8c65b0d"
+  },
+  "tester.js": {
+    "mtime": 1777841387.0,
+    "seen": 1792182506.7328277,
+    "ast_hash": "49456bd6c29351a06213fd4b3e8ef76c",
+    "semantic_hash": "49456bd6c29351a06213fd4b3e8ef76c"
+  },
+  "utils.js": {
+    "mtime": 1791525408.0804577,
+    "seen": 1792182506.7328289,
+    "ast_hash": "67b9096f4df6d19d101c1723a5acd21d",
+    "semantic_hash": "67b9096f4df6d19d101c1723a5acd21d"
+  },
+  "www/app.js": {
+    "mtime": 1790604635.985839,
+    "seen": 1792182506.7328305,
+    "ast_hash": "761ffc7ffd35774d9c00f0b49f3b5569",
+    "semantic_hash": "761ffc7ffd35774d9c00f0b49f3b5569"
+  },
+  "www/auth.js": {
+    "mtime": 1791908552.2387102,
+    "seen": 1792182506.7328317,
+    "ast_hash": "2a8035c44cc9598a438a11bb84b20f63",
+    "semantic_hash": "2a8035c44cc9598a438a11bb84b20f63"
+  },
+  "www/db.js": {
+    "mtime": 1791910282.847341,
+    "seen": 1792182506.732833,
+    "ast_hash": "547cb7932528456ed8131a5b1470f975",
+    "semantic_hash": "547cb7932528456ed8131a5b1470f975"
+  },
+  "www/emergency-contacts.js": {
+    "mtime": 1791298957.5144398,
+    "seen": 1792182506.7328343,
+    "ast_hash": "b75ae264893a388b1ae5574b60d2abbc",
+    "semantic_hash": "b75ae264893a388b1ae5574b60d2abbc"
+  },
+  "www/firebase-config.js": {
+    "mtime": 1777913406.1845465,
+    "seen": 1792182506.7328358,
+    "ast_hash": "e2476ba5ce191be1b98473817a6469e3",
+    "semantic_hash": "e2476ba5ce191be1b98473817a6469e3"
+  },
+  "www/install-sw.js": {
+    "mtime": 1791302306.9165008,
+    "seen": 1792182506.7328372,
+    "ast_hash": "e5e80abe4e38787933811225d7ecb333",
+    "semantic_hash": "e5e80abe4e38787933811225d7ecb333"
+  },
+  "www/preloader.js": {
+    "mtime": 1791525422.7060459,
+    "seen": 1792182506.7328384,
+    "ast_hash": "9a72917316d09c0598ee4cdc23d653b5",
+    "semantic_hash": "9a72917316d09c0598ee4cdc23d653b5"
+  },
+  "www/router.js": {
+    "mtime": 1791525422.7090452,
+    "seen": 1792182506.7328396,
+    "ast_hash": "a489cfeb390603515945ad6a1252f33f",
+    "semantic_hash": "a489cfeb390603515945ad6a1252f33f"
+  },
+  "www/service-worker.js": {
+    "mtime": 1791298498.0909445,
+    "seen": 1792182506.732841,
+    "ast_hash": "48fc43b8d63ac32e9829991bd8c65b0d",
+    "semantic_hash": "48fc43b8d63ac32e9829991bd8c65b0d"
+  },
+  "www/spa-router.js": {
+    "mtime": 1790604651.991099,
+    "seen": 1792182506.7328422,
+    "ast_hash": "49173de6f453e02ed072de65d7516221",
+    "semantic_hash": "49173de6f453e02ed072de65d7516221"
+  },
+  "www/tester.js": {
+    "mtime": 1777841387.0,
+    "seen": 1792182506.7328436,
+    "ast_hash": "49456bd6c29351a06213fd4b3e8ef76c",
+    "semantic_hash": "49456bd6c29351a06213fd4b3e8ef76c"
+  },
+  "www/utils.js": {
+    "mtime": 1791525408.0804577,
+    "seen": 1792182506.732845,
+    "ast_hash": "67b9096f4df6d19d101c1723a5acd21d",
+    "semantic_hash": "67b9096f4df6d19d101c1723a5acd21d"
+  }
+}

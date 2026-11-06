@@ -1,12 +1,12 @@
 ---
 source_file: "emergency-contacts.js"
 type: "code"
-community: "Community 2"
+community: "Emergency Contacts & SOS"
 location: "L132"
 tags:
   - graphify/code
   - graphify/INFERRED
-  - community/Community_2
+  - community/Emergency_Contacts__SOS
 ---
 
 # updateCampusContacts()
@@ -14,4 +14,4 @@ tags:
 ## Connections
 - [[emergency-contacts.js]] - `indirect_call` [INFERRED]
 
-#graphify/code #graphify/INFERRED #community/Community_2
+#graphify/code #graphify/INFERRED #community/Emergency_Contacts__SOS

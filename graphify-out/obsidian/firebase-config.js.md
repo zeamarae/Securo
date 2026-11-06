@@ -1,12 +1,12 @@
 ---
 source_file: "firebase-config.js"
 type: "code"
-community: "Community 5"
+community: "Authentication & Role Management"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_5
+  - community/Authentication__Role_Management
 ---
 
 # firebase-config.js
@@ -22,4 +22,4 @@ tags:
 - [[ref_https]] - `imports_from` [EXTRACTED]
 - [[storage_2]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_5
+#graphify/code #graphify/EXTRACTED #community/Authentication__Role_Management

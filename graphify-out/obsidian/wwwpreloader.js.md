@@ -1,12 +1,12 @@
 ---
 source_file: "www/preloader.js"
 type: "code"
-community: "Community 28"
+community: "Preloader Animation Engine"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_28
+  - community/Preloader_Animation_Engine
 ---
 
 # www/preloader.js
@@ -16,4 +16,4 @@ tags:
 - [[ensureGSAP()_1]] - `contains` [EXTRACTED]
 - [[runAnimation()_1]] - `indirect_call` [INFERRED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_28
+#graphify/code #graphify/EXTRACTED #community/Preloader_Animation_Engine

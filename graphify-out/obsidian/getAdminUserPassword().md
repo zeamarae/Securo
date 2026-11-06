@@ -1,12 +1,12 @@
 ---
 source_file: "db.js"
 type: "code"
-community: "Community 5"
+community: "Authentication & Role Management"
 location: "L3301"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_5
+  - community/Authentication__Role_Management
 ---
 
 # getAdminUserPassword()
@@ -17,4 +17,4 @@ tags:
 - [[login()]] - `calls` [EXTRACTED]
 - [[readLocalUsers()]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_5
+#graphify/code #graphify/EXTRACTED #community/Authentication__Role_Management

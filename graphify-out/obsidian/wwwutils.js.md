@@ -1,12 +1,12 @@
 ---
 source_file: "www/utils.js"
 type: "code"
-community: "Community 3"
+community: "Campus SOS Dispatcher"
 location: "L1"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_3
+  - community/Campus_SOS_Dispatcher
 ---
 
 # www/utils.js
@@ -27,4 +27,4 @@ tags:
 - [[wwwemergency-contacts.js]] - `imports_from` [EXTRACTED]
 - [[wwwinstall-sw.js]] - `imports_from` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_3
+#graphify/code #graphify/EXTRACTED #community/Campus_SOS_Dispatcher

@@ -1,12 +1,12 @@
 ---
 source_file: "www/db.js"
 type: "code"
-community: "Community 25"
+community: "GAD Message Store"
 location: "L2578"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_25
+  - community/GAD_Message_Store
 ---
 
 # writeLocalGADMessages()
@@ -16,4 +16,4 @@ tags:
 - [[sendGADMessage()_1]] - `calls` [EXTRACTED]
 - [[wwwdb.js]] - `contains` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_25
+#graphify/code #graphify/EXTRACTED #community/GAD_Message_Store

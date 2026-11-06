@@ -1,12 +1,12 @@
 ---
 source_file: "db.js"
 type: "code"
-community: "Community 15"
+community: "Guardian Link Verification"
 location: "L1317"
 tags:
   - graphify/code
   - graphify/EXTRACTED
-  - community/Community_15
+  - community/Guardian_Link_Verification
 ---
 
 # assertGuardianCapacityForRequest()
@@ -18,4 +18,4 @@ tags:
 - [[getGuardianLinkRecords()]] - `calls` [EXTRACTED]
 - [[respondToGuardianLink()]] - `calls` [EXTRACTED]
 
-#graphify/code #graphify/EXTRACTED #community/Community_15
+#graphify/code #graphify/EXTRACTED #community/Guardian_Link_Verification
