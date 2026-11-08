@@ -1710,13 +1710,9 @@
             } else if (state.role === 'staff' || state.role === 'admin') {
                 document.body.classList.remove('guardian-theme');
                 profileBackBtn.href = state.role === 'admin' ? 'admin.html' : 'index.html';
-                connectionsTitle.textContent = state.role === 'admin' ? 'Admin Access' : 'Workplace Access';
-                connectionsCopy.textContent = state.role === 'admin'
-                    ? 'Admin accounts do not use parent or guardian links.'
-                    : 'Staff accounts do not use parent or guardian links.';
-                connectionsHelper.textContent = state.role === 'admin'
-                    ? 'Admin accounts manage the platform and do not have family connections.'
-                    : 'Staff accounts keep the same campus tools as students, without family linking.';
+                // (2026-07-13) Hide connections card for staff; was showing placeholder card
+                const connectionsCard = connectionsTitle?.closest('.profile-card');
+                if (connectionsCard) connectionsCard.classList.add('is-hidden');
                 // (2026-07-13) Hide section and set staff ID label; was student layout
                 if (sectionRow) sectionRow.classList.add('is-hidden');
                 const staffIdLabel = studentIdRow?.querySelector('.info-label');
@@ -1728,6 +1724,8 @@
             } else {
                 document.body.classList.remove('guardian-theme');
                 profileBackBtn.href = 'index.html';
+                const connectionsCard = connectionsTitle?.closest('.profile-card');
+                if (connectionsCard) connectionsCard.classList.remove('is-hidden');
                 const studentIdLabelEl = studentIdRow?.querySelector('.info-label');
                 if (studentIdLabelEl) studentIdLabelEl.textContent = 'Student ID';
                 if (sectionRow) sectionRow.classList.remove('is-hidden');

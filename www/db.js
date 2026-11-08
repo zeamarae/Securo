@@ -1841,10 +1841,30 @@ export const subscribeToStudentLinks = (studentUid, callback, studentId = null) 
             );
             const snapshotProfile = (email ? guardianProfiles.get(email) : null) || (gid ? guardianProfiles.get(gid) : null);
             const profile = snapshotProfile || localProfile;
+            // (2026-07-13) Enrich link with live watching status; was static name and role
+            let isWatchingLive = false;
+            if (profile && profile.isWatching) {
+                let lastActive = 0;
+                if (profile.lastActiveAt) {
+                    if (typeof profile.lastActiveAt.toMillis === 'function') {
+                        lastActive = profile.lastActiveAt.toMillis();
+                    } else if (profile.lastActiveAt.seconds) {
+                        lastActive = profile.lastActiveAt.seconds * 1000;
+                    } else if (typeof profile.lastActiveAt === 'number') {
+                        lastActive = profile.lastActiveAt;
+                    } else if (typeof profile.lastActiveAt === 'string') {
+                        lastActive = new Date(profile.lastActiveAt).getTime();
+                    }
+                }
+                if (Date.now() - lastActive < 120000) {
+                    isWatchingLive = true;
+                }
+            }
             return {
                 ...link,
                 guardianName: profile?.name || link.guardianName || "Parent",
-                guardianRole: profile?.role || "guardian"
+                guardianRole: profile?.role || "guardian",
+                isWatchingLive
             };
         });
         callback(enriched);

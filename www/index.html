@@ -6777,16 +6777,15 @@
                 wheelPxPerZoomLevel: 140
             }).setView(CAMPUS_CENTER, 17);
 
-            // (2026-07-13) Set Google Streets as default student map; was OpenStreetMap
+            // (2026-07-13) Fix map tiles using CartoDB Voyager; was broken Google 403
             const baseMapLayers = {
-                "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Terrain": L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
+                "Streets": L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 20, subdomains: 'abcd' }),
+                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }),
+                "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+                "Light": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20, subdomains: 'abcd' })
             };
 
-            let activeLayer = baseMapLayers["Google Streets"];
+            let activeLayer = baseMapLayers["Streets"];
             activeLayer.addTo(map);
 
             // Force tile load after layer is added
@@ -8929,9 +8928,18 @@
             return "https://securo.cebutech.digital/guardian.html";
         }
 
+        // (2026-07-13) Skip course, section, & parents for staff; was required student
         function triggerFullscreenOnboarding(user, existingProfile) {
             fsCurrentUserContext = { user, profile: existingProfile };
             if (fsOnboardingError) fsOnboardingError.textContent = "";
+            const isStaff = user?.email?.startsWith("staff.") || existingProfile?.role === "staff" || appState.user?.role === "staff";
+            const courseSecRow = document.getElementById("fsCourseSectionRow");
+            if (courseSecRow) courseSecRow.style.display = isStaff ? "none" : "";
+            if (fsCourse) fsCourse.required = !isStaff;
+            if (fsYearLevel) fsYearLevel.required = !isStaff;
+            if (fsSection) fsSection.required = !isStaff;
+            const titleEl = document.querySelector(".fs-onboarding-title");
+            if (titleEl) titleEl.textContent = isStaff ? "Set Up Staff Profile" : "Set Up Your Profile";
             if (existingProfile?.firstName && fsFirstName) fsFirstName.value = toTitleCase(existingProfile.firstName);
             if (existingProfile?.lastName && fsLastName) fsLastName.value = toTitleCase(existingProfile.lastName);
             if (existingProfile?.course && fsCourse) fsCourse.value = existingProfile.course;
@@ -8963,6 +8971,7 @@
                 if (fsOnboardingError) fsOnboardingError.textContent = "";
                 const fn = fsFirstName ? toTitleCase(fsFirstName.value.trim()) : "";
                 const ln = fsLastName ? toTitleCase(fsLastName.value.trim()) : "";
+                const isStaff = fsCurrentUserContext?.user?.email?.startsWith("staff.") || fsCurrentUserContext?.profile?.role === "staff" || appState.user?.role === "staff";
                 const course = fsCourse ? fsCourse.value.trim().toUpperCase() : "";
                 const year = fsYearLevel ? fsYearLevel.value.trim() : "";
                 const rawSec = fsSection ? fsSection.value.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase() : "";
@@ -8975,17 +8984,19 @@
                     if (fsOnboardingError) fsOnboardingError.textContent = "Please enter your last name.";
                     return;
                 }
-                if (!course) {
-                    if (fsOnboardingError) fsOnboardingError.textContent = "Please select your course.";
-                    return;
-                }
-                if (!/^[1-5]$/.test(year)) {
-                    if (fsOnboardingError) fsOnboardingError.textContent = "Year level must be 1–5.";
-                    return;
-                }
-                if (!rawSec || rawSec.length < 1 || rawSec.length > 4) {
-                    if (fsOnboardingError) fsOnboardingError.textContent = "Section must be 1–4 letters (e.g. A).";
-                    return;
+                if (!isStaff) {
+                    if (!course) {
+                        if (fsOnboardingError) fsOnboardingError.textContent = "Please select your course.";
+                        return;
+                    }
+                    if (!/^[1-5]$/.test(year)) {
+                        if (fsOnboardingError) fsOnboardingError.textContent = "Year level must be 1–5.";
+                        return;
+                    }
+                    if (!rawSec || rawSec.length < 1 || rawSec.length > 4) {
+                        if (fsOnboardingError) fsOnboardingError.textContent = "Section must be 1–4 letters (e.g. A).";
+                        return;
+                    }
                 }
 
                 // If user submits while live camera is on and no static photo snapped yet, automatically snap live frame!
@@ -9005,7 +9016,7 @@
                     const derivedRole = user.email?.startsWith("staff.") ? "staff" : "student";
                     const fullName = `${fn} ${ln}`;
                     const initials = (fn[0] + ln[0]).toUpperCase();
-                    const formattedSection = `${course} ${year}-${rawSec}`;
+                    const formattedSection = isStaff ? "Staff" : `${course} ${year}-${rawSec}`;
 
                     const updatedProfile = {
                         studentId: fsCurrentUserContext?.profile?.studentId || derivedId,
@@ -9013,13 +9024,13 @@
                         lastName: ln,
                         name: fullName,
                         initials,
-                        course,
-                        yearLevel: year,
+                        course: isStaff ? "" : course,
+                        yearLevel: isStaff ? "" : year,
                         section: formattedSection,
                         photoURL: fsOnboardingPhotoData || "",
                         avatar: fsOnboardingPhotoData || "",
                         email: user.email || "",
-                        role: fsCurrentUserContext?.profile?.role || derivedRole,
+                        role: isStaff ? "staff" : (fsCurrentUserContext?.profile?.role || derivedRole),
                         onboardingCompleted: true,
                         updatedAt: new Date().toISOString()
                     };
@@ -9066,6 +9077,10 @@
                         fsSubmitOnboardingBtn.disabled = false;
                         fsSubmitOnboardingBtn.style.opacity = "1";
                         fsSubmitOnboardingBtn.innerHTML = '<span id="fsSubmitText">Save & Continue</span><span class="material-symbols-outlined" id="fsSubmitIcon">arrow_forward</span>';
+                    }
+                    if (isStaff) {
+                        finishOnboardingAndEnterApp();
+                        return;
                     }
                     // (2026-07-13) Dynamic guardian URL on save; prev: hardcoded zea link
                     const studentId = updatedProfile.studentId || "";
@@ -9495,13 +9510,16 @@
                 chip.className = 'parent-selector-chip active';
                 chip.title = `Hold to remove ${name}`;
                 chip.style.userSelect = 'none';
+                // (2026-07-13) Show watching badge only if live online; was static badge
+                const isLive = Boolean(link.isWatchingLive);
                 chip.innerHTML = `
                     <span class="parent-avatar">${escapeHtml(initials)}</span>
                     <span>${escapeHtml(name)}</span>
+                    ${isLive ? `
                     <span class="watching-live-badge">
                         <span class="watching-dot"></span>
                         <span>Watching</span>
-                    </span>
+                    </span>` : ''}
                 `;
 
                 let holdTimer = null;
@@ -12290,8 +12308,8 @@
                                 </div>
                             </div>
 
-                            <!-- Course (left) and Year · Section (right) side by side -->
-                            <div class="fs-form-row-grid" style="margin-bottom: 20px;">
+                            <!-- (2026-07-13) Add id to course row for staff hiding; was bare div -->
+                            <div class="fs-form-row-grid" id="fsCourseSectionRow" style="margin-bottom: 20px;">
                                 <!-- Course Dropdown -->
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <label class="form-label"

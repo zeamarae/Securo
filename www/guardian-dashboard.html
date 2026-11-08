@@ -2129,15 +2129,14 @@
                 zoomDelta: 0.5,
                 wheelPxPerZoomLevel: 140
             }).setView(CAMPUS_CENTER, 17);
-            // (2026-07-13) Set default guardian map to Google Streets; was Google Hybrid
+            // (2026-07-13) Fix map tiles using CartoDB Voyager; was broken Google 403
             const baseMapLayers = {
-                "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Terrain": L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
+                "Streets": L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 20, subdomains: 'abcd' }),
+                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }),
+                "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+                "Light": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20, subdomains: 'abcd' })
             };
-            baseMapLayers["Google Streets"].addTo(map);
+            baseMapLayers["Streets"].addTo(map);
 
             // Campus Geofence Visual Polygon
             guardianGeofencePolygonLayer = L.polygon(getCampusGeofencePolygon(), {
@@ -2705,6 +2704,7 @@
         });
 
         document.getElementById('logoutBtn').onclick = async () => {
+            if (typeof setGuardianWatchingPresence === 'function') await setGuardianWatchingPresence(false);
             await auth.signOut();
             window.location.href = 'login.html';
         };
@@ -3741,11 +3741,41 @@
             }
         });
 
+        // (2026-07-13) Live presence heartbeat for watching indicator; was static
+        let guardianPresenceInterval = null;
+        async function setGuardianWatchingPresence(isWatching) {
+            try {
+                const uid = auth.currentUser?.uid;
+                if (!uid) return;
+                await updateDoc(doc(db, "users", uid), {
+                    isWatching: Boolean(isWatching),
+                    lastActiveAt: serverTimestamp()
+                });
+            } catch (_) {}
+        }
+
         // --- Auth Hub ---
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 initDashboard(user);
+                setGuardianWatchingPresence(true);
+                if (guardianPresenceInterval) clearInterval(guardianPresenceInterval);
+                guardianPresenceInterval = setInterval(() => {
+                    if (document.visibilityState === 'visible') {
+                        setGuardianWatchingPresence(true);
+                    }
+                }, 30000);
+            } else {
+                if (guardianPresenceInterval) clearInterval(guardianPresenceInterval);
             }
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            setGuardianWatchingPresence(document.visibilityState === 'visible');
+        });
+
+        window.addEventListener('pagehide', () => {
+            setGuardianWatchingPresence(false);
         });
 
         // (2026-07-13) Prevent image drag across entire application; was draggable
