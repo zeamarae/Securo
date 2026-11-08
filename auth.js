@@ -120,14 +120,23 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
  * @param {string} password 
  * @param {string} roleOverride - Optional role override
  */
+// (2026-07-13) Support guardian email format & autocompletion; was student-only
 export const login = async (identifier, password, roleOverride = getPreferredAuthRole()) => {
     try {
         // Validate inputs
         if (!identifier || !password) {
-            throw new Error("Please enter your ID/email and password");
+            throw new Error(roleOverride === "guardian"
+                ? "Please enter your guardian email and password"
+                : "Please enter your ID/email and password");
         }
 
-        const cleanIdentifier = String(identifier).trim();
+        let cleanIdentifier = String(identifier).trim().replace(/\s+/g, '');
+        if (cleanIdentifier.includes('@') && !cleanIdentifier.includes('.')) {
+            if (cleanIdentifier.endsWith('@gmail')) cleanIdentifier += '.com';
+            else if (cleanIdentifier.endsWith('@yahoo')) cleanIdentifier += '.com';
+            else if (cleanIdentifier.endsWith('@outlook')) cleanIdentifier += '.com';
+            else if (cleanIdentifier.endsWith('@hotmail')) cleanIdentifier += '.com';
+        }
         let email = cleanIdentifier;
         
         // Detect identifier type and convert to email if needed
@@ -142,11 +151,15 @@ export const login = async (identifier, password, roleOverride = getPreferredAut
             const emailValidation = Validation.email(cleanIdentifier);
             if (emailValidation.valid) {
                 email = emailValidation.value;
+            } else if (cleanIdentifier.includes('@')) {
+                email = cleanIdentifier.toLowerCase();
             } else {
                 // Check if it's a legacy format in database
                 const foundEmail = await getEmailByStudentId(cleanIdentifier).catch(() => null);
                 if (foundEmail) {
                     email = foundEmail;
+                } else if (roleOverride === 'guardian') {
+                    throw new Error("Please enter a valid guardian email address (e.g. parent@gmail.com)");
                 } else {
                     throw new Error("Invalid student ID or email format");
                 }
