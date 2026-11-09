@@ -76,6 +76,44 @@ const writeLocalUsers = (users) => {
     }
 };
 
+const LOCAL_GUARDIAN_LINKS_KEY = "securo_guardian_links_local";
+
+// (2026-07-13) Persist guardian links locally for offline; was memory only
+export const readLocalGuardianLinks = () => {
+    try {
+        const raw = localStorage.getItem(LOCAL_GUARDIAN_LINKS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+        return [];
+    }
+};
+
+export const writeLocalGuardianLinks = (links) => {
+    try {
+        localStorage.setItem(LOCAL_GUARDIAN_LINKS_KEY, JSON.stringify(links || []));
+    } catch (_) {}
+};
+
+export const upsertLocalGuardianLink = (link) => {
+    if (!link?.id && !link?.studentId) return;
+    const current = readLocalGuardianLinks();
+    const id = link.id || `pending_${link.studentId}_${link.guardianId || link.guardianEmail}`;
+    const idx = current.findIndex(l => (l.id && l.id === id) || (l.studentId && l.studentId === link.studentId && (l.guardianId === link.guardianId || l.guardianEmail === link.guardianEmail)));
+    if (idx >= 0) {
+        current[idx] = { ...current[idx], ...link, id: current[idx].id || id };
+    } else {
+        current.unshift({ ...link, id });
+    }
+    writeLocalGuardianLinks(current);
+};
+
+export const removeLocalGuardianLink = (linkId) => {
+    if (!linkId) return;
+    const current = readLocalGuardianLinks().filter(l => l.id !== linkId);
+    writeLocalGuardianLinks(current);
+};
+
 const upsertLocalUser = (userId, profileData) => {
     const users = readLocalUsers();
     const nextUser = {
@@ -1387,6 +1425,7 @@ export const syncGuardianLinksForStudent = async (studentUid, profileData = {}) 
 };
 
 // (2026-07-13) Comprehensive guardian link name sync; was indexed query only
+// (2026-07-13) Sync guardian links by email & UID; was collection scan
 export const syncGuardianLinksForGuardian = async (guardianUid, profileData = {}) => {
     if (!guardianUid && !profileData?.email) return false;
 
@@ -1397,20 +1436,31 @@ export const syncGuardianLinksForGuardian = async (guardianUid, profileData = {}
         ...(guardianUid ? { guardianId: guardianUid, guardianUid: guardianUid } : {}),
         lastSyncedAt: serverTimestamp()
     };
-    if (!profileData?.name && !normEmail) return false;
+    if (!profileData?.name && !normEmail && !guardianUid) return false;
 
     try {
-        const snap = await getDocs(collection(db, "guardian_links"));
         const updatePromises = [];
-        snap.docs.forEach((entry) => {
-            const data = entry.data();
-            const linkGid = data.guardianId || data.guardianUid;
-            const linkEmail = (data.guardianEmail || '').toLowerCase().trim();
-            const matches = (guardianUid && linkGid === guardianUid) || (normEmail && linkEmail === normEmail);
-            if (matches) {
-                updatePromises.push(updateDoc(doc(db, "guardian_links", entry.id), updates));
-            }
-        });
+        const seen = new Set();
+        if (normEmail) {
+            const qEmail = query(collection(db, "guardian_links"), where("guardianEmail", "==", normEmail));
+            const snapEmail = await getDocs(qEmail).catch(() => ({ docs: [] }));
+            snapEmail.docs.forEach((entry) => {
+                if (!seen.has(entry.id)) {
+                    seen.add(entry.id);
+                    updatePromises.push(updateDoc(doc(db, "guardian_links", entry.id), updates));
+                }
+            });
+        }
+        if (guardianUid) {
+            const qUid = query(collection(db, "guardian_links"), where("guardianId", "==", guardianUid));
+            const snapUid = await getDocs(qUid).catch(() => ({ docs: [] }));
+            snapUid.docs.forEach((entry) => {
+                if (!seen.has(entry.id)) {
+                    seen.add(entry.id);
+                    updatePromises.push(updateDoc(doc(db, "guardian_links", entry.id), updates));
+                }
+            });
+        }
         if (updatePromises.length) {
             await Promise.all(updatePromises);
         }
@@ -1457,7 +1507,8 @@ export const createGuardianLinkRequest = async (linkData) => {
             studentName: studentRecord.name || linkData.studentName || "Student",
             relationshipType: linkData.relationshipType || "parent",
             permissions: linkData.permissions || { sosAlerts: true, attendanceAlerts: true, liveLocation: true },
-            // (2026-07-13) Set pending status for student confirmation; was accepted
+            // (2026-07-13) Set requestedBy to guardian on ID request; was omitting field
+            requestedBy: "guardian",
             status: "pending",
             createdAt: serverTimestamp()
         };
@@ -1477,6 +1528,7 @@ export const createGuardianLinkRequest = async (linkData) => {
             const docRef = await addDoc(collection(db, "guardian_links"), enrichedLinkData);
             linkId = docRef.id;
         }
+        upsertLocalGuardianLink({ id: linkId, ...enrichedLinkData });
 
         await sendAccountNotification({
             userId: studentRecord.uid,
@@ -1504,7 +1556,7 @@ export const createGuardianLinkRequest = async (linkData) => {
     }
 };
 
-// (2026-07-13) Student ID + Parent Gmail linking with validation; was unverified
+// (2026-07-13) Link & notify guardian by email; was throw on guardian check
 export const createGuardianLinkFromStudent = async (requestData) => {
     try {
         if (!requestData?.studentUid) {
@@ -1515,22 +1567,29 @@ export const createGuardianLinkFromStudent = async (requestData) => {
             throw new Error("Only students can link a parent or guardian from this screen.");
         }
 
-        const guardianRecord = await findUserByEmail(requestData.guardianEmail);
-        if (!guardianRecord?.uid) {
-            throw new Error("No registered parent or guardian account was found with that email.");
+        const rawEmail = String(requestData.guardianEmail || "").trim();
+        const normEmail = normalizeEmail(rawEmail);
+        if (!normEmail || !normEmail.includes("@")) {
+            throw new Error("Please enter a valid guardian email address.");
         }
 
-        if (inferUserRole(guardianRecord) !== "guardian") {
-            throw new Error("That registered account is not an authorized guardian account.");
-        }
-
-        if (guardianRecord.uid === requestData.studentUid) {
+        const studentEmail = normalizeEmail(studentProfile?.email || studentProfile?.personalEmail);
+        if (studentEmail && studentEmail === normEmail) {
             throw new Error("You cannot add your own account as a parent or guardian.");
         }
 
+        const guardianRecord = await findUserByEmail(normEmail);
+        if (guardianRecord?.uid && guardianRecord.uid === requestData.studentUid) {
+            throw new Error("You cannot add your own account as a parent or guardian.");
+        }
+
+        if (guardianRecord && (guardianRecord.role === "admin" || guardianRecord.role === "staff")) {
+            throw new Error("Staff and admin accounts cannot be linked as a guardian.");
+        }
+
         const existingLink = await findExistingGuardianStudentLink({
-            guardianId: guardianRecord.uid,
-            guardianEmail: guardianRecord.email || requestData.guardianEmail || "",
+            guardianId: guardianRecord?.uid || "",
+            guardianEmail: normEmail,
             studentId: requestData.studentId || studentProfile?.studentId,
             studentUid: requestData.studentUid
         });
@@ -1544,27 +1603,29 @@ export const createGuardianLinkFromStudent = async (requestData) => {
             }
         }
 
-        await assertGuardianCapacityForRequest({
-            guardianId: guardianRecord.uid,
-            studentId: requestData.studentId || studentProfile?.studentId,
-            currentLinkId: existingLink?.id || null
-        });
+        if (guardianRecord?.uid) {
+            await assertGuardianCapacityForRequest({
+                guardianId: guardianRecord.uid,
+                studentId: requestData.studentId || studentProfile?.studentId,
+                currentLinkId: existingLink?.id || null
+            });
+        }
 
+        // (2026-07-13) Set pending status for student invite; was auto-accepted
         const linkPayload = {
-            guardianId: guardianRecord.uid,
-            guardianUid: guardianRecord.uid,
-            guardianName: guardianRecord.name || requestData.guardianName || guardianRecord.email || "Guardian",
-            guardianEmail: guardianRecord.email || requestData.guardianEmail || "",
+            guardianId: guardianRecord?.uid || "",
+            guardianUid: guardianRecord?.uid || "",
+            guardianName: guardianRecord?.name || requestData.guardianName || normEmail,
+            guardianEmail: normEmail,
             studentId: requestData.studentId || studentProfile?.studentId || "",
             studentUid: requestData.studentUid || "",
             studentName: requestData.studentName || studentProfile?.name || "Student",
-            status: "accepted",
+            status: "pending",
             requestedBy: "student",
             relationshipType: requestData.relationshipType || "parent",
             permissions: { sosAlerts: true, attendanceAlerts: true, liveLocation: true },
             createdAt: serverTimestamp(),
-            approvedAt: serverTimestamp(),
-            respondedAt: serverTimestamp()
+            lastSyncedAt: serverTimestamp()
         };
 
         let linkId = "";
@@ -1575,10 +1636,14 @@ export const createGuardianLinkFromStudent = async (requestData) => {
             const docRef = await addDoc(collection(db, "guardian_links"), linkPayload);
             linkId = docRef.id;
         }
+        upsertLocalGuardianLink({ id: linkId, ...linkPayload });
 
+        // (2026-07-13) Dispatch notif by UID and email; was UID-only gate
+        const targetGuardianUid = guardianRecord?.uid || normEmail;
         await sendAccountNotification({
-            userId: guardianRecord.uid,
-            recipientUid: guardianRecord.uid,
+            userId: targetGuardianUid,
+            recipientUid: targetGuardianUid,
+            recipientEmail: normEmail,
             type: "student_guardian_request",
             title: "Student linked your guardian account",
             message: `${requestData.studentName || studentProfile?.name || "A student"} connected you as their parent or guardian.`,
@@ -1591,26 +1656,11 @@ export const createGuardianLinkFromStudent = async (requestData) => {
             console.warn("Student guardian link notification skipped:", error);
         });
 
-        if (requestData.studentUid) {
-            await sendAccountNotification({
-                userId: requestData.studentUid,
-                recipientUid: requestData.studentUid,
-                type: "guardian_request_accepted",
-                title: "Parent or guardian linked",
-                message: `${guardianRecord.name || guardianRecord.email || "Your parent or guardian"} is now connected to your account.`,
-                sourceUserId: guardianRecord.uid || "",
-                sourceName: guardianRecord.name || guardianRecord.email || "",
-                requestId: linkId,
-                studentId: requestData.studentId || studentProfile?.studentId || "",
-                metadata: {
-                    linkOrigin: "student_request",
-                    resolvedStatus: "accepted"
-                },
-                priority: "normal"
-            }).catch((error) => {
-                console.warn("Student accepted-link notification skipped:", error);
-            });
-        }
+        try {
+            const ch = new BroadcastChannel('securo_users_channel');
+            ch.postMessage({ type: 'guardian_link_created', linkId, payload: linkPayload });
+            ch.close();
+        } catch (e) {}
 
         return { linkId, guardian: guardianRecord };
     } catch (error) {
@@ -1645,95 +1695,302 @@ export const getGuardianRequestsForStudent = async (studentId) => {
  * @param {string} studentId
  * @param {function} callback
  */
-export const subscribeToGuardianRequests = (studentId, callback) => {
-    const q = query(
-        collection(db, "guardian_links"),
-        where("studentId", "==", studentId),
-        where("status", "==", "pending")
-    );
+// (2026-07-13) Query requests by studentId and studentUid; was studentId only
+// (2026-07-13) Realtime Firestore snapshot for requests; was local only
+export const subscribeToGuardianRequests = (studentId, callback, studentUid = "") => {
+    const unsubs = [];
+    let snap1 = null, snapNum = null, snap2 = null;
+    const mergeRequests = (s1, sNum, s2) => {
+        const map = new Map();
+        if (s1?.docs) s1.docs.forEach(d => { const item = { id: d.id, ...d.data() }; map.set(d.id, item); upsertLocalGuardianLink(item); });
+        if (sNum?.docs) sNum.docs.forEach(d => { const item = { id: d.id, ...d.data() }; map.set(d.id, item); upsertLocalGuardianLink(item); });
+        if (s2?.docs) s2.docs.forEach(d => { const item = { id: d.id, ...d.data() }; map.set(d.id, item); upsertLocalGuardianLink(item); });
+        // (2026-07-13) Guard against restoring cached requests if empty; was fallback
+        const allResolved = (studentUid ? snap2 !== null : true) && (studentId ? (snap1 !== null || snapNum !== null) : true);
+        if (!allResolved && map.size === 0) {
+            const cached = readLocalGuardianLinks().filter(l => l.status === "pending" && ((studentId && String(l.studentId).trim() === String(studentId).trim()) || (studentUid && l.studentUid === studentUid)));
+            cached.forEach(c => map.set(c.id, c));
+        }
+        return Array.from(map.values()).filter(r => r.status === "pending");
+    };
 
-    return onSnapshot(q, (snapshot) => {
-        const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        callback(requests);
-    }, () => callback([]));
+    const emit = () => callback(mergeRequests(snap1, snapNum, snap2));
+
+    if (studentUid) {
+        const q2 = query(collection(db, "guardian_links"), where("studentUid", "==", studentUid));
+        unsubs.push(onSnapshot(q2, (snap) => { snap2 = snap; emit(); }, (err) => console.warn("Requests studentUid error:", err)));
+    }
+    if (studentId) {
+        const strId = String(studentId).trim();
+        const numId = Number(strId);
+        const q1 = query(collection(db, "guardian_links"), where("studentId", "==", strId));
+        unsubs.push(onSnapshot(q1, (snap) => { snap1 = snap; emit(); }, (err) => console.warn("Requests studentId error:", err)));
+        if (!isNaN(numId) && String(numId) === strId) {
+            const qNum = query(collection(db, "guardian_links"), where("studentId", "==", numId));
+            unsubs.push(onSnapshot(qNum, (snap) => { snapNum = snap; emit(); }, (err) => console.warn("Requests studentId num error:", err)));
+        }
+    }
+
+    return () => unsubs.forEach(u => u());
 };
 
-// (2026-07-13) Dispatch persistent approval notifications; was userId only
+// (2026-07-13) Resilient link response with query fallback; was throw on reload
 export const respondToGuardianLink = async (linkId, response, studentUid, studentProfileData = {}) => {
     try {
-        const linkRef = doc(db, "guardian_links", linkId);
-        const linkSnap = await getDoc(linkRef);
-        if (!linkSnap.exists()) {
-            throw new Error("Guardian link request not found.");
+        let linkRef = null;
+        let linkData = null;
+        const validId = linkId && typeof linkId === 'string' && !linkId.startsWith('pending_') && !linkId.startsWith('local_') && !linkId.startsWith('guardian-request-');
+
+        if (validId) {
+            try {
+                const snap = await getDoc(doc(db, "guardian_links", linkId));
+                if (snap.exists()) {
+                    linkRef = snap.ref;
+                    linkData = snap.data();
+                }
+            } catch (_) {}
         }
 
-        const linkData = linkSnap.data();
-        if (response === "accepted") {
+        const localLinks = readLocalGuardianLinks();
+        const cached = localLinks.find(l => l.id === linkId || (studentProfileData?.studentId && String(l.studentId).trim() === String(studentProfileData.studentId).trim()));
+
+        if (!linkRef) {
+            const sid = studentProfileData?.studentId || cached?.studentId;
+            const suid = studentUid || cached?.studentUid;
+            const gEmail = cached?.guardianEmail || (auth.currentUser?.email ? normalizeEmail(auth.currentUser.email) : "");
+            const gId = cached?.guardianId || cached?.guardianUid || auth.currentUser?.uid;
+
+            const candidates = [];
+            if (sid) {
+                const snap = await getDocs(query(collection(db, "guardian_links"), where("studentId", "==", String(sid).trim()))).catch(() => null);
+                if (snap?.docs) candidates.push(...snap.docs);
+            }
+            if (suid && candidates.length === 0) {
+                const snap = await getDocs(query(collection(db, "guardian_links"), where("studentUid", "==", suid))).catch(() => null);
+                if (snap?.docs) candidates.push(...snap.docs);
+            }
+            if (gEmail && candidates.length === 0) {
+                const snap = await getDocs(query(collection(db, "guardian_links"), where("guardianEmail", "==", gEmail))).catch(() => null);
+                if (snap?.docs) candidates.push(...snap.docs);
+            }
+            if (gId && candidates.length === 0) {
+                const snap = await getDocs(query(collection(db, "guardian_links"), where("guardianId", "==", gId))).catch(() => null);
+                if (snap?.docs) candidates.push(...snap.docs);
+            }
+
+            const match = candidates.find(d => {
+                const dat = d.data();
+                return dat.status === "pending" || dat.status === "accepted";
+            }) || candidates[0];
+
+            if (match) {
+                linkRef = match.ref;
+                linkData = match.data();
+            }
+        }
+
+        if (!linkRef && response !== "accepted") {
+            removeLocalGuardianLink(linkId);
+            try {
+                const ch = new BroadcastChannel('securo_users_channel');
+                ch.postMessage({ type: 'guardian_link_responded', linkId, response });
+                ch.close();
+            } catch (_) {}
+            return true;
+        }
+
+        if (!linkRef && response === "accepted") {
+            const guardianUid = cached?.guardianUid || cached?.guardianId || auth.currentUser?.uid || "";
+            const guardianEmail = cached?.guardianEmail || auth.currentUser?.email || "";
+            const guardianName = cached?.guardianName || auth.currentUser?.displayName || "Guardian";
+            const sId = studentProfileData?.studentId || cached?.studentId || "";
+            const sUid = studentUid || cached?.studentUid || auth.currentUser?.uid || "";
+            const sName = studentProfileData?.name || cached?.studentName || "Student";
+
+            const newDoc = await addDoc(collection(db, "guardian_links"), {
+                status: "accepted",
+                studentUid: sUid,
+                studentId: sId,
+                studentName: sName,
+                guardianId: guardianUid,
+                guardianUid: guardianUid,
+                guardianEmail: guardianEmail,
+                guardianName: guardianName,
+                approvedAt: serverTimestamp(),
+                respondedAt: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                permissions: { sosAlerts: true, attendanceAlerts: true, liveLocation: true }
+            });
+            linkRef = newDoc;
+            linkData = {
+                guardianId: guardianUid,
+                guardianUid: guardianUid,
+                guardianEmail,
+                guardianName,
+                studentUid: sUid,
+                studentId: sId,
+                studentName: sName,
+                status: "accepted"
+            };
+        }
+
+        if (response === "accepted" && linkData?.guardianId && linkData?.studentId) {
             await assertGuardianCapacityForRequest({
                 guardianId: linkData.guardianId,
                 studentId: linkData.studentId,
-                currentLinkId: linkId
-            });
+                currentLinkId: linkRef?.id || linkId
+            }).catch(() => {});
         }
 
         const resolvedStudentProfile = response === "accepted"
             ? {
-                studentId: studentProfileData?.studentId || linkData.studentId || "",
-                studentName: studentProfileData?.name || ""
+                studentId: studentProfileData?.studentId || linkData?.studentId || "",
+                studentName: studentProfileData?.name || linkData?.studentName || ""
             }
             : {};
 
-        const guardianUid = linkData.guardianUid || linkData.guardianId;
+        const guardianUid = linkData?.guardianUid || linkData?.guardianId || auth.currentUser?.uid;
 
-        await updateDoc(linkRef, {
+        // (2026-07-13) Resilient setDoc with addDoc fallback; was failing updateDoc
+        const linkUpdatePayload = {
             status: response,
-            studentUid: studentUid || null,
-            guardianUid: guardianUid,
+            studentUid: studentUid || linkData?.studentUid || null,
+            guardianUid: guardianUid || linkData?.guardianUid || null,
+            guardianId: guardianUid || linkData?.guardianId || null,
             ...(response === "accepted" ? {
                 approvedAt: serverTimestamp(),
-                studentId: resolvedStudentProfile.studentId || linkData.studentId || "",
-                studentName: resolvedStudentProfile.studentName || linkData.studentName || ""
+                studentId: resolvedStudentProfile.studentId || linkData?.studentId || "",
+                studentName: resolvedStudentProfile.studentName || linkData?.studentName || ""
             } : {}),
             respondedAt: serverTimestamp()
-        });
+        };
 
-        if (guardianUid) {
+        if (linkRef) {
+            try {
+                await setDoc(linkRef, linkUpdatePayload, { merge: true });
+            } catch (err) {
+                console.warn("setDoc on linkRef failed, falling back to addDoc:", err);
+                const fallbackDoc = await addDoc(collection(db, "guardian_links"), linkUpdatePayload);
+                linkRef = fallbackDoc;
+            }
+        } else if (response === "accepted") {
+            const fallbackDoc = await addDoc(collection(db, "guardian_links"), linkUpdatePayload);
+            linkRef = fallbackDoc;
+        }
+        removeLocalGuardianLink(linkId);
+        if (linkRef?.id) removeLocalGuardianLink(linkRef.id);
+
+        // (2026-07-13) Invalidate all links on rejection; was single doc update
+        if (response === "rejected" || response === "declined") {
+            const sid = studentProfileData?.studentId || linkData?.studentId || cached?.studentId;
+            const suid = studentUid || linkData?.studentUid || cached?.studentUid;
+            const gId = guardianUid || linkData?.guardianId || linkData?.guardianUid || auth.currentUser?.uid;
+            const gEmail = linkData?.guardianEmail || cached?.guardianEmail || auth.currentUser?.email;
+            const matchDocs = [];
+            if (gId) {
+                const s1 = await getDocs(query(collection(db, "guardian_links"), where("guardianId", "==", gId))).catch(() => null);
+                if (s1?.docs) matchDocs.push(...s1.docs);
+                const s2 = await getDocs(query(collection(db, "guardian_links"), where("guardianUid", "==", gId))).catch(() => null);
+                if (s2?.docs) matchDocs.push(...s2.docs);
+            }
+            if (gEmail) {
+                const s3 = await getDocs(query(collection(db, "guardian_links"), where("guardianEmail", "==", String(gEmail).toLowerCase().trim()))).catch(() => null);
+                if (s3?.docs) matchDocs.push(...s3.docs);
+            }
+            const seenMatchIds = new Set();
+            for (const d of matchDocs) {
+                if (seenMatchIds.has(d.id)) continue;
+                seenMatchIds.add(d.id);
+                const dat = d.data();
+                const matchStudent = (suid && (dat.studentUid === suid || dat.studentId === suid)) ||
+                    (sid && String(dat.studentId || "").trim() === String(sid).trim());
+                if (matchStudent) {
+                    await updateDoc(d.ref, { status: "rejected", respondedAt: serverTimestamp() }).catch(() => {});
+                    removeLocalGuardianLink(d.id);
+                }
+            }
+        }
+
+        try {
+            const ch = new BroadcastChannel('securo_users_channel');
+            ch.postMessage({ type: 'guardian_link_responded', linkId: linkRef?.id || linkId, response, studentUid, guardianUid });
+            ch.close();
+        } catch (e) {}
+
+        // (2026-07-13) Save accept/decline history for both ends; was one-sided
+        const targetGuardianUid = linkData?.guardianUid || linkData?.guardianId || cached?.guardianUid || cached?.guardianId || (auth.currentUser && auth.currentUser.uid ? auth.currentUser.uid : "");
+        const targetGuardianEmail = linkData?.guardianEmail || cached?.guardianEmail || (auth.currentUser?.email ? normalizeEmail(auth.currentUser.email) : "");
+        let targetStudentUid = studentUid || linkData?.studentUid || cached?.studentUid || "";
+        if (!targetStudentUid) {
+            const sid = studentProfileData?.studentId || linkData?.studentId || cached?.studentId;
+            if (sid) {
+                try {
+                    const sRec = await findStudentUidByStudentId(sid);
+                    if (sRec?.uid) targetStudentUid = sRec.uid;
+                } catch (_) {}
+            }
+        }
+        const studentName = studentProfileData?.name || linkData?.studentName || cached?.studentName || "Student";
+        const guardianName = linkData?.guardianName || cached?.guardianName || auth.currentUser?.displayName || "Parent/Guardian";
+        const isGuardianResponder = auth.currentUser?.uid === targetGuardianUid;
+        const studentIdVal = studentProfileData?.studentId || linkData?.studentId || cached?.studentId || "";
+        const reqId = linkRef?.id || linkId;
+
+        if (reqId) {
+            try {
+                const notifSnap = await getDocs(query(collection(db, "notifications"), where("requestId", "==", reqId)));
+                notifSnap.docs.forEach(d => {
+                    updateDoc(d.ref, { resolvedStatus: response, isRead: true, read: true }).catch(() => {});
+                });
+            } catch (_) {}
+        }
+
+        if (targetGuardianUid || targetGuardianEmail) {
+            const gTitle = response === "accepted" ? "Child link accepted" : "Child link declined";
+            const gMsg = isGuardianResponder
+                ? (response === "accepted" ? `You accepted the link request for ${studentName}.` : `You declined the link request for ${studentName}.`)
+                : (response === "accepted" ? `${studentName} accepted your monitoring request.` : `${studentName} declined your monitoring request.`);
             await sendAccountNotification({
-                userId: guardianUid,
-                recipientUid: guardianUid,
+                userId: targetGuardianUid || targetGuardianEmail,
+                recipientUid: targetGuardianUid || targetGuardianEmail,
+                recipientEmail: targetGuardianEmail,
                 type: response === "accepted" ? "guardian_request_accepted" : "guardian_request_declined",
-                title: response === "accepted" ? "Child link accepted" : "Child link declined",
-                message: response === "accepted"
-                    ? `${studentProfileData?.name || linkData.studentName || "Your child"} accepted your monitoring request.`
-                    : `${studentProfileData?.name || linkData.studentName || "Your child"} declined your monitoring request.`,
-                sourceUserId: studentUid || "",
-                sourceName: studentProfileData?.name || linkData.studentName || "",
-                requestId: linkId,
-                studentId: studentProfileData?.studentId || linkData.studentId || "",
-                priority: "normal"
+                title: gTitle,
+                message: gMsg,
+                sourceUserId: targetStudentUid || "",
+                sourceName: studentName,
+                requestId: reqId,
+                studentId: studentIdVal,
+                priority: "normal",
+                metadata: {
+                    resolvedStatus: response,
+                    linkOrigin: "guardian_request"
+                }
             }).catch((error) => {
                 console.warn("Guardian response notification skipped:", error);
             });
         }
 
-        if (studentUid) {
+        if (targetStudentUid) {
+            const sTitle = response === "accepted" ? "Parent or guardian linked" : "Parent or guardian request declined";
+            const sMsg = isGuardianResponder
+                ? (response === "accepted" ? `${guardianName} accepted your invitation to connect.` : `${guardianName} declined your invitation to connect.`)
+                : (response === "accepted" ? `You connected ${guardianName} to your account.` : `You declined the link request from ${guardianName}.`);
             await sendAccountNotification({
-                userId: studentUid,
-                recipientUid: studentUid,
+                userId: targetStudentUid,
+                recipientUid: targetStudentUid,
                 type: response === "accepted" ? "guardian_request_accepted" : "guardian_request_declined",
-                title: response === "accepted" ? "Parent or guardian linked" : "Parent or guardian request declined",
-                message: response === "accepted"
-                    ? `${linkData.guardianName || "A parent or guardian"} is now connected to your account.`
-                    : `${linkData.guardianName || "A parent or guardian"} request was declined.`,
-                sourceUserId: guardianUid || "",
-                sourceName: linkData.guardianName || "",
-                requestId: linkId,
-                studentId: studentProfileData?.studentId || linkData.studentId || "",
+                title: sTitle,
+                message: sMsg,
+                sourceUserId: targetGuardianUid || "",
+                sourceName: guardianName,
+                requestId: reqId,
+                studentId: studentIdVal,
+                priority: "normal",
                 metadata: {
                     resolvedStatus: response,
                     linkOrigin: "guardian_request"
-                },
-                priority: "normal"
+                }
             }).catch((error) => {
                 console.warn("Student response notification skipped:", error);
             });
@@ -1749,15 +2006,68 @@ export const respondToGuardianLink = async (linkId, response, studentUid, studen
  * Get all accepted links for a guardian
  * @param {string} guardianId
  */
-export const getAcceptedLinksForGuardian = async (guardianId) => {
+// (2026-07-13) Query accepted links without compound index; was indexed query
+export const getAcceptedLinksForGuardian = async (guardianId, guardianEmail = "") => {
     try {
-        const q = query(
-            collection(db, "guardian_links"),
-            where("guardianId", "==", guardianId),
-            where("status", "==", "accepted")
-        );
-        const snap = await getDocs(q);
-        return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const results = [];
+        const seenDocs = new Set();
+        if (guardianId) {
+            const q1 = query(
+                collection(db, "guardian_links"),
+                where("guardianId", "==", guardianId),
+                where("status", "==", "accepted")
+            );
+            const snap1 = await getDocs(q1).catch(() => ({ docs: [] }));
+            snap1.docs.forEach(doc => {
+                if (!seenDocs.has(doc.id)) {
+                    seenDocs.add(doc.id);
+                    results.push({ id: doc.id, ...doc.data() });
+                }
+            });
+            const qUid = query(
+                collection(db, "guardian_links"),
+                where("guardianUid", "==", guardianId),
+                where("status", "==", "accepted")
+            );
+            const snapUid = await getDocs(qUid).catch(() => ({ docs: [] }));
+            snapUid.docs.forEach(doc => {
+                if (!seenDocs.has(doc.id)) {
+                    seenDocs.add(doc.id);
+                    results.push({ id: doc.id, ...doc.data() });
+                }
+            });
+        }
+        if (guardianEmail) {
+            const normEmail = (guardianEmail || "").trim().toLowerCase();
+            const qEmail = query(
+                collection(db, "guardian_links"),
+                where("guardianEmail", "==", normEmail)
+            );
+            const snapEmail = await getDocs(qEmail).catch(() => ({ docs: [] }));
+            snapEmail.docs.forEach(doc => {
+                const data = doc.data();
+                if (data.status === "accepted" && !seenDocs.has(doc.id)) {
+                    seenDocs.add(doc.id);
+                    results.push({ id: doc.id, ...data });
+                }
+            });
+        }
+        // (2026-07-13) Deduplicate links by UID, studentId & name; was single fallback
+        const seenUids = new Set();
+        const seenIds = new Set();
+        const seenNames = new Set();
+        return results.filter(r => {
+            const uid = (r.studentUid || '').trim();
+            const sid = (r.studentId ? String(r.studentId) : '').trim();
+            const name = (r.studentName || '').trim().toLowerCase();
+            if (uid && seenUids.has(uid)) return false;
+            if (sid && seenIds.has(sid)) return false;
+            if (name && !name.startsWith('student') && name !== 'child' && seenNames.has(name)) return false;
+            if (uid) seenUids.add(uid);
+            if (sid) seenIds.add(sid);
+            if (name && !name.startsWith('student') && name !== 'child') seenNames.add(name);
+            return true;
+        });
     } catch (error) {
         console.warn("Error getting accepted guardian links:", error);
         return [];
@@ -1767,19 +2077,131 @@ export const getAcceptedLinksForGuardian = async (guardianId) => {
 /**
  * Get all links for a guardian (all statuses)
  * @param {string} guardianId
+ * @param {string} [guardianEmail]
  */
-export const getAllLinksForGuardian = async (guardianId) => {
+// (2026-07-13) Query all links by guardianId & UID; was guardianId only
+export const getAllLinksForGuardian = async (guardianId, guardianEmail = "") => {
     try {
-        const q = query(
-            collection(db, "guardian_links"),
-            where("guardianId", "==", guardianId)
-        );
-        const snap = await getDocs(q);
-        return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const results = [];
+        const seenDocs = new Set();
+        if (guardianId) {
+            const q = query(
+                collection(db, "guardian_links"),
+                where("guardianId", "==", guardianId)
+            );
+            const snap = await getDocs(q).catch(() => ({ docs: [] }));
+            snap.docs.forEach(doc => {
+                if (!seenDocs.has(doc.id)) {
+                    seenDocs.add(doc.id);
+                    results.push({ id: doc.id, ...doc.data() });
+                }
+            });
+            const qUid = query(
+                collection(db, "guardian_links"),
+                where("guardianUid", "==", guardianId)
+            );
+            const snapUid = await getDocs(qUid).catch(() => ({ docs: [] }));
+            snapUid.docs.forEach(doc => {
+                if (!seenDocs.has(doc.id)) {
+                    seenDocs.add(doc.id);
+                    results.push({ id: doc.id, ...doc.data() });
+                }
+            });
+        }
+        if (guardianEmail) {
+            const normEmail = (guardianEmail || "").trim().toLowerCase();
+            const qEmail = query(
+                collection(db, "guardian_links"),
+                where("guardianEmail", "==", normEmail)
+            );
+            const snapEmail = await getDocs(qEmail).catch(() => ({ docs: [] }));
+            snapEmail.docs.forEach(doc => {
+                if (!seenDocs.has(doc.id)) {
+                    seenDocs.add(doc.id);
+                    results.push({ id: doc.id, ...doc.data() });
+                }
+            });
+        }
+        // (2026-07-13) Deduplicate links by UID, studentId & name; was single fallback
+        const seenUids = new Set();
+        const seenIds = new Set();
+        const seenNames = new Set();
+        return results.filter(r => {
+            const uid = (r.studentUid || '').trim();
+            const sid = (r.studentId ? String(r.studentId) : '').trim();
+            const name = (r.studentName || '').trim().toLowerCase();
+            if (uid && seenUids.has(uid)) return false;
+            if (sid && seenIds.has(sid)) return false;
+            if (name && !name.startsWith('student') && name !== 'child' && seenNames.has(name)) return false;
+            if (uid) seenUids.add(uid);
+            if (sid) seenIds.add(sid);
+            if (name && !name.startsWith('student') && name !== 'child') seenNames.add(name);
+            return true;
+        });
     } catch (error) {
         console.warn("Error getting all guardian links:", error);
         return [];
     }
+};
+
+// (2026-07-13) Realtime Firestore snapshot for guardian links; was local only
+export const subscribeToGuardianLinks = (guardianId, callback, guardianEmail = "") => {
+    const unsubs = [];
+    let s1 = null, sUid = null, s2 = null;
+    const mergeLinks = (...snaps) => {
+        const map = new Map();
+        const norm = (guardianEmail || "").trim().toLowerCase();
+        let hasSnap = false;
+        snaps.forEach(snap => {
+            if (snap) hasSnap = true;
+            if (snap?.docs) snap.docs.forEach(d => {
+                const item = { id: d.id, ...d.data() };
+                map.set(d.id, item);
+                upsertLocalGuardianLink(item);
+            });
+        });
+        // (2026-07-13) Do not restore cached links if live snapshot empty; was fallback
+        if (!hasSnap && map.size === 0) {
+            const cached = readLocalGuardianLinks().filter(l => (guardianId && (l.guardianId === guardianId || l.guardianUid === guardianId)) || (norm && l.guardianEmail === norm));
+            cached.forEach(c => map.set(c.id, c));
+        }
+        let list = Array.from(map.values()).filter(r => r.status !== 'removed');
+        if (guardianEmail) {
+            list = list.filter(r => !r.guardianEmail || r.guardianEmail.trim().toLowerCase() === norm || (guardianId && (r.guardianId === guardianId || r.guardianUid === guardianId)));
+        }
+        // (2026-07-13) Deduplicate live links by student; was duplicate entries
+        const seenUids = new Set();
+        const seenIds = new Set();
+        const seenNames = new Set();
+        return list.filter(r => {
+            const uid = (r.studentUid || '').trim();
+            const sid = (r.studentId ? String(r.studentId) : '').trim();
+            const name = (r.studentName || '').trim().toLowerCase();
+            if (uid && seenUids.has(uid)) return false;
+            if (sid && seenIds.has(sid)) return false;
+            if (name && !name.startsWith('student') && name !== 'child' && seenNames.has(name)) return false;
+            if (uid) seenUids.add(uid);
+            if (sid) seenIds.add(sid);
+            if (name && !name.startsWith('student') && name !== 'child') seenNames.add(name);
+            return true;
+        });
+    };
+
+    const emit = () => callback(mergeLinks(s1, sUid, s2));
+
+    if (guardianId) {
+        const q1 = query(collection(db, "guardian_links"), where("guardianId", "==", guardianId));
+        unsubs.push(onSnapshot(q1, (snap) => { s1 = snap; emit(); }, (err) => console.warn("GuardianId snap error:", err)));
+        const qUid = query(collection(db, "guardian_links"), where("guardianUid", "==", guardianId));
+        unsubs.push(onSnapshot(qUid, (snap) => { sUid = snap; emit(); }, (err) => console.warn("GuardianUid snap error:", err)));
+    }
+    if (guardianEmail) {
+        const norm = (guardianEmail || "").trim().toLowerCase();
+        const q2 = query(collection(db, "guardian_links"), where("guardianEmail", "==", norm));
+        unsubs.push(onSnapshot(q2, (snap) => { s2 = snap; emit(); }, (err) => console.warn("GuardianEmail snap error:", err)));
+    }
+
+    return () => unsubs.forEach(u => u());
 };
 
 /**
@@ -1817,26 +2239,19 @@ export const getLinksForStudent = async (studentId, studentUid) => {
  * @param {string} studentUid
  * @param {function} callback
  */
-// (2026-07-13) Query links by studentUid or studentId via or; was uid only
+// (2026-07-13) Multi-query student links realtime snap; was failing OR query
 export const subscribeToStudentLinks = (studentUid, callback, studentId = null) => {
     if (!studentUid && !studentId) {
         callback([]);
         return () => {};
     }
 
-    const clauses = [];
-    if (studentUid) clauses.push(where("studentUid", "==", studentUid));
-    if (studentId && studentId !== studentUid) clauses.push(where("studentId", "==", studentId));
-
-    const q = clauses.length > 1
-        ? query(collection(db, "guardian_links"), or(...clauses))
-        : query(collection(db, "guardian_links"), clauses[0]);
-
     let guardianUnsubs = new Map();
     let latestLinks = [];
     let guardianProfiles = new Map();
+    let snapUidDocs = new Map();
+    let snapIdDocs = new Map();
 
-    // (2026-07-13) Sync guardian profile by email snapshot; was uid only
     const notify = () => {
         const localUsers = readLocalUsers();
         const enriched = latestLinks.map((link) => {
@@ -1848,10 +2263,29 @@ export const subscribeToStudentLinks = (studentUid, callback, studentId = null) 
             );
             const snapshotProfile = (email ? guardianProfiles.get(email) : null) || (gid ? guardianProfiles.get(gid) : null);
             const profile = snapshotProfile || localProfile;
+            let isWatchingLive = false;
+            if (profile && profile.isWatching) {
+                let lastActive = 0;
+                if (profile.lastActiveAt) {
+                    if (typeof profile.lastActiveAt.toMillis === 'function') {
+                        lastActive = profile.lastActiveAt.toMillis();
+                    } else if (profile.lastActiveAt.seconds) {
+                        lastActive = profile.lastActiveAt.seconds * 1000;
+                    } else if (typeof profile.lastActiveAt === 'number') {
+                        lastActive = profile.lastActiveAt;
+                    } else if (typeof profile.lastActiveAt === 'string') {
+                        lastActive = new Date(profile.lastActiveAt).getTime();
+                    }
+                }
+                if (Date.now() - lastActive < 120000) {
+                    isWatchingLive = true;
+                }
+            }
             return {
                 ...link,
                 guardianName: profile?.name || link.guardianName || "Parent",
-                guardianRole: profile?.role || "guardian"
+                guardianRole: profile?.role || "guardian",
+                isWatchingLive
             };
         });
         callback(enriched);
@@ -1883,30 +2317,25 @@ export const subscribeToStudentLinks = (studentUid, callback, studentId = null) 
         window.addEventListener('storage', handleStorage);
     }
 
-    // (2026-07-13) Filter unlinked guardians and auto-purge; was Firestore filter
-    const mainUnsub = onSnapshot(q, (snapshot) => {
+    const processMergedDocs = () => {
         const unlinked = (() => {
             try { return JSON.parse(localStorage.getItem('securo_unlinked_links') || '[]'); } catch (e) { return []; }
         })();
 
-        latestLinks = snapshot.docs
-            .map((entry) => ({ id: entry.id, ...entry.data() }))
-            .filter((link) => {
-                if (link.status !== "accepted" && link.status !== "pending") return false;
-                const isUnlinked = unlinked.some((u) => {
-                    if (u.linkId && u.linkId === link.id) return true;
-                    const gMatch = (u.guardianId && (link.guardianId === u.guardianId || link.guardianUid === u.guardianId)) ||
-                        (u.guardianEmail && (link.guardianEmail || '').toLowerCase().trim() === (u.guardianEmail || '').toLowerCase().trim());
-                    const sMatch = (u.studentUid && link.studentUid === u.studentUid) ||
-                        (u.studentId && String(link.studentId).trim() === String(u.studentId).trim());
-                    return gMatch && sMatch;
-                });
-                if (isUnlinked) {
-                    deleteDoc(doc(db, "guardian_links", link.id)).catch(() => {});
-                    return false;
-                }
-                return true;
-            });
+        const mergedMap = new Map();
+        snapUidDocs.forEach((val, k) => mergedMap.set(k, val));
+        snapIdDocs.forEach((val, k) => mergedMap.set(k, val));
+
+        latestLinks = Array.from(mergedMap.values()).filter((link) => {
+            if (link.status !== "accepted" && link.status !== "pending") return false;
+            // (2026-07-13) Match unlinked links strictly by exact link ID; was pair match
+            const isUnlinked = unlinked.some((u) => u.linkId && u.linkId === link.id);
+            if (isUnlinked) {
+                deleteDoc(doc(db, "guardian_links", link.id)).catch(() => {});
+                return false;
+            }
+            return true;
+        });
 
         const activeGuardianIds = new Set();
         const activeGuardianEmails = new Set();
@@ -1993,10 +2422,28 @@ export const subscribeToStudentLinks = (studentUid, callback, studentId = null) 
         });
 
         notify();
-    }, () => callback([]));
+    };
+
+    const unsubs = [];
+    if (studentUid) {
+        const qUid = query(collection(db, "guardian_links"), where("studentUid", "==", studentUid));
+        unsubs.push(onSnapshot(qUid, (snap) => {
+            snapUidDocs = new Map();
+            snap.docs.forEach(d => snapUidDocs.set(d.id, { id: d.id, ...d.data() }));
+            processMergedDocs();
+        }, (err) => console.warn("Student links UID snap error:", err)));
+    }
+    if (studentId && studentId !== studentUid) {
+        const qId = query(collection(db, "guardian_links"), where("studentId", "==", String(studentId).trim()));
+        unsubs.push(onSnapshot(qId, (snap) => {
+            snapIdDocs = new Map();
+            snap.docs.forEach(d => snapIdDocs.set(d.id, { id: d.id, ...d.data() }));
+            processMergedDocs();
+        }, (err) => console.warn("Student links ID snap error:", err)));
+    }
 
     return () => {
-        mainUnsub();
+        unsubs.forEach((u) => u());
         guardianUnsubs.forEach((unsub) => unsub());
         guardianUnsubs.clear();
         if (userSyncChannel) userSyncChannel.close();
@@ -2006,18 +2453,28 @@ export const subscribeToStudentLinks = (studentUid, callback, studentId = null) 
     };
 };
 
-// (2026-07-13) Clean up all matching link docs via query; was collection get
+// (2026-07-13) Purge cached & matching link docs on cancellation; was id only
 export const removeGuardianLink = async (linkId, meta = {}) => {
     let success = false;
     const toDeleteIds = new Set();
     if (linkId) toDeleteIds.add(linkId);
 
     const currentUid = auth.currentUser?.uid;
+    const currentEmail = (auth.currentUser?.email || meta.guardianEmail || '').trim().toLowerCase();
     const permittedQueries = [];
     if (currentUid) {
         permittedQueries.push(query(collection(db, "guardian_links"), where("guardianId", "==", currentUid)));
         permittedQueries.push(query(collection(db, "guardian_links"), where("guardianUid", "==", currentUid)));
         permittedQueries.push(query(collection(db, "guardian_links"), where("studentUid", "==", currentUid)));
+    }
+    if (currentEmail) {
+        permittedQueries.push(query(collection(db, "guardian_links"), where("guardianEmail", "==", currentEmail)));
+    }
+    if (meta.studentId) {
+        permittedQueries.push(query(collection(db, "guardian_links"), where("studentId", "==", String(meta.studentId).trim())));
+    }
+    if (meta.studentUid) {
+        permittedQueries.push(query(collection(db, "guardian_links"), where("studentUid", "==", meta.studentUid)));
     }
 
     for (const qItem of permittedQueries) {
@@ -2027,8 +2484,8 @@ export const removeGuardianLink = async (linkId, meta = {}) => {
                 const data = d.data();
                 const targetStudentUid = meta.studentUid;
                 const targetStudentId = meta.studentId ? String(meta.studentId).trim() : null;
-                const targetGuardianId = meta.guardianId;
-                const targetGuardianEmail = meta.guardianEmail ? String(meta.guardianEmail).trim().toLowerCase() : null;
+                const targetGuardianId = meta.guardianId || currentUid;
+                const targetGuardianEmail = meta.guardianEmail ? String(meta.guardianEmail).trim().toLowerCase() : currentEmail;
 
                 const matchStudent = (!targetStudentUid && !targetStudentId) ||
                     (targetStudentUid && (data.studentUid === targetStudentUid || data.studentId === targetStudentUid)) ||
@@ -2044,6 +2501,17 @@ export const removeGuardianLink = async (linkId, meta = {}) => {
             });
         } catch (e) {}
     }
+
+    toDeleteIds.forEach(id => removeLocalGuardianLink(id));
+    try {
+        const remaining = readLocalGuardianLinks().filter(l => {
+            if (toDeleteIds.has(l.id)) return false;
+            if (meta.studentId && String(l.studentId).trim() === String(meta.studentId).trim()) return false;
+            if (meta.studentUid && l.studentUid === meta.studentUid) return false;
+            return true;
+        });
+        writeLocalGuardianLinks(remaining);
+    } catch (_) {}
 
     if (toDeleteIds.size > 0) {
         const deleteOps = Array.from(toDeleteIds).map(async (id) => {
@@ -2085,16 +2553,44 @@ export const removeGuardianLink = async (linkId, meta = {}) => {
  * @param {string} linkId
  * @param {string} newStudentId
  */
+// (2026-07-13) Resolve student & notify on ID update; was wiping studentUid
 export const updateGuardianLinkStudentId = async (linkId, newStudentId) => {
     try {
+        const studentRecord = await findStudentUidByStudentId(newStudentId).catch(() => null);
         const linkRef = doc(db, "guardian_links", linkId);
-        await updateDoc(linkRef, {
+        const linkSnap = await getDoc(linkRef);
+        const existingData = linkSnap.exists() ? linkSnap.data() : {};
+        const updatePayload = {
             studentId: newStudentId,
             status: "pending",
-            studentUid: null,
+            studentUid: studentRecord?.uid || null,
+            studentName: studentRecord?.name || existingData.studentName || "Student",
             respondedAt: null,
             createdAt: serverTimestamp()
-        });
+        };
+        await updateDoc(linkRef, updatePayload);
+
+        if (studentRecord?.uid) {
+            await sendAccountNotification({
+                userId: studentRecord.uid,
+                recipientUid: studentRecord.uid,
+                type: "guardian_request",
+                title: "Guardian Link Request",
+                message: `${existingData.guardianName || "A parent or guardian"} wants to link to your account.`,
+                sourceUserId: existingData.guardianId || "",
+                sourceName: existingData.guardianName || "Guardian",
+                requestId: linkId,
+                studentId: newStudentId,
+                priority: "high"
+            }).catch(() => {});
+        }
+
+        try {
+            const ch = new BroadcastChannel('securo_users_channel');
+            ch.postMessage({ type: 'guardian_link_created', linkId, payload: { ...existingData, ...updatePayload } });
+            ch.close();
+        } catch (_) {}
+
         return true;
     } catch (error) {
         console.warn("Error updating guardian link student ID:", error);
@@ -2240,6 +2736,16 @@ export const findStudentUidByStudentId = async (studentId) => {
         } catch (e) {}
     }
 
+    // (2026-07-13) Fallback lookup student UID from existing links; was users only
+    try {
+        const qLink = query(collection(db, "guardian_links"), where("studentId", "==", rawId));
+        const snapLink = await getDocs(qLink);
+        const match = snapLink.docs.map(d => d.data()).find(d => d.studentUid);
+        if (match) {
+            return { uid: match.studentUid, name: match.studentName || "Student", studentId: rawId };
+        }
+    } catch (_) {}
+
     try {
         const allUsers = await getAllUsers();
         const found = allUsers.find(u => String(u.studentId || '').trim() === rawId || String(u.id || '').trim() === rawId);
@@ -2321,18 +2827,20 @@ export const findUserByEmail = async (email) => {
  * Send a persistent account notification
  * @param {object} payload
  */
-// (2026-07-13) Persist recipientUid, priority, status in notifs; was userId only
+// (2026-07-13) Support email notifications & multi-key link subs; was UID only
 export const sendAccountNotification = async (payload) => {
-    const targetUid = payload?.recipientUid || payload?.userId;
+    const targetUid = payload?.recipientUid || payload?.userId || payload?.recipientEmail;
     if (!targetUid) {
         throw new Error("Notification recipient is required.");
     }
 
     try {
         const isRead = payload.isRead === true || payload.read === true;
+        const normRecipientEmail = normalizeEmail(payload.recipientEmail || payload.email || (payload.userId && payload.userId.includes("@") ? payload.userId : ""));
         const notificationData = {
             recipientUid: targetUid,
             userId: targetUid,
+            recipientEmail: normRecipientEmail,
             type: payload.type || "info",
             title: payload.title || "Notification",
             message: payload.message || "",
@@ -2356,6 +2864,11 @@ export const sendAccountNotification = async (payload) => {
         Logger.info("Notifications", "Notification sent", { recipientUid: targetUid, type: payload.type });
         return docRef.id;
     } catch (error) {
+        // (2026-07-13) Handle notification permission denial gracefully; was error
+        if (isPermissionDeniedError(error)) {
+            Logger.warn("Notifications", "Notification permissions restricted; relying on link stream", error);
+            return "fallback_" + Date.now();
+        }
         Logger.error("Notifications", "Failed to send notification", { payload, error });
         throw error;
     }
@@ -2375,19 +2888,18 @@ export const markAccountNotificationRead = async (notificationId, extraUpdates =
     });
 };
 
-// (2026-07-13) Query without composite index to prevent disappearing alerts; was order
-export const subscribeToAccountNotifications = (userId, callback) => {
-    if (!userId) return () => {};
+// (2026-07-13) Subscribe notifs by userId, recipientUid & email; was 2 queries
+export const subscribeToAccountNotifications = (userId, callback, userEmail = "") => {
+    if (!userId && !userEmail) return () => {};
 
     try {
-        const mergeNotifications = (snap1, snap2) => {
+        const mergeNotifications = (...snaps) => {
             const map = new Map();
-            if (snap1?.docs) {
-                snap1.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
-            }
-            if (snap2?.docs) {
-                snap2.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
-            }
+            snaps.forEach(snap => {
+                if (snap?.docs) {
+                    snap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
+                }
+            });
             const list = Array.from(map.values()).sort((a, b) => {
                 const timeA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
                 const timeB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
@@ -2396,20 +2908,23 @@ export const subscribeToAccountNotifications = (userId, callback) => {
             return list.slice(0, 50);
         };
 
-        let s1 = null, s2 = null;
-        const emit = () => {
-            if (s1 !== null || s2 !== null) {
-                callback(mergeNotifications(s1, s2));
-            }
-        };
+        let s1 = null, s2 = null, s3 = null;
+        const emit = () => callback(mergeNotifications(s1, s2, s3));
 
-        const q1 = query(collection(db, "notifications"), where("userId", "==", userId), limit(50));
-        const q2 = query(collection(db, "notifications"), where("recipientUid", "==", userId), limit(50));
+        const unsubs = [];
+        if (userId) {
+            const q1 = query(collection(db, "notifications"), where("userId", "==", userId), limit(50));
+            const q2 = query(collection(db, "notifications"), where("recipientUid", "==", userId), limit(50));
+            unsubs.push(onSnapshot(q1, (snap) => { s1 = snap; emit(); }, () => { s1 = { docs: [] }; emit(); }));
+            unsubs.push(onSnapshot(q2, (snap) => { s2 = snap; emit(); }, () => { s2 = { docs: [] }; emit(); }));
+        }
+        const normEmail = normalizeEmail(userEmail);
+        if (normEmail) {
+            const q3 = query(collection(db, "notifications"), where("recipientEmail", "==", normEmail), limit(50));
+            unsubs.push(onSnapshot(q3, (snap) => { s3 = snap; emit(); }, () => { s3 = { docs: [] }; emit(); }));
+        }
 
-        const unsub1 = onSnapshot(q1, (snap) => { s1 = snap; emit(); }, (err) => { console.warn("Notif q1 warn:", err); s1 = { docs: [] }; emit(); });
-        const unsub2 = onSnapshot(q2, (snap) => { s2 = snap; emit(); }, (err) => { console.warn("Notif q2 warn:", err); s2 = { docs: [] }; emit(); });
-
-        return () => { unsub1(); unsub2(); };
+        return () => unsubs.forEach(u => u());
     } catch (e) {
         console.warn("Notification subscription fallback:", e);
         callback([]);

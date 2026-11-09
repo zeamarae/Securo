@@ -852,11 +852,13 @@
             box-shadow: none;
         }
 
+        /* (2026-07-13) Hide label text during is-busy spinner; was visible text */
         button.is-busy,
         .notif-action-btn.is-busy,
         .like-action.is-busy {
             position: relative;
             pointer-events: none;
+            color: transparent !important;
         }
 
         button.is-busy>*,
@@ -6777,16 +6779,15 @@
                 wheelPxPerZoomLevel: 140
             }).setView(CAMPUS_CENTER, 17);
 
-            // (2026-07-13) Set Google Streets as default student map; was OpenStreetMap
+            // (2026-07-13) Use OSM tiles; was broken CartoDB tiles requiring API key
             const baseMapLayers = {
-                "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "Google Terrain": L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
+                "Streets": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }),
+                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }),
+                "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+                "Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 })
             };
 
-            let activeLayer = baseMapLayers["Google Streets"];
+            let activeLayer = baseMapLayers["Streets"];
             activeLayer.addTo(map);
 
             // Force tile load after layer is added
@@ -8333,7 +8334,8 @@
 
             notifList.innerHTML = visibleNotifications.map((item) => {
                 const requestId = item.requestId || "";
-                const actionable = item.type === "guardian_request" && !item.resolvedStatus && requestId;
+                // (2026-07-13) Support student_guardian_request actions; was guardian_request
+                const actionable = (item.type === "guardian_request" || item.type === "student_guardian_request") && !item.resolvedStatus && requestId;
                 return `
                     <div class="notif-item" id="${requestId ? `notif-request-${requestId}` : `notif-${item.id}`}">
                         <div class="notif-item-icon">
@@ -8357,8 +8359,43 @@
 
         function renderAccountNotifications(notifications = []) {
             appState.accountNotifications = Array.isArray(notifications) ? notifications : [];
+            // (2026-07-13) Persist student notifs to localStorage; was memory only
+            try { localStorage.setItem('securo_student_notifications', JSON.stringify(appState.accountNotifications)); } catch (_) {}
             syncNotificationViews();
+
+            // (2026-07-13) Show accept/decline notifs on snapshot; was request types only
+            notifications.forEach(item => {
+                if (!item.isRead && (item.type === "guardian_request" || item.type === "student_guardian_request")) {
+                    showGuardianRequestNotification({
+                        id: item.requestId || item.id,
+                        guardianName: item.sourceName || "A parent / guardian",
+                        message: item.message || "A parent or guardian wants to link to your account."
+                    });
+                } else if (!item.isRead && (item.type === "guardian_request_accepted" || item.type === "guardian_request_declined")) {
+                    const evtKey = 'notif_seen_' + item.id;
+                    if (!window._seenStudentNotifEventIds) window._seenStudentNotifEventIds = new Set();
+                    if (!window._seenStudentNotifEventIds.has(evtKey)) {
+                        window._seenStudentNotifEventIds.add(evtKey);
+                        showStatus(item.title || "Guardian Update", item.message || "");
+                        const existingPopup = document.getElementById('guardianNotify');
+                        if (existingPopup) existingPopup.remove();
+                    }
+                }
+            });
         }
+
+        // (2026-07-13) Restore student notifications offline; was memory-only
+        try {
+            const cachedRequests = JSON.parse(localStorage.getItem('securo_student_pending_requests') || '[]');
+            if (Array.isArray(cachedRequests) && cachedRequests.length) {
+                appState.pendingGuardianRequests = cachedRequests;
+            }
+            const cachedNotifs = JSON.parse(localStorage.getItem('securo_student_notifications') || '[]');
+            if (Array.isArray(cachedNotifs) && cachedNotifs.length) {
+                appState.accountNotifications = cachedNotifs;
+            }
+            syncNotificationViews();
+        } catch (_) {}
 
         function renderNotificationHistorySection(notifications = []) {
             const container = document.getElementById("historyNotifications");
@@ -8929,9 +8966,18 @@
             return "https://securo.cebutech.digital/guardian.html";
         }
 
+        // (2026-07-13) Skip course, section, & parents for staff; was required student
         function triggerFullscreenOnboarding(user, existingProfile) {
             fsCurrentUserContext = { user, profile: existingProfile };
             if (fsOnboardingError) fsOnboardingError.textContent = "";
+            const isStaff = user?.email?.startsWith("staff.") || existingProfile?.role === "staff" || appState.user?.role === "staff";
+            const courseSecRow = document.getElementById("fsCourseSectionRow");
+            if (courseSecRow) courseSecRow.style.display = isStaff ? "none" : "";
+            if (fsCourse) fsCourse.required = !isStaff;
+            if (fsYearLevel) fsYearLevel.required = !isStaff;
+            if (fsSection) fsSection.required = !isStaff;
+            const titleEl = document.querySelector(".fs-onboarding-title");
+            if (titleEl) titleEl.textContent = isStaff ? "Set Up Staff Profile" : "Set Up Your Profile";
             if (existingProfile?.firstName && fsFirstName) fsFirstName.value = toTitleCase(existingProfile.firstName);
             if (existingProfile?.lastName && fsLastName) fsLastName.value = toTitleCase(existingProfile.lastName);
             if (existingProfile?.course && fsCourse) fsCourse.value = existingProfile.course;
@@ -8963,6 +9009,7 @@
                 if (fsOnboardingError) fsOnboardingError.textContent = "";
                 const fn = fsFirstName ? toTitleCase(fsFirstName.value.trim()) : "";
                 const ln = fsLastName ? toTitleCase(fsLastName.value.trim()) : "";
+                const isStaff = fsCurrentUserContext?.user?.email?.startsWith("staff.") || fsCurrentUserContext?.profile?.role === "staff" || appState.user?.role === "staff";
                 const course = fsCourse ? fsCourse.value.trim().toUpperCase() : "";
                 const year = fsYearLevel ? fsYearLevel.value.trim() : "";
                 const rawSec = fsSection ? fsSection.value.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase() : "";
@@ -8975,17 +9022,19 @@
                     if (fsOnboardingError) fsOnboardingError.textContent = "Please enter your last name.";
                     return;
                 }
-                if (!course) {
-                    if (fsOnboardingError) fsOnboardingError.textContent = "Please select your course.";
-                    return;
-                }
-                if (!/^[1-5]$/.test(year)) {
-                    if (fsOnboardingError) fsOnboardingError.textContent = "Year level must be 1–5.";
-                    return;
-                }
-                if (!rawSec || rawSec.length < 1 || rawSec.length > 4) {
-                    if (fsOnboardingError) fsOnboardingError.textContent = "Section must be 1–4 letters (e.g. A).";
-                    return;
+                if (!isStaff) {
+                    if (!course) {
+                        if (fsOnboardingError) fsOnboardingError.textContent = "Please select your course.";
+                        return;
+                    }
+                    if (!/^[1-5]$/.test(year)) {
+                        if (fsOnboardingError) fsOnboardingError.textContent = "Year level must be 1–5.";
+                        return;
+                    }
+                    if (!rawSec || rawSec.length < 1 || rawSec.length > 4) {
+                        if (fsOnboardingError) fsOnboardingError.textContent = "Section must be 1–4 letters (e.g. A).";
+                        return;
+                    }
                 }
 
                 // If user submits while live camera is on and no static photo snapped yet, automatically snap live frame!
@@ -9005,7 +9054,7 @@
                     const derivedRole = user.email?.startsWith("staff.") ? "staff" : "student";
                     const fullName = `${fn} ${ln}`;
                     const initials = (fn[0] + ln[0]).toUpperCase();
-                    const formattedSection = `${course} ${year}-${rawSec}`;
+                    const formattedSection = isStaff ? "Staff" : `${course} ${year}-${rawSec}`;
 
                     const updatedProfile = {
                         studentId: fsCurrentUserContext?.profile?.studentId || derivedId,
@@ -9013,13 +9062,13 @@
                         lastName: ln,
                         name: fullName,
                         initials,
-                        course,
-                        yearLevel: year,
+                        course: isStaff ? "" : course,
+                        yearLevel: isStaff ? "" : year,
                         section: formattedSection,
                         photoURL: fsOnboardingPhotoData || "",
                         avatar: fsOnboardingPhotoData || "",
                         email: user.email || "",
-                        role: fsCurrentUserContext?.profile?.role || derivedRole,
+                        role: isStaff ? "staff" : (fsCurrentUserContext?.profile?.role || derivedRole),
                         onboardingCompleted: true,
                         updatedAt: new Date().toISOString()
                     };
@@ -9066,6 +9115,10 @@
                         fsSubmitOnboardingBtn.disabled = false;
                         fsSubmitOnboardingBtn.style.opacity = "1";
                         fsSubmitOnboardingBtn.innerHTML = '<span id="fsSubmitText">Save & Continue</span><span class="material-symbols-outlined" id="fsSubmitIcon">arrow_forward</span>';
+                    }
+                    if (isStaff) {
+                        finishOnboardingAndEnterApp();
+                        return;
                     }
                     // (2026-07-13) Dynamic guardian URL on save; prev: hardcoded zea link
                     const studentId = updatedProfile.studentId || "";
@@ -9433,13 +9486,15 @@
                 if (guardianLinkReminderUnsub) guardianLinkReminderUnsub();
                 notificationUnsub = subscribeToAccountNotifications(user.uid, renderAccountNotifications);
 
-                // Check for Guardian Link Requests (Date: 2026-05-03)
-                if (appState.user.studentId && profile?.role === 'student') {
+                // (2026-07-13) Subscribe guardian requests by studentId and UID; was ID gate
+                if (profile?.role === 'student' || !profile?.role) {
                     guardianRequestUnsub = subscribeToGuardianRequests(appState.user.studentId, (requests) => {
                         appState.pendingGuardianRequests = Array.isArray(requests) ? requests : [];
+                        // (2026-07-13) Persist student pending requests offline; was memory only
+                        try { localStorage.setItem('securo_student_pending_requests', JSON.stringify(appState.pendingGuardianRequests)); } catch (_) {}
                         syncNotificationViews();
                         requests.forEach(req => showGuardianRequestNotification(req));
-                    });
+                    }, user.uid);
                     guardianLinkReminderUnsub = subscribeToStudentLinks(user.uid, (links) => {
                         appState.guardianLinkReminders = Array.isArray(links) ? links : [];
                         syncNotificationViews();
@@ -9447,6 +9502,56 @@
                         renderGuardianWatchers(appState.guardianLinkReminders);
                     }, appState.user.studentId);
                 }
+
+                // (2026-07-13) Listen for realtime guardian requests; was missing listener
+                try {
+                    const securoChannel = new BroadcastChannel('securo_users_channel');
+                    securoChannel.onmessage = (event) => {
+                        const data = event.data;
+                        if (!data) return;
+                        if (data.type === 'guardian_link_created' || data.type === 'guardian_link_updated') {
+                            const payload = data.payload || data;
+                            const curUid = user.uid;
+                            const curSid = String(appState.user?.studentId || '').trim();
+                            const targetSid = String(payload.studentId || '').trim();
+                            const targetUid = payload.studentUid || '';
+                            if ((targetUid && targetUid === curUid) || (targetSid && targetSid === curSid)) {
+                                // (2026-07-13) Append pending request to state & cache; was toast only
+                                const reqObj = {
+                                    id: data.linkId || payload.id,
+                                    studentId: payload.studentId || curSid,
+                                    studentUid: payload.studentUid || curUid,
+                                    guardianName: payload.guardianName || "A parent or guardian",
+                                    guardianId: payload.guardianId || payload.guardianUid,
+                                    guardianEmail: payload.guardianEmail,
+                                    message: `${payload.guardianName || "A parent or guardian"} wants to link to your account.`,
+                                    status: 'pending',
+                                    createdAt: new Date().toISOString()
+                                };
+                                const existingIdx = appState.pendingGuardianRequests.findIndex(r => r.id === reqObj.id);
+                                if (existingIdx >= 0) {
+                                    appState.pendingGuardianRequests[existingIdx] = reqObj;
+                                } else {
+                                    appState.pendingGuardianRequests.unshift(reqObj);
+                                }
+                                try { localStorage.setItem('securo_student_pending_requests', JSON.stringify(appState.pendingGuardianRequests)); } catch (_) {}
+                                showGuardianRequestNotification(reqObj, true);
+                                syncNotificationViews();
+                            }
+                        } else if (data.type === 'guardian_link_responded') {
+                            if (data.studentUid === user.uid) {
+                                if (data.response === 'accepted') {
+                                    showStatus('Guardian Connected', 'Your parent or guardian accepted your link request.');
+                                }
+                                getLinksForStudent(appState.user?.studentId, user.uid).then(validLinks => {
+                                    appState.guardianLinkReminders = Array.isArray(validLinks) ? validLinks : [];
+                                    renderGuardianWatchers(appState.guardianLinkReminders);
+                                    syncNotificationViews();
+                                }).catch(() => {});
+                            }
+                        }
+                    };
+                } catch (_) {}
             } catch (error) {
                 Logger.error("Auth", "Auth state processing error", error);
             }
@@ -9495,13 +9600,16 @@
                 chip.className = 'parent-selector-chip active';
                 chip.title = `Hold to remove ${name}`;
                 chip.style.userSelect = 'none';
+                // (2026-07-13) Show watching badge only if live online; was static badge
+                const isLive = Boolean(link.isWatchingLive);
                 chip.innerHTML = `
                     <span class="parent-avatar">${escapeHtml(initials)}</span>
                     <span>${escapeHtml(name)}</span>
+                    ${isLive ? `
                     <span class="watching-live-badge">
                         <span class="watching-dot"></span>
                         <span>Watching</span>
-                    </span>
+                    </span>` : ''}
                 `;
 
                 let holdTimer = null;
@@ -9628,6 +9736,7 @@
                     sendEmailBtn.disabled = true;
                     const prevBtnHtml = sendEmailBtn.innerHTML;
                     sendEmailBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:18px;">sync</span><span>Sending...</span>`;
+                    // (2026-07-13) Send account notification; was mailto email draft fallback
                     try {
                         await createGuardianLinkFromStudent({
                             studentUid: appState.user?.uid,
@@ -9635,13 +9744,11 @@
                             studentName: appState.profile?.name || appState.user?.name || "Student",
                             guardianEmail: email
                         });
-                        showStatus("Invitation Sent", `Guardian request successfully linked to ${email}.`);
+                        showStatus("Notification Sent", `Child link notification sent to ${email} for their guardian account.`);
                         emailInput.value = "";
+                        modal.classList.remove("active");
                     } catch (err) {
-                        const subject = encodeURIComponent("Securo Guardian Invitation");
-                        const body = encodeURIComponent(`Hi, I'm inviting you to be my guardian on Securo so you can monitor my campus safety and receive live SOS alerts.\n\nPlease register or sign in here: ${guardianUrl}`);
-                        window.open(`mailto:${encodeURIComponent(email)}?subject=${subject}&body=${body}`, '_blank');
-                        showStatus("Invite Ready", `Email draft opened to send the registration link to ${email}.`);
+                        showStatus("Request Failed", err.message || `Could not send request to ${email}.`, "error");
                     } finally {
                         sendEmailBtn.disabled = false;
                         sendEmailBtn.innerHTML = prevBtnHtml;
@@ -9673,33 +9780,66 @@
             noParentsChipInit.addEventListener("click", () => openInviteParentModal());
         }
 
-        // Guardian Consent Notification Logic
-        function showGuardianRequestNotification(request) {
-            if (!request?.id || seenGuardianRequestToasts.has(request.id)) return;
+        // (2026-07-13) Actionable guardian request prompt modal; was static banner
+        function showGuardianRequestNotification(request, force = false) {
+            if (!request?.id) return;
+            if (!force && seenGuardianRequestToasts.has(request.id)) return;
             seenGuardianRequestToasts.add(request.id);
 
-            // Also show a temporary overlay if desired, or just use the bell badge
-            if (document.getElementById('guardianNotify')) return;
+            const existing = document.getElementById('guardianNotify');
+            if (existing) existing.remove();
 
             const notify = document.createElement('div');
             notify.className = 'guardian-notify';
             notify.id = 'guardianNotify';
+            notify.style.cursor = 'pointer';
             notify.innerHTML = `
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="width:44px; height:44px; border-radius:50%; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center;">
+                    <div style="width:44px; height:44px; border-radius:50%; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                         <span class="material-symbols-outlined">family_restroom</span>
                     </div>
                     <div style="flex:1;">
-                        <strong style="display:block; font-size:0.95rem;">Guardian Request</strong>
-                        <span style="font-size:0.8rem; color:var(--muted);">${request.guardianName} wants to link to your account. Check your notification bell.</span>
+                        <strong style="display:block; font-size:0.95rem; color:var(--ink);">Parent / Guardian Request</strong>
+                        <span style="font-size:0.8rem; color:var(--muted);">${escapeHtml(request.guardianName || "A parent or guardian")} wants to link to your account.</span>
                     </div>
                 </div>
+                <div style="display:flex; gap:8px; margin-top:10px;">
+                    <button class="notif-action-btn accept" type="button" style="flex:1; padding:8px; border-radius:10px; font-weight:700; font-size:0.84rem; cursor:pointer;" data-request-id="${request.id}" data-request-status="accepted">Accept</button>
+                    <button class="notif-action-btn reject" type="button" style="flex:1; padding:8px; border-radius:10px; font-weight:700; font-size:0.84rem; cursor:pointer;" data-request-id="${request.id}" data-request-status="rejected">Decline</button>
+                </div>
             `;
+            notify.addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-request-id][data-request-status]');
+                if (btn) {
+                    e.stopPropagation();
+                    const reqId = btn.dataset.requestId;
+                    const status = btn.dataset.requestStatus;
+                    const siblingBtn = btn.parentElement ? btn.parentElement.querySelector(`button:not([data-request-status="${status}"])`) : null;
+                    setButtonBusy(btn, true);
+                    if (siblingBtn) siblingBtn.disabled = true;
+                    // (2026-07-13) Remove responded request from local storage; was not cleared
+                    respondToGuardianLink(reqId, status, appState.user?.uid, appState.profile).then(() => {
+                        notify.remove();
+                        appState.pendingGuardianRequests = (appState.pendingGuardianRequests || []).filter((item) => String(item.id) !== String(reqId));
+                        try { localStorage.setItem('securo_student_pending_requests', JSON.stringify(appState.pendingGuardianRequests)); } catch (_) {}
+                        syncNotificationViews();
+                        showStatus(status === 'accepted' ? 'Guardian Linked' : 'Request Declined', status === 'accepted' ? 'Parent is now linked to your account.' : 'Guardian request was declined.');
+                    }).catch(err => {
+                        setButtonBusy(btn, false);
+                        if (siblingBtn) siblingBtn.disabled = false;
+                        showStatus('Error', err.message || 'Could not update request', 'error');
+                    });
+                    return;
+                }
+                openNotifications();
+                notify.remove();
+            });
             document.body.appendChild(notify);
-            setTimeout(() => { if (notify) notify.remove(); }, 5000);
+            setTimeout(() => { if (notify && notify.parentNode) notify.remove(); }, 12000);
         }
 
         if (notifList) {
+            // (2026-07-13) Disable and spin request buttons on click; was instant state
             notifList.addEventListener("click", async (event) => {
                 const actionButton = event.target.closest("[data-request-id][data-request-status]");
                 if (!actionButton) return;
@@ -9707,11 +9847,19 @@
                 const requestId = actionButton.dataset.requestId;
                 const status = actionButton.dataset.requestStatus;
                 const notificationId = actionButton.dataset.notificationId || "";
+                const siblingBtn = actionButton.parentElement ? actionButton.parentElement.querySelector(`button:not([data-request-status="${status}"])`) : null;
                 setButtonBusy(actionButton, true);
+                if (siblingBtn) siblingBtn.disabled = true;
                 try {
                     await window.handleGuardianResponse(requestId, status, notificationId);
-                } finally {
+                } catch (err) {
                     setButtonBusy(actionButton, false);
+                    if (siblingBtn) siblingBtn.disabled = false;
+                } finally {
+                    if (document.body.contains(actionButton)) {
+                        setButtonBusy(actionButton, false);
+                        if (siblingBtn) siblingBtn.disabled = false;
+                    }
                 }
             });
         }
@@ -9719,6 +9867,10 @@
         window.handleGuardianResponse = async (requestId, status, notificationId = "") => {
             try {
                 const request = (appState.pendingGuardianRequests || []).find((item) => String(item.id) === String(requestId));
+                // (2026-07-13) Filter responded request from student cache; was retained
+                appState.pendingGuardianRequests = (appState.pendingGuardianRequests || []).filter((item) => String(item.id) !== String(requestId));
+                try { localStorage.setItem('securo_student_pending_requests', JSON.stringify(appState.pendingGuardianRequests)); } catch (_) {}
+                syncNotificationViews();
                 await respondToGuardianLink(requestId, status, appState.user.uid, {
                     studentId: appState.user.studentId,
                     name: appState.user.name
@@ -9727,7 +9879,17 @@
                     await markAccountNotificationRead(notificationId, {
                         resolvedStatus: status
                     }).catch(() => { });
-                } else if (request?.id) {
+                }
+                // (2026-07-13) Mark resolved status in cached notifications; was memory desync
+                appState.accountNotifications = (appState.accountNotifications || []).map(item => {
+                    if ((notificationId && item.id === notificationId) || (requestId && item.requestId === requestId)) {
+                        return { ...item, isRead: true, resolvedStatus: status };
+                    }
+                    return item;
+                });
+                try { localStorage.setItem('securo_student_notifications', JSON.stringify(appState.accountNotifications)); } catch (_) {}
+                syncNotificationViews();
+                if (!notificationId && request?.id) {
                     await sendAccountNotification({
                         userId: appState.user.uid,
                         type: "guardian_request",
@@ -12290,8 +12452,8 @@
                                 </div>
                             </div>
 
-                            <!-- Course (left) and Year · Section (right) side by side -->
-                            <div class="fs-form-row-grid" style="margin-bottom: 20px;">
+                            <!-- (2026-07-13) Add id to course row for staff hiding; was bare div -->
+                            <div class="fs-form-row-grid" id="fsCourseSectionRow" style="margin-bottom: 20px;">
                                 <!-- Course Dropdown -->
                                 <div class="form-group" style="margin-bottom: 0;">
                                     <label class="form-label"
