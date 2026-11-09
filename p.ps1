@@ -1,8 +1,10 @@
-# (2026-07-13) Auto sync pull and push script; was missing ps1 script
+# (2026-07-13) Auto sync with no-edit pull and merge cleanup; was plain pull
+if (Test-Path ".git\MERGE_HEAD") { git merge --abort }
+npm run build
 Write-Host "[1/4] Staging local changes..." -ForegroundColor Cyan
 git add -A
-git diff-index --quiet HEAD --
-if ($LASTEXITCODE -ne 0) {
+$status = git status --porcelain
+if ($status) {
     Write-Host "[2/4] Committing local changes..." -ForegroundColor Cyan
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     git commit -m "Update Securo $timestamp"
@@ -10,7 +12,7 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "[2/4] No local changes to commit." -ForegroundColor Yellow
 }
 Write-Host "[3/4] Pulling latest changes from origin main..." -ForegroundColor Cyan
-git pull --no-rebase origin main
+git pull --no-rebase --no-edit origin main
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Pull encountered conflicts. Please resolve before pushing." -ForegroundColor Red
     exit 1
