@@ -5177,15 +5177,14 @@
                     wheelPxPerZoomLevel: 140
                 }).setView(ADMIN_CAMPUS_CENTER, 17);
 
-                // (2026-07-13) Add Google Satellite & view switcher; was OSM tile layer only
+                // (2026-07-13) Use OSM tiles; was broken CartoDB tiles requiring API key
                 const adminSosBaseMaps = {
-                    "Google Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                    "Google Satellite": L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                    "Google Streets": L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                    "Google Terrain": L.tileLayer('https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom: 20 }),
-                    "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 })
+                    "Streets": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }),
+                    "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }),
+                    "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
+                    "Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 })
                 };
-                adminSosBaseMaps["Google Hybrid"].addTo(adminSosLeafletMap);
+                adminSosBaseMaps["Streets"].addTo(adminSosLeafletMap);
                 L.control.layers(adminSosBaseMaps, null, { position: 'topright' }).addTo(adminSosLeafletMap);
 
                 currentAdminGeofence = getActiveAdminGeofencePolygon();
