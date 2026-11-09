@@ -8363,7 +8363,7 @@
             try { localStorage.setItem('securo_student_notifications', JSON.stringify(appState.accountNotifications)); } catch (_) {}
             syncNotificationViews();
 
-            // (2026-07-13) Prompt student on new guardian request notification; was silent
+            // (2026-07-13) Show accept/decline notifs on snapshot; was request types only
             notifications.forEach(item => {
                 if (!item.isRead && (item.type === "guardian_request" || item.type === "student_guardian_request")) {
                     showGuardianRequestNotification({
@@ -8371,6 +8371,15 @@
                         guardianName: item.sourceName || "A parent / guardian",
                         message: item.message || "A parent or guardian wants to link to your account."
                     });
+                } else if (!item.isRead && (item.type === "guardian_request_accepted" || item.type === "guardian_request_declined")) {
+                    const evtKey = 'notif_seen_' + item.id;
+                    if (!window._seenStudentNotifEventIds) window._seenStudentNotifEventIds = new Set();
+                    if (!window._seenStudentNotifEventIds.has(evtKey)) {
+                        window._seenStudentNotifEventIds.add(evtKey);
+                        showStatus(item.title || "Guardian Update", item.message || "");
+                        const existingPopup = document.getElementById('guardianNotify');
+                        if (existingPopup) existingPopup.remove();
+                    }
                 }
             });
         }
@@ -9507,11 +9516,26 @@
                             const targetSid = String(payload.studentId || '').trim();
                             const targetUid = payload.studentUid || '';
                             if ((targetUid && targetUid === curUid) || (targetSid && targetSid === curSid)) {
-                                showGuardianRequestNotification({
+                                // (2026-07-13) Append pending request to state & cache; was toast only
+                                const reqObj = {
                                     id: data.linkId || payload.id,
+                                    studentId: payload.studentId || curSid,
+                                    studentUid: payload.studentUid || curUid,
                                     guardianName: payload.guardianName || "A parent or guardian",
-                                    message: `${payload.guardianName || "A parent or guardian"} wants to link to your account.`
-                                }, true);
+                                    guardianId: payload.guardianId || payload.guardianUid,
+                                    guardianEmail: payload.guardianEmail,
+                                    message: `${payload.guardianName || "A parent or guardian"} wants to link to your account.`,
+                                    status: 'pending',
+                                    createdAt: new Date().toISOString()
+                                };
+                                const existingIdx = appState.pendingGuardianRequests.findIndex(r => r.id === reqObj.id);
+                                if (existingIdx >= 0) {
+                                    appState.pendingGuardianRequests[existingIdx] = reqObj;
+                                } else {
+                                    appState.pendingGuardianRequests.unshift(reqObj);
+                                }
+                                try { localStorage.setItem('securo_student_pending_requests', JSON.stringify(appState.pendingGuardianRequests)); } catch (_) {}
+                                showGuardianRequestNotification(reqObj, true);
                                 syncNotificationViews();
                             }
                         } else if (data.type === 'guardian_link_responded') {

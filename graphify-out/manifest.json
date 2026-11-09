@@ -66,10 +66,10 @@
     "semantic_hash": "eda550f54a407296de63dca5ca8251bc"
   },
   "auth.js": {
-    "mtime": 1791908552.2387102,
-    "seen": 1792182506.73281,
-    "ast_hash": "2a8035c44cc9598a438a11bb84b20f63",
-    "semantic_hash": "2a8035c44cc9598a438a11bb84b20f63"
+    "mtime": 1794164498.1453881,
+    "seen": 1794198147.230644,
+    "ast_hash": "bacfb188c5ec8490a00725e3c3a98e2b",
+    "semantic_hash": "bacfb188c5ec8490a00725e3c3a98e2b"
   },
   "capacitor.config.json": {
     "mtime": 1791593766.740588,
@@ -78,10 +78,10 @@
     "semantic_hash": "26614e48811fd22c4b56706fb0c1f799"
   },
   "db.js": {
-    "mtime": 1791910282.847341,
-    "seen": 1792182506.7328126,
-    "ast_hash": "547cb7932528456ed8131a5b1470f975",
-    "semantic_hash": "547cb7932528456ed8131a5b1470f975"
+    "mtime": 1794197357.3867018,
+    "seen": 1794198147.2307723,
+    "ast_hash": "24c75ed2cb509c28e78ce22385d1e0f9",
+    "semantic_hash": "24c75ed2cb509c28e78ce22385d1e0f9"
   },
   "emergency-contacts.js": {
     "mtime": 1791298957.5144398,
@@ -126,10 +126,10 @@
     "semantic_hash": "130faa5f2f72df1c0ad3084687fd14f6"
   },
   "preloader.js": {
-    "mtime": 1791525422.7060459,
-    "seen": 1792182506.732823,
-    "ast_hash": "9a72917316d09c0598ee4cdc23d653b5",
-    "semantic_hash": "9a72917316d09c0598ee4cdc23d653b5"
+    "mtime": 1792383956.2394173,
+    "seen": 1794198147.2315607,
+    "ast_hash": "f67f38d95be5ca16ea3cb189a342c998",
+    "semantic_hash": "f67f38d95be5ca16ea3cb189a342c998"
   },
   "router.js": {
     "mtime": 1791525422.7090452,
@@ -162,16 +162,16 @@
     "semantic_hash": "761ffc7ffd35774d9c00f0b49f3b5569"
   },
   "www/auth.js": {
-    "mtime": 1791908552.2387102,
-    "seen": 1792182506.7328317,
-    "ast_hash": "2a8035c44cc9598a438a11bb84b20f63",
-    "semantic_hash": "2a8035c44cc9598a438a11bb84b20f63"
+    "mtime": 1794163885.7419944,
+    "seen": 1794198147.232032,
+    "ast_hash": "bacfb188c5ec8490a00725e3c3a98e2b",
+    "semantic_hash": "bacfb188c5ec8490a00725e3c3a98e2b"
   },
   "www/db.js": {
-    "mtime": 1791910282.847341,
-    "seen": 1792182506.732833,
-    "ast_hash": "547cb7932528456ed8131a5b1470f975",
-    "semantic_hash": "547cb7932528456ed8131a5b1470f975"
+    "mtime": 1794197357.3867018,
+    "seen": 1794198147.2320333,
+    "ast_hash": "24c75ed2cb509c28e78ce22385d1e0f9",
+    "semantic_hash": "24c75ed2cb509c28e78ce22385d1e0f9"
   },
   "www/emergency-contacts.js": {
     "mtime": 1791298957.5144398,
@@ -192,10 +192,10 @@
     "semantic_hash": "e5e80abe4e38787933811225d7ecb333"
   },
   "www/preloader.js": {
-    "mtime": 1791525422.7060459,
-    "seen": 1792182506.7328384,
-    "ast_hash": "9a72917316d09c0598ee4cdc23d653b5",
-    "semantic_hash": "9a72917316d09c0598ee4cdc23d653b5"
+    "mtime": 1794160343.3552065,
+    "seen": 1794198147.2323625,
+    "ast_hash": "f67f38d95be5ca16ea3cb189a342c998",
+    "semantic_hash": "f67f38d95be5ca16ea3cb189a342c998"
   },
   "www/router.js": {
     "mtime": 1791525422.7090452,

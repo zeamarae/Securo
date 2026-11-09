@@ -2438,7 +2438,7 @@
                                 <div style="font-size:0.75rem; color:var(--muted); line-height:1.35; margin-top:1px;">${escapeHtml(childName)} invited you as parent/guardian.</div>
                                 <div style="display:flex; gap:6px; margin-top:8px;">
                                     <button type="button" class="btn btn-primary guardian-dropdown-accept-btn" data-link-id="${link.id}" data-student-uid="${link.studentUid || ''}" data-student-name="${escapeHtml(childName)}" style="flex:1; padding:6px 10px; font-size:0.75rem; border-radius:8px; font-weight:700; cursor:pointer;">Accept</button>
-                                    <button type="button" class="btn guardian-dropdown-decline-btn" data-link-id="${link.id}" style="flex:1; padding:6px 10px; font-size:0.75rem; border-radius:8px; border:1px solid #e2e8f0; font-weight:600; cursor:pointer;">Decline</button>
+                                    <button type="button" class="btn guardian-dropdown-decline-btn" data-link-id="${link.id}" data-student-uid="${link.studentUid || ''}" data-student-name="${escapeHtml(childName)}" style="flex:1; padding:6px 10px; font-size:0.75rem; border-radius:8px; border:1px solid #e2e8f0; font-weight:600; cursor:pointer;">Decline</button>
                                 </div>
                             </div>
                         </div>
@@ -2453,7 +2453,7 @@
                                 <strong style="font-size:0.84rem; color:var(--ink); font-weight:800; display:block;">Parent Request Pending</strong>
                                 <div style="font-size:0.75rem; color:var(--muted); line-height:1.35; margin-top:1px;">Waiting for ${escapeHtml(childName)}${link.studentId ? ` (ID: ${link.studentId})` : ''} to accept.</div>
                                 <div style="display:flex; gap:6px; margin-top:8px;">
-                                    <button type="button" class="btn guardian-dropdown-cancel-btn" data-link-id="${link.id}" style="width:100%; padding:6px 10px; font-size:0.75rem; border-radius:8px; border:1px solid #e2e8f0; font-weight:600; cursor:pointer;">Cancel Request</button>
+                                    <button type="button" class="btn guardian-dropdown-cancel-btn" data-link-id="${link.id}" data-student-id="${link.studentId || ''}" data-student-uid="${link.studentUid || ''}" style="width:100%; padding:6px 10px; font-size:0.75rem; border-radius:8px; border:1px solid #e2e8f0; font-weight:600; cursor:pointer;">Cancel Request</button>
                                 </div>
                             </div>
                         </div>
@@ -2461,7 +2461,7 @@
                 }
             });
 
-            const notifsHtml = notifications.slice(0, 5).map(item => `
+            const notifsHtml = notifications.slice(0, 25).map(item => `
                 <div class="location-alert-card active" style="margin:0; background:${item.isRead ? '#f8fafc' : '#fff1f2'}; border:1px solid ${item.isRead ? '#e2e8f0' : '#fda4af'};">
                     <div class="location-alert-icon" style="background:${item.isRead ? '#f1f5f9' : '#fee2e2'}; color:${item.isRead ? '#64748b' : '#e11d48'};">
                         <span class="material-symbols-outlined">${getGuardianNotificationIcon(item.type)}</span>
@@ -2504,11 +2504,14 @@
                 btn.onclick = async (e) => {
                     e.stopPropagation();
                     const linkId = btn.dataset.linkId;
+                    const studentUid = btn.dataset.studentUid;
+                    const studentName = btn.dataset.studentName;
                     const accBtn = btn.parentElement ? btn.parentElement.querySelector('.guardian-dropdown-accept-btn') : null;
                     setButtonBusy(btn, true);
                     if (accBtn) accBtn.disabled = true;
                     try {
-                        await respondToGuardianLink(linkId, 'rejected');
+                        // (2026-07-13) Pass student profile on decline to notify; was ID-only reject
+                        await respondToGuardianLink(linkId, 'rejected', studentUid, { name: studentName });
                         window._guardianPendingLinks = (window._guardianPendingLinks || []).filter(l => l.id !== linkId);
                         localStorage.setItem('securo_guardian_pending_links', JSON.stringify(window._guardianPendingLinks));
                         renderGuardianAllDropdownNotifications();
@@ -2525,11 +2528,19 @@
                 btn.onclick = async (e) => {
                     e.stopPropagation();
                     const linkId = btn.dataset.linkId;
+                    const studentId = btn.dataset.studentId;
+                    const studentUid = btn.dataset.studentUid;
                     setButtonBusy(btn, true);
                     try {
-                        await removeGuardianLink(linkId);
-                        window._guardianPendingLinks = (window._guardianPendingLinks || []).filter(l => l.id !== linkId);
-                        localStorage.setItem('securo_guardian_pending_links', JSON.stringify(window._guardianPendingLinks));
+                        // (2026-07-13) Pass student profile to remove link & clear cache; was id only
+                        await removeGuardianLink(linkId, {
+                            guardianId: auth.currentUser?.uid,
+                            guardianEmail: auth.currentUser?.email,
+                            studentId: studentId,
+                            studentUid: studentUid
+                        });
+                        window._guardianPendingLinks = (window._guardianPendingLinks || []).filter(l => l.id !== linkId && (!studentId || String(l.studentId) !== String(studentId)) && (!studentUid || l.studentUid !== studentUid));
+                        try { localStorage.setItem('securo_guardian_pending_links', JSON.stringify(window._guardianPendingLinks)); } catch (_) {}
                         renderGuardianAllDropdownNotifications();
                         showToast("Request cancelled");
                         if (auth.currentUser) initDashboard(auth.currentUser);
@@ -2612,7 +2623,8 @@
                     _notifiedAccountEventIds.add(item.id);
                     triggerBrowserNotification(item.title || "Campus Update", item.message || "");
                     showGuardianRealtimePrompt(item.title || "New Notification", item.message || "");
-                    if (item.type === "student_guardian_request" || item.type === "guardian_request_accepted") {
+                    // (2026-07-13) Refresh dashboard on declined notification; was accepted only
+                    if (item.type === "student_guardian_request" || item.type === "guardian_request_accepted" || item.type === "guardian_request_declined") {
                         if (auth.currentUser) initDashboard(auth.currentUser);
                     }
                 }
@@ -2650,8 +2662,9 @@
                 return;
             }
 
+            // (2026-07-13) Hide child card when unlinked or pending; was display flex
             const studentStatusCard = document.querySelector('.student-status-card');
-            if (studentStatusCard) studentStatusCard.style.display = 'flex';
+            if (studentStatusCard && !activeLink) studentStatusCard.style.display = 'none';
 
             let childDisplayName = link.studentName || '';
             if (typeof resolveChildDisplayName === 'function') {
@@ -2734,7 +2747,8 @@
                                 setButtonBusy(dec, true);
                                 if (acc) acc.disabled = true;
                                 try {
-                                    await respondToGuardianLink(link.id, 'rejected');
+                                    // (2026-07-13) Pass student profile on reject to notify student; was ID only
+                                    await respondToGuardianLink(link.id, 'rejected', link.studentUid, { name: childDisplayName });
                                     window._guardianPendingLinks = (window._guardianPendingLinks || []).filter(l => l.id !== link.id);
                                     try { localStorage.setItem('securo_guardian_pending_links', JSON.stringify(window._guardianPendingLinks)); } catch (_) {}
                                     renderGuardianAllDropdownNotifications();
@@ -2934,14 +2948,23 @@
                 notificationUnsub = subscribeToAccountNotifications(user.uid, renderGuardianNotificationHistory, user.email);
 
                 if (guardianLinksLiveUnsub) guardianLinksLiveUnsub();
-                // (2026-07-13) Deduplicate live accepted links; was raw array with dupes
+                let _isInitialGuardianLinkSnapshot = true;
+                // (2026-07-13) Deduplicate live accepted links by child; was UID-only key
                 guardianLinksLiveUnsub = subscribeToGuardianLinks(user.uid, (allLiveLinks) => {
-                    const seenLive = new Set();
+                    const seenUids = new Set();
+                    const seenIds = new Set();
+                    const seenNames = new Set();
                     const accepted = (allLiveLinks || []).filter(l => {
                         if (l.status !== 'accepted') return false;
-                        const k = (l.studentUid || l.studentId || l.id || '').trim();
-                        if (k && seenLive.has(k)) return false;
-                        if (k) seenLive.add(k);
+                        const uid = (l.studentUid || '').trim();
+                        const sid = (l.studentId ? String(l.studentId) : '').trim();
+                        const name = (l.studentName || '').trim().toLowerCase();
+                        if (uid && seenUids.has(uid)) return false;
+                        if (sid && seenIds.has(sid)) return false;
+                        if (name && !name.startsWith('student') && name !== 'child' && seenNames.has(name)) return false;
+                        if (uid) seenUids.add(uid);
+                        if (sid) seenIds.add(sid);
+                        if (name && !name.startsWith('student') && name !== 'child') seenNames.add(name);
                         return true;
                     });
                     const pending = (allLiveLinks || []).filter(l => l.status === 'pending');
@@ -2950,23 +2973,52 @@
                     try { localStorage.setItem('securo_guardian_pending_links', JSON.stringify(pending)); } catch (_) {}
                     renderGuardianAllDropdownNotifications();
 
+                    // (2026-07-13) Hide child status & silence stale toast; was stuck card
                     allLiveLinks.forEach(l => {
-                        if (!_notifiedAccountEventIds.has(l.id)) {
-                            _notifiedAccountEventIds.add(l.id);
-                            if (l.status === 'accepted') {
-                                showGuardianRealtimePrompt("Child Connected", `${l.studentName || "Your child"} has linked to your guardian account.`);
+                        if (l.status === 'accepted') {
+                            if (!_notifiedAccountEventIds.has(l.id)) {
+                                _notifiedAccountEventIds.add(l.id);
+                                if (!_isInitialGuardianLinkSnapshot) {
+                                    showGuardianRealtimePrompt("Child Connected", `${l.studentName || "Your child"} has linked to your guardian account.`);
+                                }
+                            }
+                        } else if (l.status === 'rejected' || l.status === 'declined') {
+                            const decKey = 'declined_' + l.id;
+                            if (!_notifiedAccountEventIds.has(decKey)) {
+                                _notifiedAccountEventIds.add(decKey);
+                                showGuardianRealtimePrompt("Child Link Declined", `${l.studentName || "Your child"} declined your link request.`);
+                                showToast("Link request declined by child.", "error");
                             }
                         }
                     });
+                    _isInitialGuardianLinkSnapshot = false;
                     renderStudentSelector(accepted);
                     if (accepted.length > 0) {
                         if (studentSelectorBar) studentSelectorBar.style.display = 'flex';
                         setPendingGuardianState(null);
                         selectStudent(accepted[0]);
                     } else if (pending.length > 0) {
+                        // (2026-07-13) Hide child card & reset link when pending; was retained
+                        activeLink = null;
+                        if (locationUnsub) { locationUnsub(); locationUnsub = null; }
+                        if (attendanceUnsub) { attendanceUnsub(); attendanceUnsub = null; }
+                        if (sosUnsub) { sosUnsub(); sosUnsub = null; }
+                        clearStudentMarker();
+                        const studentStatusCard = document.querySelector('.student-status-card');
+                        if (studentStatusCard) studentStatusCard.style.display = 'none';
                         setPendingGuardianState(pending[0]);
                     } else {
+                        // (2026-07-13) Clear active link & hide child card if empty; was visible
+                        activeLink = null;
+                        if (locationUnsub) { locationUnsub(); locationUnsub = null; }
+                        if (attendanceUnsub) { attendanceUnsub(); attendanceUnsub = null; }
+                        if (sosUnsub) { sosUnsub(); sosUnsub = null; }
+                        clearStudentMarker();
                         setPendingGuardianState(null);
+                        const studentStatusCard = document.querySelector('.student-status-card');
+                        if (studentStatusCard) studentStatusCard.style.display = 'none';
+                        const addBtn = document.getElementById('addStudentBtn');
+                        if (addBtn) addBtn.style.display = 'flex';
                     }
                     updateGuardianNotifBadge();
                 }, user.email);
@@ -3011,6 +3063,14 @@
                     updateGuardianTrackingChip();
                     setupChildStatusRotation();
                 } else {
+                    // (2026-07-13) Reset active child & hide child card when unlinked; was retained
+                    activeLink = null;
+                    if (locationUnsub) { locationUnsub(); locationUnsub = null; }
+                    if (attendanceUnsub) { attendanceUnsub(); attendanceUnsub = null; }
+                    if (sosUnsub) { sosUnsub(); sosUnsub = null; }
+                    clearStudentMarker();
+                    const studentStatusCard = document.querySelector('.student-status-card');
+                    if (studentStatusCard) studentStatusCard.style.display = 'none';
                     if (studentSelectorBar) studentSelectorBar.style.display = 'flex';
                     const allLinks = await getAllLinksForGuardian(user.uid, user.email);
                     console.log("All Links (inc pending):", allLinks.length);
@@ -3019,28 +3079,22 @@
                     const banner = document.getElementById('guardianTrackingStatusBanner');
                     if (banner) banner.style.display = 'none';
 
-                    if (allLinks.length === 0) {
-                        // (2026-07-13) Fallback to cached pending links offline; was null clearing
-                        const cached = window._guardianPendingLinks || [];
-                        if (cached.length > 0) {
-                            setPendingGuardianState(cached[0]);
-                        } else {
-                            setPendingGuardianState(null);
-                            const studentStatusCard = document.querySelector('.student-status-card');
-                            if (studentStatusCard) studentStatusCard.style.display = 'none';
-                            document.getElementById('addStudentBtn').style.display = 'flex';
-                        }
-                    } else {
+                    // (2026-07-13) Filter strictly pending links; was allLinks[0] fallback
+                    const pendingLinks = (allLinks || []).filter((link) => link.status === 'pending');
+                    if (pendingLinks.length > 0) {
                         document.getElementById('addStudentBtn').style.display = 'none';
                         showToast("Waiting for child approval...");
-                        const pendingLink = allLinks.find((link) => link.status === 'pending') || allLinks[0];
-                        setPendingGuardianState(pendingLink);
+                        setPendingGuardianState(pendingLinks[0]);
                         document.getElementById('vaultEmpty').style.display = 'block';
                         document.getElementById('vaultEmpty').querySelector('h3').textContent = 'Vault unlocks after approval';
                         document.getElementById('vaultEmpty').querySelector('p').textContent = 'Your child needs to accept your invitation before shared vault media appears here.';
                         document.getElementById('alertsEmpty').style.display = 'block';
                         document.getElementById('alertsEmpty').querySelector('h3').textContent = 'Safety feed pending approval';
                         document.getElementById('alertsEmpty').querySelector('p').textContent = 'Emergency alerts and attendance updates will appear after your child approves your request.';
+                    } else {
+                        setPendingGuardianState(null);
+                        if (studentStatusCard) studentStatusCard.style.display = 'none';
+                        document.getElementById('addStudentBtn').style.display = 'flex';
                     }
                 }
             } catch (err) {
@@ -3223,9 +3277,11 @@
                 if (pendingGuardianLink?.id && pendingGuardianLink.status === 'pending' && pendingGuardianLink.studentId !== sid) {
                     try { await removeGuardianLink(pendingGuardianLink.id); } catch (_) {}
                 }
+                // (2026-07-13) Explicitly set requestedBy to guardian; was unassigned
                 const linkData = {
                     guardianId: auth.currentUser.uid,
                     studentId: sid,
+                    requestedBy: 'guardian',
                     guardianName: guardianProfile?.name || auth.currentUser.displayName || auth.currentUser.email,
                     guardianEmail: auth.currentUser.email
                 };
@@ -3242,13 +3298,25 @@
         };
 
         document.getElementById('cancelPendingRequestBtn')?.addEventListener('click', async () => {
-            if (!pendingGuardianLink?.id) return;
+            if (!pendingGuardianLink?.id && !pendingGuardianLink?.studentId) return;
 
             const button = document.getElementById('cancelPendingRequestBtn');
             try {
                 setButtonBusy(button, true);
-                await removeGuardianLink(pendingGuardianLink.id);
+                // (2026-07-13) Pass student profile to remove link & clear cache; was id only
+                await removeGuardianLink(pendingGuardianLink.id, {
+                    guardianId: auth.currentUser?.uid,
+                    guardianEmail: auth.currentUser?.email,
+                    studentId: pendingGuardianLink.studentId,
+                    studentUid: pendingGuardianLink.studentUid
+                });
+                const cancelledId = pendingGuardianLink.id;
+                const cancelledSid = pendingGuardianLink.studentId;
+                const cancelledUid = pendingGuardianLink.studentUid;
                 pendingGuardianLink = null;
+                window._guardianPendingLinks = (window._guardianPendingLinks || []).filter(l => l.id !== cancelledId && (!cancelledSid || String(l.studentId) !== String(cancelledSid)) && (!cancelledUid || l.studentUid !== cancelledUid));
+                try { localStorage.setItem('securo_guardian_pending_links', JSON.stringify(window._guardianPendingLinks)); } catch (_) {}
+                renderGuardianAllDropdownNotifications();
                 document.getElementById('studentIdInput').value = '';
                 showToast("Pending request cancelled.");
                 document.getElementById('addStudentBtn').style.display = 'flex';
@@ -3395,20 +3463,49 @@
             }
         });
 
-        // (2026-07-13) Deduplicate child selector chips; was multiple per student
+        let _renderStudentSelectorToken = 0;
+        // (2026-07-13) Deduplicate student selector chips by child name; was duplicates
         async function renderStudentSelector(links) {
+            const currentToken = ++_renderStudentSelectorToken;
             const bar = document.getElementById('studentSelector');
-            bar.innerHTML = '';
-            const seenChildKeys = new Set();
-            const uniqueLinks = (links || []).filter(l => {
-                const key = (l.studentUid || l.studentId || l.id || '').trim();
-                if (!key) return true;
-                if (seenChildKeys.has(key)) return false;
-                seenChildKeys.add(key);
-                return true;
-            });
-            for (const link of uniqueLinks) {
+            if (!bar) return;
+
+            const seenUids = new Set();
+            const seenIds = new Set();
+            const seenRawNames = new Set();
+            const preliminary = [];
+
+            for (const l of (links || [])) {
+                const uid = (l.studentUid || '').trim();
+                const sid = (l.studentId ? String(l.studentId) : '').trim();
+                const name = (l.studentName || '').trim().toLowerCase();
+                if (uid && seenUids.has(uid)) continue;
+                if (sid && seenIds.has(sid)) continue;
+                if (name && !name.startsWith('student') && name !== 'child' && seenRawNames.has(name)) continue;
+                if (uid) seenUids.add(uid);
+                if (sid) seenIds.add(sid);
+                if (name && !name.startsWith('student') && name !== 'child') seenRawNames.add(name);
+                preliminary.push(l);
+            }
+
+            const resolvedList = [];
+            const seenResolvedNames = new Set();
+            for (const link of preliminary) {
                 const resolvedName = await resolveChildDisplayName(link);
+                if (currentToken !== _renderStudentSelectorToken) return;
+                const norm = (resolvedName || '').trim().toLowerCase();
+                if (norm && seenResolvedNames.has(norm)) continue;
+                if (norm) seenResolvedNames.add(norm);
+                resolvedList.push({ link, resolvedName });
+            }
+
+            if (currentToken !== _renderStudentSelectorToken) return;
+            // (2026-07-13) Guard against duplicate student chips in selector bar; was duplicate append
+            bar.innerHTML = '';
+            for (const { link, resolvedName } of resolvedList) {
+                const normName = (resolvedName || '').trim().toLowerCase();
+                const existing = [...bar.querySelectorAll('.selector-chip')].some(c => (c.textContent || '').trim().toLowerCase() === normName);
+                if (existing) continue;
                 const chip = document.createElement('div');
                 chip.className = 'selector-chip' + (activeLink?.id === link.id ? ' active' : '');
                 chip.textContent = resolvedName;
@@ -3797,9 +3894,9 @@
             });
         }
 
-        // (2026-07-13) Disallow tracking if student logged out or offline; was stale
+        // (2026-07-13) Disallow tracking if unlinked or offline; was active map only
         function updateStudentMap(loc) {
-            if (!map) return;
+            if (!map || !activeLink) return;
             const locTime = loc?.updatedAt?.toDate ? loc.updatedAt.toDate().getTime() : (loc?.timestamp ? new Date(loc.timestamp).getTime() : 0);
             const isInactiveSession = !loc || loc.isOnline === false || loc.sharingEnabled === false || loc.sharingState === 'logged_out' || (locTime > 0 && Date.now() - locTime > 150000);
             if (isInactiveSession) {
