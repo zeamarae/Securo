@@ -1,19 +1,28 @@
-/* (2026-07-13) Dramatic preloader styles with white bg; was no preloader */
+/* (2026-07-13) Fix preloader overlay dismiss styles; was display flex !important */
 #securo-preloader-overlay {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: 999999 !important;
-    background-color: #ffffff !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    overflow: hidden !important;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 999999;
+    background-color: #ffffff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
     contain: layout style paint;
     isolation: isolate;
     will-change: opacity, transform;
     pointer-events: auto;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#securo-preloader-overlay.hidden {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    z-index: -99999 !important;
 }
 
 /* (2026-07-13) Pure white preloader bg without glow; was radial-gradient */

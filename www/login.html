@@ -675,7 +675,8 @@
                 <label class="form-label" id="identifierLabel">Student ID Number</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon" id="identifierIcon">badge</span>
-                    <input type="text" id="identifier" placeholder="1234567" maxlength="7" pattern="\d*" inputmode="numeric" required>
+                    <!-- (2026-07-13) Add descriptive placeholder for ID; was 1234567 -->
+                    <input type="text" id="identifier" placeholder="Enter 7-digit ID Number" maxlength="7" pattern="\d*" inputmode="numeric" required>
                 </div>
             </div>
 
@@ -684,8 +685,18 @@
                 <label class="form-label" id="signupIdLabel">Student ID Number</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">badge</span>
-                    <!-- (2026-07-13) Blank register inputs without defaults; was placeholder dots -->
-                    <input type="text" id="studentIdSignup" placeholder="" maxlength="7" pattern="\d*" inputmode="numeric" autocomplete="off">
+                    <!-- (2026-07-13) Add placeholder for signup ID; was empty -->
+                    <input type="text" id="studentIdSignup" placeholder="Enter 7-digit ID Number" maxlength="7" pattern="\d*" inputmode="numeric" autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Student Email (Signup Only) -->
+            <div class="form-group signup-only">
+                <label class="form-label">Email Address</label>
+                <div class="input-wrapper">
+                    <span class="material-symbols-outlined input-icon">mail</span>
+                    <!-- (2026-07-13) Add student email field for recovery; was absent -->
+                    <input type="email" id="studentEmailSignup" placeholder="Enter your email for password reset" autocomplete="email">
                 </div>
             </div>
 
@@ -694,7 +705,8 @@
                 <label class="form-label">Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">lock</span>
-                    <input type="password" id="password" placeholder="" autocomplete="new-password" required>
+                    <!-- (2026-07-13) Add placeholder for password; was empty -->
+                    <input type="password" id="password" placeholder="Enter password" autocomplete="new-password" required>
                     <button type="button" id="togglePassword" class="btn" style="background:none; border:none; color:var(--muted); padding:0;">
                         <span class="material-symbols-outlined">visibility</span>
                     </button>
@@ -705,8 +717,8 @@
                 <label class="form-label">Confirm Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">verified_user</span>
-                    <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
-                    <input type="password" id="confirmPasswordSignup" placeholder="" autocomplete="new-password">
+                    <!-- (2026-07-13) Add placeholder for confirm password; was empty -->
+                    <input type="password" id="confirmPasswordSignup" placeholder="Confirm password" autocomplete="new-password">
                     <button type="button" id="toggleConfirmPassword" class="btn" style="background:none; border:none; color:var(--muted); padding:0; cursor:pointer;">
                         <span class="material-symbols-outlined">visibility</span>
                     </button>
@@ -918,6 +930,71 @@
         </div>
     </div>
 
+    <!-- (2026-07-13) Student email password reset modal; was guardian verify -->
+    <div id="studentResetModal" class="onboarding-modal-backdrop">
+        <div class="onboarding-modal-card" style="max-width: 440px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 40px; height: 40px; border-radius: 12px; background: rgba(90, 31, 224, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                        <span class="material-symbols-outlined" style="font-size: 24px;">lock_reset</span>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: var(--ink);">Reset Password</h3>
+                        <p style="margin: 2px 0 0; font-size: 0.78rem; color: var(--muted);">Direct Email Password Recovery</p>
+                    </div>
+                </div>
+                <button type="button" id="closeStudentResetModalBtn" style="background: none; border: none; color: var(--muted); cursor: pointer; padding: 4px; border-radius: 8px;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">close</span>
+                </button>
+            </div>
+
+            <!-- Form View: Enter Student ID -->
+            <div id="studentResetFormView">
+                <p style="margin: 0 0 14px; font-size: 0.82rem; color: var(--muted); line-height: 1.45;">
+                    Enter your 7-Digit Student ID number. We will send a secure password reset link to the email linked to your account upon registration.
+                </p>
+
+                <div class="input-group" style="margin-bottom: 14px;">
+                    <label style="font-size: 0.8rem; font-weight: 700; color: var(--ink); margin-bottom: 6px; display: block;">7-Digit Student ID</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined">badge</span>
+                        <input type="text" id="studentResetIdInput" placeholder="e.g. 1234567" maxlength="7" pattern="\d*" inputmode="numeric">
+                    </div>
+                </div>
+
+                <div id="studentResetError" class="error-msg" style="margin-bottom: 12px;"></div>
+
+                <button type="button" id="studentResetSendBtn" class="btn-action" style="margin-bottom: 10px;">
+                    <span>Send Password Reset Link</span>
+                    <span class="material-symbols-outlined">send</span>
+                </button>
+
+                <button type="button" id="studentRequestAdminResetBtn" style="width: 100%; background: none; border: 1px solid rgba(90, 31, 224, 0.2); border-radius: 12px; padding: 10px; font-size: 0.78rem; font-weight: 600; color: var(--primary); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; font-family: inherit;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">contact_support</span>
+                    <span>Can't access your email? Request Admin Reset</span>
+                </button>
+            </div>
+
+            <!-- Success View: Link Dispatched -->
+            <div id="studentResetSuccessView" style="display: none; text-align: center;">
+                <div style="width: 52px; height: 52px; border-radius: 50%; background: #f0fdf4; color: #16a34a; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                    <span class="material-symbols-outlined" style="font-size: 30px;">mark_email_read</span>
+                </div>
+                <h4 style="margin: 0 0 6px; font-size: 1rem; font-weight: 700; color: var(--ink);">Reset Link Dispatched!</h4>
+                <p style="margin: 0 0 10px; font-size: 0.82rem; color: var(--muted); line-height: 1.45;">
+                    A password reset email has been sent to:
+                </p>
+                <div style="background: #f8f7fc; border: 1px solid rgba(90, 31, 224, 0.12); border-radius: 10px; padding: 8px 12px; margin-bottom: 14px; font-size: 0.88rem; font-weight: 700; color: var(--primary); word-break: break-all;" id="studentResetTargetEmail"></div>
+                <p style="margin: 0 0 16px; font-size: 0.76rem; color: var(--muted); line-height: 1.4;">
+                    Please check your inbox (and Spam/Junk folder). Click the link inside to set your new password, then return here to log in.
+                </p>
+                <button type="button" id="studentResetDoneBtn" class="btn-action">
+                    <span>Back to Sign In</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- (2026-07-13) Add terms modal with I Agree button; was inline checkbox -->
     <div id="termsModal" class="onboarding-modal-backdrop">
         <div class="onboarding-modal-card" style="max-width: 460px; max-height: 90vh; display: flex; flex-direction: column;">
@@ -1053,7 +1130,8 @@
     <script type="module">
         import { auth } from './firebase-config.js';
         import { login, signUp, checkAuth, forgotPassword, roleIdToEmail, getPreferredAuthRole, getFriendlyAuthMessage } from './auth.js';
-        import { saveUserProfile, saveUserDirectoryMarker, getUserProfile, isStudentIdTaken, getEmailByStudentId } from './db.js';
+        // (2026-07-13) Import student password reset helpers from db; was basic
+        import { saveUserProfile, saveUserDirectoryMarker, getUserProfile, isStudentIdTaken, getEmailByStudentId, saveAdminUserPassword, findStudentUidByStudentId, getLinksForStudent, sendAccountNotification } from './db.js';
         import { Validation, UI, Logger, Permissions } from './utils.js';
         import './install-sw.js'; // Initialize offline support
 
@@ -1237,6 +1315,8 @@
             // (2026-07-13) Clear register inputs on mode switch; was unmanaged inputs
             if (!isLoginMode) {
                 if (signupIdInput) signupIdInput.value = '';
+                const emailInput = document.getElementById('studentEmailSignup');
+                if (emailInput) emailInput.value = '';
                 const pwd = document.getElementById('password');
                 if (pwd) pwd.value = '';
                 const cpwd = document.getElementById('confirmPasswordSignup');
@@ -1272,26 +1352,109 @@
             setMode('signup');
         }
 
-        // Handle Forgot Password (Date: 2026-05-02)
-        document.getElementById('forgotPassword').addEventListener('click', async (e) => {
+        // (2026-07-13) Send reset email directly by student ID; was guardian verify
+        const studentResetModal = document.getElementById('studentResetModal');
+        const studentResetIdInput = document.getElementById('studentResetIdInput');
+        const studentResetError = document.getElementById('studentResetError');
+        const studentResetSendBtn = document.getElementById('studentResetSendBtn');
+        const studentRequestAdminResetBtn = document.getElementById('studentRequestAdminResetBtn');
+        const studentResetFormView = document.getElementById('studentResetFormView');
+        const studentResetSuccessView = document.getElementById('studentResetSuccessView');
+        const studentResetTargetEmail = document.getElementById('studentResetTargetEmail');
+        const studentResetDoneBtn = document.getElementById('studentResetDoneBtn');
+        const closeStudentResetModalBtn = document.getElementById('closeStudentResetModalBtn');
+
+        function maskStudentEmail(email) {
+            if (!email || !email.includes('@')) return email;
+            const [name, domain] = email.split('@');
+            if (name.length <= 2) return `${name[0]}*@${domain}`;
+            const stars = '*'.repeat(Math.max(name.length - 2, 3));
+            return `${name[0]}${stars}${name[name.length - 1]}@${domain}`;
+        }
+
+        const openStudentResetModal = () => {
+            if (!studentResetModal) return;
+            const currentId = identifierInput.value.trim().replace(/\D/g, '');
+            studentResetIdInput.value = currentId;
+            studentResetError.textContent = '';
+            studentResetFormView.style.display = 'block';
+            studentResetSuccessView.style.display = 'none';
+            studentResetModal.classList.add('active');
+            setTimeout(() => studentResetIdInput.focus(), 150);
+        };
+
+        const closeStudentResetModal = () => {
+            if (studentResetModal) studentResetModal.classList.remove('active');
+        };
+
+        closeStudentResetModalBtn?.addEventListener('click', closeStudentResetModal);
+        studentResetDoneBtn?.addEventListener('click', () => {
+            closeStudentResetModal();
+            identifierInput.focus();
+        });
+
+        document.getElementById('forgotPassword').addEventListener('click', (e) => {
             e.preventDefault();
-            const identifier = identifierInput.value.trim();
-            if (!identifier) {
-                showToast("Missing ID", `Please enter your 7-digit ${roleLabel.toLowerCase()} ID first.`, "info");
+            openStudentResetModal();
+        });
+
+        studentResetSendBtn?.addEventListener('click', async () => {
+            studentResetError.textContent = '';
+            const sid = studentResetIdInput.value.trim().replace(/\D/g, '');
+            if (!/^\d{7}$/.test(sid)) {
+                studentResetError.textContent = 'Please enter a valid 7-digit Student ID.';
                 return;
             }
 
-            if (!/^\d{7}$/.test(identifier)) {
-                showToast("Invalid ID", `Please enter a valid 7-digit ${roleLabel.toLowerCase()} ID first.`, "error");
-                return;
-            }
-
+            setButtonBusy(studentResetSendBtn, true);
             try {
-                let email = identifier.includes('@') ? identifier : roleIdToEmail(identifier, preferredRole);
-                await forgotPassword(email);
-                showToast("Reset email sent", `Password reset instructions were sent to ${email}.`, "success");
-            } catch (error) {
-                showToast("Reset failed", getFriendlyAuthMessage(error, "reset", roleLabel), "error");
+                let targetEmail = await getEmailByStudentId(sid).catch(() => null);
+                if (!targetEmail || !targetEmail.includes('@') || targetEmail.endsWith('@securo.app')) {
+                    studentResetError.textContent = `No linked email address found for Student #${sid}. Please request an admin reset below.`;
+                    return;
+                }
+
+                await forgotPassword(targetEmail);
+                studentResetTargetEmail.textContent = maskStudentEmail(targetEmail);
+                studentResetFormView.style.display = 'none';
+                studentResetSuccessView.style.display = 'block';
+                showToast('Reset Link Sent', 'Password reset instructions have been emailed.', 'success');
+            } catch (err) {
+                console.warn('Student password reset failed:', err);
+                const friendly = getFriendlyAuthMessage(err, 'login', 'student');
+                studentResetError.textContent = friendly || 'Failed to dispatch reset link. Please check your ID or try again.';
+            } finally {
+                setButtonBusy(studentResetSendBtn, false);
+            }
+        });
+
+        studentRequestAdminResetBtn?.addEventListener('click', async () => {
+            const sid = studentResetIdInput.value.trim().replace(/\D/g, '') || identifierInput.value.trim().replace(/\D/g, '');
+            if (!/^\d{7}$/.test(sid)) {
+                studentResetError.textContent = 'Please enter your 7-digit Student ID first.';
+                return;
+            }
+            setButtonBusy(studentRequestAdminResetBtn, true);
+            try {
+                await sendAccountNotification({
+                    userId: 'admin',
+                    recipientUid: 'admin',
+                    type: 'password_reset_request',
+                    title: 'Student Password Reset Request',
+                    message: `Student #${sid} requested a password reset from the login screen.`,
+                    relatedId: sid,
+                    sourceUserId: sid,
+                    sourceName: `Student #${sid}`,
+                    priority: 'high'
+                }).catch(() => {});
+
+                showToast('Request Dispatched', `Campus Command Desk notified for Student #${sid}.`, 'success');
+                closeStudentResetModal();
+            } catch (e) {
+                showToast('Notification sent', 'Admin notified for assistance.', 'info');
+                closeStudentResetModal();
+            } finally {
+                setButtonBusy(studentRequestAdminResetBtn, false);
             }
         });
 
@@ -1650,10 +1813,15 @@
                     window.location.href = (isNativeApk && (!camOk || !locOk)) ? 'permissions-onboarding.html' : 'index.html';
                 } else {
                     const studentId = signupIdInput.value.trim();
+                    const studentEmail = document.getElementById('studentEmailSignup')?.value?.trim();
                     const confirmPassword = document.getElementById('confirmPasswordSignup').value;
 
                     if (!/^\d{7}$/.test(studentId)) {
                         throw new Error(`Please enter a valid 7-digit ${roleLabel} ID number.`);
+                    }
+                    // (2026-07-13) Validate student recovery email; was ID & password only
+                    if (!studentEmail || !Validation.email(studentEmail).valid) {
+                        throw new Error("Please enter a valid email address for account recovery.");
                     }
                     if (password.length < 8) {
                         throw new Error("Password must be at least 8 characters.");
@@ -1750,11 +1918,15 @@
                 setButtonBusy(agreeTermsBtn, true);
                 try {
                     const studentId = signupIdInput.value.trim();
+                    const studentEmail = document.getElementById('studentEmailSignup')?.value?.trim();
                     const password = document.getElementById('password').value;
                     const confirmPassword = document.getElementById('confirmPasswordSignup').value;
 
                     if (!/^\d{7}$/.test(studentId)) {
                         throw new Error(`Please enter a valid 7-digit ${roleLabel} ID number.`);
+                    }
+                    if (!studentEmail || !Validation.email(studentEmail).valid) {
+                        throw new Error("Please enter a valid email address for account recovery.");
                     }
                     if (password.length < 8) {
                         throw new Error("Password must be at least 8 characters.");
@@ -1778,16 +1950,24 @@
                         throw new Error(`That ${roleLabel} ID is already registered. Please sign in.`);
                     }
 
-                    const generatedEmail = roleIdToEmail(studentId, preferredRole);
-                    const user = await signUp(generatedEmail, password);
+                    // (2026-07-13) Register account with recovery email; was synthetic email
+                    const user = await signUp(studentEmail, password);
                     if (user?.uid) {
                         localStorage.setItem('securo_session_token', user.uid);
                         sessionStorage.setItem('securo_login_pending', '1');
                     }
                     try {
+                        await saveUserProfile(user.uid, {
+                            studentId,
+                            email: studentEmail,
+                            role: preferredRole,
+                            createdAt: new Date().toISOString()
+                        });
+                    } catch (_) {}
+                    try {
                         const raw = localStorage.getItem('securo_user_directory');
                         const dir = raw ? JSON.parse(raw) : {};
-                        dir[user.uid] = { ...(dir[user.uid] || {}), studentId, email: generatedEmail, role: preferredRole, updatedAt: new Date().toISOString() };
+                        dir[user.uid] = { ...(dir[user.uid] || {}), uid: user.uid, studentId, email: studentEmail, role: preferredRole, updatedAt: new Date().toISOString() };
                         localStorage.setItem('securo_user_directory', JSON.stringify(dir));
                     } catch (_) {}
 

@@ -5413,6 +5413,18 @@
         </div>
     </div>
 
+    <!-- (2026-07-13) Auto-dismiss watchdog for preloader overlay; was unmonitored -->
+    <script>
+        setTimeout(() => {
+            const p = document.getElementById('securo-preloader-overlay');
+            if (p) {
+                p.classList.add('hidden');
+                p.style.setProperty('display', 'none', 'important');
+                if (p.parentNode) p.parentNode.removeChild(p);
+            }
+        }, 1600);
+    </script>
+
     <div class="device-shell mx-auto">
         <div class="screen">
             <!-- [REMOVED] Embedded Login Screen (Date: 2026-05-01) - Now handled by login.html -->
@@ -10157,48 +10169,70 @@
         // (2026-07-13) Real-time GAD chatbox thread & composer; was form modal
         let _cachedGadMessages = [];
 
+        // (2026-07-13) Messenger group bubbles for GAD support; was standalone rows
         function renderGadChatThread(messages) {
             const thread = document.getElementById("gadChatThread");
             if (!thread) return;
             const msgs = messages || _cachedGadMessages;
-            let html = '<div class="gad-bubble them">Hi! This is the GAD Desk. Tell us what is on your mind — your message is confidential.</div>';
+            const items = [
+                { type: 'them', text: "Hi! This is the GAD Desk. Tell us what is on your mind — your message is confidential." }
+            ];
+            let isWaitingReply = false;
+
             if (msgs && msgs.length) {
                 const sorted = [...msgs].sort((a, b) => {
-                    const ta = a.createdAt?.seconds || 0;
-                    const tb = b.createdAt?.seconds || 0;
+                    const ta = a.createdAt?.seconds || (a.createdAt?.toDate ? a.createdAt.toDate().getTime() / 1000 : (new Date(a.createdAt || 0).getTime() / 1000));
+                    const tb = b.createdAt?.seconds || (b.createdAt?.toDate ? b.createdAt.toDate().getTime() / 1000 : (new Date(b.createdAt || 0).getTime() / 1000));
                     return ta - tb;
                 });
+
                 sorted.forEach(m => {
-                    const timeStr = m.createdAt?.seconds
-                        ? new Date(m.createdAt.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                        : 'Just now';
-                    const catLabel = m.category || 'General';
-                    const anonLabel = m.isAnonymous ? 'Anonymous' : 'Verified';
-                    html += `
-                        <div class="gad-bubble me">
-                            <span class="gad-bubble-tag">${escapeHtml(anonLabel)} · ${escapeHtml(catLabel)}</span>
-                            <div>${escapeHtml(m.message || '')}</div>
-                            <span class="gad-bubble-meta">${timeStr}</span>
-                        </div>
-                    `;
+                    if (m.message) {
+                        items.push({ type: 'me', text: m.message });
+                    }
                     if (m.status === 'answered' && m.reply) {
-                        html += `
-                            <div class="gad-bubble them">
-                                <span class="gad-bubble-tag" style="background:#0f9b67; color:#fff;">GAD Desk</span>
-                                <div>${escapeHtml(m.reply)}</div>
-                                <span class="gad-bubble-meta">${escapeHtml(m.repliedBy || 'Counselor')}</span>
-                            </div>
-                        `;
+                        items.push({ type: 'them', text: m.reply });
+                        isWaitingReply = false;
                     } else {
-                        html += `
-                            <div class="gad-chat-pending">
-                                <span class="material-symbols-outlined" style="font-size:14px; color:#ffb649;">schedule</span>
-                                <span>Waiting for GAD reply...</span>
-                            </div>
-                        `;
+                        isWaitingReply = true;
                     }
                 });
             }
+
+            // (2026-07-13) Render avatar alongside incoming GAD messages; was bare bubble
+            let html = '';
+            for (let i = 0; i < items.length; i++) {
+                const cur = items[i];
+                const prevSame = (i > 0 && items[i - 1].type === cur.type);
+                const nextSame = (i < items.length - 1 && items[i + 1].type === cur.type);
+
+                let bubbleClass = 'bubble-single';
+                if (!prevSame && nextSame) bubbleClass = 'bubble-first';
+                else if (prevSame && nextSame) bubbleClass = 'bubble-middle';
+                else if (prevSame && !nextSame) bubbleClass = 'bubble-last';
+
+                if (cur.type === 'them') {
+                    const avatarHtml = !nextSame 
+                        ? '<div class="gad-them-avatar"><span class="material-symbols-outlined" style="font-size:16px;">support_agent</span></div>'
+                        : '<div class="gad-them-avatar-spacer"></div>';
+                    html += `<div class="gad-them-row ${bubbleClass}">${avatarHtml}<div class="gad-bubble them ${bubbleClass}">${escapeHtml(cur.text)}</div></div>`;
+                } else {
+                    html += `<div class="gad-bubble me ${bubbleClass}">${escapeHtml(cur.text)}</div>`;
+                }
+            }
+
+            if (isWaitingReply) {
+                html += `
+                    <div class="gad-chat-status-row">
+                        <span class="gad-chat-delivered">Delivered <span class="material-symbols-outlined" style="font-size:13px;">done</span></span>
+                        <div class="gad-chat-pending">
+                            <span class="material-symbols-outlined" style="font-size:14px; color:#ffb649;">hourglass_top</span>
+                            <span>Waiting for counselor reply...</span>
+                        </div>
+                    </div>
+                `;
+            }
+
             thread.innerHTML = html;
             thread.scrollTop = thread.scrollHeight;
         }
@@ -12170,12 +12204,12 @@
             position: relative;
             z-index: 100001;
         }
-        /* (2026-07-13) Add top inset for universal topbar; was 16px max */
+        /* (2026-07-13) Tight Messenger GAD chat styling; was loose layout with anon bar */
         .gad-chat-header {
-            padding: 16px 20px;
-            padding-top: max(56px, calc(16px + env(safe-area-inset-top, 0px)));
-            background: linear-gradient(135deg, #5a1fe0, #4311c5);
-            color: #fff;
+            padding: 10px 16px;
+            padding-top: max(40px, calc(10px + env(safe-area-inset-top, 0px)));
+            background: #ffffff;
+            color: var(--ink);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -12183,99 +12217,133 @@
             top: 0;
             z-index: 10;
             flex-shrink: 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         }
         .gad-chat-close {
-            background: transparent;
+            background: #f1f3f5;
             border: none;
-            color: #fff;
-            padding: 6px;
+            color: #475569;
+            width: 32px;
+            height: 32px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
+            border-radius: 50%;
+            transition: background 0.15s;
         }
-        .gad-chat-anon {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 18px;
-            font-size: 0.76rem;
-            font-weight: 700;
-            color: #5a1fe0;
-            background: #f7f4ff;
-            border-bottom: 1px solid rgba(90, 31, 224, 0.08);
-            cursor: pointer;
-            flex-shrink: 0;
+        .gad-chat-close:hover {
+            background: #e2e8f0;
         }
         .gad-chat-thread {
             flex: 1;
             min-height: 0;
             overflow-y: auto;
-            padding: 18px;
-            background: #fbf9ff;
+            padding: 12px 14px 6px 14px;
+            background: #ffffff;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 0;
+        }
+        .gad-them-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 84%;
+        }
+        .gad-them-row.bubble-single,
+        .gad-them-row.bubble-last {
+            margin-bottom: 6px;
+        }
+        .gad-them-row.bubble-first,
+        .gad-them-row.bubble-middle {
+            margin-bottom: 2px;
+        }
+        .gad-them-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #2563eb;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.25);
+        }
+        .gad-them-avatar-spacer {
+            width: 28px;
+            height: 28px;
+            flex-shrink: 0;
         }
         .gad-bubble {
-            max-width: 80%;
-            padding: 12px 16px;
-            border-radius: 18px;
-            font-size: 0.92rem;
-            line-height: 1.45;
+            max-width: 76%;
+            width: fit-content;
+            padding: 7px 13px;
+            font-size: 0.9rem;
+            line-height: 1.35;
             word-break: break-word;
-            white-space: pre-wrap;
+            position: relative;
         }
         .gad-bubble.me {
             align-self: flex-end;
-            background: #5a1fe0;
-            color: #fff;
-            border-bottom-right-radius: 4px;
+            margin-left: auto;
+            background: linear-gradient(135deg, #7c3aed 0%, #5a1fe0 100%);
+            color: #ffffff;
+            box-shadow: 0 1px 3px rgba(90, 31, 224, 0.16);
         }
         .gad-bubble.them {
-            align-self: flex-start;
-            background: #fff;
-            color: var(--ink);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+            margin: 0;
+            background: #f1f3f5;
+            color: #1e1b2e;
         }
+
+        .gad-bubble.me.bubble-single { border-radius: 18px; margin-bottom: 6px; }
+        .gad-bubble.me.bubble-first { border-radius: 18px 18px 4px 18px; margin-bottom: 2px; }
+        .gad-bubble.me.bubble-middle { border-radius: 18px 4px 4px 18px; margin-bottom: 2px; }
+        .gad-bubble.me.bubble-last { border-radius: 18px 4px 18px 18px; margin-bottom: 6px; }
+
+        .gad-bubble.them.bubble-single { border-radius: 18px; }
+        .gad-bubble.them.bubble-first { border-radius: 18px 18px 18px 4px; }
+        .gad-bubble.them.bubble-middle { border-radius: 4px 18px 18px 4px; }
+        .gad-bubble.them.bubble-last { border-radius: 4px 18px 18px 18px; }
+
         .gad-bubble-meta {
-            display: block;
-            margin-top: 4px;
-            font-size: 0.7rem;
-            opacity: 0.75;
-            text-align: right;
-        }
-        .gad-bubble.them .gad-bubble-meta {
-            text-align: left;
+            display: none;
         }
         .gad-bubble-tag {
-            display: inline-block;
-            font-size: 0.6rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-            padding: 2px 6px;
-            border-radius: 6px;
+            display: none;
+        }
+        .gad-chat-status-row {
+            align-self: flex-end;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+            margin-top: 2px;
             margin-bottom: 4px;
-            background: rgba(255, 255, 255, 0.2);
+        }
+        .gad-chat-delivered {
+            font-size: 0.68rem;
+            color: #64748b;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
         }
         .gad-chat-pending {
-            align-self: flex-start;
-            font-size: 0.7rem;
-            color: var(--muted);
-            display: flex;
+            font-size: 0.74rem;
+            color: #7c3aed;
+            font-weight: 600;
+            display: inline-flex;
             align-items: center;
             gap: 4px;
         }
-        /* (2026-07-13) Add bottom inset for 3-button nav; was 14px bottom */
         .gad-chat-composer {
-            padding: 14px;
-            padding-bottom: max(56px, calc(14px + env(safe-area-inset-bottom, 0px)));
+            padding: 8px 14px;
+            padding-bottom: max(32px, calc(8px + env(safe-area-inset-bottom, 0px)));
             border-top: 1px solid rgba(0, 0, 0, 0.05);
-            background: #fff;
+            background: #ffffff;
             position: sticky;
             bottom: 0;
             z-index: 2;
@@ -12283,53 +12351,60 @@
         }
         .gad-chat-composer select {
             width: 100%;
-            padding: 8px 12px;
-            border-radius: 12px;
-            border: 1px solid rgba(90, 31, 224, 0.12);
-            background: #f7f4ff;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
             font-family: inherit;
             font-size: 0.78rem;
-            margin-bottom: 10px;
-            color: var(--ink);
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #334155;
             outline: none;
         }
         .gad-chat-input-row {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: flex-end;
         }
         .gad-chat-input-row textarea {
             flex: 1;
             min-width: 0;
-            min-height: 48px;
-            max-height: 110px;
-            padding: 12px 16px;
-            border-radius: 14px;
-            border: 1px solid rgba(90, 31, 224, 0.12);
-            background: #f7f4ff;
+            min-height: 40px;
+            max-height: 100px;
+            padding: 9px 16px;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            background: #f1f3f9;
             outline: none;
             font: inherit;
-            font-size: 0.92rem;
+            font-size: 0.9rem;
             resize: none;
             color: var(--ink);
+            transition: all 0.2s;
         }
         .gad-chat-input-row textarea:focus {
-            border-color: #5a1fe0;
-            background: #fff;
+            border-color: #0084ff;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(0, 132, 255, 0.12);
         }
         .gad-chat-send {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             border: none;
-            background: #5a1fe0;
-            color: #fff;
+            background: #0084ff;
+            color: #ffffff;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             flex: 0 0 auto;
             cursor: pointer;
-            box-shadow: 0 6px 16px rgba(90, 31, 224, 0.25);
+            box-shadow: 0 3px 10px rgba(0, 132, 255, 0.28);
+            transition: transform 0.15s;
+        }
+        .gad-chat-send:active {
+            transform: scale(0.94);
         }
         .gad-chat-send:disabled {
             opacity: 0.55;
@@ -12338,23 +12413,30 @@
     </style>
     <div class="status-modal" id="gadPmModal">
         <div class="gad-chat-card" id="gadChatCard">
-            <!-- (2026-07-13) Match GAD header to guardian support; was desk avatar -->
+            <!-- (2026-07-13) Clean GAD header without anon divider; was anon subbar -->
             <div class="gad-chat-header">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <span class="material-symbols-outlined" style="font-size:24px;">support_agent</span>
-                    <strong style="font-family:'Sora',sans-serif; font-size:1.05rem;">GAD Support</strong>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div style="width:36px; height:36px; border-radius:50%; background:#2563eb; color:#ffffff; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <span class="material-symbols-outlined" style="font-size:20px;">support_agent</span>
+                    </div>
+                    <div>
+                        <div style="font-family:'Sora',sans-serif; font-size:0.98rem; font-weight:700; color:var(--ink); line-height:1.2;">GAD Support</div>
+                        <div style="font-size:0.72rem; color:var(--muted); display:flex; align-items:center; gap:5px; margin-top:2px;">
+                            <span style="width:7px; height:7px; border-radius:50%; background:#059669; display:inline-block;"></span>
+                            <span>Active now • Confidential</span>
+                        </div>
+                    </div>
                 </div>
                 <button type="button" id="closeGadPmModalBtn" class="gad-chat-close" aria-label="Close chat">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
-            <label class="gad-chat-anon">
-                <input type="checkbox" id="gadAnonToggle" checked style="width:16px; height:16px; accent-color:#5a1fe0;">
-                <span class="material-symbols-outlined" style="font-size:16px;">visibility_off</span>
-                <span>Send anonymously (name &amp; ID hidden)</span>
-            </label>
+            <input type="checkbox" id="gadAnonToggle" checked style="display:none;" aria-hidden="true">
             <div class="gad-chat-thread" id="gadChatThread">
-                <div class="gad-bubble them">Hi! This is the GAD Desk. Tell us what's on your mind — your message is confidential.</div>
+                <div class="gad-them-row bubble-single">
+                    <div class="gad-them-avatar"><span class="material-symbols-outlined" style="font-size:16px;">support_agent</span></div>
+                    <div class="gad-bubble them bubble-single">Hi! This is the GAD Desk. Tell us what is on your mind — your message is confidential.</div>
+                </div>
             </div>
             <div class="gad-chat-composer">
                 <select id="gadCategorySelect" aria-label="Topic">
@@ -12366,9 +12448,9 @@
                 </select>
                 <input type="hidden" id="gadSubjectInput" value="">
                 <div class="gad-chat-input-row">
-                    <textarea id="gadMessageBody" rows="1" placeholder="Type your message..."></textarea>
+                    <textarea id="gadMessageBody" rows="1" placeholder="Type a message..."></textarea>
                     <button type="button" id="submitGadPmBtn" class="gad-chat-send" aria-label="Send message">
-                        <span class="material-symbols-outlined">send</span>
+                        <span class="material-symbols-outlined" style="font-size:18px;">send</span>
                     </button>
                 </div>
             </div>

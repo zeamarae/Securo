@@ -557,20 +557,28 @@ export const toggleEmergencyPostGuardianAccess = async (postId, isVisible) => {
 /**
  * Fetch all emergency posts for admin incident review
  */
+// (2026-07-13) Fetch all vault posts without gadVisible filter; was filtered
 export const getAllEmergencyPosts = async () => {
     const localPosts = readLocalEmergencyPosts();
     try {
-        const q = query(collection(db, "emergency_posts"), orderBy("createdAt", "desc"));
-        const querySnapshot = await getDocs(q);
-        const remotePosts = querySnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(post => post.gadVisible !== false); // Respect privacy toggle
-            
-        return mergeEmergencyPosts(remotePosts, localPosts.filter(p => p.gadVisible !== false));
+        let querySnapshot;
+        try {
+            const q = query(collection(db, "emergency_posts"), orderBy("createdAt", "desc"));
+            querySnapshot = await getDocs(q);
+        } catch (idxError) {
+            console.warn("Falling back to unindexed emergency_posts fetch:", idxError);
+            querySnapshot = await getDocs(collection(db, "emergency_posts"));
+        }
+        const remotePosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        remotePosts.sort((a, b) => {
+            const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime());
+            const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime());
+            return timeB - timeA;
+        });
+        return mergeEmergencyPosts(remotePosts, localPosts);
     } catch (error) {
         console.warn("Error getting all emergency posts:", error);
-        // Fallback to filtered local posts if query fails (e.g. missing index)
-        return mergeEmergencyPosts([], localPosts.filter(p => p.gadVisible !== false));
+        return mergeEmergencyPosts([], localPosts);
     }
 };
 
@@ -615,9 +623,18 @@ export const isStudentIdTaken = async (studentId) => {
  * Find user email by Student ID
  * @param {string} studentId 
  */
+// (2026-07-13) Lookup email from user directory & Firestore; was query only
 export const getEmailByStudentId = async (studentId) => {
     try {
-        const q = query(collection(db, "users"), where("studentId", "==", studentId));
+        const raw = localStorage.getItem('securo_user_directory');
+        if (raw) {
+            const dir = JSON.parse(raw);
+            const found = Object.values(dir).find(u => String(u.studentId || '') === String(studentId));
+            if (found?.email) return found.email;
+        }
+    } catch (_) {}
+    try {
+        const q = query(collection(db, "users"), where("studentId", "==", String(studentId)));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
             return querySnapshot.docs[0].data().email;
@@ -1084,7 +1101,7 @@ export const subscribeToMessagesByThread = (threadId, callback) => {
 /**
  * Messaging: Send a message with threadId
  */
-// (2026-07-13) Persist senderUid, recipientUid and notify; was senderId only
+// (2026-07-13) Persist senderUid, recipientUid, read/seen status; was unread only
 export const sendChatMessage = async (senderId, receiverId, text, senderName, options = {}) => {
     const threadId = options.threadId || [senderId, receiverId].sort().join("_");
     const senderRole = options.senderRole || (senderId === "system_admin_securo" ? "admin" : "student");
@@ -1107,8 +1124,28 @@ export const sendChatMessage = async (senderId, receiverId, text, senderName, op
             ownerId: options.ownerId || "",
             anonymousSessionId: options.anonymousSessionId || "",
             timestamp: serverTimestamp(),
-            read: false
+            read: false,
+            seen: false,
+            seenAt: null,
+            status: "delivered"
         });
+
+        // (2026-07-13) Mark previous incoming messages as replied; was unflagged
+        try {
+            const qPrev = query(collection(db, "messages"), where("threadId", "==", threadId));
+            getDocs(qPrev).then(snap => {
+                snap.forEach(d => {
+                    const data = d.data();
+                    if (data.senderRole !== senderRole && data.status !== "replied") {
+                        updateDoc(doc(db, "messages", d.id), {
+                            status: "replied",
+                            repliedAt: serverTimestamp(),
+                            repliedBy: senderName || "Admin"
+                        }).catch(() => {});
+                    }
+                });
+            }).catch(() => {});
+        } catch (_) {}
 
         const targetUid = receiverId === "system_admin_securo" ? "admin" : receiverId;
         const noteTitle = senderRole === "admin" ? "New message from Admin" : `Message from ${senderName || "Student"}`;
@@ -1128,6 +1165,31 @@ export const sendChatMessage = async (senderId, receiverId, text, senderName, op
     } catch (error) {
         console.warn("Error sending chat message:", error);
         throw error;
+    }
+};
+
+// (2026-07-13) Persist thread seen & read state to Firestore; was in-memory only
+export const markThreadMessagesSeen = async (threadId, viewerRole = "admin") => {
+    if (!threadId) return;
+    try {
+        const q = query(collection(db, "messages"), where("threadId", "==", threadId));
+        const snap = await getDocs(q);
+        const updates = [];
+        snap.forEach(d => {
+            const data = d.data();
+            const isFromOther = viewerRole === "admin" ? data.senderRole !== "admin" : data.senderRole === "admin";
+            if (isFromOther && (!data.read || !data.seen)) {
+                updates.push(updateDoc(doc(db, "messages", d.id), {
+                    read: true,
+                    seen: true,
+                    seenAt: serverTimestamp(),
+                    status: "seen"
+                }).catch(() => {}));
+            }
+        });
+        await Promise.all(updates);
+    } catch (e) {
+        console.warn("markThreadMessagesSeen fallback:", e);
     }
 };
 
@@ -3151,6 +3213,17 @@ export const sendGADMessage = async (messageData) => {
             }
         }).catch(err => console.warn("Failed GAD admin notify:", err));
 
+        // (2026-07-13) Synchronize GAD inquiry into unified chat thread; was separate
+        if (messageData.studentUid) {
+            sendChatMessage(messageData.studentUid, "system_admin_securo", messageData.message || "", isAnon ? "Anonymous Student" : (messageData.studentName || "Student"), {
+                threadId: [messageData.studentUid, "system_admin_securo"].sort().join("_"),
+                supportMode: "gad_support",
+                isAnonymous: isAnon,
+                senderLabel: isAnon ? "Anonymous Student" : (messageData.studentName || "Student"),
+                ownerId: messageData.studentUid
+            }).catch(() => {});
+        }
+
         return { id: docRef.id, ...payload };
     } catch (error) {
         console.warn("Firestore GAD message save fallback to local:", error);
@@ -3196,6 +3269,18 @@ export const replyToGADMessage = async (messageId, replyText, adminName = "GAD D
         local[targetIdx].repliedBy = adminName;
         writeLocalGADMessages(local);
     }
+
+    // (2026-07-13) Synchronize GAD reply into unified chat thread; was isolated
+    try {
+        if (targetIdx >= 0 && local[targetIdx]?.studentUid) {
+            sendChatMessage("system_admin_securo", local[targetIdx].studentUid, replyText, adminName, {
+                threadId: [local[targetIdx].studentUid, "system_admin_securo"].sort().join("_"),
+                supportMode: "gad_support",
+                senderRole: "admin",
+                recipientRole: "student"
+            }).catch(() => {});
+        }
+    } catch (_) {}
 
     try {
         await updateDoc(doc(db, "gad_messages", messageId), {

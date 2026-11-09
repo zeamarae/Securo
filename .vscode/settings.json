@@ -1,3 +1,6 @@
 {
-  "liveServer.settings.port": 5508
+  // (2026-07-13) Set live server entry to index.html; was port-only
+  "liveServer.settings.port": 5508,
+  "liveServer.settings.root": "/",
+  "liveServer.settings.file": "index.html"
 }

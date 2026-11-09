@@ -37,17 +37,22 @@
         script.onload = () => callback();
         script.onerror = () => dismissFallback();
         document.head.appendChild(script);
+        // (2026-07-13) GSAP load timeout fallback; was hanging on offline/blocked CDN
+        setTimeout(dismissFallback, 1200);
     }
 
+    // (2026-07-13) Clean dismissal with hidden class & node removal; was inline none
     function dismissFallback() {
         const overlay = document.getElementById(OVERLAY_ID);
         if (overlay) {
-            overlay.style.transition = 'opacity 0.4s ease';
-            overlay.style.opacity = '0';
+            overlay.classList.add('hidden');
+            overlay.style.setProperty('display', 'none', 'important');
+            overlay.style.setProperty('visibility', 'hidden', 'important');
+            overlay.style.setProperty('pointer-events', 'none', 'important');
+            document.body.removeAttribute('data-preloader-active');
             setTimeout(() => {
-                overlay.style.display = 'none';
-                document.body.removeAttribute('data-preloader-active');
-            }, 400);
+                if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+            }, 250);
         }
     }
 
@@ -73,10 +78,14 @@
             onComplete: () => {
                 document.body.removeAttribute('data-preloader-active');
                 if (overlay) {
-                    overlay.style.display = 'none';
-                    overlay.style.visibility = 'hidden';
-                    overlay.style.pointerEvents = 'none';
-                    overlay.style.zIndex = '-99999';
+                    overlay.classList.add('hidden');
+                    overlay.style.setProperty('display', 'none', 'important');
+                    overlay.style.setProperty('visibility', 'hidden', 'important');
+                    overlay.style.setProperty('pointer-events', 'none', 'important');
+                    overlay.style.setProperty('z-index', '-99999', 'important');
+                    setTimeout(() => {
+                        if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                    }, 250);
                 }
                 if (typeof onCompleteCallback === 'function') {
                     onCompleteCallback();
@@ -179,10 +188,14 @@
                 delay: 0.1,
                 ease: 'power2.inOut',
                 onComplete: () => {
-                    overlay.style.display = 'none';
-                    overlay.style.visibility = 'hidden';
-                    overlay.style.pointerEvents = 'none';
-                    overlay.style.zIndex = '-99999';
+                    overlay.classList.add('hidden');
+                    overlay.style.setProperty('display', 'none', 'important');
+                    overlay.style.setProperty('visibility', 'hidden', 'important');
+                    overlay.style.setProperty('pointer-events', 'none', 'important');
+                    overlay.style.setProperty('z-index', '-99999', 'important');
+                    setTimeout(() => {
+                        if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                    }, 250);
                 }
             });
         } else {
@@ -197,6 +210,7 @@
         sessionStorage.setItem('securo_transition_active', '1');
         const overlay = ensureOverlay();
         if (overlay) {
+            overlay.classList.remove('hidden');
             overlay.style.display = 'flex';
             overlay.style.visibility = 'visible';
             overlay.style.opacity = '1';
@@ -246,6 +260,8 @@
         if (hasInitialized) return;
         hasInitialized = true;
         ensureOverlay();
+        // (2026-07-13) Safety max timeout to avoid white screen freeze; was infinite wait
+        setTimeout(dismissFallback, 1500);
         if (sessionStorage.getItem('securo_transition_active') === '1') {
             sessionStorage.removeItem('securo_transition_active');
             ensureGSAP(runTransitionDismiss);

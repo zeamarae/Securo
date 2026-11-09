@@ -277,7 +277,8 @@
                 <label for="adminEmail">Administrator Email</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined">mail</span>
-                    <input type="email" id="adminEmail" placeholder="admin@securo.app" required>
+                    <!-- (2026-07-13) Add admin email placeholder; was admin@securo.app -->
+                    <input type="email" id="adminEmail" placeholder="Enter administrator email" required>
                 </div>
             </div>
 
@@ -285,8 +286,8 @@
                 <label for="password">Security Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined">lock</span>
-                    <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
-                    <input type="password" id="password" placeholder="••••••••" required>
+                    <!-- (2026-07-13) Add admin password placeholder; was bullet dots -->
+                    <input type="password" id="password" placeholder="Enter password" required>
                     <button type="button" class="btn" data-password-target="password" style="background:none; border:none; color:var(--muted,#94a3b8); padding:0; cursor:pointer; display:flex; align-items:center;">
                         <span class="material-symbols-outlined">visibility</span>
                     </button>

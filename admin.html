@@ -8,7 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- (2026-07-13) Add Inter font for corporate enterprise UI; was Outfit/Sora -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&family=Sora:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
     <!-- (2026-07-13) Add Leaflet and SheetJS for reports; was Leaflet only -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -19,28 +20,39 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="preloader.js"></script>
     <style>
-        /* (2026-07-13) Set light theme colors; was dark palette */
+        /* (2026-07-13) Soft lilac card design tokens as in image 3 & 4; was grey boxy tokens */
         :root {
             --glass-white: 255, 255, 255;
             --bg: #f6f4fe;
-            --surface: rgba(var(--glass-white), 0.88);
+            --surface: #ffffff;
             --surface-strong: #ffffff;
+            --surface-subtle: #f8f6ff;
+            --surface-hover: #f3f0ff;
             --ink: #171428;
-            --muted: #64748b;
+            --ink-secondary: #4a4468;
+            --muted: #6e6a84;
+            --subtle: #94a3b8;
             --primary: #5a1fe0;
             --primary-strong: #7b42f6;
             --primary-soft: rgba(90, 31, 224, 0.08);
+            --accent: #2563eb;
             --cyan: #0284c7;
             --green: #059669;
-            --red: #e11d48;
-            --red-soft: rgba(225, 29, 72, 0.1);
+            --green-soft: #ecfdf5;
+            --red: #dc2626;
+            --red-soft: #fee2e2;
             --amber: #d97706;
+            --amber-soft: #fffbeb;
             --line: rgba(90, 31, 224, 0.08);
-            --shadow: 0 16px 36px rgba(90, 31, 224, 0.08);
-            --shadow-soft: 0 8px 20px rgba(90, 31, 224, 0.05);
-            --radius-xl: 32px;
-            --radius-lg: 24px;
-            --radius-md: 18px;
+            --border: rgba(90, 31, 224, 0.1);
+            --border-subtle: rgba(90, 31, 224, 0.05);
+            --shadow: 0 16px 36px rgba(90, 31, 224, 0.06);
+            --shadow-soft: 0 6px 20px rgba(90, 31, 224, 0.04);
+            --shadow-elevated: 0 20px 40px rgba(90, 31, 224, 0.08);
+            --radius-xl: 28px;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 8px;
         }
 
         /* (2026-07-13) Enable text highlighting in admin; was user-select none */
@@ -66,12 +78,14 @@
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: "Outfit", sans-serif;
+            font-family: "Outfit", "Sora", -apple-system, BlinkMacSystemFont, sans-serif;
             color: var(--ink);
             background: var(--bg);
             line-height: 1.5;
             height: 100vh;
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .admin-shell {
@@ -94,21 +108,24 @@
 
         .admin-section {
             display: none;
-            gap: 20px;
+            gap: 16px;
         }
 
         .admin-section.active {
             display: grid;
         }
 
+        /* (2026-07-13) Soft white glass topbar from images 3 & 4; was dark corporate bar */
         .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 20px;
-            padding: 18px 22px;
-            border-bottom: 1px solid rgba(226,232,240,0.9);
-            background: rgba(var(--glass-white),0.96);
+            gap: 16px;
+            padding: 10px 24px;
+            min-height: 60px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
             flex-shrink: 0;
             z-index: 100;
         }
@@ -116,70 +133,79 @@
         .brand-wrap {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 14px;
         }
 
         .brand-badge {
-            width: 56px;
-            height: 56px;
-            border-radius: 15px;
-            background: linear-gradient(135deg, #f3eeff, #e2d8ff);
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--primary-soft);
             color: var(--primary);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            box-shadow: inset 0 1px 0 rgba(var(--glass-white),0.8), 0 12px 24px rgba(90,31,224,0.12);
+            box-shadow: none;
         }
 
         .brand-wrap h1 {
             margin: 0;
             font-family: "Sora", sans-serif;
-            font-size: 1rem;
-            letter-spacing: -0.04em;
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--ink);
         }
 
         .brand-wrap p {
-            margin: 4px 0 0;
+            margin: 1px 0 0;
             color: var(--muted);
-            font-size: 0.74rem;
+            font-size: 0.72rem;
+            letter-spacing: 0.01em;
         }
 
         .topbar-actions {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             flex-wrap: wrap;
         }
 
         .profile-chip {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
-            border: 1px solid rgba(var(--glass-white),0.75);
-            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-            color: #fff;
+            border: 2px solid #ffffff;
+            background: #5a1fe0;
+            color: #ffffff;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-weight: 800;
-            box-shadow: 0 10px 20px rgba(90,31,224,0.14);
+            font-weight: 700;
+            font-size: 0.88rem;
+            box-shadow: 0 2px 8px rgba(90, 31, 224, 0.25);
             position: relative;
             cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .profile-chip:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(90, 31, 224, 0.35);
         }
 
         .profile-dropdown {
             position: absolute;
-            top: 58px;
+            top: 44px;
             right: 0;
-            width: 240px;
-            background: rgba(var(--glass-white),0.98);
-            border: 1px solid rgba(var(--glass-white),0.8);
-            border-radius: 16px;
-            box-shadow: 0 24px 48px rgba(15, 23, 42, 0.16);
-            padding: 10px;
+            width: 220px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            box-shadow: var(--shadow-elevated);
+            padding: 6px;
             display: none;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
             z-index: 120;
         }
 
@@ -189,29 +215,31 @@
 
         .dropdown-divider {
             height: 1px;
-            background: rgba(15,23,42,0.06);
-            margin: 6px 4px;
+            background: var(--border);
+            margin: 4px 0;
         }
 
         .dropdown-item {
-            min-height: 38px;
-            padding: 0 14px;
-            border-radius: 12px;
+            min-height: 32px;
+            padding: 0 10px;
+            border-radius: 6px;
             border: none;
             background: transparent;
-            color: var(--ink);
+            color: var(--ink-secondary);
             display: inline-flex;
             align-items: center;
-            gap: 10px;
-            font-weight: 700;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
             text-decoration: none;
             cursor: pointer;
             text-align: left;
+            transition: background 0.15s;
         }
 
         .dropdown-item:hover {
-            background: rgba(90,31,224,0.08);
-            color: var(--primary);
+            background: #f1f5f9;
+            color: var(--ink);
         }
 
         .dropdown-item.logout {
@@ -223,61 +251,81 @@
             color: var(--red);
         }
 
+        /* (2026-07-13) Action buttons styling from images 3 & 4; was corporate grey */
         .ghost-btn,
         .primary-btn,
         .danger-btn {
-            min-height: 48px;
-            padding: 0 18px;
-            border: 0;
-            border-radius: 16px;
+            min-height: 36px;
+            height: 36px;
+            padding: 0 14px;
+            border-radius: 12px;
             font-weight: 700;
+            font-size: 0.82rem;
             display: inline-flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
             cursor: pointer;
-            transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+            transition: all 0.15s ease;
             text-decoration: none;
         }
 
         .ghost-btn {
-            background: rgba(var(--glass-white),0.7);
+            background: #ffffff;
             color: var(--ink);
-            border: 1px solid rgba(var(--glass-white),0.7);
+            border: 1px solid var(--border);
+            border-radius: 999px;
             box-shadow: var(--shadow-soft);
+        }
+        .ghost-btn:hover {
+            background: rgba(90, 31, 224, 0.04);
+            border-color: rgba(90, 31, 224, 0.2);
+            color: var(--primary);
         }
 
         .primary-btn {
-            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-            color: #fff;
-            box-shadow: 0 16px 32px rgba(90,31,224,0.22);
+            background: linear-gradient(135deg, #7c3aed, #5a1fe0);
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 4px 14px rgba(90, 31, 224, 0.25);
+        }
+        .primary-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(90, 31, 224, 0.35);
         }
 
         .danger-btn {
-            background: linear-gradient(135deg, #eb3a53, #c71d35);
-            color: #fff;
-            box-shadow: 0 16px 32px rgba(209,31,52,0.22);
+            background: #dc2626;
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
+        }
+        .danger-btn:hover {
+            background: #b91c1c;
         }
 
+        /* (2026-07-13) Terminal live signal chip from image 3 & 4; was square green */
         .signal-chip {
-            min-height: 48px;
-            padding: 0 16px;
-            border-radius: 16px;
-            background: rgba(var(--glass-white),0.72);
-            border: 1px solid rgba(var(--glass-white),0.74);
-            box-shadow: var(--shadow-soft);
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
+            min-height: 36px;
+            height: 36px;
+            padding: 0 14px;
+            border-radius: 999px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            font-size: 0.78rem;
             font-weight: 700;
             color: var(--ink);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow-soft);
         }
 
         .signal-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 999px;
-            background: #37d67a;
-            box-shadow: 0 0 0 5px rgba(55,214,122,0.12);
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
         }
 
         @keyframes pulseDot {
@@ -288,13 +336,13 @@
         .ghost-btn:hover,
         .primary-btn:hover,
         .danger-btn:hover {
-            transform: translateY(-1px);
+            transform: none;
         }
 
-        /* (2026-07-13) Collapsible icon sidebar with hover expansion; was static 240px */
+        /* (2026-07-13) Enterprise collapsible navigation sidebar; was bubbly rail */
         .dashboard-grid {
             display: grid;
-            grid-template-columns: 74px minmax(0, 1fr);
+            grid-template-columns: 68px minmax(0, 1fr);
             height: 100%;
             min-height: 0;
             overflow: hidden;
@@ -302,16 +350,16 @@
         }
 
         .sidebar {
-            border-right: 1px solid rgba(0,0,0,0.05);
-            background: rgba(var(--glass-white),0.96);
+            border-right: 1px solid var(--border);
+            background: #ffffff;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
             overflow-x: hidden;
             scrollbar-width: none;
             -ms-overflow-style: none;
-            width: 74px;
-            transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 68px;
+            transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             z-index: 25;
             white-space: nowrap;
@@ -322,21 +370,23 @@
         }
 
         .sidebar:hover {
-            width: 240px;
-            box-shadow: 4px 0 24px rgba(24,20,40,0.08);
+            width: 230px;
+            box-shadow: 4px 0 20px rgba(15, 23, 42, 0.06);
         }
 
         .sidebar-inner {
-            padding: 16px 10px;
-            width: 240px;
+            padding: 12px 8px;
+            width: 230px;
+            box-sizing: border-box;
         }
 
         .sidebar-label {
             font-size: 0.65rem;
             text-transform: uppercase;
-            letter-spacing: 0.14em;
-            color: var(--muted);
-            margin: 0 8px 10px;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+            color: var(--subtle);
+            margin: 10px 8px 6px;
             opacity: 0;
             transition: opacity 0.2s ease;
         }
@@ -347,37 +397,44 @@
 
         .nav-stack {
             display: grid;
-            gap: 8px;
+            gap: 4px;
         }
 
         .tab-btn {
             width: 100%;
-            min-height: 46px;
-            padding: 8px 10px;
+            min-height: 42px;
+            height: 42px;
+            padding: 6px 12px;
             border: 0;
             border-radius: 14px;
             background: transparent;
-            color: var(--muted);
+            color: #6e6a84;
             display: flex;
             align-items: center;
             gap: 12px;
             text-align: left;
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.84rem;
             cursor: pointer;
             overflow: hidden;
+            transition: all 0.15s ease;
+        }
+
+        .tab-btn:hover {
+            background: rgba(90, 31, 224, 0.05);
+            color: var(--ink);
         }
 
         .tab-btn .material-symbols-outlined {
-            width: 34px;
-            height: 34px;
-            min-width: 34px;
-            border-radius: 10px;
-            background: rgba(var(--glass-white),0.62);
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            border-radius: 8px;
+            background: transparent;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            color: var(--primary);
+            color: inherit;
             font-size: 20px;
         }
 
@@ -400,16 +457,18 @@
         }
 
         .tab-btn.active {
-            background: linear-gradient(180deg, rgba(var(--glass-white),0.92), rgba(239,232,255,0.84));
-            color: var(--ink);
-            box-shadow: var(--shadow-soft);
+            background: rgba(90, 31, 224, 0.1);
+            color: #5a1fe0;
+            font-weight: 700;
+            box-shadow: none;
         }
 
         .sidebar-note {
-            margin-top: 20px;
-            padding: 16px;
-            border-radius: 16px;
-            background: linear-gradient(180deg, rgba(var(--glass-white),0.74), rgba(244,240,255,0.64));
+            margin-top: 16px;
+            padding: 14px;
+            border-radius: 14px;
+            background: rgba(90, 31, 224, 0.04);
+            border: 1px solid var(--border);
             opacity: 0;
             transition: opacity 0.2s ease;
             pointer-events: none;
@@ -419,29 +478,30 @@
             opacity: 1;
             pointer-events: auto;
         }
-            border: 1px solid rgba(var(--glass-white),0.68);
-        }
 
         .sidebar-note strong {
             display: block;
-            font-family: "Sora", sans-serif;
-            margin-bottom: 6px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 4px;
         }
 
         .sidebar-note p {
             margin: 0;
             color: var(--muted);
-            font-size: 0.76rem;
-            line-height: 1.35;
+            font-size: 0.72rem;
+            line-height: 1.4;
         }
 
         .main-panel {
-            padding: 18px 22px;
+            padding: 20px 24px;
             overflow-y: auto;
-            background: rgba(var(--glass-white),0.2);
+            background: var(--bg);
             display: flex;
             flex-direction: column;
-            gap: 18px;
+            gap: 16px;
             height: 100%; 
             min-height: 0;
         }
@@ -449,63 +509,76 @@
         .hero-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 16px;
+            gap: 14px;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 16px;
+            gap: 14px;
         }
 
         .chart-grid {
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-            gap: 18px;
+            gap: 14px;
+        }
+
+        /* (2026-07-13) Soft cards and panels from images 3 & 4; was grey boxy cards */
+        .chart-card,
+        .panel-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
+            padding: 22px;
         }
 
         .chart-card {
-            padding: 24px;
             display: grid;
-            gap: 18px;
+            gap: 16px;
         }
 
         .chart-title {
             margin: 0;
             font-family: "Sora", sans-serif;
-            font-size: 1.15rem;
-            letter-spacing: -0.04em;
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--ink);
         }
 
         .chart-copy {
-            margin: 6px 0 0;
+            margin: 3px 0 0;
             color: var(--muted);
-            font-size: 0.88rem;
+            font-size: 0.78rem;
+            line-height: 1.4;
         }
 
         .role-chart-wrap {
             display: grid;
-            grid-template-columns: 180px minmax(0, 1fr);
+            grid-template-columns: 170px minmax(0, 1fr);
             gap: 18px;
             align-items: center;
         }
 
         .role-chart {
-            width: 180px;
-            height: 180px;
+            width: 170px;
+            height: 170px;
             border-radius: 50%;
-            background: conic-gradient(var(--primary) 0deg 220deg, #ff7a90 220deg 310deg, #c7b8ff 310deg 360deg);
+            background: conic-gradient(#1e40af 0deg 220deg, #38bdf8 220deg 310deg, #cbd5e1 310deg 360deg);
             position: relative;
-            box-shadow: inset 0 0 0 1px rgba(var(--glass-white),0.78), 0 18px 36px rgba(90,31,224,0.1);
+            border: 1px solid var(--border);
+            box-shadow: none;
         }
 
         .role-chart::after {
             content: "";
             position: absolute;
-            inset: 28px;
+            inset: 26px;
             border-radius: 50%;
-            background: rgba(var(--glass-white),0.96);
-            box-shadow: inset 0 0 0 1px rgba(15,23,42,0.04);
+            background: #ffffff;
+            box-shadow: inset 0 0 0 1px var(--border);
         }
 
         .role-chart-center {
@@ -520,12 +593,15 @@
         .role-chart-center strong {
             display: block;
             font-family: "Sora", sans-serif;
-            font-size: 1rem;
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--ink);
+            letter-spacing: -0.02em;
         }
 
         .legend-list {
             display: grid;
-            gap: 12px;
+            gap: 8px;
         }
 
         .legend-item {
@@ -533,196 +609,207 @@
             align-items: center;
             justify-content: space-between;
             gap: 12px;
-            padding: 10px 12px;
-            border-radius: 16px;
-            background: rgba(var(--glass-white),0.66);
-            border: 1px solid rgba(var(--glass-white),0.74);
+            padding: 8px 14px;
+            border-radius: 12px;
+            background: rgba(90, 31, 224, 0.03);
+            border: 1px solid var(--border-subtle);
+            font-size: 0.82rem;
+            font-weight: 600;
         }
 
         .legend-meta {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             min-width: 0;
         }
 
         .legend-swatch {
-            width: 12px;
-            height: 12px;
-            border-radius: 999px;
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
             flex-shrink: 0;
         }
 
         .bar-list {
             display: grid;
-            gap: 12px;
+            gap: 10px;
         }
 
         .bar-row {
             display: grid;
-            gap: 8px;
+            gap: 6px;
         }
 
         .bar-top {
             display: flex;
             justify-content: space-between;
             gap: 12px;
-            font-size: 0.78rem;
-            font-weight: 700;
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #334155;
         }
 
         .bar-track {
             width: 100%;
-            height: 12px;
-            border-radius: 999px;
-            background: rgba(90,31,224,0.08);
+            height: 8px;
+            border-radius: 4px;
+            background: #f1f5f9;
             overflow: hidden;
+            border: 1px solid #e2e8f0;
         }
 
         .bar-fill {
             height: 100%;
             border-radius: inherit;
-            background: linear-gradient(135deg, var(--primary), #7c5cff);
+            background: #2563eb;
         }
 
         .accounts-head {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 16px;
+            gap: 14px;
             flex-wrap: wrap;
         }
 
         .danger-inline-btn {
-            min-height: 40px;
-            padding: 0 14px;
-            border-radius: 12px;
-            border: none;
-            background: var(--red-soft);
-            color: var(--red);
-            font-weight: 800;
+            min-height: 32px;
+            padding: 0 12px;
+            border-radius: 6px;
+            border: 1px solid #fecaca;
+            background: #fef2f2;
+            color: #dc2626;
+            font-weight: 700;
+            font-size: 0.78rem;
             cursor: pointer;
         }
 
         .thread-hint {
             margin: 0;
             color: var(--muted);
-            font-size: 0.8rem;
+            font-size: 0.78rem;
         }
 
         .overview-card {
-            padding: 24px;
+            padding: 22px;
             display: grid;
             grid-template-columns: minmax(0, 1fr);
             gap: 12px;
-            background:
-                radial-gradient(circle at top right, rgba(108, 215, 255, 0.24), transparent 28%),
-                radial-gradient(circle at bottom left, rgba(90,31,224,0.16), transparent 30%),
-                linear-gradient(180deg, rgba(var(--glass-white),0.92), rgba(247,243,255,0.74));
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-soft);
         }
 
         .overview-copy h2 {
-            margin: 10px 0 8px;
+            margin: 8px 0 6px;
             font-family: "Sora", sans-serif;
-            font-size: clamp(1.5rem, 2.2vw, 2.2rem);
-            letter-spacing: -0.05em;
+            font-size: clamp(1.3rem, 1.8vw, 1.7rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: var(--ink);
         }
 
         .overview-copy p {
             margin: 0;
-            max-width: 56ch;
+            max-width: 60ch;
             color: var(--muted);
-            line-height: 1.35;
+            line-height: 1.45;
+            font-size: 0.85rem;
         }
 
         .overview-tags,
         .sync-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 8px;
         }
 
         .overview-tags {
-            margin-top: 14px;
+            margin-top: 10px;
         }
 
         .capsule {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            min-height: 40px;
-            padding: 0 14px;
+            gap: 6px;
+            min-height: 26px;
+            padding: 0 10px;
             border-radius: 999px;
-            background: rgba(var(--glass-white),0.74);
-            border: 1px solid rgba(var(--glass-white),0.74);
-            color: var(--ink);
-            font-size: 0.76rem;
-            font-weight: 700;
+            background: rgba(90, 31, 224, 0.08);
+            border: 1px solid rgba(90, 31, 224, 0.12);
+            color: #5a1fe0;
+            font-size: 0.68rem;
+            font-weight: 800;
         }
 
         .overview-side {
             display: grid;
-            gap: 12px;
+            gap: 10px;
             align-content: start;
         }
 
         .sync-card {
-            padding: 18px;
-            border-radius: 22px;
-            background: rgba(var(--glass-white),0.66);
-            border: 1px solid rgba(var(--glass-white),0.72);
+            padding: 14px;
+            border-radius: 6px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
         }
 
         .sync-card strong {
             display: block;
-            margin-bottom: 6px;
-            font-family: "Sora", sans-serif;
-            letter-spacing: -0.03em;
+            margin-bottom: 4px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #0f172a;
         }
 
         .sync-card p {
-            margin: 0 0 12px;
+            margin: 0 0 10px;
             color: var(--muted);
-            font-size: 0.8rem;
-            line-height: 1.55;
+            font-size: 0.76rem;
+            line-height: 1.45;
         }
 
-        .metric-card,
-        .panel-card {
-            background: linear-gradient(180deg, rgba(var(--glass-white),0.86), rgba(var(--glass-white),0.64));
-            border: 1px solid rgba(var(--glass-white),0.74);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-soft);
-            backdrop-filter: blur(20px);
-        }
-
+        /* (2026-07-13) Metric cards from image 4; was high-density corporate tiles */
         .metric-card {
-            padding: 10px 12px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 18px 22px;
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .metric-label {
             color: var(--muted);
-            font-size: 0.66rem;
+            font-size: 0.68rem;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.14em;
-            margin-bottom: 8px;
+            letter-spacing: 0.08em;
+            margin-bottom: 6px;
         }
 
         .metric-value {
             font-family: "Sora", sans-serif;
-            font-size: 1.45rem;
-            letter-spacing: -0.05em;
-            line-height: 1.05;
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: var(--ink);
+            letter-spacing: -0.03em;
+            line-height: 1.1;
         }
 
         .metric-sub {
             color: var(--muted);
-            font-size: 0.78rem;
-            margin-top: 4px;
-        }
-
-        .panel-card {
-            padding: 16px;
+            font-size: 0.74rem;
+            margin-top: 6px;
+            font-weight: 500;
         }
 
         .section-head {
@@ -730,41 +817,45 @@
             justify-content: space-between;
             align-items: center;
             gap: 12px;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
         .section-head h2 {
             margin: 0;
-            font-family: "Sora", sans-serif;
-            font-size: 1rem;
-            letter-spacing: -0.04em;
+            font-family: inherit;
+            font-size: 0.98rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: #0f172a;
         }
 
         .section-head p {
-            margin: 6px 0 0;
+            margin: 3px 0 0;
             color: var(--muted);
-            font-size: 0.8rem;
+            font-size: 0.78rem;
         }
 
         .section-actions {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
         .eyebrow {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            padding: 5px 9px;
-            border-radius: 999px;
-            background: rgba(90,31,224,0.08);
-            color: var(--primary);
-            font-size: 0.68rem;
-            font-weight: 700;
+            gap: 5px;
+            padding: 3px 9px;
+            border-radius: 6px;
+            background: rgba(90, 31, 224, 0.08);
+            color: #5a1fe0;
+            border: 1px solid rgba(90, 31, 224, 0.12);
+            font-size: 0.65rem;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.12em;
+            letter-spacing: 0.07em;
+            margin-bottom: 6px;
         }
 
         .composer-grid {
@@ -876,27 +967,29 @@
             background: var(--red-soft);
         }
 
+        /* (2026-07-13) Enterprise corporate inputs & tables; was glass pastel */
         .glass-input,
         .glass-textarea {
             width: 100%;
-            border: 1px solid rgba(var(--glass-white),0.86);
-            background: rgba(var(--glass-white),0.72);
-            border-radius: 15px;
-            padding: 11px 13px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            border-radius: 6px;
+            padding: 8px 12px;
             outline: none;
             font: inherit;
             color: var(--ink);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            transition: border-color 0.15s, box-shadow 0.15s;
         }
 
         .glass-input:focus,
         .glass-textarea:focus {
-            border-color: rgba(90,31,224,0.3);
-            box-shadow: 0 0 0 4px rgba(90,31,224,0.08);
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
         }
 
         .glass-textarea {
-            min-height: 112px;
+            min-height: 100px;
             resize: vertical;
         }
 
@@ -907,7 +1000,7 @@
 
         .table-list {
             display: grid;
-            gap: 12px;
+            gap: 8px;
         }
 
         .table-row {
@@ -915,22 +1008,28 @@
             grid-template-columns: minmax(0, 2fr) 1fr 1fr auto;
             gap: 12px;
             align-items: center;
-            padding: 13px 14px;
-            border-radius: 16px;
-            background: rgba(var(--glass-white),0.76);
-            border: 1px solid rgba(var(--glass-white),0.74);
+            padding: 10px 14px;
+            border-radius: 6px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            font-size: 0.82rem;
+            transition: background 0.12s;
+        }
+
+        .table-row:hover {
+            background: #f8fafc;
         }
 
         .management-grid {
             display: grid;
             grid-template-columns: minmax(300px, 0.95fr) minmax(0, 1.25fr);
-            gap: 18px;
+            gap: 16px;
             align-items: start;
         }
 
         .users-table {
             display: grid;
-            gap: 10px;
+            gap: 8px;
         }
 
         /* (2026-07-13) Maximize space for User Directory; was cramped container */
@@ -944,7 +1043,7 @@
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
-            padding: 22px 24px;
+            padding: 20px;
         }
         #sec-users .users-table {
             flex: 1;
@@ -957,6 +1056,133 @@
             grid-template-columns: minmax(220px, 1.5fr) 130px minmax(220px, 1.8fr) 56px;
         }
 
+        /* (2026-07-13) Soft lilac styling for Digital Vault cards; was rigid grey */
+        #sec-vault {
+            width: 100%;
+            height: 100%;
+        }
+        #sec-vault .panel-card {
+            width: 100%;
+            min-height: calc(100vh - 130px);
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+            padding: 22px;
+            border-radius: var(--radius-lg);
+            background: #ffffff;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-soft);
+        }
+        .vault-evidence-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 18px;
+            margin-top: 18px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: calc(100vh - 250px);
+            padding-right: 4px;
+            padding-bottom: 24px;
+        }
+        .vault-evidence-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 6px 20px rgba(90, 31, 224, 0.04);
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .vault-evidence-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 32px rgba(90, 31, 224, 0.09);
+            border-color: rgba(90, 31, 224, 0.22);
+        }
+        .vault-media-preview-wrap {
+            width: 100%;
+            height: 180px;
+            background: #0f172a;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .vault-media-preview-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.25s ease;
+        }
+        .vault-evidence-card:hover .vault-media-preview-wrap img {
+            transform: scale(1.05);
+        }
+        .vault-media-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(15, 23, 42, 0.72);
+            color: #ffffff;
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 999px;
+            backdrop-filter: blur(6px);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .vault-evidence-body {
+            padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+        .vault-student-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .vault-student-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+        .vault-actions-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: auto;
+            padding-top: 10px;
+            border-top: 1px solid var(--border-subtle);
+        }
+        .vault-filter-chip {
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .vault-filter-chip:hover,
+        .vault-filter-chip.active {
+            background: #5a1fe0 !important;
+            color: #ffffff !important;
+            border-color: #5a1fe0 !important;
+            box-shadow: 0 4px 12px rgba(90, 31, 224, 0.25);
+        }
+
         .users-table-head,
         .user-table-row {
             display: grid;
@@ -966,19 +1192,29 @@
         }
 
         .users-table-head {
-            padding: 0 14px 8px;
+            padding: 0 14px 6px;
             color: var(--muted);
             font-size: 0.68rem;
-            font-weight: 800;
-            letter-spacing: 0.12em;
+            font-weight: 700;
+            letter-spacing: 0.06em;
             text-transform: uppercase;
         }
 
+        /* (2026-07-13) Soft lilac user directory rows from images 3 & 4; was square grey */
         .user-table-row {
-            padding: 14px;
-            border-radius: 16px;
-            background: rgba(var(--glass-white),0.82);
-            border: 1px solid rgba(90,31,224,0.08);
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            font-size: 0.82rem;
+            box-shadow: 0 2px 8px rgba(90, 31, 224, 0.02);
+            transition: all 0.15s ease;
+        }
+
+        .user-table-row:hover {
+            background: #fdfcff;
+            border-color: rgba(90, 31, 224, 0.2);
+            box-shadow: 0 4px 14px rgba(90, 31, 224, 0.05);
         }
 
         .user-table-main {
@@ -992,58 +1228,60 @@
         }
 
         .icon-ghost-btn {
-            width: 38px;
-            height: 38px;
-            border-radius: 12px;
-            border: 1px solid rgba(90,31,224,0.12);
-            background: rgba(248,245,255,0.9);
-            color: var(--primary);
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: #475569;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+            transition: all 0.15s ease;
         }
 
         .icon-ghost-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-soft);
-            background: rgba(241,235,255,0.96);
+            background: #f1f5f9;
+            color: var(--ink);
+            border-color: #cbd5e1;
         }
 
         .row-action-menu {
             position: absolute;
-            top: calc(100% + 8px);
+            top: calc(100% + 4px);
             right: 0;
             min-width: 160px;
-            padding: 8px;
-            border-radius: 16px;
-            background: rgba(var(--glass-white),0.98);
-            border: 1px solid rgba(90,31,224,0.1);
-            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+            padding: 4px;
+            border-radius: 6px;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-elevated);
             display: grid;
-            gap: 6px;
+            gap: 2px;
             z-index: 30;
         }
 
         .row-action-item {
-            min-height: 40px;
-            padding: 0 12px;
+            min-height: 32px;
+            padding: 0 10px;
             border: 0;
-            border-radius: 12px;
+            border-radius: 4px;
             background: transparent;
-            color: var(--ink);
+            color: var(--ink-secondary);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             cursor: pointer;
-            font-weight: 700;
-            font-size: 0.82rem;
+            font-weight: 500;
+            font-size: 0.8rem;
             text-align: left;
+            transition: background 0.12s;
         }
 
         .row-action-item:hover {
-            background: rgba(90,31,224,0.06);
+            background: #f1f5f9;
+            color: var(--ink);
         }
 
         .row-action-item.delete {
@@ -1053,8 +1291,8 @@
         .modal-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(15, 23, 42, 0.38);
-            backdrop-filter: blur(10px);
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(4px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -1070,10 +1308,10 @@
             width: min(760px, 100%);
             max-height: min(88vh, 920px);
             overflow-y: auto;
-            background: rgba(var(--glass-white),0.98);
-            border: 1px solid rgba(var(--glass-white),0.9);
-            border-radius: 28px;
-            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.22);
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow-elevated);
             padding: 20px;
         }
 
@@ -1082,48 +1320,54 @@
             justify-content: space-between;
             align-items: flex-start;
             gap: 14px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
 
         .modal-close-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 14px;
-            border: 1px solid rgba(90,31,224,0.1);
-            background: rgba(248,245,255,0.92);
-            color: var(--primary);
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: #64748b;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             flex-shrink: 0;
+            transition: all 0.15s;
+        }
+
+        .modal-close-btn:hover {
+            background: #f1f5f9;
+            color: var(--ink);
         }
 
         .management-list {
             display: grid;
-            gap: 12px;
+            gap: 8px;
             max-height: 72vh;
             overflow-y: auto;
             padding-right: 4px;
         }
 
         .management-card {
-            padding: 13px 14px;
-            border-radius: 16px;
-            border: 1px solid rgba(var(--glass-white),0.74);
-            background: rgba(var(--glass-white),0.78);
+            padding: 12px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: #ffffff;
             cursor: pointer;
-            transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+            transition: all 0.15s ease;
         }
 
         .management-card:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-soft);
+            background: #f8fafc;
+            border-color: #cbd5e1;
         }
 
         .management-card.active {
-            border-color: rgba(90,31,224,0.26);
-            box-shadow: 0 0 0 4px rgba(90,31,224,0.08);
+            border-color: #2563eb;
+            background: #eff6ff;
         }
 
         .management-card-top,
@@ -1145,57 +1389,66 @@
             justify-content: space-between;
         }
 
-        /* (2026-07-13) Set red avatar for guardian, purple student; was purple */
+        /* (2026-07-13) Soft round role avatars matching images 3 & 4; was square 6px */
         .management-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 16px;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-weight: 800;
+            font-weight: 700;
             color: #fff;
-            background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-            box-shadow: 0 10px 20px rgba(90,31,224,0.16);
+            background: #1e40af;
             flex-shrink: 0;
             overflow: hidden;
+            font-size: 0.76rem;
         }
 
+        /* (2026-07-13) Role avatar colors: student purple, parent red, staff blue */
         .management-avatar.student {
-            background: linear-gradient(135deg, #7c3aed, #5a1fe0) !important;
+            background: #7c3aed !important;
             color: #ffffff !important;
-            border: 2px solid #7c3aed !important;
-            box-shadow: 0 4px 12px rgba(90,31,224,0.2) !important;
+            border: 1px solid #6d28d9 !important;
+            box-shadow: none !important;
         }
 
         .management-avatar.guardian {
-            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+            background: #dc2626 !important;
             color: #ffffff !important;
-            border: 2px solid #ef4444 !important;
-            box-shadow: 0 4px 12px rgba(220,38,38,0.25) !important;
+            border: 1px solid #b91c1c !important;
+            box-shadow: none !important;
+        }
+
+        .management-avatar.staff {
+            background: #2563eb !important;
+            color: #ffffff !important;
+            border: 1px solid #1d4ed8 !important;
+            box-shadow: none !important;
         }
 
         .management-meta {
             display: grid;
-            gap: 10px;
+            gap: 8px;
         }
 
+        /* (2026-07-13) Soft pill shape for role badges; was rectangular 4px */
         .role-pill {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-height: 28px;
-            padding: 0 12px;
+            min-height: 20px;
+            padding: 2px 9px;
             border-radius: 999px;
-            font-size: 0.64rem;
+            font-size: 0.62rem;
             font-weight: 800;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.04em;
             text-transform: uppercase;
         }
 
-        /* (2026-07-13) Red guardian and purple student chips; was amber guardian */
+        /* (2026-07-13) Role pills: student purple, parent red, staff blue */
         .role-pill.student {
-            color: #5a1fe0;
+            color: #7c3aed;
             background: #f3e8ff;
             border: 1px solid #d8b4fe;
         }
@@ -1207,27 +1460,27 @@
         }
 
         .role-pill.staff {
-            color: #0369a1;
-            background: #e0f2fe;
-            border: 1px solid #bae6fd;
+            color: #2563eb;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
         }
 
         .role-pill.admin {
-            color: #047857;
-            background: #d1fae5;
-            border: 1px solid #a7f3d0;
+            color: #475569;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
         }
 
         .editor-grid {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 12px;
-            margin-top: 14px;
+            margin-top: 12px;
         }
 
         .field-block {
             display: grid;
-            gap: 8px;
+            gap: 6px;
         }
 
         .field-block.full {
@@ -1235,27 +1488,28 @@
         }
 
         .field-block label {
-            font-size: 0.66rem;
-            font-weight: 800;
+            font-size: 0.68rem;
+            font-weight: 700;
             color: var(--muted);
-            letter-spacing: 0.08em;
+            letter-spacing: 0.06em;
             text-transform: uppercase;
         }
 
         .editor-note {
-            margin: 14px 0 0;
-            padding: 11px 13px;
-            border-radius: 15px;
-            background: var(--bg);
+            margin: 12px 0 0;
+            padding: 10px 12px;
+            border-radius: 6px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
             color: var(--muted);
-            font-size: 0.8rem;
+            font-size: 0.78rem;
             line-height: 1.45;
         }
 
         .relation-list {
             display: grid;
-            gap: 10px;
-            margin-top: 14px;
+            gap: 8px;
+            margin-top: 12px;
         }
 
         .relation-chip {
@@ -1263,77 +1517,66 @@
             justify-content: space-between;
             align-items: center;
             gap: 10px;
-            padding: 10px 12px;
-            border-radius: 16px;
-            background: rgba(248,250,252,0.96);
-            border: 1px solid rgba(226,232,240,0.9);
+            padding: 8px 12px;
+            border-radius: 6px;
+            background: #f8fafc;
+            border: 1px solid var(--border);
         }
 
         .relation-status {
-            font-size: 0.64rem;
-            font-weight: 800;
-            letter-spacing: 0.08em;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
             text-transform: uppercase;
             color: var(--muted);
         }
 
         .log-time {
             color: var(--muted);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
+            font-variant-numeric: tabular-nums;
         }
 
         .row-title {
-            font-weight: 700;
+            font-weight: 600;
             line-height: 1.35;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
+            color: #0f172a;
         }
 
         .row-sub {
             color: var(--muted);
-            font-size: 0.76rem;
-            margin-top: 4px;
+            font-size: 0.75rem;
+            margin-top: 2px;
             line-height: 1.35;
-        }
-
-        .chart-title {
-            margin: 0;
-            font-family: "Sora", sans-serif;
-            font-size: 1rem;
-            letter-spacing: -0.03em;
-            line-height: 1.2;
-        }
-
-        .chart-copy {
-            margin: 6px 0 0;
-            color: var(--muted);
-            font-size: 0.78rem;
-            line-height: 1.4;
-        }
-
-        .table-row {
-            padding: 2px 0;
-            align-items: start;
         }
 
         .search-input {
             min-width: 180px;
             max-width: 280px;
-            font-size: 0.88rem;
+            font-size: 0.84rem;
         }
 
         .meta-pair {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 10px;
+            gap: 6px;
+            margin-top: 8px;
         }
 
         .mini-chip {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            min-height: 28px;
-            padding: 0 10px;
+            gap: 5px;
+            min-height: 24px;
+            padding: 0 8px;
+            border-radius: 4px;
+            background: #f1f5f9;
+            border: 1px solid var(--border);
+            color: #334155;
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
             border-radius: 999px;
             background: rgba(90,31,224,0.08);
             color: var(--primary);
@@ -1550,13 +1793,13 @@
             flex-shrink: 0;
         }
 
-        /* (2026-07-13) Red guardian & purple student avatars; was generic purple */
+        /* (2026-07-13) Role thread avatars: student, guardian, staff; was 2 roles */
         .thread-avatar {
             width: 38px;
             height: 38px;
             border-radius: 50%;
             background: #f3e8ff;
-            color: #5a1fe0;
+            color: #7c3aed;
             border: 2px solid #d8b4fe;
             display: flex;
             align-items: center;
@@ -1564,11 +1807,12 @@
             font-weight: 700;
             flex-shrink: 0;
             overflow: hidden;
+            position: relative;
         }
 
         .thread-avatar.student {
             background: #f3e8ff !important;
-            color: #5a1fe0 !important;
+            color: #7c3aed !important;
             border: 2px solid #7c3aed !important;
         }
 
@@ -1576,6 +1820,12 @@
             background: #fee2e2 !important;
             color: #dc2626 !important;
             border: 2px solid #ef4444 !important;
+        }
+
+        .thread-avatar.staff {
+            background: #eff6ff !important;
+            color: #2563eb !important;
+            border: 2px solid #3b82f6 !important;
         }
 
         .thread-info {
@@ -1628,32 +1878,80 @@
             flex-shrink: 0;
         }
 
+        /* (2026-07-13) Fit content bubble rows for Messenger layout; was full width */
+        .admin-msg-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            margin-bottom: 3px;
+            max-width: 78%;
+            width: fit-content;
+        }
+        .admin-msg-row.sent {
+            align-self: flex-end;
+            margin-left: auto;
+            flex-direction: row-reverse;
+        }
+        .admin-msg-row.received {
+            align-self: flex-start;
+            margin-right: auto;
+        }
+        .admin-msg-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-bottom: 2px;
+        }
         .admin-msg {
-            max-width: 80%;
-            padding: 10px 13px;
-            border-radius: 15px;
-            font-size: 0.86rem;
-            line-height: 1.4;
+            max-width: 100%;
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 0.92rem;
+            line-height: 1.44;
+            word-break: break-word;
             position: relative;
-            margin-bottom: 4px;
         }
 
         .admin-msg.received {
             align-self: flex-start;
-            background: white;
-            color: #1e293b;
+            background: #ffffff;
+            color: #050505;
             border: 1px solid rgba(0,0,0,0.05);
             border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
 
         .admin-msg.sent {
             align-self: flex-end;
-            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            background: linear-gradient(135deg, #0084ff 0%, #0066fe 100%);
             color: white;
             border-bottom-right-radius: 4px;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            box-shadow: 0 2px 8px rgba(0, 132, 255, 0.25);
         }
+
+        /* (2026-07-13) Messenger grouped bubble radius; was uniform 18px */
+        .admin-msg.sent.bubble-first { border-radius: 18px 18px 4px 18px !important; }
+        .admin-msg.sent.bubble-middle { border-radius: 18px 4px 4px 18px !important; }
+        .admin-msg.sent.bubble-last { border-radius: 18px 4px 18px 18px !important; }
+        .admin-msg.sent.bubble-single { border-radius: 18px 18px 4px 18px !important; }
+
+        .admin-msg.received.bubble-first { border-radius: 18px 18px 18px 4px !important; }
+        .admin-msg.received.bubble-middle { border-radius: 4px 18px 18px 4px !important; }
+        .admin-msg.received.bubble-last { border-radius: 4px 18px 18px 18px !important; }
+        .admin-msg.received.bubble-single { border-radius: 18px 18px 18px 4px !important; }
+
+        .admin-msg-row.group-first,
+        .admin-msg-row.group-middle { margin-bottom: 2px !important; }
+        .admin-msg-row.group-last,
+        .admin-msg-row.group-single { margin-bottom: 8px !important; }
 
         .msg-time {
             font-size: 0.62rem;
@@ -1664,10 +1962,37 @@
 
         .admin-msg.sent .msg-time { 
             text-align: right; 
-            color: rgba(var(--glass-white),0.8);
+            color: rgba(255,255,255,0.85);
         }
 
-        /* (2026-07-13) Full-height messages container; was 68vh fixed shell */
+        .msg-receipt-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.68rem;
+            color: #64748b;
+            margin-top: 3px;
+            margin-bottom: 4px;
+        }
+        .msg-receipt-row.sent {
+            justify-content: flex-end;
+        }
+        .msg-receipt-row.received {
+            justify-content: flex-start;
+            padding-left: 36px;
+        }
+        .receipt-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.65rem;
+            font-weight: 700;
+        }
+        .receipt-pill.seen {
+            color: #0084ff;
+        }
+
+        /* (2026-07-13) Soft lilac messages shell from images 3 & 4; was corporate box */
         .messages-shell {
             padding: 0 !important;
             height: calc(100vh - 120px);
@@ -1675,35 +2000,39 @@
             display: grid;
             grid-template-columns: 340px minmax(0, 1fr);
             overflow: hidden;
-            border: 1px solid rgba(90,31,224,0.08);
-            box-shadow: 0 22px 50px rgba(49, 30, 105, 0.08);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: 0 12px 32px rgba(90, 31, 224, 0.05);
+            background: #ffffff;
         }
 
         .messages-sidebar {
-            border-right: 1px solid rgba(15,23,42,0.06);
+            border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            background: linear-gradient(180deg, rgba(var(--glass-white),0.92), rgba(248,245,255,0.82));
+            background: #ffffff;
             height: 100%;
             min-height: 0;
         }
 
         .messages-sidebar-head {
-            padding: 18px 18px 16px;
-            border-bottom: 1px solid rgba(15,23,42,0.06);
-            background: rgba(var(--glass-white),0.94);
+            padding: 18px 20px 14px;
+            border-bottom: 1px solid var(--border);
+            background: #ffffff;
             flex-shrink: 0;
         }
 
         .messages-sidebar-head h3 {
             margin: 0;
-            font-family: "Sora", sans-serif;
-            font-size: 1rem;
-            letter-spacing: -0.03em;
+            font-family: 'Sora', sans-serif;
+            font-size: 1.08rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--ink);
         }
 
         .thread-hint {
-            margin: 6px 0 0;
+            margin: 4px 0 0;
             color: var(--muted);
             font-size: 0.75rem;
             line-height: 1.4;
@@ -1719,7 +2048,7 @@
         .messages-main {
             display: grid;
             grid-template-rows: auto 1fr auto;
-            background: #fcfcff;
+            background: #f8fafc;
             height: 100%;
             min-height: 0;
             overflow: hidden;
@@ -1727,15 +2056,15 @@
 
         /* (2026-07-13) Modern dispatch messaging styles; was centered vertical header */
         .messages-header {
-            padding: 14px 22px;
-            border-bottom: 1px solid rgba(15,23,42,0.08);
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 16px;
             background: #ffffff;
             z-index: 10;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+            box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
         }
 
         .messages-header-left {
@@ -1795,13 +2124,14 @@
             margin-top: 10px;
         }
 
+        /* (2026-07-13) Soft rounded search input from images 3 & 4; was square grey */
         .messages-search-box input {
             width: 100%;
-            padding: 8px 12px 8px 34px;
+            padding: 8px 14px 8px 36px;
             font-size: 0.82rem;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: #ffffff;
             color: var(--ink);
             outline: none;
             transition: all 0.2s;
@@ -1822,12 +2152,13 @@
             padding-bottom: 2px;
         }
 
+        /* (2026-07-13) Soft rounded pills for chat filters; was rectangular border */
         .msg-filter-chip {
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 999px;
             font-size: 0.72rem;
             font-weight: 700;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border);
             background: #ffffff;
             color: var(--muted);
             cursor: pointer;
@@ -1840,6 +2171,18 @@
             background: var(--primary);
             color: white;
             border-color: var(--primary);
+        }
+
+        .msg-filter-chip[data-msg-filter="unread"] {
+            background: #f3e8ff;
+            color: #7c3aed;
+            border-color: #e9d5ff;
+        }
+        .msg-filter-chip[data-msg-filter="unread"]:hover,
+        .msg-filter-chip[data-msg-filter="unread"].active {
+            background: #7c3aed !important;
+            color: #ffffff !important;
+            border-color: #7c3aed !important;
         }
 
         /* (2026-07-13) Red guardian & purple student filter chips; was generic */
@@ -1951,12 +2294,13 @@
             color: rgba(255,255,255,0.85);
         }
 
+        /* (2026-07-13) Set 2px gap for message grouping; was gap 8px */
         .messages-body {
             padding: 20px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 2px;
             background: linear-gradient(180deg, #fcfcff 0%, #f7f7fb 100%);
             min-height: 0;
         }
@@ -1992,51 +2336,95 @@
             border-radius: 12px;
         }
 
-        @media (max-width: 980px) {
+        /* (2026-07-13) Responsive mobile chat slider & Messenger thread styling; was vertical stack */
+        @media (max-width: 900px) {
             .messages-shell {
-                grid-template-columns: 1fr;
-                grid-template-rows: 290px minmax(0, 1fr);
-                min-height: 76vh;
-                height: 76vh;
+                grid-template-columns: 100% !important;
+                grid-template-rows: 1fr !important;
+                height: calc(100vh - 100px) !important;
+                min-height: 0 !important;
+                position: relative;
             }
-
             .messages-sidebar {
-                border-right: 0;
-                border-bottom: 1px solid rgba(15,23,42,0.06);
+                width: 100% !important;
+                height: 100% !important;
+                display: flex !important;
+            }
+            .messages-main {
+                display: none !important;
+                width: 100% !important;
+                height: 100% !important;
+            }
+            .messages-shell.mobile-chat-active .messages-sidebar {
+                display: none !important;
+            }
+            .messages-shell.mobile-chat-active .messages-main {
+                display: flex !important;
+                flex-direction: column !important;
+            }
+            .mobile-chat-back-btn {
+                display: inline-flex !important;
             }
         }
 
+        .mobile-chat-back-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: #f0f2f5;
+            color: #0f172a;
+            cursor: pointer;
+            flex-shrink: 0;
+            margin-right: 6px;
+            transition: background 0.15s;
+        }
+        .mobile-chat-back-btn:hover {
+            background: #e4e6eb;
+        }
+
+        /* (2026-07-13) Soft rounded thread items with purple active bar; was grey */
         .thread-item {
             padding: 10px 12px;
             display: flex;
             align-items: center;
             gap: 12px;
             cursor: pointer;
-            transition: all 0.2s;
-            border-left: 4px solid transparent;
-            border-radius: 12px;
-            margin-bottom: 3px;
+            transition: all 0.15s ease;
+            border-radius: 16px;
+            margin: 3px 6px;
+            position: relative;
+            border-left: 3px solid transparent;
         }
 
         .thread-item:hover {
-            background: rgba(241, 245, 249, 0.8);
+            background: rgba(90, 31, 224, 0.04);
         }
 
         .thread-item.active {
-            background: rgba(90, 31, 224, 0.08);
-            border-left-color: var(--primary);
+            background: #f5f3ff;
+            border-left: 3px solid #5a1fe0;
         }
 
-        .thread-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .thread-item.unread .thread-name {
+            font-weight: 800;
+            color: #000;
+        }
+
+        .thread-item.unread .thread-preview {
             font-weight: 700;
+            color: #0f172a;
+        }
+
+        /* (2026-07-13) Clean duplicate thread-avatar rule; was overriding student */
+        .thread-unread-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #0084ff;
             flex-shrink: 0;
         }
 
@@ -2120,14 +2508,15 @@
                     <a href="javascript:void(0)" id="adminHeaderLogo" title="Command Stats" style="cursor: pointer; display: inline-block;">
                         <img src="logo with text.png" alt="Securo" style="height: 32px; max-height: 32px; object-fit: contain; display: block;">
                     </a>
-                    <div style="border-left: 1px solid rgba(0,0,0,0.1); padding-left: 14px;">
-                        <h1 style="margin:0; font-size:1.08rem; font-family:'Sora', sans-serif; font-weight:800; color:var(--ink);">Command Center</h1>
-                        <p style="margin:0; font-size:0.75rem; color:var(--muted);">Campus safety operations & dispatch management</p>
+                    <!-- (2026-07-13) Enterprise Command Center header branding; was Sora serif -->
+                    <div style="border-left: 1px solid var(--border); padding-left: 14px;">
+                        <h1 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--ink); letter-spacing:-0.01em;">Command Center</h1>
+                        <p style="margin:1px 0 0; font-size:0.72rem; color:var(--muted); letter-spacing:0.01em;">Campus safety operations &amp; dispatch management</p>
                     </div>
                 </div>
                 <div class="topbar-actions">
                     <!-- (2026-07-13) Command Center status & logout header; was static live chip -->
-                    <div id="topbarSosAlertBadge" class="capsule" style="background:#fee2e2; border:1px solid #fca5a5; color:#b91c1c; font-weight:800; font-size:0.78rem; display:none; align-items:center; gap:6px;">
+                    <div id="topbarSosAlertBadge" class="capsule" style="background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; font-weight:700; font-size:0.75rem; border-radius:4px; padding:3px 8px; display:none; align-items:center; gap:6px;">
                         <span class="signal-dot" style="background:#dc2626; animation:pulse 1.2s infinite;"></span>
                         <span id="topbarSosCountText">0 Critical SOS</span>
                     </div>
@@ -2136,12 +2525,12 @@
                         <span>Terminal Live</span>
                     </div>
                     <a href="about.html" class="ghost-btn" style="text-decoration:none;">
-                        <span class="material-symbols-outlined">info</span>
+                        <span class="material-symbols-outlined" style="font-size:18px;">info</span>
                         <span>About Us</span>
                     </a>
-                    <!-- (2026-07-13) Remove back to app link; was index link -->
-                    <button class="action-btn" id="topbarDirectLogoutBtn" type="button" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecdd3; padding:8px 14px; border-radius:12px; font-weight:700; font-size:0.82rem; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Sign out of command center">
-                        <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
+                    <!-- (2026-07-13) Soft red rounded logout button from images 3 & 4; was square grey -->
+                    <button class="action-btn" id="topbarDirectLogoutBtn" type="button" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca; height:36px; padding:0 14px; border-radius:12px; font-weight:700; font-size:0.82rem; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Sign out of command center">
+                        <span class="material-symbols-outlined" style="font-size:17px;">logout</span>
                         <span>Log Out</span>
                     </button>
                     <div class="profile-chip" id="adminProfileChip" aria-label="Admin menu">
@@ -2195,6 +2584,12 @@
                             <button class="tab-btn" data-tab="users">
                                 <span class="material-symbols-outlined">manage_accounts</span>
                                 <span>User Directory</span>
+                            </button>
+                            <!-- (2026-07-13) Add Digital Vault tab button in sidebar; was absent -->
+                            <button class="tab-btn" data-tab="vault">
+                                <span class="material-symbols-outlined">inventory_2</span>
+                                <span>Digital Vault</span>
+                                <span id="sidebarVaultCounter" class="capsule" style="margin-left:auto; font-size:0.68rem; padding:2px 7px; background:#f3e8ff; color:#7c3aed; font-weight:800; display:none;">0</span>
                             </button>
                             <button class="tab-btn" data-tab="gad">
                                 <span class="material-symbols-outlined">campaign</span>
@@ -2479,7 +2874,8 @@
                                         <div>
                                             <h3 style="font-family:'Sora',sans-serif; font-size:1.02rem; margin:0; display:flex; align-items:center; gap:8px;">
                                                 <span>Inquiries & Chats</span>
-                                                <span id="threadCountBadge" class="capsule" style="font-size:0.7rem; padding:2px 8px; background:rgba(90,31,224,0.1); color:var(--primary); font-weight:800;">0</span>
+                                                <!-- (2026-07-13) Soft round count badge from image 3; was rectangular capsule -->
+                                                <span id="threadCountBadge" style="font-size:0.75rem; min-width:24px; height:24px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; background:#ede9fe; color:var(--primary); font-weight:800; padding:0 6px;">0</span>
                                             </h3>
                                             <p class="thread-hint" style="margin:2px 0 0; font-size:0.73rem;">Direct safety & counseling channels</p>
                                         </div>
@@ -2504,6 +2900,10 @@
                             <div class="messages-main">
                                 <div id="chatHeader" class="messages-header">
                                     <div class="messages-header-left">
+                                        <!-- (2026-07-13) Add mobile back button for thread list navigation; was absent -->
+                                        <button id="btnMobileBackToThreads" type="button" class="mobile-chat-back-btn" title="Back to conversations">
+                                            <span class="material-symbols-outlined">arrow_back</span>
+                                        </button>
                                         <div id="activeUserAvatar" class="thread-avatar" style="position:relative;">
                                             ?
                                             <span id="activeUserBeacon" style="position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%; background:#10b981; border:2px solid #fff; display:none;"></span>
@@ -2582,6 +2982,49 @@
                                     <button id="adminSendBtn" class="primary-btn" disabled style="border-radius:12px; height:46px; min-width:50px;">
                                         <span class="material-symbols-outlined">send</span>
                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- (2026-07-13) Soft rounded Digital Vault gallery section; was boxy grey -->
+                    <section class="admin-section" id="sec-vault">
+                        <div class="panel-card">
+                            <div class="card-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                                <div>
+                                    <div class="capsule" style="background:#f3e8ff; color:#7c3aed; border:1px solid #d8b4fe; font-weight:800; font-size:0.68rem; padding:3px 10px; border-radius:999px; display:inline-block; margin-bottom:6px;">DIGITAL VAULT REPOSITORY</div>
+                                    <h2 style="margin:0; font-size:1.15rem; font-weight:700; color:var(--ink); letter-spacing:-0.02em;">Student Uploaded Evidence &amp; Media</h2>
+                                    <p style="margin:2px 0 0; font-size:0.78rem; color:var(--muted);">All photos, images, and evidence media stored in the digital vault by students</p>
+                                </div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <button class="ghost-btn" id="btnRefreshVault" type="button" title="Synchronize digital vault evidence" style="border-radius:12px;">
+                                        <span class="material-symbols-outlined">sync</span>
+                                        <span>Sync Vault</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Filter & Search Bar -->
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:14px; padding:10px 16px; background:#ffffff; border:1px solid var(--border); border-radius:16px; box-shadow:0 2px 10px rgba(90,31,224,0.02);">
+                                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:240px; position:relative;">
+                                    <span class="material-symbols-outlined" style="position:absolute; left:12px; color:var(--muted); font-size:18px;">search</span>
+                                    <input type="text" id="vaultSearchInput" class="glass-input" placeholder="Search by student name, ID, or location..." style="width:100%; padding:8px 14px 8px 38px; font-size:0.82rem; background:#ffffff; border:1px solid var(--border); border-radius:999px;">
+                                </div>
+                                <div style="display:flex; align-items:center; gap:6px;">
+                                    <button class="filter-chip vault-filter-chip active" data-vault-filter="all" type="button">All Media</button>
+                                    <button class="filter-chip vault-filter-chip" data-vault-filter="image" type="button">Images</button>
+                                    <button class="filter-chip vault-filter-chip" data-vault-filter="video" type="button">Videos</button>
+                                </div>
+                                <div style="font-size:0.75rem; color:var(--muted); font-weight:600;">
+                                    Showing <strong id="vaultCountLabel" style="color:var(--ink);">0</strong> items
+                                </div>
+                            </div>
+
+                            <!-- Vault Evidence Grid -->
+                            <div class="vault-evidence-grid" id="adminVaultGrid">
+                                <div class="messages-empty" style="grid-column: 1 / -1; padding:48px 16px; text-align:center;">
+                                    <span class="material-symbols-outlined" style="font-size:44px; opacity:0.3; color:var(--muted);">photo_library</span>
+                                    <p style="margin:8px 0 0; font-size:0.88rem; font-weight:600; color:var(--muted);">No student vault media uploaded yet.</p>
                                 </div>
                             </div>
                         </div>
@@ -2866,6 +3309,62 @@
         </div>
     </div>
 
+    <!-- (2026-07-13) Add Digital Vault evidence lightbox modal; was absent -->
+    <div class="modal-overlay" id="vaultLightboxModal" aria-hidden="true">
+        <div class="modal-card" style="width:min(920px, 95vw); max-height:92vh; padding:0; overflow:hidden; display:flex; flex-direction:column; border-radius:10px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 18px; border-bottom:1px solid var(--border); background:#ffffff;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span class="material-symbols-outlined" style="color:#7c3aed; font-size:20px;">lock</span>
+                    <div>
+                        <h3 id="vaultLightboxTitle" style="margin:0; font-size:0.92rem; font-weight:700; color:var(--ink);">Student Vault Evidence</h3>
+                        <p id="vaultLightboxSubtitle" style="margin:0; font-size:0.72rem; color:var(--muted);">Digital Vault Secure Repository</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" id="closeVaultLightboxBtn" type="button" aria-label="Close image lightbox">
+                    <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+                </button>
+            </div>
+            <div style="display:grid; grid-template-columns: minmax(0, 1.8fr) minmax(260px, 1fr); max-height:calc(92vh - 58px); overflow:hidden;">
+                <div id="vaultLightboxMediaBox" style="background:#0f172a; display:flex; align-items:center; justify-content:center; padding:16px; overflow:auto; min-height:360px;">
+                    <img id="vaultLightboxImage" src="" alt="Vault evidence" style="max-width:100%; max-height:75vh; object-fit:contain; border-radius:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5);">
+                </div>
+                <div style="padding:18px; background:#ffffff; overflow-y:auto; display:flex; flex-direction:column; gap:14px; border-left:1px solid var(--border);">
+                    <div>
+                        <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:0.06em; margin-bottom:4px;">Uploader Information</div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <div class="thread-avatar student" id="vaultLightboxAvatar" style="width:34px; height:34px; font-size:0.8rem;">S</div>
+                            <div style="min-width:0;">
+                                <div id="vaultLightboxStudentName" style="font-weight:700; font-size:0.88rem; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Student Name</div>
+                                <div style="display:flex; align-items:center; gap:6px; margin-top:2px;">
+                                    <span class="role-pill student" style="font-size:0.56rem; padding:1px 5px;">STUDENT</span>
+                                    <span id="vaultLightboxStudentId" style="font-size:0.72rem; color:var(--muted); font-weight:600;">#1234567</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:0.06em; margin-bottom:4px;">Recorded Timestamp</div>
+                        <div id="vaultLightboxTime" style="font-size:0.82rem; font-weight:600; color:var(--ink);">Nov 10, 2026 • 12:00 AM</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:0.06em; margin-bottom:4px;">Location Coordinates</div>
+                        <div id="vaultLightboxLocation" style="font-size:0.8rem; color:var(--ink);">Campus Area</div>
+                    </div>
+                    <div>
+                        <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:0.06em; margin-bottom:4px;">File Metadata</div>
+                        <div id="vaultLightboxFileType" style="font-size:0.8rem; color:var(--muted);">Format: Image</div>
+                    </div>
+                    <div style="margin-top:auto; padding-top:14px; border-top:1px solid var(--border); display:flex; gap:8px;">
+                        <a id="vaultLightboxDownloadBtn" href="" download="" class="action-btn" style="flex:1; text-align:center; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:6px; background:#7c3aed; color:#ffffff; border:none; height:36px; border-radius:6px; font-weight:600; font-size:0.82rem;">
+                            <span class="material-symbols-outlined" style="font-size:18px;">download</span>
+                            <span>Download Media</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // Core utilities and offline support
         import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './utils.js';
@@ -2913,7 +3412,9 @@
             // (2026-07-13) Import admin password setter; was absent
             saveAdminUserPassword,
             // (2026-07-13) Import guardian link sync function; was absent
-            syncGuardianLinksForGuardian
+            syncGuardianLinksForGuardian,
+            // (2026-07-13) Import markThreadMessagesSeen for read receipts; was absent
+            markThreadMessagesSeen
         } from './db.js';
         import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         // (2026-07-13) Import auth credentials & password updater; was absent
@@ -3019,7 +3520,26 @@
         let selectedGadImage = "";
         let editingGadPostId = null;
         let unsubscribeAdminNotifications = null;
-        const seenAdminThreads = new Map();
+        // (2026-07-13) Persist seen threads via localStorage; was in-memory Map
+        const loadSeenAdminThreads = () => {
+            const map = new Map();
+            try {
+                const stored = JSON.parse(localStorage.getItem('securo_admin_seen_threads') || '{}');
+                Object.entries(stored).forEach(([k, v]) => map.set(k, Number(v) || 0));
+            } catch (e) {}
+            return map;
+        };
+        const seenAdminThreads = loadSeenAdminThreads();
+        const persistSeenThread = (threadId) => {
+            if (!threadId) return;
+            const now = Date.now();
+            seenAdminThreads.set(threadId, now);
+            try {
+                const obj = {};
+                seenAdminThreads.forEach((v, k) => { obj[k] = v; });
+                localStorage.setItem('securo_admin_seen_threads', JSON.stringify(obj));
+            } catch (e) {}
+        };
 
         const debounce = (callback, delay = 160) => {
             let timeoutId = null;
@@ -3140,17 +3660,31 @@
                 return;
             }
 
-            reporterStatsList.innerHTML = rows.map((entry) => `
-                <div class="table-row" style="grid-template-columns: minmax(0, 1fr) auto auto auto;">
-                    <div>
-                        <div class="row-title">${escapeHtml(entry.name)}</div>
-                        <div class="row-sub">${escapeHtml(entry.studentId ? `ID: ${entry.studentId}` : 'No ID saved')}</div>
+            // (2026-07-13) Role pills & avatars in Most Active Reporters; was unbadged
+            reporterStatsList.innerHTML = rows.map((entry) => {
+                const profile = cachedUsers.find(u => String(u.id) === String(entry.userId) || (entry.studentId && String(u.studentId) === String(entry.studentId))) || {};
+                const roleKey = profile.role || (entry.studentId ? 'student' : (profile.children ? 'guardian' : 'student'));
+                const initials = getInitials(entry.name || 'Student');
+                return `
+                <div class="table-row" style="grid-template-columns: minmax(0, 1fr) auto auto auto; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+                        <div class="management-avatar ${roleKey}" style="width:32px; height:32px; font-size:0.75rem; flex-shrink:0;">
+                            ${initials}
+                        </div>
+                        <div style="min-width:0;">
+                            <div style="display:flex; align-items:center; gap:6px;">
+                                <div class="row-title" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(entry.name)}</div>
+                                <span class="role-pill ${roleKey}" style="font-size:0.56rem; padding:1px 6px;">${roleKey.toUpperCase()}</span>
+                            </div>
+                            <div class="row-sub">${escapeHtml(entry.studentId ? `ID: ${entry.studentId}` : (roleKey === 'guardian' ? 'Guardian Account' : 'Verified Profile'))}</div>
+                        </div>
                     </div>
-                    <div><span class="mini-chip">${entry.sos} SOS</span></div>
-                    <div><span class="mini-chip">${entry.evidence} media</span></div>
-                    <div><strong>${entry.total}</strong></div>
+                    <div><span class="mini-chip" style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5;">${entry.sos} SOS</span></div>
+                    <div><span class="mini-chip" style="background:#f3e8ff; color:#7c3aed; border:1px solid #d8b4fe;">${entry.evidence} media</span></div>
+                    <div style="min-width:24px; text-align:right;"><strong style="font-size:0.95rem; color:var(--ink);">${entry.total}</strong></div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function renderGadImagePreview() {
@@ -3510,6 +4044,23 @@
             if (tab === 'reports') {
                 if (typeof renderDailyReport === 'function') renderDailyReport();
             }
+            // (2026-07-13) Auto-sync digital vault from Firestore on tab switch; was static
+            if (tab === 'vault') {
+                if (typeof getAllEmergencyPosts === 'function') {
+                    getAllEmergencyPosts().then(ep => {
+                        if (Array.isArray(ep)) {
+                            cachedEmergencyPosts = ep;
+                            saveToLocalCache();
+                        }
+                        if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
+                    }).catch(e => {
+                        console.warn("Vault sync error:", e);
+                        if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
+                    });
+                } else if (typeof renderAdminVaultGallery === 'function') {
+                    renderAdminVaultGallery();
+                }
+            }
             // (2026-07-13) Keep chat threads listening in background; was disconnected
             initAdminChat();
         };
@@ -3778,44 +4329,64 @@
                 return;
             }
 
+            // (2026-07-13) Role pills & soft styling for safety report rows; was unbadged
             const rowsHtml = filtered.map(row => {
-                let statusBadge = `<span class="status-pill active" style="font-size:0.7rem; padding:3px 9px;">${escapeHtml(row.status)}</span>`;
+                const isStaff = String(row.studentId).includes('STAFF') || String(row.studentName).includes('GAD') || row.category === 'gad';
+                const isGuardian = row.role === 'guardian' || String(row.studentName).toLowerCase().includes('parent');
+                const roleKey = isStaff ? 'staff' : (isGuardian ? 'guardian' : 'student');
+                const roleLabel = isStaff ? 'STAFF' : (isGuardian ? 'GUARDIAN' : 'STUDENT');
+
+                let statusBadge = `<span class="status-pill active" style="font-size:0.7rem; padding:3px 10px; border-radius:999px;">${escapeHtml(row.status)}</span>`;
                 if (row.status === 'ACTIVE') {
-                    statusBadge = `<span class="status-pill emergency" style="font-size:0.7rem; padding:3px 9px; animation:pulse 1.2s infinite;">${escapeHtml(row.status)}</span>`;
+                    statusBadge = `<span class="status-pill emergency" style="font-size:0.7rem; padding:3px 10px; border-radius:999px; background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-weight:700;">${escapeHtml(row.status)}</span>`;
                 } else if (row.status === 'VERIFIED') {
-                    statusBadge = `<span class="status-pill active" style="font-size:0.7rem; padding:3px 9px; background:rgba(15,155,103,0.1); color:var(--green); border:1px solid rgba(15,155,103,0.25);">${escapeHtml(row.status)}</span>`;
+                    statusBadge = `<span class="status-pill active" style="font-size:0.7rem; padding:3px 10px; border-radius:999px; background:#ecfdf5; color:#059669; border:1px solid #a7f3d0; font-weight:700;">${escapeHtml(row.status)}</span>`;
+                } else if (row.status === 'PUBLISHED') {
+                    statusBadge = `<span class="status-pill" style="font-size:0.7rem; padding:3px 10px; border-radius:999px; background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; font-weight:700;">${escapeHtml(row.status)}</span>`;
                 }
 
                 return `
-                    <tr style="border-bottom:1px solid #f1f5f9;">
-                        <td style="padding:12px 14px; font-weight:800; font-family:monospace; color:var(--primary); font-size:0.82rem;">${escapeHtml(row.reportNo)}</td>
-                        <td style="padding:12px 14px; font-weight:700; color:#334155; font-size:0.84rem;">${escapeHtml(row.studentId)}</td>
-                        <td style="padding:12px 14px; font-weight:800; color:var(--ink); font-size:0.86rem;">${escapeHtml(row.studentName)}</td>
-                        <td style="padding:12px 14px; color:#475569; font-size:0.82rem; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(row.location)}">${escapeHtml(row.location)}</td>
-                        <td style="padding:12px 14px;">${statusBadge}</td>
-                        <td style="padding:12px 14px; color:#475569; font-size:0.82rem; white-space:nowrap;">${escapeHtml(row.date)}</td>
-                        <td style="padding:12px 14px; color:#475569; font-size:0.82rem; white-space:nowrap;">${escapeHtml(row.time)}</td>
-                        <td style="padding:12px 14px; font-weight:700; color:#1e293b; font-size:0.82rem;">${escapeHtml(row.reportType)}</td>
+                    <tr style="border-bottom:1px solid rgba(90,31,224,0.06); transition:background 0.15s;" onmouseover="this.style.background='#faf9fe'" onmouseout="this.style.background='transparent'">
+                        <td style="padding:13px 16px; font-weight:800; font-family:monospace; color:#7c3aed; font-size:0.82rem;">${escapeHtml(row.reportNo)}</td>
+                        <td style="padding:13px 16px;">
+                            ${isStaff 
+                                ? `<span class="role-pill staff" style="font-size:0.62rem; padding:2px 8px;">STAFF / OFFICE</span>`
+                                : `<span style="font-weight:700; color:${roleKey === 'student' ? '#7c3aed' : '#dc2626'}; font-family:monospace; font-size:0.84rem;">${escapeHtml(row.studentId)}</span>`
+                            }
+                        </td>
+                        <td style="padding:13px 16px;">
+                            <div style="display:inline-flex; align-items:center; gap:8px;">
+                                <span style="font-weight:800; color:var(--ink); font-size:0.86rem;">${escapeHtml(row.studentName)}</span>
+                                <span class="role-pill ${roleKey}" style="font-size:0.58rem; padding:1px 6px;">${roleLabel}</span>
+                            </div>
+                        </td>
+                        <td style="padding:13px 16px; color:#475569; font-size:0.82rem; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(row.location)}">${escapeHtml(row.location)}</td>
+                        <td style="padding:13px 16px;">${statusBadge}</td>
+                        <td style="padding:13px 16px; color:#475569; font-size:0.82rem; white-space:nowrap;">${escapeHtml(row.date)}</td>
+                        <td style="padding:13px 16px; color:#475569; font-size:0.82rem; white-space:nowrap;">${escapeHtml(row.time)}</td>
+                        <td style="padding:13px 16px; font-weight:700; color:var(--ink); font-size:0.82rem;">${escapeHtml(row.reportType)}</td>
                     </tr>
                 `;
             }).join('');
 
             container.innerHTML = `
-                <table style="width:100%; border-collapse:collapse; text-align:left;">
-                    <thead>
-                        <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0;">
-                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Report No.</th>
-                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Student ID</th>
-                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Student Name</th>
-                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Location</th>
-                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Status</th>
-                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Date</th>
-                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Time</th>
-                            <th style="padding:11px 14px; font-size:0.74rem; font-weight:800; text-transform:uppercase; color:#475569;">Report/Incident Type</th>
-                        </tr>
-                    </thead>
-                    <tbody>${rowsHtml}</tbody>
-                </table>
+                <div style="border:1px solid var(--border); border-radius:18px; overflow:hidden; background:#ffffff; box-shadow:0 4px 20px rgba(90,31,224,0.03);">
+                    <table style="width:100%; border-collapse:collapse; text-align:left;">
+                        <thead>
+                            <tr style="background:#fdfcff; border-bottom:1px solid var(--border);">
+                                <th style="padding:12px 16px; font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:0.04em;">Report No.</th>
+                                <th style="padding:12px 16px; font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:0.04em;">Student ID</th>
+                                <th style="padding:12px 16px; font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:0.04em;">Student Name</th>
+                                <th style="padding:12px 16px; font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:0.04em;">Location</th>
+                                <th style="padding:12px 16px; font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:0.04em;">Status</th>
+                                <th style="padding:12px 16px; font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:0.04em;">Date</th>
+                                <th style="padding:12px 16px; font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:0.04em;">Time</th>
+                                <th style="padding:12px 16px; font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--muted); letter-spacing:0.04em;">Report / Incident Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>${rowsHtml}</tbody>
+                    </table>
+                </div>
             `;
         }
 
@@ -4466,6 +5037,8 @@
             applyFilters();
             if (typeof renderDailyReport === 'function') renderDailyReport();
             if (typeof renderAdminSosQueue === 'function') renderAdminSosQueue(cachedSosLogs);
+            // (2026-07-13) Synchronize Digital Vault items on data load; was absent
+            if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
             // (2026-07-13) Subscribe to real-time GAD counseling messages; was uncalled
             if (!window._gadMessagesUnsub) {
                 window._gadMessagesUnsub = subscribeToGADMessages(null, (messages) => {
@@ -4573,50 +5146,50 @@
                 const studentDeg = totalUsers ? (roleCounts.student / totalUsers) * 360 : 0;
                 const guardianDeg = totalUsers ? (roleCounts.guardian / totalUsers) * 360 : 0;
                 const staffDeg = totalUsers ? (roleCounts.staff / totalUsers) * 360 : 0;
-                // (2026-07-13) Set guardian chart swatch to red; was light pink
+                // (2026-07-13) Soft pastel colors for donut chart and bars; was harsh dark
                 roleChart.style.background = `conic-gradient(
-                    var(--primary) 0deg ${studentDeg}deg,
-                    #ef4444 ${studentDeg}deg ${studentDeg + guardianDeg}deg,
-                    #9f67ff ${studentDeg + guardianDeg}deg ${studentDeg + guardianDeg + staffDeg}deg,
-                    #c7b8ff ${studentDeg + guardianDeg + staffDeg}deg 360deg
+                    #8b5cf6 0deg ${studentDeg}deg,
+                    #fb7185 ${studentDeg}deg ${studentDeg + guardianDeg}deg,
+                    #60a5fa ${studentDeg + guardianDeg}deg ${studentDeg + guardianDeg + staffDeg}deg,
+                    #cbd5e1 ${studentDeg + guardianDeg + staffDeg}deg 360deg
                 )`;
             }
             if (roleChartTotal) roleChartTotal.textContent = totalUsers;
             if (roleLegend) {
                 roleLegend.innerHTML = `
                     <div class="legend-item">
-                        <div class="legend-meta"><span class="legend-swatch" style="background: var(--primary);"></span><span>Students</span></div>
-                        <strong>${roleCounts.student}</strong>
+                        <div class="legend-meta"><span class="legend-swatch" style="background: #8b5cf6;"></span><span>Students</span></div>
+                        <strong style="font-variant-numeric: tabular-nums;">${roleCounts.student}</strong>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-meta"><span class="legend-swatch" style="background: #ef4444;"></span><span>Guardians</span></div>
-                        <strong>${roleCounts.guardian}</strong>
+                        <div class="legend-meta"><span class="legend-swatch" style="background: #fb7185;"></span><span>Guardians</span></div>
+                        <strong style="font-variant-numeric: tabular-nums;">${roleCounts.guardian}</strong>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-meta"><span class="legend-swatch" style="background: #9f67ff;"></span><span>Staff</span></div>
-                        <strong>${roleCounts.staff}</strong>
+                        <div class="legend-meta"><span class="legend-swatch" style="background: #60a5fa;"></span><span>Staff</span></div>
+                        <strong style="font-variant-numeric: tabular-nums;">${roleCounts.staff}</strong>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-meta"><span class="legend-swatch" style="background: #c7b8ff;"></span><span>Admins</span></div>
-                        <strong>${roleCounts.admin}</strong>
+                        <div class="legend-meta"><span class="legend-swatch" style="background: #cbd5e1;"></span><span>Admins</span></div>
+                        <strong style="font-variant-numeric: tabular-nums;">${roleCounts.admin}</strong>
                     </div>
                 `;
             }
             if (statsBarList) {
                 const barRows = [
-                    { label: 'Registered Users', value: totalUsers },
-                    { label: 'Published GAD Posts', value: cachedPosts.length },
-                    { label: 'Support Conversations', value: cachedThreads.length },
-                    { label: 'Engaged Users', value: gadEngaged }
+                    { label: 'Registered Users', value: totalUsers, gradient: 'linear-gradient(90deg, #8b5cf6, #7c3aed)' },
+                    { label: 'Published GAD Posts', value: cachedPosts.length, gradient: 'linear-gradient(90deg, #60a5fa, #3b82f6)' },
+                    { label: 'Support Conversations', value: cachedThreads.length, gradient: 'linear-gradient(90deg, #38bdf8, #0ea5e9)' },
+                    { label: 'Engaged Users', value: gadEngaged, gradient: 'linear-gradient(90deg, #fb7185, #f43f5e)' }
                 ];
                 statsBarList.innerHTML = barRows.map((row) => `
                     <div class="bar-row">
                         <div class="bar-top">
-                            <span>${row.label}</span>
-                            <strong>${row.value}</strong>
+                            <span style="font-weight:600; color:var(--ink);">${row.label}</span>
+                            <strong style="font-variant-numeric: tabular-nums; color:var(--ink);">${row.value}</strong>
                         </div>
-                        <div class="bar-track">
-                            <div class="bar-fill" style="width:${Math.max(8, Math.round((row.value / maxMetric) * 100))}%;"></div>
+                        <div class="bar-track" style="background:#f1f0f7; border-radius:999px; height:8px;">
+                            <div class="bar-fill" style="width:${Math.max(6, Math.round((row.value / maxMetric) * 100))}%; background:${row.gradient}; border-radius:999px;"></div>
                         </div>
                     </div>
                 `).join('');
@@ -5127,8 +5700,8 @@
                 return `
                     <div class="table-row" style="grid-template-columns: minmax(0, 1.4fr) 1fr 1.3fr 0.8fr auto; align-items:center;">
                         <div class="inline-fields" style="align-items:center;">
-                            <!-- (2026-07-13) Red guardian and purple student avatar; was dark red -->
-                            <div class="management-avatar ${roleClass === 'guardian' ? 'guardian' : 'student'}">${escapeHtml(getInitials(rep.name))}</div>
+                            <!-- (2026-07-13) Role avatar class dynamically bound; was binary -->
+                            <div class="management-avatar ${roleClass}">${escapeHtml(getInitials(rep.name))}</div>
                             <div>
                                 <div class="row-title" style="font-weight:800; color:var(--ink);">${escapeHtml(rep.name)}</div>
                                 <div class="row-sub">${escapeHtml(rep.email)}</div>
@@ -5621,7 +6194,9 @@
                 renderStatistics(cachedUsers);
                 renderThreads(cachedThreads);
                 if (currentActiveThreadId && currentActiveUserId && !unsubscribeAdminChat) {
-                    window.openAdminThread(currentActiveThreadId, currentActiveUserId, activeUserName.textContent);
+                    const activeT = cachedThreads.find(t => t.threadId === currentActiveThreadId);
+                    const client = getThreadClientInfo(activeT);
+                    window.openAdminThread(currentActiveThreadId, currentActiveUserId, client.name);
                 }
             });
         }
@@ -5671,32 +6246,92 @@
             return 'student';
         }
 
+        function isAdminName(name) {
+            if (!name) return false;
+            const n = String(name).trim().toLowerCase();
+            return n === 'gad office' || n === 'command desk' || n === 'admin' || n === 'system' || n === 'campus admin' || n === 'system_admin_securo';
+        }
+
+        // (2026-07-13) Client name resolution and deduplication; was senderName override
+        function getThreadClientInfo(thread) {
+            if (!thread) return { userId: '', name: 'Student', role: 'student', isGuardian: false, userObj: null };
+            const otherUserId = getOtherUserIdFromThread(thread);
+            const userObj = cachedUsers.find(u => {
+                if (!u) return false;
+                if (otherUserId && (u.id === otherUserId || u.uid === otherUserId || String(u.studentId || '') === String(otherUserId))) return true;
+                const uEmail = (u.email || '').toLowerCase();
+                if (uEmail && (
+                    (thread.senderEmail && uEmail === thread.senderEmail.toLowerCase()) ||
+                    (thread.recipientEmail && uEmail === thread.recipientEmail.toLowerCase()) ||
+                    (thread.ownerEmail && uEmail === thread.ownerEmail.toLowerCase()) ||
+                    (thread.senderLabel && uEmail === thread.senderLabel.toLowerCase())
+                )) return true;
+                return false;
+            });
+
+            const role = getThreadParticipantRole(thread, userObj);
+            const isGuardian = role === 'guardian';
+            const isSentByAdmin = thread.senderRole === 'admin' || thread.senderId === ADMIN_ID || thread.senderId === currentAdminUid;
+
+            let name = userObj?.name || userObj?.fullName || '';
+            if (!name || isAdminName(name)) {
+                const candidates = [
+                    thread.clientName,
+                    thread.targetUserName,
+                    thread.recipientName,
+                    thread.ownerName,
+                    thread.otherUserName,
+                    thread.userName,
+                    !isSentByAdmin ? (thread.senderLabel || thread.senderName) : null
+                ];
+                for (const c of candidates) {
+                    if (c && !isAdminName(c)) {
+                        name = c;
+                        break;
+                    }
+                }
+            }
+            if (!name && userObj?.studentId) name = `Student #${userObj.studentId}`;
+            if (!name && otherUserId && /^\d{7}$/.test(otherUserId)) name = `Student #${otherUserId}`;
+            if (!name) name = isGuardian ? 'Guardian' : 'Student';
+
+            return { userId: otherUserId, name, role, isGuardian, userObj };
+        }
+
         function renderThreads(threads) {
             const rawThreads = Array.isArray(threads) ? threads : [];
             const query = currentMsgSearchQuery.trim().toLowerCase();
 
-            // (2026-07-13) Deduplicate threads and filter by user role; was conflict
+            // (2026-07-13) Deduplicate threads by user identity; was thread ID only
             const dedupedMap = new Map();
             rawThreads.forEach(t => {
-                const otherUserId = getOtherUserIdFromThread(t);
-                const existing = dedupedMap.get(otherUserId);
+                const client = getThreadClientInfo(t);
+                let dedupKey = client.userObj?.uid || client.userObj?.id || client.userObj?.studentId;
+                if (!dedupKey) {
+                    if (client.name && !isAdminName(client.name)) {
+                        dedupKey = `${client.role}_${client.name.toLowerCase().trim()}`;
+                    } else {
+                        dedupKey = client.userId || t.threadId;
+                    }
+                }
+
+                const existing = dedupedMap.get(dedupKey);
                 if (!existing) {
-                    dedupedMap.set(otherUserId, t);
+                    dedupedMap.set(dedupKey, t);
                 } else {
                     const timeNew = new Date(t.updatedAt || t.timestamp || t.lastMessageAt || 0).getTime();
                     const timeOld = new Date(existing.updatedAt || existing.timestamp || existing.lastMessageAt || 0).getTime();
-                    if (timeNew > timeOld) dedupedMap.set(otherUserId, t);
+                    if (timeNew > timeOld) dedupedMap.set(dedupKey, t);
                 }
             });
             const uniqueThreads = Array.from(dedupedMap.values());
 
             const filteredThreads = uniqueThreads.filter((thread) => {
-                const otherUserId = getOtherUserIdFromThread(thread);
-                const userObj = cachedUsers.find(u => (otherUserId && u.id === otherUserId) || (u.email && thread.senderEmail && u.email.toLowerCase() === thread.senderEmail.toLowerCase()) || (u.email && thread.senderLabel && u.email.toLowerCase() === thread.senderLabel.toLowerCase()));
-                const displayName = (userObj?.name || thread.senderLabel || thread.senderName || 'Anonymous').toLowerCase();
+                const client = getThreadClientInfo(thread);
+                const displayName = client.name.toLowerCase();
                 const text = (thread.text || '').toLowerCase();
                 const unread = isThreadUnread(thread);
-                const role = getThreadParticipantRole(thread, userObj);
+                const role = client.role;
 
                 if (query && !displayName.includes(query) && !text.includes(query)) {
                     return false;
@@ -5723,31 +6358,41 @@
                 return;
             }
 
+            // (2026-07-13) Messenger thread previews, online beacon & unread dots; was plain
             threadList.innerHTML = filteredThreads.map(thread => {
-                const otherUserId = getOtherUserIdFromThread(thread);
-                const userObj = cachedUsers.find(u => (otherUserId && u.id === otherUserId) || (u.email && thread.senderEmail && u.email.toLowerCase() === thread.senderEmail.toLowerCase()) || (u.email && thread.senderLabel && u.email.toLowerCase() === thread.senderLabel.toLowerCase()));
+                const client = getThreadClientInfo(thread);
+                const otherUserId = client.userId;
+                const userObj = client.userObj;
                 const isActive = currentActiveThreadId === thread.threadId;
                 const unread = isThreadUnread(thread);
-                const displayName = userObj?.name || thread.senderLabel || thread.senderName || 'Anonymous';
+                const displayName = client.name;
                 const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || 'U';
-                const role = getThreadParticipantRole(thread, userObj);
-                const isGuardian = role === 'guardian';
+                const role = client.role;
+                const isGuardian = client.isGuardian;
+                // (2026-07-13) Dynamic role themes: purple student, red parent, blue staff
+                const roleClass = (role === 'guardian' || isGuardian) ? 'guardian' : (role === 'staff' ? 'staff' : 'student');
+                const roleLabel = (role === 'guardian' || isGuardian) ? 'Guardian' : (role === 'staff' ? 'Staff' : 'Student');
                 const timeStr = formatThreadTimestamp(thread.updatedAt || thread.timestamp || thread.lastMessageAt);
+                const isSentByAdmin = thread.senderRole === 'admin' || thread.senderId === ADMIN_ID || thread.senderId === currentAdminUid;
+                const statusPrefix = isSentByAdmin ? (thread.status === 'replied' ? 'You: Replied · ' : 'You: ') : '';
+                const previewSnippet = escapeHtml(statusPrefix + (thread.text || thread.message || 'Direct message'));
                 return `
                     <div class="thread-item ${isActive ? 'active' : ''} ${unread ? 'unread' : ''}" data-thread-id="${escapeHtml(thread.threadId)}" data-other-user-id="${escapeHtml(otherUserId)}" data-other-user-name="${escapeHtml(displayName)}">
-                        <!-- (2026-07-13) Role-based thread avatar & photo; was generic initials -->
-                        <div class="thread-avatar ${isGuardian ? 'guardian' : 'student'}">${userObj?.photoURL ? `<img src="${escapeHtml(userObj.photoURL)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : initials}</div>
+                        <div class="thread-avatar ${roleClass}">
+                            ${userObj?.photoURL ? `<img src="${escapeHtml(userObj.photoURL)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : initials}
+                            <span style="position:absolute; bottom:0; right:0; width:11px; height:11px; border-radius:50%; background:#22c55e; border:2px solid #fff;"></span>
+                        </div>
                         <div class="thread-info">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
                                 <div class="thread-name">${escapeHtml(displayName)}</div>
                                 <span style="font-size:0.67rem; color:var(--muted); font-weight:600;">${timeStr}</span>
                             </div>
                             <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
-                                <div class="thread-preview">${escapeHtml(thread.text || 'Direct message')}</div>
-                                <span class="role-pill ${isGuardian ? 'guardian' : 'student'}" style="font-size:0.58rem; padding:1px 6px; flex-shrink:0;">${isGuardian ? 'Guardian' : 'Student'}</span>
+                                <div class="thread-preview">${previewSnippet}</div>
+                                <span class="role-pill ${roleClass}" style="font-size:0.58rem; padding:1px 6px; flex-shrink:0;">${roleLabel}</span>
                             </div>
                         </div>
-                        ${unread ? '<div class="thread-badge" title="Unread conversation"></div>' : ''}
+                        ${unread ? '<div class="thread-unread-dot" title="Unread conversation"></div>' : ''}
                     </div>
                 `;
             }).join('');
@@ -5796,25 +6441,29 @@
             });
         }
 
-        // (2026-07-13) Open thread with resolved UID and role styling; was naive ID
+        // (2026-07-13) Retain client name on admin reply; was GAD Office overwrite
         window.openAdminThread = function(threadId, userId, userName) {
             currentActiveThreadId = threadId;
-            let resolvedUserId = userId;
-            if (!resolvedUserId || resolvedUserId === 'system' || resolvedUserId === 'support') {
-                const threadObj = cachedThreads.find(t => t.threadId === threadId);
-                resolvedUserId = getOtherUserIdFromThread(threadObj) || userId;
-            }
-            currentActiveUserId = resolvedUserId;
-            seenAdminThreads.set(threadId, Date.now());
-
-            const userObj = cachedUsers.find(u => (resolvedUserId && u.id === resolvedUserId) || (u.email && u.email.toLowerCase() === (userName || '').toLowerCase()));
-            const displayName = userName || userObj?.name || 'User';
-            activeUserName.textContent = displayName;
             const threadObj = cachedThreads.find(t => t.threadId === threadId);
-            const role = getThreadParticipantRole(threadObj, userObj);
-            const isGuardian = role === 'guardian';
+            const client = getThreadClientInfo(threadObj);
+            let resolvedUserId = userId || client.userId;
+            currentActiveUserId = resolvedUserId;
+            persistSeenThread(threadId);
+            markThreadMessagesSeen(threadId, 'admin');
+
+            const messagesShell = document.querySelector('.messages-shell');
+            if (messagesShell) messagesShell.classList.add('mobile-chat-active');
+
+            const userObj = client.userObj;
+            const displayName = (!userName || isAdminName(userName)) ? client.name : userName;
+            activeUserName.textContent = displayName;
+            const role = client.role;
+            const isGuardian = client.isGuardian;
+            // (2026-07-13) Set active chat role style dynamically; was binary
+            const roleClass = (role === 'guardian' || isGuardian) ? 'guardian' : (role === 'staff' ? 'staff' : 'student');
+            const roleLabel = (role === 'guardian' || isGuardian) ? 'Guardian' : (role === 'staff' ? 'Staff' : 'Student');
             const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || 'U';
-            activeUserAvatar.className = 'thread-avatar ' + (isGuardian ? 'guardian' : 'student');
+            activeUserAvatar.className = 'thread-avatar ' + roleClass;
             if (userObj?.photoURL) {
                 activeUserAvatar.innerHTML = `<img src="${escapeHtml(userObj.photoURL)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"><span id="activeUserBeacon" style="position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%; background:#10b981; border:2px solid #fff;"></span>`;
             } else {
@@ -5823,8 +6472,8 @@
 
             if (activeUserRoleBadge) {
                 activeUserRoleBadge.style.display = 'inline-block';
-                activeUserRoleBadge.className = 'role-pill ' + (isGuardian ? 'guardian' : 'student');
-                activeUserRoleBadge.textContent = isGuardian ? 'Guardian' : (role === 'staff' ? 'Staff' : 'Student');
+                activeUserRoleBadge.className = 'role-pill ' + roleClass;
+                activeUserRoleBadge.textContent = roleLabel;
             }
 
             if (activeUserIdTag) {
@@ -5837,7 +6486,7 @@
             }
 
             if (activeUserStatus) {
-                activeUserStatus.innerHTML = '<span class="signal-dot" style="width:6px; height:6px; background:#10b981;"></span><span>Secure Channel Connected</span>';
+                activeUserStatus.innerHTML = '<span class="signal-dot" style="width:6px; height:6px; background:#10b981;"></span><span>Active now • Connected</span>';
             }
 
             if (chatHeaderActions) chatHeaderActions.style.display = 'flex';
@@ -5881,7 +6530,7 @@
             renderThreads(cachedThreads);
         };
 
-        // (2026-07-13) Fix dateStr definition and detect admin sender; was ReferenceError
+        // (2026-07-13) Render Messenger chat rows with receipts & avatars; was plain boxes
         function renderAdminMessages(messages) {
             adminChatMessages.innerHTML = "";
             if (!messages || messages.length === 0) {
@@ -5895,8 +6544,10 @@
             }
 
             let lastDateLabel = "";
-            messages.forEach(msg => {
-                // (2026-07-13) Identify admin sent message with role check; was conflict
+            const currentOtherUser = activeUserName.textContent || 'User';
+            const userInitial = currentOtherUser.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 1) || 'U';
+
+            messages.forEach((msg, idx) => {
                 const isSent = msg.senderId === ADMIN_ID || msg.senderId === currentAdminUid || msg.senderRole === 'admin';
                 const date = msg.timestamp?.toDate?.() || new Date(msg.localTime || Date.now());
                 const dateStr = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
@@ -5906,26 +6557,85 @@
                     lastDateLabel = dateStr;
                     const divider = document.createElement("div");
                     divider.style.cssText = "display:flex; justify-content:center; margin:14px 0 8px;";
-                    divider.innerHTML = `<span style="background:#e2e8f0; color:#64748b; font-size:0.68rem; font-weight:800; padding:2px 10px; border-radius:12px; letter-spacing:0.03em;">${dateStr}</span>`;
+                    divider.innerHTML = `<span style="background:#f0f2f5; color:#65676b; font-size:0.68rem; font-weight:700; padding:3px 12px; border-radius:12px; letter-spacing:0.02em;">${dateStr}</span>`;
                     adminChatMessages.appendChild(divider);
                 }
 
+                // (2026-07-13) Grouped bubble cluster & receipt filtering; was separate
+                const prevMsg = messages[idx - 1];
+                const nextMsg = messages[idx + 1];
+                const prevDate = prevMsg ? (prevMsg.timestamp?.toDate?.() || new Date(prevMsg.localTime || Date.now())).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+                const nextDate = nextMsg ? (nextMsg.timestamp?.toDate?.() || new Date(nextMsg.localTime || Date.now())).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) : null;
+
+                const isPrevSame = prevMsg && (prevDate === dateStr) && (
+                    (prevMsg.senderId === ADMIN_ID || prevMsg.senderId === currentAdminUid || prevMsg.senderRole === 'admin') === isSent
+                );
+                const isNextSame = nextMsg && (nextDate === dateStr) && (
+                    (nextMsg.senderId === ADMIN_ID || nextMsg.senderId === currentAdminUid || nextMsg.senderRole === 'admin') === isSent
+                );
+
+                let groupPos = 'single';
+                if (isPrevSame && isNextSame) {
+                    groupPos = 'middle';
+                } else if (!isPrevSame && isNextSame) {
+                    groupPos = 'first';
+                } else if (isPrevSame && !isNextSame) {
+                    groupPos = 'last';
+                }
+
+                const rowEl = document.createElement("div");
+                rowEl.className = `admin-msg-row ${isSent ? 'sent' : 'received'} group-${groupPos}`;
+
+                if (!isSent) {
+                    const avatarEl = document.createElement("div");
+                    avatarEl.className = "admin-msg-avatar";
+                    if (groupPos === 'last' || groupPos === 'single') {
+                        avatarEl.textContent = userInitial;
+                    } else {
+                        avatarEl.style.visibility = 'hidden';
+                    }
+                    rowEl.appendChild(avatarEl);
+                }
+
                 const msgEl = document.createElement("div");
-                msgEl.className = `admin-msg ${isSent ? 'sent' : 'received'}`;
+                msgEl.className = `admin-msg ${isSent ? 'sent' : 'received'} bubble-${groupPos}`;
                 if (msg.isPending) msgEl.style.opacity = "0.7";
-                
-                const senderTag = isSent ? 'Command Desk' : escapeHtml(activeUserName.textContent || (msg.senderRole === 'guardian' ? 'Guardian' : 'Student'));
                 msgEl.innerHTML = `
-                    <span style="font-size:0.67rem; font-weight:800; display:block; margin-bottom:2px; opacity:0.8;">${senderTag}</span>
                     <div>${escapeHtml(msg.text || msg.message || '')}</div>
-                    <span class="msg-time">${timeStr}</span>
+                    ${(groupPos === 'last' || groupPos === 'single') ? `<span class="msg-time">${timeStr}</span>` : ''}
                 `;
-                adminChatMessages.appendChild(msgEl);
+                rowEl.appendChild(msgEl);
+                adminChatMessages.appendChild(rowEl);
+
+                const isLastMsg = idx === messages.length - 1;
+                const status = msg.status || (msg.seen ? 'seen' : (msg.read ? 'read' : 'delivered'));
+                let receiptText = '';
+                let isSeenStatus = false;
+
+                if (isSent) {
+                    if (status === 'replied') {
+                        receiptText = 'Replied • ' + timeStr;
+                    } else if (status === 'seen' || msg.seen) {
+                        receiptText = 'Seen ✓✓';
+                        isSeenStatus = true;
+                    } else {
+                        receiptText = 'Delivered ✓';
+                    }
+                } else if (msg.status === 'replied') {
+                    receiptText = 'Replied by Command Desk';
+                }
+
+                if (receiptText && (groupPos === 'last' || groupPos === 'single')) {
+                    const receiptEl = document.createElement("div");
+                    receiptEl.className = `msg-receipt-row ${isSent ? 'sent' : 'received'}`;
+                    receiptEl.innerHTML = `<span class="receipt-pill ${isSeenStatus ? 'seen' : ''}">${escapeHtml(receiptText)}</span>`;
+                    adminChatMessages.appendChild(receiptEl);
+                }
             });
             adminChatMessages.scrollTo({ top: adminChatMessages.scrollHeight, behavior: 'smooth' });
         }
 
-        // (2026-07-13) Dispatch reply with admin role & target UID; was missing options
+        // (2026-07-13) Dispatch reply with grouped bubble wrapper; was unwrapped msg
         async function handleAdminSendMessage() {
             const text = adminChatInput.value.trim();
             if (!text) return;
@@ -5938,26 +6648,31 @@
             currentActiveUserId = targetUserId;
             const adminSenderId = currentAdminUid || ADMIN_ID;
 
+            const rowEl = document.createElement("div");
+            rowEl.className = "admin-msg-row sent group-last";
             const msgEl = document.createElement("div");
-            msgEl.className = "admin-msg sent";
+            msgEl.className = "admin-msg sent bubble-last";
             msgEl.style.opacity = "0.7";
             const now = new Date();
             const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
             msgEl.innerHTML = `
-                <span style="font-size:0.67rem; font-weight:800; display:block; margin-bottom:2px; opacity:0.8;">Command Desk</span>
                 <div>${escapeHtml(text)}</div>
                 <span class="msg-time">${timeStr}</span>
             `;
-            adminChatMessages.appendChild(msgEl);
+            rowEl.appendChild(msgEl);
+            adminChatMessages.appendChild(rowEl);
             adminChatMessages.scrollTo({ top: adminChatMessages.scrollHeight, behavior: 'smooth' });
             adminChatInput.value = "";
 
             try {
+                // (2026-07-13) Persist client name on admin reply; was missing clientName
                 await sendChatMessage(adminSenderId, targetUserId, text, "GAD Office", {
                     threadId: currentActiveThreadId,
                     supportMode: "gad_support",
                     senderRole: "admin",
-                    ownerId: targetUserId
+                    ownerId: targetUserId,
+                    clientName: activeUserName.textContent,
+                    targetUserName: activeUserName.textContent
                 });
             } catch (err) {
                 console.warn("Failed to send admin message:", err);
@@ -6217,6 +6932,15 @@
             });
         }
 
+        // (2026-07-13) Add mobile back button listener for thread list; was absent
+        const btnMobileBack = document.getElementById('btnMobileBackToThreads');
+        if (btnMobileBack) {
+            btnMobileBack.addEventListener('click', () => {
+                const shell = document.querySelector('.messages-shell');
+                if (shell) shell.classList.remove('mobile-chat-active');
+            });
+        }
+
         adminSendBtn.addEventListener('click', handleAdminSendMessage);
         adminChatInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
@@ -6224,6 +6948,283 @@
                 handleAdminSendMessage();
             }
         });
+
+        // (2026-07-13) Digital Vault evidence gallery state and renderers; was absent
+        let currentVaultFilter = 'all';
+        let currentVaultSearch = '';
+
+        function getAllVaultItems() {
+            const items = [];
+            (cachedEmergencyPosts || []).forEach(post => {
+                const uId = post.userId || post.uid;
+                const user = cachedUsers.find(u => String(u.id) === String(uId) || String(u.uid) === String(uId) || (u.studentId && String(u.studentId) === String(post.studentId))) || {};
+                const studentName = user.name || user.fullName || post.userName || 'Student';
+                const studentId = user.studentId || post.studentId || '';
+                const time = post.createdAt?.toDate ? post.createdAt.toDate() : (post.createdAt?.seconds ? new Date(post.createdAt.seconds * 1000) : new Date(post.createdAt || 0));
+                const location = post.location || null;
+
+                const rawAttachments = Array.isArray(post.attachments) && post.attachments.length > 0
+                    ? post.attachments
+                    : (post.photo || post.photoURL || post.image ? [{ kind: 'image', url: post.photo || post.photoURL || post.image, thumb: post.photo || post.photoURL || post.image }] : []);
+
+                rawAttachments.forEach((att, idx) => {
+                    const url = att.url || att.src || att.data || att.thumb;
+                    if (!url) return;
+                    const kind = att.kind || (String(url).startsWith('data:video') || String(url).includes('.mp4') ? 'video' : 'image');
+                    items.push({
+                        id: `${post.id || 'p'}_${idx}`,
+                        postId: post.id,
+                        userId: uId,
+                        studentName,
+                        studentId,
+                        userPhoto: user.photoURL || null,
+                        url,
+                        thumb: att.thumb || url,
+                        kind,
+                        time,
+                        location,
+                        name: att.name || `Vault_Evidence_${idx + 1}`
+                    });
+                });
+            });
+
+            // (2026-07-13) Filter valid photo strings from SOS logs; was accepting any truthy
+            (cachedSosLogs || []).forEach(log => {
+                const url = log.photoURL || log.photo || log.attachment || log.image;
+                if (!url) return;
+                if (typeof url !== 'string' || (!url.startsWith('http') && !url.startsWith('data:image') && !url.startsWith('data:video') && url.length < 15)) return;
+                const uId = log.userId || log.studentId;
+                const user = cachedUsers.find(u => String(u.id) === String(uId) || String(u.uid) === String(uId) || (u.studentId && String(u.studentId) === String(log.studentId))) || {};
+                const studentName = user.name || user.fullName || log.studentName || log.userName || 'Student';
+                const studentId = user.studentId || log.studentId || '';
+                const time = log.timestamp?.toDate ? log.timestamp.toDate() : (log.timestamp?.seconds ? new Date(log.timestamp.seconds * 1000) : new Date(log.timestamp || 0));
+                const location = log.location || null;
+
+                if (!items.some(it => it.url === url)) {
+                    items.push({
+                        id: `sos_${log.id || Math.random().toString(36).slice(2, 7)}`,
+                        postId: log.id,
+                        userId: uId,
+                        studentName,
+                        studentId,
+                        userPhoto: user.photoURL || null,
+                        url,
+                        thumb: url,
+                        kind: String(url).startsWith('data:video') || String(url).includes('.mp4') ? 'video' : 'image',
+                        time,
+                        location,
+                        name: `SOS_Evidence_${log.id || 'log'}`
+                    });
+                }
+            });
+
+            items.sort((a, b) => b.time.getTime() - a.time.getTime());
+            return items;
+        }
+
+        window.renderAdminVaultGallery = function() {
+            const grid = document.getElementById('adminVaultGrid');
+            const countLabel = document.getElementById('vaultCountLabel');
+            const sidebarCounter = document.getElementById('sidebarVaultCounter');
+            if (!grid) return;
+
+            const allItems = getAllVaultItems();
+            if (sidebarCounter) {
+                if (allItems.length > 0) {
+                    sidebarCounter.style.display = 'inline-block';
+                    sidebarCounter.textContent = String(allItems.length);
+                } else {
+                    sidebarCounter.style.display = 'none';
+                }
+            }
+
+            const query = (currentVaultSearch || '').trim().toLowerCase();
+            const filtered = allItems.filter(item => {
+                if (currentVaultFilter !== 'all' && item.kind !== currentVaultFilter) return false;
+                if (query) {
+                    const matchName = item.studentName.toLowerCase().includes(query);
+                    const matchId = String(item.studentId).toLowerCase().includes(query);
+                    const matchFile = (item.name || '').toLowerCase().includes(query);
+                    const matchLoc = (item.location?.address || '').toLowerCase().includes(query);
+                    if (!matchName && !matchId && !matchFile && !matchLoc) return false;
+                }
+                return true;
+            });
+
+            if (countLabel) countLabel.textContent = String(filtered.length);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="messages-empty" style="grid-column: 1 / -1; padding:48px 16px; text-align:center;">
+                        <span class="material-symbols-outlined" style="font-size:44px; opacity:0.3; color:var(--muted);">photo_library</span>
+                        <p style="margin:8px 0 0; font-size:0.88rem; font-weight:600; color:var(--muted);">${allItems.length === 0 ? 'No student vault media uploaded yet.' : 'No images or media match current filter.'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(item => {
+                const initials = item.studentName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'S';
+                const timeStr = item.time.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + item.time.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+                const isImage = item.kind === 'image';
+
+                return `
+                    <div class="vault-evidence-card" data-item-id="${escapeHtml(item.id)}" style="min-height:280px;">
+                        <div class="vault-media-preview-wrap" onclick="window.openVaultLightbox('${escapeHtml(item.id)}')" style="width:100%; height:180px; min-height:180px; background:#181528; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                            ${isImage 
+                                ? `<img src="${escapeHtml(item.thumb || item.url)}" alt="${escapeHtml(item.name)}" loading="lazy" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.onerror=null; this.src='logo with text.png';">`
+                                : `<div style="display:flex; flex-direction:column; align-items:center; gap:6px; color:#94a3b8;">
+                                    <span class="material-symbols-outlined" style="font-size:40px;">videocam</span>
+                                    <span style="font-size:0.75rem; font-weight:700;">Video Recording</span>
+                                   </div>`
+                            }
+                            <span class="vault-media-badge">
+                                <span class="material-symbols-outlined" style="font-size:12px;">${isImage ? 'image' : 'videocam'}</span>
+                                <span>${isImage ? 'IMAGE' : 'VIDEO'}</span>
+                            </span>
+                        </div>
+                        <div class="vault-evidence-body">
+                            <div class="vault-student-row">
+                                <div class="vault-student-info">
+                                    <div class="thread-avatar student" style="width:28px; height:28px; font-size:0.7rem;">
+                                        ${item.userPhoto ? `<img src="${escapeHtml(item.userPhoto)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : initials}
+                                    </div>
+                                    <div style="min-width:0;">
+                                        <div style="font-size:0.82rem; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.studentName)}</div>
+                                        <div style="font-size:0.68rem; color:var(--muted);">${item.studentId ? '#' + escapeHtml(item.studentId) : 'Student'}</div>
+                                    </div>
+                                </div>
+                                <span class="role-pill student" style="font-size:0.56rem; padding:1px 5px;">STUDENT</span>
+                            </div>
+                            <div style="font-size:0.72rem; color:var(--muted); display:flex; align-items:center; gap:4px;">
+                                <span class="material-symbols-outlined" style="font-size:14px;">schedule</span>
+                                <span>${timeStr}</span>
+                            </div>
+                            ${item.location?.address ? `
+                                <div style="font-size:0.7rem; color:var(--muted); display:flex; align-items:center; gap:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    <span class="material-symbols-outlined" style="font-size:14px; color:#dc2626;">location_on</span>
+                                    <span style="overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.location.address)}</span>
+                                </div>
+                            ` : ''}
+                            <div class="vault-actions-row">
+                                <button type="button" class="action-btn" onclick="window.openVaultLightbox('${escapeHtml(item.id)}')" style="background:#f8fafc; border:1px solid var(--border); height:28px; padding:0 8px; border-radius:4px; font-size:0.72rem; font-weight:600; color:var(--ink); display:inline-flex; align-items:center; gap:4px; cursor:pointer;">
+                                    <span class="material-symbols-outlined" style="font-size:14px; color:#7c3aed;">visibility</span>
+                                    <span>Inspect</span>
+                                </button>
+                                <a href="${escapeHtml(item.url)}" download="${escapeHtml(item.name || 'vault_evidence.jpg')}" class="action-btn" style="background:#f8fafc; border:1px solid var(--border); height:28px; padding:0 8px; border-radius:4px; font-size:0.72rem; font-weight:600; color:var(--ink); display:inline-flex; align-items:center; gap:4px; text-decoration:none;" title="Download evidence">
+                                    <span class="material-symbols-outlined" style="font-size:14px;">download</span>
+                                    <span>Download</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        window.openVaultLightbox = function(itemId) {
+            const allItems = getAllVaultItems();
+            const item = allItems.find(it => it.id === itemId);
+            if (!item) return;
+
+            const modal = document.getElementById('vaultLightboxModal');
+            const mediaBox = document.getElementById('vaultLightboxMediaBox');
+            const sName = document.getElementById('vaultLightboxStudentName');
+            const sId = document.getElementById('vaultLightboxStudentId');
+            const sAvatar = document.getElementById('vaultLightboxAvatar');
+            const sTime = document.getElementById('vaultLightboxTime');
+            const sLoc = document.getElementById('vaultLightboxLocation');
+            const sType = document.getElementById('vaultLightboxFileType');
+            const dlBtn = document.getElementById('vaultLightboxDownloadBtn');
+
+            if (item.kind === 'video') {
+                if (mediaBox) {
+                    mediaBox.innerHTML = `<video src="${escapeHtml(item.url)}" controls autoplay style="max-width:100%; max-height:75vh; border-radius:4px;"></video>`;
+                }
+            } else {
+                if (mediaBox) {
+                    mediaBox.innerHTML = `<img id="vaultLightboxImage" src="${escapeHtml(item.url)}" alt="Vault evidence" style="max-width:100%; max-height:75vh; object-fit:contain; border-radius:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5);">`;
+                }
+            }
+
+            if (sName) sName.textContent = item.studentName;
+            if (sId) sId.textContent = item.studentId ? '#' + item.studentId : 'Student Profile';
+            if (sAvatar) {
+                const initials = item.studentName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'S';
+                sAvatar.textContent = initials;
+            }
+            if (sTime) {
+                sTime.textContent = item.time.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' }) + ' at ' + item.time.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            }
+            if (sLoc) {
+                sLoc.textContent = item.location?.address || (item.location?.lat ? `${Number(item.location.lat).toFixed(5)}, ${Number(item.location.lng).toFixed(5)}` : 'Campus Area (No GPS tag)');
+            }
+            if (sType) {
+                sType.textContent = `Type: ${item.kind === 'image' ? 'Image File' : 'Video Recording'}`;
+            }
+            if (dlBtn) {
+                dlBtn.href = item.url;
+                dlBtn.download = item.name || 'vault_evidence.jpg';
+            }
+
+            if (modal) {
+                modal.classList.add('active');
+                modal.setAttribute('aria-hidden', 'false');
+            }
+        };
+
+        window.closeVaultLightbox = function() {
+            const modal = document.getElementById('vaultLightboxModal');
+            if (modal) {
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+                const mediaBox = document.getElementById('vaultLightboxMediaBox');
+                if (mediaBox) mediaBox.innerHTML = '';
+            }
+        };
+
+        const closeVaultLightboxBtn = document.getElementById('closeVaultLightboxBtn');
+        if (closeVaultLightboxBtn) {
+            closeVaultLightboxBtn.addEventListener('click', window.closeVaultLightbox);
+        }
+
+        const vaultLightboxModal = document.getElementById('vaultLightboxModal');
+        if (vaultLightboxModal) {
+            vaultLightboxModal.addEventListener('click', (e) => {
+                if (e.target === vaultLightboxModal) window.closeVaultLightbox();
+            });
+        }
+
+        const vaultSearchInput = document.getElementById('vaultSearchInput');
+        if (vaultSearchInput) {
+            vaultSearchInput.addEventListener('input', (e) => {
+                currentVaultSearch = e.target.value;
+                window.renderAdminVaultGallery();
+            });
+        }
+
+        document.querySelectorAll('.vault-filter-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.vault-filter-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                currentVaultFilter = chip.dataset.vaultFilter || 'all';
+                window.renderAdminVaultGallery();
+            });
+        });
+
+        const btnRefreshVault = document.getElementById('btnRefreshVault');
+        if (btnRefreshVault) {
+            btnRefreshVault.addEventListener('click', async () => {
+                try {
+                    const ep = await getAllEmergencyPosts();
+                    if (Array.isArray(ep)) cachedEmergencyPosts = ep;
+                } catch (e) {
+                    console.warn("Vault refresh error:", e);
+                }
+                window.renderAdminVaultGallery();
+                showToast("Vault Synchronized", "Digital vault evidence gallery updated.", "info");
+            });
+        }
 
         // (2026-07-13) Prevent image drag across entire application; was draggable
         window.addEventListener('dragstart', (e) => {

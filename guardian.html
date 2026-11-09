@@ -125,20 +125,26 @@
             padding-left: 4px;
         }
 
+        /* (2026-07-13) Add visible input outlines; was transparent white border */
         .input-wrapper {
             display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.56);
-            border: 1px solid rgba(255, 255, 255, 0.82);
+            background: rgba(255, 255, 255, 0.85);
+            border: 1.5px solid rgba(244, 63, 94, 0.28);
             border-radius: var(--radius-md);
             padding: 0 15px;
+            box-shadow: 0 2px 6px rgba(244, 63, 94, 0.04);
             transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .input-wrapper:hover {
+            border-color: rgba(244, 63, 94, 0.45);
         }
 
         .input-wrapper:focus-within {
             background: white;
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.12);
+            box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.14);
         }
 
         .input-wrapper input {
@@ -368,15 +374,17 @@
             align-items: center;
             justify-content: center;
         }
+        /* (2026-07-13) Upgrade OTP notice box design; was plain box */
         .otp-notice-box {
-            background: var(--primary-soft);
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            padding: 10px 14px;
-            margin-bottom: 14px;
+            background: linear-gradient(135deg, rgba(244, 63, 94, 0.06) 0%, rgba(255, 255, 255, 0.95) 100%);
+            border: 1px solid rgba(244, 63, 94, 0.22);
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin-bottom: 16px;
             display: flex;
-            align-items: center;
-            gap: 10px;
+            align-items: flex-start;
+            gap: 12px;
+            box-shadow: 0 4px 14px rgba(244, 63, 94, 0.05);
         }
     </style>
 </head>
@@ -402,7 +410,8 @@
                 <label class="form-label">Email Address</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">mail</span>
-                    <input type="email" id="emailInput" placeholder="parent@example.com" required>
+                    <!-- (2026-07-13) Add email input placeholder; was parent@example.com -->
+                    <input type="email" id="emailInput" placeholder="Enter email address" required>
                 </div>
             </div>
 
@@ -410,7 +419,8 @@
                 <label class="form-label">Full Name</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">edit_square</span>
-                    <input type="text" id="fullNameSignup" placeholder="Guardian Full Name">
+                    <!-- (2026-07-13) Add name input placeholder; was Guardian Full Name -->
+                    <input type="text" id="fullNameSignup" placeholder="Enter guardian full name" autocomplete="name">
                 </div>
             </div>
 
@@ -418,8 +428,8 @@
                 <label class="form-label">Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">lock</span>
-                    <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
-                    <input type="password" id="passwordInput" placeholder="" autocomplete="new-password" required>
+                    <!-- (2026-07-13) Add password placeholder; was empty string -->
+                    <input type="password" id="passwordInput" placeholder="Enter password" autocomplete="new-password" required>
                     <button type="button" class="btn" data-password-target="passwordInput" style="background:none; border:none; color:var(--muted); padding:0; cursor:pointer;">
                         <span class="material-symbols-outlined">visibility</span>
                     </button>
@@ -435,8 +445,8 @@
                 <label class="form-label">Confirm Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">verified_user</span>
-                    <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
-                    <input type="password" id="confirmPasswordSignup" placeholder="" autocomplete="new-password">
+                    <!-- (2026-07-13) Add confirm password placeholder; was empty string -->
+                    <input type="password" id="confirmPasswordSignup" placeholder="Confirm password" autocomplete="new-password">
                     <button type="button" class="btn" data-password-target="confirmPasswordSignup" style="background:none; border:none; color:var(--muted); padding:0; cursor:pointer;">
                         <span class="material-symbols-outlined">visibility</span>
                     </button>
@@ -459,17 +469,17 @@
         </form>
     </div>
 
-    <!-- (2026-07-13) 3-step OTP password reset modal; was 2-step plain modal -->
+    <!-- (2026-07-13) Password reset link modal; was 3-step OTP modal -->
     <div id="guardianOtpModal" class="otp-modal-backdrop" style="display: none;">
         <div class="otp-modal-card">
             <div class="otp-modal-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <div class="otp-icon-bubble">
-                        <span class="material-symbols-outlined">key</span>
+                        <span class="material-symbols-outlined">lock_reset</span>
                     </div>
                     <div>
                         <h3 style="margin: 0; font-size: 1.12rem; font-weight: 700; color: var(--ink);">Reset Password</h3>
-                        <p style="margin: 0; font-size: 0.78rem; color: var(--muted);">Follow the steps below to reset your Guardian password</p>
+                        <p style="margin: 0; font-size: 0.78rem; color: var(--muted);">Receive a password reset link to your email</p>
                     </div>
                 </div>
                 <button type="button" id="closeOtpModalBtn" class="otp-close-btn" aria-label="Close">
@@ -477,104 +487,95 @@
                 </button>
             </div>
 
-            <!-- Step 1: Request OTP with instructions -->
-            <div id="otpStep1" class="otp-step">
+            <!-- View 1: Request reset link -->
+            <div id="resetRequestView" class="otp-step">
                 <div class="otp-explain-container" style="background: rgba(244, 63, 94, 0.06); border: 1px solid rgba(244, 63, 94, 0.2); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px;">
                     <div style="font-weight: 700; color: var(--ink); margin-bottom: 6px; font-size: 0.86rem; display: flex; align-items: center; gap: 6px;">
-                        <span class="material-symbols-outlined" style="font-size: 18px; color: var(--primary);">help_outline</span>
-                        How to reset your password:
+                        <span class="material-symbols-outlined" style="font-size: 18px; color: var(--primary);">info</span>
+                        Reset password via email link
                     </div>
-                    <ol style="margin: 0; padding-left: 18px; color: var(--muted); font-size: 0.8rem; line-height: 1.5;">
-                        <li>Enter your registered Guardian Gmail address below.</li>
-                        <li>A 6-digit verification code will be sent to your Gmail inbox.</li>
-                        <li>Verify the code, then enter and confirm your new password to log in.</li>
-                    </ol>
+                    <p style="margin: 0; color: var(--muted); font-size: 0.8rem; line-height: 1.5;">
+                        Enter your registered Guardian Gmail address below. We'll send you an official password reset link directly to your inbox.
+                    </p>
                 </div>
                 <div class="form-group" style="margin-bottom: 14px;">
                     <label class="form-label">Guardian Gmail Address</label>
                     <div class="input-wrapper">
                         <span class="material-symbols-outlined input-icon">mail</span>
-                        <input type="email" id="otpEmailInput" placeholder="parent@gmail.com">
+                        <input type="email" id="resetEmailInput" placeholder="parent@gmail.com">
                     </div>
                 </div>
-                <div id="otpStep1Error" class="error-msg" style="margin-bottom: 12px;"></div>
-                <button type="button" id="sendOtpBtn" class="btn-action">
-                    <span>Send OTP to Gmail</span>
+                <div id="resetEmailError" class="error-msg" style="margin-bottom: 12px;"></div>
+                <button type="button" id="sendResetLinkBtn" class="btn-action">
+                    <span>Send Password Reset Link</span>
                     <span class="material-symbols-outlined">send</span>
                 </button>
             </div>
 
-            <!-- Step 2: Verify Code only (Code NOT shown in UI) -->
-            <div id="otpStep2" class="otp-step" style="display: none;">
-                <div class="otp-notice-box" id="otpNoticeBox" style="margin-bottom: 14px;">
-                    <span class="material-symbols-outlined" style="font-size: 20px; color: var(--primary);">mark_email_read</span>
-                    <div style="font-size: 0.82rem; color: var(--ink); flex: 1;">
-                        Verification code sent to <strong id="otpTargetEmailDisplay"></strong>.<br>
-                        <span style="color: var(--muted); font-size: 0.77rem;">Please check your Gmail inbox (including Spam/Junk) for your 6-digit code.</span>
+            <!-- View 2: Link sent confirmation -->
+            <div id="resetSentView" class="otp-step" style="display: none;">
+                <div style="text-align: center; padding: 10px 0 6px;">
+                    <div style="width: 58px; height: 58px; border-radius: 50%; background: rgba(244, 63, 94, 0.1); color: var(--primary); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                        <span class="material-symbols-outlined" style="font-size: 32px;">mark_email_read</span>
                     </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 14px;">
-                    <label class="form-label">6-Digit Verification Code</label>
-                    <div class="input-wrapper">
-                        <span class="material-symbols-outlined input-icon">pin</span>
-                        <input type="text" id="otpCodeInput" maxlength="6" placeholder="123456" style="letter-spacing: 4px; font-weight: 700; font-size: 1.05rem; text-align: center;">
+                    <h4 style="margin: 0 0 6px; font-size: 1.15rem; font-weight: 700; color: var(--ink);">Reset Link Sent!</h4>
+                    <p style="margin: 0 0 14px; font-size: 0.84rem; color: var(--muted); line-height: 1.45;">
+                        We sent a password reset link to <strong id="resetTargetEmailDisplay" style="color: var(--ink);"></strong>.
+                    </p>
+                    <div style="background: rgba(244, 63, 94, 0.05); border: 1px solid rgba(244, 63, 94, 0.18); border-radius: 12px; padding: 12px 14px; text-align: left; margin-bottom: 18px; font-size: 0.8rem; color: var(--ink); line-height: 1.5;">
+                        <span class="material-symbols-outlined" style="font-size: 16px; color: var(--primary); vertical-align: middle; margin-right: 4px;">mail</span>
+                        <strong>Next Steps:</strong>
+                        <ol style="margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 0.78rem;">
+                            <li>Open your Gmail (check Inbox and Spam/Junk folder).</li>
+                            <li>Click the reset link in the email from <em>Securo</em>.</li>
+                            <li>Type your new password and submit.</li>
+                            <li>Return to Securo and sign in with your new password!</li>
+                        </ol>
                     </div>
-                </div>
-
-                <div id="otpStep2Error" class="error-msg" style="margin-bottom: 12px;"></div>
-
-                <button type="button" id="verifyOtpCodeBtn" class="btn-action">
-                    <span>Verify Code</span>
-                    <span class="material-symbols-outlined">verified</span>
-                </button>
-
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 0.82rem;">
-                    <button type="button" id="otpBackToStep1Btn" style="background: none; border: none; color: var(--muted); cursor: pointer; text-decoration: underline; padding: 0;">Change Email</button>
-                    <button type="button" id="resendOtpBtn" style="background: none; border: none; color: var(--primary); font-weight: 600; cursor: pointer; padding: 0;">Resend OTP</button>
+                    <button type="button" id="backToSignInBtn" class="btn-action" style="margin-bottom: 10px;">
+                        <span>Return to Sign In</span>
+                        <span class="material-symbols-outlined">login</span>
+                    </button>
+                    <button type="button" id="resendResetLinkBtn" style="background: none; border: none; color: var(--primary); font-size: 0.82rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 4px;">
+                        Didn't get the email? Send again
+                    </button>
                 </div>
             </div>
 
-            <!-- Step 3: Change Password after verified -->
-            <div id="otpStep3" class="otp-step" style="display: none;">
+            <!-- View 3: In-app new password (if opened via reset link oobCode) -->
+            <div id="resetNewPasswordView" class="otp-step" style="display: none;">
                 <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
                     <span class="material-symbols-outlined" style="color: #059669; font-size: 20px;">check_circle</span>
-                    <span style="font-size: 0.82rem; color: var(--ink);">Email verified! Enter and confirm your new password below.</span>
+                    <span style="font-size: 0.82rem; color: var(--ink);">Reset token verified! Enter your new password below.</span>
                 </div>
-
-                <div class="form-group" style="margin-bottom: 12px;">
-                    <label class="form-label">New Password</label>
-                    <div class="input-wrapper">
-                        <span class="material-symbols-outlined input-icon">lock</span>
-                        <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
-                        <input type="password" id="otpNewPassword" placeholder="Minimum 8 characters">
-                        <button type="button" class="btn" data-password-target="otpNewPassword" style="background:none; border:none; color:var(--muted); padding:0; cursor:pointer;">
-                            <span class="material-symbols-outlined">visibility</span>
-                        </button>
+                <form id="newPasswordForm" onsubmit="event.preventDefault();">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label class="form-label">New Password</label>
+                        <div class="input-wrapper">
+                            <span class="material-symbols-outlined input-icon">lock</span>
+                            <input type="password" id="modalNewPassword" placeholder="Minimum 8 characters" autocomplete="new-password">
+                            <button type="button" class="btn" data-password-target="modalNewPassword" style="background:none; border:none; color:var(--muted); padding:0; cursor:pointer;">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
-
-                <div class="form-group" style="margin-bottom: 14px;">
-                    <label class="form-label">Confirm New Password</label>
-                    <div class="input-wrapper">
-                        <span class="material-symbols-outlined input-icon">verified_user</span>
-                        <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
-                        <input type="password" id="otpConfirmPassword" placeholder="Confirm your new password">
-                        <button type="button" class="btn" data-password-target="otpConfirmPassword" style="background:none; border:none; color:var(--muted); padding:0; cursor:pointer;">
-                            <span class="material-symbols-outlined">visibility</span>
-                        </button>
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label class="form-label">Confirm New Password</label>
+                        <div class="input-wrapper">
+                            <span class="material-symbols-outlined input-icon">verified_user</span>
+                            <input type="password" id="modalConfirmPassword" placeholder="Confirm your new password" autocomplete="new-password">
+                            <button type="button" class="btn" data-password-target="modalConfirmPassword" style="background:none; border:none; color:var(--muted); padding:0; cursor:pointer;">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
-
-                <div id="otpStep3Error" class="error-msg" style="margin-bottom: 12px;"></div>
-
-                <button type="button" id="confirmChangePasswordBtn" class="btn-action">
-                    <span>Save Password &amp; Sign In</span>
-                    <span class="material-symbols-outlined">login</span>
-                </button>
+                    <div id="newPasswordError" class="error-msg" style="margin-bottom: 12px;"></div>
+                    <button type="submit" id="saveNewPasswordBtn" class="btn-action">
+                        <span>Save Password &amp; Sign In</span>
+                        <span class="material-symbols-outlined">login</span>
+                    </button>
+                </form>
             </div>
-        </div>
-    </div>
         </div>
     </div>
 
@@ -719,10 +720,11 @@
     <script type="module">
         // (2026-07-13) Import Firebase secondary auth helpers; was basic auth
         import { login, signUp, forgotPassword, getFriendlyAuthMessage } from './auth.js';
-        import { saveUserProfile, saveAdminUserPassword, findUserByEmail } from './db.js';
-        import { firebaseConfig } from './firebase-config.js';
+        // (2026-07-13) Import getAdminUserPassword; was not imported
+        import { saveUserProfile, saveAdminUserPassword, findUserByEmail, getAdminUserPassword } from './db.js';
+        import { firebaseConfig, auth } from './firebase-config.js';
         import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, updatePassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, updatePassword, createUserWithEmailAndPassword, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const mainAuthForm = document.getElementById('guardianAuthForm');
         const loginTab = document.getElementById('loginTab');
@@ -804,206 +806,123 @@
         loginTab.addEventListener('click', () => setMode('login'));
         signupTab.addEventListener('click', () => setMode('signup'));
 
-        // (2026-07-13) Verified OTP password reset and login; was broken signup catch
+        // (2026-07-13) Password reset link modal handler; was 3-step OTP flow
         const openOtpModalBtn = document.getElementById('openOtpModalBtn');
         const guardianOtpModal = document.getElementById('guardianOtpModal');
         const closeOtpModalBtn = document.getElementById('closeOtpModalBtn');
-        const otpStep1 = document.getElementById('otpStep1');
-        const otpStep2 = document.getElementById('otpStep2');
-        const otpStep3 = document.getElementById('otpStep3');
-        const otpEmailInput = document.getElementById('otpEmailInput');
-        const sendOtpBtn = document.getElementById('sendOtpBtn');
-        const otpStep1Error = document.getElementById('otpStep1Error');
-        const otpStep2Error = document.getElementById('otpStep2Error');
-        const otpStep3Error = document.getElementById('otpStep3Error');
-        const otpTargetEmailDisplay = document.getElementById('otpTargetEmailDisplay');
-        const otpCodeInput = document.getElementById('otpCodeInput');
-        const verifyOtpCodeBtn = document.getElementById('verifyOtpCodeBtn');
-        const otpBackToStep1Btn = document.getElementById('otpBackToStep1Btn');
-        const resendOtpBtn = document.getElementById('resendOtpBtn');
-        const otpNewPassword = document.getElementById('otpNewPassword');
-        const otpConfirmPassword = document.getElementById('otpConfirmPassword');
-        const confirmChangePasswordBtn = document.getElementById('confirmChangePasswordBtn');
+        const resetRequestView = document.getElementById('resetRequestView');
+        const resetSentView = document.getElementById('resetSentView');
+        const resetNewPasswordView = document.getElementById('resetNewPasswordView');
+        const resetEmailInput = document.getElementById('resetEmailInput');
+        const sendResetLinkBtn = document.getElementById('sendResetLinkBtn');
+        const resetEmailError = document.getElementById('resetEmailError');
+        const resetTargetEmailDisplay = document.getElementById('resetTargetEmailDisplay');
+        const backToSignInBtn = document.getElementById('backToSignInBtn');
+        const resendResetLinkBtn = document.getElementById('resendResetLinkBtn');
+        const modalNewPassword = document.getElementById('modalNewPassword');
+        const modalConfirmPassword = document.getElementById('modalConfirmPassword');
+        const newPasswordError = document.getElementById('newPasswordError');
+        const saveNewPasswordBtn = document.getElementById('saveNewPasswordBtn');
 
-        let currentOtpEmail = '';
-
-        const openOtpModal = () => {
+        const openResetModal = () => {
             const currentVal = emailInput.value.trim();
-            if (currentVal) otpEmailInput.value = currentVal;
-            if (otpStep1Error) otpStep1Error.textContent = '';
-            if (otpStep2Error) otpStep2Error.textContent = '';
-            if (otpStep3Error) otpStep3Error.textContent = '';
-            if (otpStep1) otpStep1.style.display = 'block';
-            if (otpStep2) otpStep2.style.display = 'none';
-            if (otpStep3) otpStep3.style.display = 'none';
-            guardianOtpModal.style.display = 'flex';
+            if (currentVal && resetEmailInput) resetEmailInput.value = currentVal;
+            if (resetEmailError) resetEmailError.textContent = '';
+            if (resetRequestView) resetRequestView.style.display = 'block';
+            if (resetSentView) resetSentView.style.display = 'none';
+            if (resetNewPasswordView) resetNewPasswordView.style.display = 'none';
+            if (guardianOtpModal) guardianOtpModal.style.display = 'flex';
         };
 
-        const closeOtpModal = () => {
-            guardianOtpModal.style.display = 'none';
+        const closeResetModal = () => {
+            if (guardianOtpModal) guardianOtpModal.style.display = 'none';
         };
 
-        openOtpModalBtn?.addEventListener('click', openOtpModal);
-        closeOtpModalBtn?.addEventListener('click', closeOtpModal);
+        openOtpModalBtn?.addEventListener('click', openResetModal);
+        closeOtpModalBtn?.addEventListener('click', closeResetModal);
         guardianOtpModal?.addEventListener('click', (e) => {
-            if (e.target === guardianOtpModal) closeOtpModal();
+            if (e.target === guardianOtpModal) closeResetModal();
         });
 
-        const requestOtp = async () => {
-            if (otpStep1Error) otpStep1Error.textContent = '';
-            if (otpStep2Error) otpStep2Error.textContent = '';
-            const email = otpEmailInput.value.trim().toLowerCase();
+        const handleSendResetLink = async () => {
+            if (resetEmailError) resetEmailError.textContent = '';
+            let email = (resetEmailInput?.value || '').trim().toLowerCase();
+            if (email.includes('@') && !email.includes('.')) {
+                if (email.endsWith('@gmail')) email += '.com';
+            }
             if (!email || !email.includes('@')) {
-                otpStep1Error.textContent = 'Please enter a valid guardian Gmail address.';
+                if (resetEmailError) resetEmailError.textContent = 'Please enter a valid guardian Gmail address.';
                 return;
             }
 
-            setButtonBusy(sendOtpBtn, true);
-            if (resendOtpBtn) setButtonBusy(resendOtpBtn, true);
+            setButtonBusy(sendResetLinkBtn, true);
+            if (resendResetLinkBtn) setButtonBusy(resendResetLinkBtn, true);
             try {
-                currentOtpEmail = email;
-                const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-                const otpData = {
-                    code: otpCode,
-                    expiresAt: Date.now() + 10 * 60 * 1000
-                };
-                sessionStorage.setItem('securo_otp_' + email, JSON.stringify(otpData));
-
-                try {
-                    await forgotPassword(email);
-                } catch (_) {}
-
-                try {
-                    fetch('https://formsubmit.co/ajax/' + encodeURIComponent(email), {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                        body: JSON.stringify({
-                            _subject: 'Securo Guardian Password Reset Verification Code',
-                            message: `Your Securo Guardian verification code is: ${otpCode}. It expires in 10 minutes.`
-                        })
-                    }).catch(() => {});
-                } catch (_) {}
-
-                if (otpTargetEmailDisplay) otpTargetEmailDisplay.textContent = email;
-                if (otpCodeInput) otpCodeInput.value = '';
-                if (otpStep1) otpStep1.style.display = 'none';
-                if (otpStep2) otpStep2.style.display = 'block';
-                if (otpStep3) otpStep3.style.display = 'none';
-                showToast('OTP Sent', `Verification code sent to ${email}. Check your Gmail inbox.`, 'success');
+                await forgotPassword(email);
+                if (resetTargetEmailDisplay) resetTargetEmailDisplay.textContent = email;
+                if (resetRequestView) resetRequestView.style.display = 'none';
+                if (resetSentView) resetSentView.style.display = 'block';
+                showToast('Reset Link Sent', `Password reset link sent to ${email}.`, 'success');
             } catch (err) {
-                otpStep1Error.textContent = err.message || 'Failed to send verification code.';
+                const message = getFriendlyAuthMessage(err, 'reset', 'guardian');
+                if (resetEmailError) resetEmailError.textContent = message;
+                showToast('Reset Failed', message, 'error');
             } finally {
-                setButtonBusy(sendOtpBtn, false);
-                if (resendOtpBtn) setButtonBusy(resendOtpBtn, false);
+                setButtonBusy(sendResetLinkBtn, false);
+                if (resendResetLinkBtn) setButtonBusy(resendResetLinkBtn, false);
             }
         };
 
-        sendOtpBtn?.addEventListener('click', requestOtp);
-        resendOtpBtn?.addEventListener('click', requestOtp);
-        otpBackToStep1Btn?.addEventListener('click', () => {
-            if (otpStep1) otpStep1.style.display = 'block';
-            if (otpStep2) otpStep2.style.display = 'none';
-            if (otpStep3) otpStep3.style.display = 'none';
-            if (otpStep2Error) otpStep2Error.textContent = '';
+        sendResetLinkBtn?.addEventListener('click', handleSendResetLink);
+        resendResetLinkBtn?.addEventListener('click', handleSendResetLink);
+
+        backToSignInBtn?.addEventListener('click', () => {
+            closeResetModal();
+            const email = (resetEmailInput?.value || '').trim();
+            if (email && emailInput) {
+                emailInput.value = email;
+                setMode('login');
+                const pwd = document.getElementById('passwordInput');
+                if (pwd) pwd.focus();
+            }
         });
 
-        verifyOtpCodeBtn?.addEventListener('click', () => {
-            if (otpStep2Error) otpStep2Error.textContent = '';
-            const enteredOtp = (otpCodeInput?.value || '').trim();
-            if (!enteredOtp) {
-                otpStep2Error.textContent = 'Please enter the 6-digit verification code.';
-                return;
-            }
-
-            const storedOtpRaw = sessionStorage.getItem('securo_otp_' + currentOtpEmail);
-            if (!storedOtpRaw) {
-                otpStep2Error.textContent = 'No active OTP found. Please request a new code.';
-                return;
-            }
-            const storedOtp = JSON.parse(storedOtpRaw);
-            if (Date.now() > storedOtp.expiresAt) {
-                otpStep2Error.textContent = 'This verification code has expired. Please resend OTP.';
-                return;
-            }
-            if (enteredOtp !== storedOtp.code) {
-                otpStep2Error.textContent = 'Incorrect verification code. Please check your Gmail and try again.';
-                return;
-            }
-
-            showToast('Code Verified', 'Code verified! Now set your new password.', 'success');
-            if (otpStep2) otpStep2.style.display = 'none';
-            if (otpStep3) otpStep3.style.display = 'block';
-            if (otpNewPassword) otpNewPassword.value = '';
-            if (otpConfirmPassword) otpConfirmPassword.value = '';
-            if (otpStep3Error) otpStep3Error.textContent = '';
-        });
-
-        confirmChangePasswordBtn?.addEventListener('click', async () => {
-            if (otpStep3Error) otpStep3Error.textContent = '';
-            const newPassword = (otpNewPassword?.value || '');
-            const confirmPassword = (otpConfirmPassword?.value || '');
+        saveNewPasswordBtn?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (newPasswordError) newPasswordError.textContent = '';
+            const newPassword = (modalNewPassword?.value || '');
+            const confirmPassword = (modalConfirmPassword?.value || '');
 
             if (newPassword.length < 8) {
-                otpStep3Error.textContent = 'New password must be at least 8 characters.';
+                newPasswordError.textContent = 'New password must be at least 8 characters.';
                 return;
             }
             if (newPassword !== confirmPassword) {
-                otpStep3Error.textContent = 'New password and confirm password do not match.';
+                newPasswordError.textContent = 'New password and confirm password do not match.';
                 return;
             }
 
-            setButtonBusy(confirmChangePasswordBtn, true);
+            const urlParams = new URLSearchParams(window.location.search);
+            const oobCode = urlParams.get('oobCode');
+            if (!oobCode) {
+                newPasswordError.textContent = 'Reset code missing. Please use the link from your email.';
+                return;
+            }
+
+            setButtonBusy(saveNewPasswordBtn, true);
             try {
-                let targetUid = null;
-                try {
-                    const profile = await findUserByEmail(currentOtpEmail);
-                    if (profile?.uid) targetUid = profile.uid;
-                } catch (_) {}
-
-                await saveAdminUserPassword(targetUid, currentOtpEmail, newPassword);
-                localStorage.setItem('securo_admin_pwd_' + currentOtpEmail, newPassword);
-                localStorage.setItem('securo_guardian_pwd_' + currentOtpEmail, newPassword);
-
-                const secondaryAppName = `securo-pwd-sync-${Date.now()}`;
-                const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
-                const secondaryAuth = getAuth(secondaryApp);
-                try {
-                    let userCred = null;
-                    const candidatePasses = [newPassword, '123123123', 'kiyokoshimizu', 'password', '12345678'];
-                    for (const oldPwd of candidatePasses) {
-                        try {
-                            userCred = await signInWithEmailAndPassword(secondaryAuth, currentOtpEmail, oldPwd);
-                            break;
-                        } catch (e) {}
-                    }
-                    if (userCred?.user) {
-                        await updatePassword(userCred.user, newPassword).catch(() => {});
-                    } else {
-                        await createUserWithEmailAndPassword(secondaryAuth, currentOtpEmail, newPassword).catch(() => {});
-                    }
-                } catch (syncErr) {
-                    console.warn('Firebase live auth sync attempt handled:', syncErr);
-                } finally {
-                    await deleteApp(secondaryApp).catch(() => {});
-                }
-
-                sessionStorage.removeItem('securo_otp_' + currentOtpEmail);
-
-                const loggedInUser = await login(currentOtpEmail, newPassword);
-                if (loggedInUser?.uid) {
-                    localStorage.setItem('securo_session_token', loggedInUser.uid);
-                }
-                sessionStorage.setItem('securo_authenticated', '1');
-
-                closeOtpModal();
-                showToast('Password Changed', 'Password updated! Logging into Guardian Hub...', 'success');
-                setTimeout(() => {
-                    window.location.href = 'guardian-dashboard.html';
-                }, 1000);
+                await confirmPasswordReset(auth, oobCode, newPassword);
+                showToast('Password Changed', 'Password reset successfully! Please sign in.', 'success');
+                closeResetModal();
+                setMode('login');
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
             } catch (err) {
-                otpStep3Error.textContent = err.message || 'Failed to update password and sign in.';
+                const message = getFriendlyAuthMessage(err, 'reset', 'guardian');
+                newPasswordError.textContent = message;
+                showToast('Reset Error', message, 'error');
             } finally {
-                setButtonBusy(confirmChangePasswordBtn, false);
+                setButtonBusy(saveNewPasswordBtn, false);
             }
         });
 
@@ -1145,6 +1064,14 @@
                     setButtonBusy(agreeGuardianTermsBtn, false);
                 }
             });
+        }
+        // (2026-07-13) Auto-open password reset modal from email link; was unhandled
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'resetPassword' || urlParams.get('oobCode')) {
+            openResetModal();
+            if (resetRequestView) resetRequestView.style.display = 'none';
+            if (resetSentView) resetSentView.style.display = 'none';
+            if (resetNewPasswordView) resetNewPasswordView.style.display = 'block';
         }
     </script>
 </body>
