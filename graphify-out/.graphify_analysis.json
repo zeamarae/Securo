@@ -36,8 +36,8 @@
       "db_saveuserdirectorymarker",
       "db_sendguardianlocationreminder",
       "db_setstudentlocationsharingstatus",
-      "db_subscribetoaccountnotifications",
       "db_subscribetocampusmapconfig",
+      "db_subscribetoguardianlinks",
       "db_subscribetoguardianrequests",
       "db_subscribetomessages",
       "db_subscribetomessagesbythread",
@@ -47,7 +47,6 @@
       "db_subscribetostudentsos",
       "db_togglelikegadpost",
       "db_updategadpost",
-      "db_updateguardianlinkstudentid",
       "db_updatestudentlivelocation"
     ],
     "1": [
@@ -86,8 +85,8 @@
       "www_db_saveuserdirectorymarker",
       "www_db_sendguardianlocationreminder",
       "www_db_setstudentlocationsharingstatus",
-      "www_db_subscribetoaccountnotifications",
       "www_db_subscribetocampusmapconfig",
+      "www_db_subscribetoguardianlinks",
       "www_db_subscribetoguardianrequests",
       "www_db_subscribetomessages",
       "www_db_subscribetomessagesbythread",
@@ -97,7 +96,6 @@
       "www_db_subscribetostudentsos",
       "www_db_togglelikegadpost",
       "www_db_updategadpost",
-      "www_db_updateguardianlinkstudentid",
       "www_db_updatestudentlivelocation"
     ],
     "2": [
@@ -208,34 +206,7 @@
       "www_tester_puppeteer"
     ],
     "5": [
-      "auth",
-      "auth_changepassword",
-      "auth_checkauth",
-      "auth_extractstudentidfromemail",
-      "auth_forgotpassword",
-      "auth_getfriendlyauthmessage",
-      "auth_getpreferredauthrole",
-      "auth_googleprovider",
-      "auth_login",
-      "auth_loginwithgoogle",
-      "auth_logout",
-      "auth_roleidtoemail",
-      "auth_signup",
-      "auth_staffidtoemail",
-      "auth_studentidtoemail",
-      "db_getadminuserpassword",
-      "db_getemailbystudentid",
-      "db_logauditevent",
-      "firebase_config",
-      "firebase_config_analytics",
-      "firebase_config_app",
-      "firebase_config_auth",
-      "firebase_config_db",
-      "firebase_config_firebaseconfig",
-      "firebase_config_storage",
-      "ref_https"
-    ],
-    "6": [
+      "ref_https",
       "www_auth",
       "www_auth_changepassword",
       "www_auth_checkauth",
@@ -262,43 +233,34 @@
       "www_firebase_config_firebaseconfig",
       "www_firebase_config_storage"
     ],
+    "6": [
+      "auth",
+      "auth_changepassword",
+      "auth_checkauth",
+      "auth_extractstudentidfromemail",
+      "auth_forgotpassword",
+      "auth_getfriendlyauthmessage",
+      "auth_getpreferredauthrole",
+      "auth_googleprovider",
+      "auth_login",
+      "auth_loginwithgoogle",
+      "auth_logout",
+      "auth_roleidtoemail",
+      "auth_signup",
+      "auth_staffidtoemail",
+      "auth_studentidtoemail",
+      "db_getadminuserpassword",
+      "db_getemailbystudentid",
+      "db_logauditevent",
+      "firebase_config",
+      "firebase_config_analytics",
+      "firebase_config_app",
+      "firebase_config_auth",
+      "firebase_config_db",
+      "firebase_config_firebaseconfig",
+      "firebase_config_storage"
+    ],
     "7": [
-      "db_createguardianlinkrequest",
-      "db_deletecurrentuseraccount",
-      "db_deleteuserrecord",
-      "db_findstudentuidbystudentid",
-      "db_getguardianrequestsforstudent",
-      "db_getstudentbootstrapprofile",
-      "db_getuserprofile",
-      "db_ispermissiondeniederror",
-      "db_readlocalusers",
-      "db_saveuserprofile",
-      "db_subscribetostudentlinks",
-      "db_syncguardianlinksforguardian",
-      "db_syncguardianlinksforstudent",
-      "db_updateuserprofile",
-      "db_upsertlocaluser",
-      "db_writelocalusers"
-    ],
-    "8": [
-      "www_db_createguardianlinkrequest",
-      "www_db_deletecurrentuseraccount",
-      "www_db_deleteuserrecord",
-      "www_db_findstudentuidbystudentid",
-      "www_db_getguardianrequestsforstudent",
-      "www_db_getstudentbootstrapprofile",
-      "www_db_getuserprofile",
-      "www_db_ispermissiondeniederror",
-      "www_db_readlocalusers",
-      "www_db_saveuserprofile",
-      "www_db_subscribetostudentlinks",
-      "www_db_syncguardianlinksforguardian",
-      "www_db_syncguardianlinksforstudent",
-      "www_db_updateuserprofile",
-      "www_db_upsertlocaluser",
-      "www_db_writelocalusers"
-    ],
-    "9": [
       "manifest",
       "manifest_background_color",
       "manifest_categories",
@@ -315,7 +277,23 @@
       "manifest_start_url",
       "manifest_theme_color"
     ],
-    "10": [
+    "8": [
+      "db_createguardianlinkfromstudent",
+      "db_finduserbyemail",
+      "db_getallusers",
+      "db_getguardianrequestsforstudent",
+      "db_getstudentbootstrapprofile",
+      "db_getuseridentitykeys",
+      "db_inferuserrole",
+      "db_ispermissiondeniederror",
+      "db_mergeusersbyidentity",
+      "db_normalizeemail",
+      "db_savegadpost",
+      "db_sendaccountnotification",
+      "db_sendchatmessage",
+      "db_subscribetoaccountnotifications"
+    ],
+    "9": [
       "db_deleteemergencypost",
       "db_getallemergencyposts",
       "db_getattendancehistory",
@@ -330,6 +308,22 @@
       "db_toggleemergencypostguardianaccess",
       "db_updateemergencypostattachments",
       "db_writelocalemergencyposts"
+    ],
+    "10": [
+      "www_db_createguardianlinkfromstudent",
+      "www_db_finduserbyemail",
+      "www_db_getallusers",
+      "www_db_getguardianrequestsforstudent",
+      "www_db_getstudentbootstrapprofile",
+      "www_db_getuseridentitykeys",
+      "www_db_inferuserrole",
+      "www_db_ispermissiondeniederror",
+      "www_db_mergeusersbyidentity",
+      "www_db_normalizeemail",
+      "www_db_savegadpost",
+      "www_db_sendaccountnotification",
+      "www_db_sendchatmessage",
+      "www_db_subscribetoaccountnotifications"
     ],
     "11": [
       "www_db_deleteemergencypost",
@@ -362,26 +356,24 @@
       "org_junit_test"
     ],
     "13": [
-      "db_getlinksforstudent",
-      "db_logattendance",
-      "db_logsos",
-      "db_notifyguardiansofgeofenceevent",
-      "db_notifyguardianssos",
-      "db_processofflinequeue",
-      "db_savegadpost",
-      "db_sendaccountnotification",
-      "db_sendchatmessage"
+      "db_createguardianlinkrequest",
+      "db_deletecurrentuseraccount",
+      "db_deleteuserrecord",
+      "db_findstudentuidbystudentid",
+      "db_getuserprofile",
+      "db_readlocalusers",
+      "db_subscribetostudentlinks",
+      "db_updateguardianlinkstudentid"
     ],
     "14": [
-      "www_db_getlinksforstudent",
-      "www_db_logattendance",
-      "www_db_logsos",
-      "www_db_notifyguardiansofgeofenceevent",
-      "www_db_notifyguardianssos",
-      "www_db_processofflinequeue",
-      "www_db_savegadpost",
-      "www_db_sendaccountnotification",
-      "www_db_sendchatmessage"
+      "www_db_createguardianlinkrequest",
+      "www_db_deletecurrentuseraccount",
+      "www_db_deleteuserrecord",
+      "www_db_findstudentuidbystudentid",
+      "www_db_getuserprofile",
+      "www_db_readlocalusers",
+      "www_db_subscribetostudentlinks",
+      "www_db_updateguardianlinkstudentid"
     ],
     "15": [
       "db_assertguardiancapacityforrequest",
@@ -393,13 +385,13 @@
       "db_respondtoguardianlink"
     ],
     "16": [
-      "db_createguardianlinkfromstudent",
-      "db_finduserbyemail",
-      "db_getallusers",
-      "db_getuseridentitykeys",
-      "db_inferuserrole",
-      "db_mergeusersbyidentity",
-      "db_normalizeemail"
+      "preloader",
+      "preloader_dismissfallback",
+      "preloader_ensuregsap",
+      "preloader_ensureoverlay",
+      "preloader_initpreloader",
+      "preloader_runanimation",
+      "preloader_runtransitiondismiss"
     ],
     "17": [
       "router",
@@ -429,13 +421,13 @@
       "www_db_respondtoguardianlink"
     ],
     "20": [
-      "www_db_createguardianlinkfromstudent",
-      "www_db_finduserbyemail",
-      "www_db_getallusers",
-      "www_db_getuseridentitykeys",
-      "www_db_inferuserrole",
-      "www_db_mergeusersbyidentity",
-      "www_db_normalizeemail"
+      "www_preloader",
+      "www_preloader_dismissfallback",
+      "www_preloader_ensuregsap",
+      "www_preloader_ensureoverlay",
+      "www_preloader_initpreloader",
+      "www_preloader_runanimation",
+      "www_preloader_runtransitiondismiss"
     ],
     "21": [
       "www_router",
@@ -447,6 +439,22 @@
       "www_router_showtoast"
     ],
     "22": [
+      "db_getlinksforstudent",
+      "db_logattendance",
+      "db_logsos",
+      "db_notifyguardiansofgeofenceevent",
+      "db_notifyguardianssos",
+      "db_processofflinequeue"
+    ],
+    "23": [
+      "db_saveuserprofile",
+      "db_syncguardianlinksforguardian",
+      "db_syncguardianlinksforstudent",
+      "db_updateuserprofile",
+      "db_upsertlocaluser",
+      "db_writelocalusers"
+    ],
+    "24": [
       "jsconfig",
       "jsconfig_compileroptions",
       "jsconfig_compileroptions_module",
@@ -454,7 +462,23 @@
       "jsconfig_compileroptions_target",
       "jsconfig_exclude"
     ],
-    "23": [
+    "25": [
+      "www_db_getlinksforstudent",
+      "www_db_logattendance",
+      "www_db_logsos",
+      "www_db_notifyguardiansofgeofenceevent",
+      "www_db_notifyguardianssos",
+      "www_db_processofflinequeue"
+    ],
+    "26": [
+      "www_db_saveuserprofile",
+      "www_db_syncguardianlinksforguardian",
+      "www_db_syncguardianlinksforstudent",
+      "www_db_updateuserprofile",
+      "www_db_upsertlocaluser",
+      "www_db_writelocalusers"
+    ],
+    "27": [
       "www_spa_router",
       "www_spa_router_back",
       "www_spa_router_converttohashurl",
@@ -462,135 +486,120 @@
       "www_spa_router_interceptlinks",
       "www_spa_router_navigate"
     ],
-    "24": [
+    "28": [
       "db_readlocalgadmessages",
       "db_replytogadmessage",
       "db_sendgadmessage",
       "db_subscribetogadmessages",
       "db_writelocalgadmessages"
     ],
-    "25": [
+    "29": [
       "www_db_readlocalgadmessages",
       "www_db_replytogadmessage",
       "www_db_sendgadmessage",
       "www_db_subscribetogadmessages",
       "www_db_writelocalgadmessages"
     ],
-    "26": [
+    "30": [
       "android_gradlew",
       "android_gradlew__entry",
       "android_gradlew_die",
       "android_gradlew_warn"
     ],
-    "27": [
-      "preloader",
-      "preloader_dismissfallback",
-      "preloader_ensuregsap",
-      "preloader_runanimation"
-    ],
-    "28": [
-      "www_preloader",
-      "www_preloader_dismissfallback",
-      "www_preloader_ensuregsap",
-      "www_preloader_runanimation"
-    ],
-    "29": [
+    "31": [
       "android_app_src_main_java_com_securo_app_mainactivity",
       "android_app_src_main_java_com_securo_app_mainactivity_mainactivity",
       "com_getcapacitor_bridgeactivity"
     ],
-    "30": [
+    "32": [
       "service_worker",
       "service_worker_core_assets",
       "service_worker_syncofflinequeue"
     ],
-    "31": [
+    "33": [
       "www_service_worker",
       "www_service_worker_core_assets",
       "www_service_worker_syncofflinequeue"
     ],
-    "32": [
+    "34": [
       "android_app_build"
     ],
-    "33": [
+    "35": [
       "android_app_capacitor_build"
     ],
-    "34": [
+    "36": [
       "android_build"
     ],
-    "35": [
+    "37": [
       "android_capacitor_settings"
     ],
-    "36": [
+    "38": [
       "android_settings"
     ],
-    "37": [
+    "39": [
       "android_variables"
     ],
-    "38": [
+    "40": [
       "p"
     ]
   },
   "cohesion": {
-    "0": 0.041666666666666664,
-    "1": 0.041666666666666664,
+    "0": 0.0425531914893617,
+    "1": 0.0425531914893617,
     "2": 0.09803921568627451,
     "3": 0.09803921568627451,
     "4": 0.06060606060606061,
     "5": 0.11384615384615385,
     "6": 0.11666666666666667,
-    "7": 0.175,
-    "8": 0.175,
-    "9": 0.13333333333333333,
-    "10": 0.1978021978021978,
+    "7": 0.13333333333333333,
+    "8": 0.21978021978021978,
+    "9": 0.1978021978021978,
+    "10": 0.21978021978021978,
     "11": 0.1978021978021978,
     "12": 0.24242424242424243,
-    "13": 0.2777777777777778,
-    "14": 0.2777777777777778,
+    "13": 0.32142857142857145,
+    "14": 0.32142857142857145,
     "15": 0.2857142857142857,
-    "16": 0.47619047619047616,
+    "16": 0.6190476190476191,
     "17": 0.38095238095238093,
     "18": 0.47619047619047616,
     "19": 0.2857142857142857,
-    "20": 0.47619047619047616,
+    "20": 0.6190476190476191,
     "21": 0.38095238095238093,
-    "22": 0.3333333333333333,
-    "23": 0.6,
-    "24": 0.5,
-    "25": 0.5,
-    "26": 0.8333333333333334,
-    "27": 0.6666666666666666,
-    "28": 0.6666666666666666,
-    "29": 1.0,
-    "30": 0.6666666666666666,
-    "31": 0.6666666666666666,
-    "32": 1.0,
-    "33": 1.0,
+    "22": 0.4,
+    "23": 0.4666666666666667,
+    "24": 0.3333333333333333,
+    "25": 0.4,
+    "26": 0.4666666666666667,
+    "27": 0.6,
+    "28": 0.5,
+    "29": 0.5,
+    "30": 0.8333333333333334,
+    "31": 1.0,
+    "32": 0.6666666666666666,
+    "33": 0.6666666666666666,
     "34": 1.0,
     "35": 1.0,
     "36": 1.0,
     "37": 1.0,
-    "38": 1.0
+    "38": 1.0,
+    "39": 1.0,
+    "40": 1.0
   },
   "gods": [
     {
-      "id": "db_readlocalemergencyposts",
-      "label": "readLocalEmergencyPosts()",
-      "degree": 9
-    },
-    {
-      "id": "www_db_readlocalemergencyposts",
-      "label": "readLocalEmergencyPosts()",
-      "degree": 9
-    },
-    {
       "id": "db_sendaccountnotification",
       "label": "sendAccountNotification()",
-      "degree": 9
+      "degree": 12
     },
     {
       "id": "www_db_sendaccountnotification",
       "label": "sendAccountNotification()",
+      "degree": 12
+    },
+    {
+      "id": "db_readlocalemergencyposts",
+      "label": "readLocalEmergencyPosts()",
       "degree": 9
     },
     {
@@ -599,9 +608,24 @@
       "degree": 9
     },
     {
+      "id": "www_db_readlocalemergencyposts",
+      "label": "readLocalEmergencyPosts()",
+      "degree": 9
+    },
+    {
       "id": "www_db_readlocalusers",
       "label": "readLocalUsers()",
       "degree": 9
+    },
+    {
+      "id": "db_normalizeemail",
+      "label": "normalizeEmail()",
+      "degree": 8
+    },
+    {
+      "id": "db_getuserprofile",
+      "label": "getUserProfile()",
+      "degree": 8
     },
     {
       "id": "db_getallusers",
@@ -612,40 +636,41 @@
       "id": "install_sw_initializeofflinesupport",
       "label": "initializeOfflineSupport()",
       "degree": 8
-    },
-    {
-      "id": "www_db_getallusers",
-      "label": "getAllUsers()",
-      "degree": 8
-    },
-    {
-      "id": "www_install_sw_initializeofflinesupport",
-      "label": "initializeOfflineSupport()",
-      "degree": 8
     }
   ],
   "surprises": [
     {
-      "source": "getEmergencyContacts()",
-      "target": "getUserProfile()",
+      "source": "loginWithGoogle()",
+      "target": "logAuditEvent()",
       "source_files": [
-        "emergency-contacts.js",
+        "auth.js",
         "db.js"
       ],
       "confidence": "EXTRACTED",
       "relation": "calls",
-      "why": "bridges separate communities"
+      "why": "peripheral node `loginWithGoogle()` unexpectedly reaches hub `logAuditEvent()`"
     },
     {
-      "source": "getEmergencyContacts()",
-      "target": "getUserProfile()",
+      "source": "signUp()",
+      "target": "logAuditEvent()",
       "source_files": [
-        "www/emergency-contacts.js",
-        "www/db.js"
+        "auth.js",
+        "db.js"
       ],
       "confidence": "EXTRACTED",
       "relation": "calls",
-      "why": "bridges separate communities"
+      "why": "peripheral node `signUp()` unexpectedly reaches hub `logAuditEvent()`"
+    },
+    {
+      "source": "logout()",
+      "target": "logAuditEvent()",
+      "source_files": [
+        "auth.js",
+        "db.js"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "peripheral node `logout()` unexpectedly reaches hub `logAuditEvent()`"
     },
     {
       "source": "changePassword()",
@@ -659,32 +684,21 @@
       "why": "peripheral node `changePassword()` unexpectedly reaches hub `logAuditEvent()`"
     },
     {
-      "source": "login()",
-      "target": "saveUserProfile()",
+      "source": "getEmergencyContacts()",
+      "target": "getUserProfile()",
       "source_files": [
-        "auth.js",
+        "emergency-contacts.js",
         "db.js"
       ],
       "confidence": "EXTRACTED",
       "relation": "calls",
       "why": "bridges separate communities"
-    },
-    {
-      "source": "loginWithGoogle()",
-      "target": "logAuditEvent()",
-      "source_files": [
-        "auth.js",
-        "db.js"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "peripheral node `loginWithGoogle()` unexpectedly reaches hub `logAuditEvent()`"
     }
   ],
   "questions": [
     {
       "type": "bridge_node",
-      "question": "Why does `initializeOfflineSupport()` connect `Emergency Contacts & SOS` to `Database & Notification Store`?",
+      "question": "Why does `initializeOfflineSupport()` connect `Community 2` to `Community 0`?",
       "why": "High betweenness centrality (0.004) - this node is a cross-community bridge."
     },
     {
@@ -694,27 +708,27 @@
     },
     {
       "type": "low_cohesion",
-      "question": "Should `Database & Notification Store` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected."
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.0425531914893617 - nodes in this community are weakly interconnected."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `initializeOfflineSupport()` connect `Campus SOS Dispatcher` to `Firestore Operations`?",
+      "question": "Why does `initializeOfflineSupport()` connect `Community 3` to `Community 1`?",
       "why": "High betweenness centrality (0.004) - this node is a cross-community bridge."
     },
     {
       "type": "low_cohesion",
-      "question": "Should `Firestore Operations` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected."
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.0425531914893617 - nodes in this community are weakly interconnected."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `logAuditEvent()` connect `Authentication & Role Management` to `Database & Notification Store`?",
+      "question": "Why does `logAuditEvent()` connect `Community 6` to `Community 0`?",
       "why": "High betweenness centrality (0.003) - this node is a cross-community bridge."
     },
     {
       "type": "low_cohesion",
-      "question": "Should `Emergency Contacts & SOS` be split into smaller, more focused modules?",
+      "question": "Should `Community 2` be split into smaller, more focused modules?",
       "why": "Cohesion score 0.09803921568627451 - nodes in this community are weakly interconnected."
     }
   ]

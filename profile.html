@@ -1281,8 +1281,12 @@
             </div>
             <h3 class="status-title" style="color: var(--red); margin-bottom: 8px;">Delete Account Permanently</h3>
             <p class="status-msg" style="margin-bottom: 16px;">This action cannot be undone. All your emergency records, attendance logs, and linked data will be deleted. Enter your password to confirm:</p>
-            <div style="margin-bottom: 18px;">
-                <input id="deletePasswordConfirmInput" class="input-field" type="password" placeholder="Enter current password" style="width: 100%;">
+            <div style="margin-bottom: 18px; position: relative; display: flex; align-items: center;">
+                <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
+                <input id="deletePasswordConfirmInput" class="input-field" type="password" placeholder="Enter current password" style="width: 100%; padding-right: 44px;">
+                <button class="password-toggle-btn" type="button" data-password-target="deletePasswordConfirmInput" aria-label="Show password" style="position: absolute; right: 12px; background: none; border: none; color: var(--muted); cursor: pointer; display: flex; align-items: center;">
+                    <span class="material-symbols-outlined">visibility</span>
+                </button>
             </div>
             <div style="display: flex; gap: 10px;">
                 <button id="cancelDeleteBtn" class="btn-secondary" type="button" style="flex: 1; min-height: 48px; border-radius: 14px;">Cancel</button>
@@ -1825,7 +1829,8 @@
             connectionsList.innerHTML = '<div class="empty-state">Loading connections...</div>';
             try {
                 if (state.role === 'guardian') {
-                    const links = await getAllLinksForGuardian(state.uid);
+                    // (2026-07-13) Pass guardian email to loadConnections; was UID-only query
+                    const links = await getAllLinksForGuardian(state.uid, state.email);
                     const visibleLinks = await Promise.all(
                         links
                             .filter((link) => link.status === 'accepted' || link.status === 'pending')
@@ -2278,14 +2283,35 @@
             state.uid = user.uid;
 
             try {
-                const profile = await getUserProfile(user.uid);
+                let profile = await getUserProfile(user.uid);
+                const currentAuthEmail = (user.email || '').toLowerCase().trim();
+                const profileEmailNorm = (profile?.email || '').toLowerCase().trim();
+
+                // (2026-07-13) Fix mismatched guardian profile on login; was stale email
+                if (currentAuthEmail && profileEmailNorm && currentAuthEmail !== profileEmailNorm) {
+                    const matchedUser = await findUserByEmail(currentAuthEmail);
+                    const fixedName = matchedUser?.name || user.displayName || currentAuthEmail.split('@')[0];
+                    profile = {
+                        ...(profile || {}),
+                        ...(matchedUser || {}),
+                        email: currentAuthEmail,
+                        name: fixedName,
+                        role: matchedUser?.role || profile?.role || 'guardian'
+                    };
+                    await updateUserProfile(user.uid, {
+                        email: currentAuthEmail,
+                        name: fixedName,
+                        role: profile.role
+                    }).catch(() => {});
+                }
+
                 if ((profile?.role || '') === 'admin' || user.email === 'admin@admin.com') {
                     window.location.replace('admin.html');
                     return;
                 }
                 renderIdentity({
                     ...profile,
-                    email: profile?.email || user.email || '',
+                    email: currentAuthEmail || profile?.email || '',
                     name: profile?.name || user.displayName || 'Securo User'
                 });
                 setNameEditing(false);

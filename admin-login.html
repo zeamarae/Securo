@@ -285,7 +285,11 @@
                 <label for="password">Security Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined">lock</span>
+                    <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
                     <input type="password" id="password" placeholder="••••••••" required>
+                    <button type="button" class="btn" data-password-target="password" style="background:none; border:none; color:var(--muted,#94a3b8); padding:0; cursor:pointer; display:flex; align-items:center;">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </button>
                 </div>
             </div>
 
@@ -315,6 +319,18 @@
         const errorMessage = document.getElementById('errorMessage');
 
         adminEmailInput.value = ADMIN_EMAIL;
+
+        // (2026-07-13) Add password eye toggle; was password input without toggle
+        document.querySelectorAll('[data-password-target]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = document.getElementById(btn.dataset.passwordTarget);
+                if (!target) return;
+                const isPass = target.type === 'password';
+                target.type = isPass ? 'text' : 'password';
+                const icon = btn.querySelector('.material-symbols-outlined');
+                if (icon) icon.textContent = isPass ? 'visibility_off' : 'visibility';
+            });
+        });
 
         const showError = (msg) => {
             errorMessage.textContent = msg;

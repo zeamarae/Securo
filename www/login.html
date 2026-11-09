@@ -705,7 +705,11 @@
                 <label class="form-label">Confirm Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">verified_user</span>
+                    <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
                     <input type="password" id="confirmPasswordSignup" placeholder="" autocomplete="new-password">
+                    <button type="button" id="toggleConfirmPassword" class="btn" style="background:none; border:none; color:var(--muted); padding:0; cursor:pointer;">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </button>
                 </div>
             </div>
 
@@ -1291,13 +1295,20 @@
             }
         });
 
-        // Toggle Password Visibility (Date: 2026-05-02)
+        // (2026-07-13) Add password eye toggle; was password input without toggle
         const togglePasswordBtn = document.getElementById('togglePassword');
         const passwordInput = document.getElementById('password');
-        togglePasswordBtn.addEventListener('click', () => {
+        togglePasswordBtn?.addEventListener('click', () => {
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
             togglePasswordBtn.querySelector('span').textContent = type === 'password' ? 'visibility' : 'visibility_off';
+        });
+        const toggleConfirmPasswordBtn = document.getElementById('toggleConfirmPassword');
+        const confirmPasswordInput = document.getElementById('confirmPasswordSignup');
+        toggleConfirmPasswordBtn?.addEventListener('click', () => {
+            const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            confirmPasswordInput.setAttribute('type', type);
+            toggleConfirmPasswordBtn.querySelector('span').textContent = type === 'password' ? 'visibility' : 'visibility_off';
         });
 
         // Dynamic Onboarding Avatar Initials sync

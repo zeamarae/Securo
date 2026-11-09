@@ -2721,7 +2721,13 @@
                 </div>
                 <div class="field-block">
                     <label for="manageUserPassword">Password</label>
-                    <input id="manageUserPassword" class="glass-input" type="password" placeholder="Required for new sign-in accounts">
+                    <div style="position:relative; display:flex; align-items:center;">
+                        <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
+                        <input id="manageUserPassword" class="glass-input" type="password" placeholder="Required for new sign-in accounts" style="width:100%; padding-right:42px;">
+                        <button type="button" class="btn" data-password-target="manageUserPassword" style="position:absolute; right:12px; background:none; border:none; color:var(--muted,#94a3b8); padding:0; cursor:pointer; display:flex; align-items:center;">
+                            <span class="material-symbols-outlined">visibility</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="field-block" id="manageUserStudentIdBlock">
                     <label for="manageUserStudentId" id="manageUserStudentIdLabel">Student ID</label>
@@ -2952,6 +2958,18 @@
         const manageUserEmailLabel = document.getElementById('manageUserEmailLabel');
         const manageUserRole = document.getElementById('manageUserRole');
         const manageUserPassword = document.getElementById('manageUserPassword');
+
+        // (2026-07-13) Add password eye toggle; was password input without toggle
+        document.querySelectorAll('[data-password-target]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = document.getElementById(btn.dataset.passwordTarget);
+                if (!target) return;
+                const isPass = target.type === 'password';
+                target.type = isPass ? 'text' : 'password';
+                const icon = btn.querySelector('.material-symbols-outlined');
+                if (icon) icon.textContent = isPass ? 'visibility_off' : 'visibility';
+            });
+        });
         const manageUserStudentId = document.getElementById('manageUserStudentId');
         const manageUserStudentIdBlock = document.getElementById('manageUserStudentIdBlock');
         const manageUserStudentIdLabel = document.getElementById('manageUserStudentIdLabel');
@@ -4854,12 +4872,12 @@
                         wheelPxPerZoomLevel: 140
                     }).setView(ADMIN_CAMPUS_CENTER, 17);
 
-                    // (2026-07-13) Fix map tiles using CartoDB Voyager; was broken Google 403
+                    // (2026-07-13) Use OSM tiles; was broken CartoDB tiles requiring API key
                     const modalBaseMaps = {
-                        "Streets": L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 20, subdomains: 'abcd' }),
-                        "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }),
+                        "Streets": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }),
+                        "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }),
                         "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
-                        "Light": L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 20, subdomains: 'abcd' })
+                        "Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 })
                     };
                     modalBaseMaps["Streets"].addTo(adminModalLeafletMap);
                     L.control.layers(modalBaseMaps, null, { position: 'topright' }).addTo(adminModalLeafletMap);

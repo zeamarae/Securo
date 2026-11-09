@@ -418,8 +418,11 @@
                 <label class="form-label">Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">lock</span>
-                    <!-- (2026-07-13) Blank password placeholder; was bullet dots placeholder -->
+                    <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
                     <input type="password" id="passwordInput" placeholder="" autocomplete="new-password" required>
+                    <button type="button" class="btn" data-password-target="passwordInput" style="background:none; border:none; color:var(--muted); padding:0; cursor:pointer;">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </button>
                 </div>
             </div>
 
@@ -432,8 +435,11 @@
                 <label class="form-label">Confirm Password</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">verified_user</span>
-                    <!-- (2026-07-13) Blank confirm password placeholder; was text placeholder -->
+                    <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
                     <input type="password" id="confirmPasswordSignup" placeholder="" autocomplete="new-password">
+                    <button type="button" class="btn" data-password-target="confirmPasswordSignup" style="background:none; border:none; color:var(--muted); padding:0; cursor:pointer;">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </button>
                 </div>
             </div>
 
@@ -540,7 +546,11 @@
                     <label class="form-label">New Password</label>
                     <div class="input-wrapper">
                         <span class="material-symbols-outlined input-icon">lock</span>
+                        <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
                         <input type="password" id="otpNewPassword" placeholder="Minimum 8 characters">
+                        <button type="button" class="btn" data-password-target="otpNewPassword" style="background:none; border:none; color:var(--muted); padding:0; cursor:pointer;">
+                            <span class="material-symbols-outlined">visibility</span>
+                        </button>
                     </div>
                 </div>
 
@@ -548,7 +558,11 @@
                     <label class="form-label">Confirm New Password</label>
                     <div class="input-wrapper">
                         <span class="material-symbols-outlined input-icon">verified_user</span>
+                        <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
                         <input type="password" id="otpConfirmPassword" placeholder="Confirm your new password">
+                        <button type="button" class="btn" data-password-target="otpConfirmPassword" style="background:none; border:none; color:var(--muted); padding:0; cursor:pointer;">
+                            <span class="material-symbols-outlined">visibility</span>
+                        </button>
                     </div>
                 </div>
 
@@ -719,6 +733,18 @@
         const toastStack = document.getElementById('toastStack');
         const emailInput = document.getElementById('emailInput');
         let isLoginMode = true;
+
+        // (2026-07-13) Add password eye toggle; was password input without toggle
+        document.querySelectorAll('[data-password-target]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = document.getElementById(btn.dataset.passwordTarget);
+                if (!target) return;
+                const isPass = target.type === 'password';
+                target.type = isPass ? 'text' : 'password';
+                const icon = btn.querySelector('.material-symbols-outlined');
+                if (icon) icon.textContent = isPass ? 'visibility_off' : 'visibility';
+            });
+        });
 
         const showToast = (title, message, type = 'info') => {
             const icon = type === 'error' ? 'error' : type === 'success' ? 'check_circle' : 'info';

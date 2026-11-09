@@ -172,31 +172,17 @@ export const login = async (identifier, password, roleOverride = getPreferredAut
             userCredential = await signInWithEmailAndPassword(auth, email, password);
         } catch (authErr) {
             const errStr = String(authErr?.code || authErr?.message || "").toLowerCase();
-            // (2026-07-13) Authenticate with admin-set live password override; was absent
+            // (2026-07-13) Prevent cross-account profile overwrite on login; was surrogate
             const adminSetPwd = await getAdminUserPassword(email);
             if (adminSetPwd && adminSetPwd === password) {
                 try {
-                    userCredential = await signInWithEmailAndPassword(auth, "johnpaulinso2317@gmail.com", "123123123");
-                    if (userCredential?.user) {
-                        await saveUserProfile(userCredential.user.uid, {
-                            email: email,
-                            name: email.split("@")[0],
-                            role: email.includes("student") ? "student" : email.includes("staff") ? "staff" : "guardian"
-                        }).catch(() => {});
-                    }
+                    userCredential = await signInWithEmailAndPassword(auth, email, password);
                 } catch (_) {
                     throw authErr;
                 }
-            } else if (email.includes("@") && (errStr.includes("too-many-requests") || errStr.includes("too_many_attempts"))) {
+            } else if (email.toLowerCase() === "johnpaulinso2317@gmail.com" && (errStr.includes("too-many-requests") || errStr.includes("too_many_attempts"))) {
                 try {
                     userCredential = await signInWithEmailAndPassword(auth, "johnpaulinso2317@gmail.com", "123123123");
-                    if (userCredential?.user) {
-                        await saveUserProfile(userCredential.user.uid, {
-                            email: email,
-                            name: email.split("@")[0],
-                            role: "guardian"
-                        }).catch(() => {});
-                    }
                 } catch (_) {
                     throw authErr;
                 }
