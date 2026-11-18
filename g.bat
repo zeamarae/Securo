@@ -8,4 +8,6 @@ echo [2/3] Committing with message: %msg%
 rem (2026-07-13) Allow empty commits; was git commit failing on clean tree
 git commit --allow-empty -m "%msg%"
 echo [3/3] Pushing to https://github.com/zeamarae/Securo.git ...
+rem (2026-07-13) Auto-rebase before push; was bare push failing on divergence
+git pull --rebase origin main
 git push origin main
