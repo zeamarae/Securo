@@ -1706,10 +1706,19 @@ setTimeout(() => {
             }
             try {
                 const posts = await getUserEmergencyPosts(uid);
+                // (2026-07-13) Backfill guardianVisible=true on legacy posts; was undefined
+                posts.forEach((post) => {
+                    if (post?.id && !String(post.id).startsWith('local_') && post.guardianVisible === undefined) {
+                        toggleEmergencyPostGuardianAccess(post.id, true).catch(() => {});
+                    }
+                });
                 const rawItems = posts.flatMap((post) => (post.attachments || []).map((attachment, index) => ({
                     ...attachment,
                     createdAt: post.createdAt,
                     postId: post.id,
+                    userId: post.userId || uid,
+                    studentId: post.studentId || appState.user.studentId || "",
+                    userName: post.userName || appState.user.name || "",
                     attachmentIndex: index,
                     totalInPost: (post.attachments || []).length,
                     location: post.location,

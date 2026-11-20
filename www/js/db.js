@@ -495,6 +495,21 @@ export const getUserEmergencyPosts = async (userId, userName = null) => {
             const snapName = await getDocs(qName).catch(() => ({ docs: [] }));
             remotePosts = snapName.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
+        // (2026-07-13) Fallback to guardianVisible==true query for rules; was unfiltered
+        if (remotePosts.length === 0) {
+            const qShared = query(
+                collection(db, "emergency_posts"),
+                where("guardianVisible", "==", true)
+            );
+            const snapShared = await getDocs(qShared).catch(() => ({ docs: [] }));
+            remotePosts = snapShared.docs
+                .map(doc => ({ id: doc.id, ...doc.data() }))
+                .filter(p => {
+                    if (userId && (String(p.userId) === String(userId) || (p.studentId && String(p.studentId) === String(userId)))) return true;
+                    if (normName && ((p.userName && String(p.userName).trim().toLowerCase().includes(normName)) || (p.studentName && String(p.studentName).trim().toLowerCase().includes(normName)))) return true;
+                    return false;
+                });
+        }
         return mergeEmergencyPosts(remotePosts, localPosts);
     } catch (error) {
         if (error?.code === "permission-denied" || /permissions/i.test(error?.message)) {
@@ -504,6 +519,63 @@ export const getUserEmergencyPosts = async (userId, userName = null) => {
         }
         return mergeEmergencyPosts([], localPosts);
     }
+};
+
+// (2026-07-13) Cache guardian shared vault posts for fast switch; was uncached
+let _guardianSharedPostsCache = null;
+let _guardianSharedPostsCacheTs = 0;
+let _guardianSharedPostsInFlight = null;
+const GUARDIAN_SHARED_CACHE_TTL_MS = 30000;
+
+export const getGuardianSharedEmergencyPosts = async (studentUid, studentId = null, studentName = null, forceRefresh = false) => {
+    const uidStr = studentUid ? String(studentUid).trim() : "";
+    const sidStr = studentId ? String(studentId).trim() : "";
+    const normName = studentName ? String(studentName).trim().toLowerCase() : "";
+
+    const matchesStudent = (p) => {
+        if (!p || p.guardianVisible === false) return false;
+        if (uidStr && String(p.userId || "").trim() === uidStr) return true;
+        if (sidStr && (String(p.studentId || "").trim() === sidStr || String(p.userId || "").trim() === sidStr)) return true;
+        if (normName && normName !== "linked child" && normName !== "student") {
+            const pName = String(p.userName || p.studentName || "").trim().toLowerCase();
+            if (pName && (pName === normName || pName.includes(normName) || normName.includes(pName))) return true;
+        }
+        return false;
+    };
+
+    const localPosts = readLocalEmergencyPosts().filter(matchesStudent);
+    const now = Date.now();
+    let collected = null;
+
+    if (!forceRefresh && _guardianSharedPostsCache && (now - _guardianSharedPostsCacheTs) < GUARDIAN_SHARED_CACHE_TTL_MS) {
+        collected = _guardianSharedPostsCache;
+    } else {
+        if (!_guardianSharedPostsInFlight || forceRefresh) {
+            _guardianSharedPostsInFlight = (async () => {
+                const docs = [];
+                const seen = new Set();
+                try {
+                    const qShared = query(collection(db, "emergency_posts"), where("guardianVisible", "==", true));
+                    const snapShared = await getDocs(qShared).catch(() => null);
+                    (snapShared?.docs || []).forEach((d) => {
+                        if (!seen.has(d.id)) {
+                            seen.add(d.id);
+                            docs.push({ id: d.id, ...d.data() });
+                        }
+                    });
+                } catch (_) {}
+                _guardianSharedPostsCache = docs;
+                _guardianSharedPostsCacheTs = Date.now();
+                return docs;
+            })().finally(() => {
+                _guardianSharedPostsInFlight = null;
+            });
+        }
+        collected = await _guardianSharedPostsInFlight;
+    }
+
+    const matchedRemote = (collected || []).filter(matchesStudent);
+    return mergeEmergencyPosts(matchedRemote, localPosts);
 };
 
 /**

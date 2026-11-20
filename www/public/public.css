@@ -24,7 +24,7 @@ body.page-landing {
             --radius-md: 16px;
         }
 
-        body.page-landing, body.page-landing * {
+        body.page-landing, :where(body.page-landing) * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -49,7 +49,7 @@ body.page-landing {
         }
 
         /* Ambient Glows */
-        body.page-landing .ambient-glow-top {
+        :where(body.page-landing) .ambient-glow-top {
             position: absolute;
             top: -200px;
             right: -100px;
@@ -60,7 +60,7 @@ body.page-landing {
             pointer-events: none;
         }
 
-        body.page-landing .ambient-glow-bottom {
+        :where(body.page-landing) .ambient-glow-bottom {
             position: absolute;
             bottom: 200px;
             left: -150px;
@@ -72,7 +72,7 @@ body.page-landing {
         }
 
         /* Container */
-        body.page-landing .page-container {
+        :where(body.page-landing) .page-container {
             width: 100%;
             max-width: 1320px;
             margin: 0 auto;
@@ -82,7 +82,7 @@ body.page-landing {
         }
 
         /* Navbar */
-        body.page-landing .navbar-main {
+        :where(body.page-landing) .navbar-main {
             position: sticky;
             top: 0;
             width: 100%;
@@ -95,34 +95,34 @@ body.page-landing {
             transition: all 0.3s ease;
         }
 
-        body.page-landing .nav-content {
+        :where(body.page-landing) .nav-content {
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
-        body.page-landing .brand-logo-wrap {
+        :where(body.page-landing) .brand-logo-wrap {
             display: flex;
             align-items: center;
             gap: 10px;
             text-decoration: none;
         }
 
-        body.page-landing .brand-logo-img {
+        :where(body.page-landing) .brand-logo-img {
             height: 38px;
             width: auto;
             display: block;
         }
 
         /* (2026-07-13) Set purple bg on active nav link; was primary text color */
-        body.page-landing .nav-links {
+        :where(body.page-landing) .nav-links {
             display: flex;
             align-items: center;
             gap: 8px;
             list-style: none;
         }
 
-        body.page-landing .nav-links a {
+        :where(body.page-landing) .nav-links a {
             text-decoration: none;
             color: var(--ink-muted);
             font-size: 0.92rem;
@@ -133,12 +133,12 @@ body.page-landing {
             display: inline-block;
         }
 
-        body.page-landing .nav-links a:hover {
+        :where(body.page-landing) .nav-links a:hover {
             color: var(--primary);
             background: rgba(90, 31, 224, 0.08);
         }
 
-        body.page-landing .nav-links a.active {
+        :where(body.page-landing) .nav-links a.active {
             color: #ffffff;
             background: var(--primary);
             font-weight: 700;
@@ -146,21 +146,21 @@ body.page-landing {
         }
 
         /* (2026-07-13) Add mobile nav accordion styles; was hidden desktop nav */
-        body.page-landing .mobile-nav-toggle {
+        :where(body.page-landing) .mobile-nav-toggle {
             display: none;
         }
 
-        body.page-landing .mobile-nav-accordion {
+        :where(body.page-landing) .mobile-nav-accordion {
             display: none;
         }
 
-        body.page-landing .nav-actions {
+        :where(body.page-landing) .nav-actions {
             display: flex;
             align-items: center;
             gap: 16px;
         }
 
-        body.page-landing .btn-ghost {
+        :where(body.page-landing) .btn-ghost {
             text-decoration: none;
             color: var(--ink);
             font-size: 0.92rem;
@@ -170,11 +170,11 @@ body.page-landing {
             transition: background 0.2s ease;
         }
 
-        body.page-landing .btn-ghost:hover {
+        :where(body.page-landing) .btn-ghost:hover {
             background: rgba(18, 15, 38, 0.05);
         }
 
-        body.page-landing .btn-primary {
+        :where(body.page-landing) .btn-primary {
             text-decoration: none;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-strong) 100%);
             color: #ffffff !important;
@@ -189,13 +189,13 @@ body.page-landing {
             gap: 8px;
         }
 
-        body.page-landing .btn-primary:hover {
+        :where(body.page-landing) .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 30px rgba(90, 31, 224, 0.36);
         }
 
         /* (2026-07-13) Set explicit overview bg var(--bg); was unassigned */
-        body.page-landing .hero-section {
+        :where(body.page-landing) .hero-section {
             padding: 60px 0 100px;
             min-height: calc(100vh - 80px);
             display: flex;
@@ -203,7 +203,7 @@ body.page-landing {
             background: var(--bg);
         }
 
-        body.page-landing .hero-grid {
+        :where(body.page-landing) .hero-grid {
             display: grid;
             grid-template-columns: 1.15fr 0.85fr;
             gap: 60px;
@@ -212,12 +212,12 @@ body.page-landing {
         }
 
         /* Hero Left: Editorial Content */
-        body.page-landing .hero-left {
+        :where(body.page-landing) .hero-left {
             position: relative;
             padding-right: 20px;
         }
 
-        body.page-landing .hero-headline {
+        :where(body.page-landing) .hero-headline {
             font-family: "Fraunces", Georgia, serif;
             font-size: clamp(3.4rem, 6.5vw, 5.6rem);
             font-weight: 700;
@@ -227,11 +227,11 @@ body.page-landing {
             margin-bottom: 34px;
         }
 
-        body.page-landing .hero-headline span {
+        :where(body.page-landing) .hero-headline span {
             display: block;
         }
 
-        body.page-landing .app-store-badges {
+        :where(body.page-landing) .app-store-badges {
             display: flex;
             align-items: center;
             gap: 14px;
@@ -239,7 +239,7 @@ body.page-landing {
             flex-wrap: wrap;
         }
 
-        body.page-landing .store-badge-btn {
+        :where(body.page-landing) .store-badge-btn {
             display: inline-flex;
             align-items: center;
             gap: 12px;
@@ -252,26 +252,26 @@ body.page-landing {
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
         }
 
-        body.page-landing .store-badge-btn:hover {
+        :where(body.page-landing) .store-badge-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
         }
 
-        body.page-landing .store-badge-btn svg {
+        :where(body.page-landing) .store-badge-btn svg {
             width: 24px;
             height: 24px;
             fill: #ffffff;
             flex-shrink: 0;
         }
 
-        body.page-landing .store-badge-text {
+        :where(body.page-landing) .store-badge-text {
             display: flex;
             flex-direction: column;
             line-height: 1.15;
             text-align: left;
         }
 
-        body.page-landing .store-badge-text .caption {
+        :where(body.page-landing) .store-badge-text .caption {
             font-size: 0.65rem;
             text-transform: uppercase;
             font-weight: 500;
@@ -279,13 +279,13 @@ body.page-landing {
             opacity: 0.8;
         }
 
-        body.page-landing .store-badge-text .store-title {
+        :where(body.page-landing) .store-badge-text .store-title {
             font-size: 0.96rem;
             font-weight: 700;
             font-family: "Outfit", sans-serif;
         }
 
-        body.page-landing .hero-subhead {
+        :where(body.page-landing) .hero-subhead {
             font-size: 1.45rem;
             font-weight: 800;
             color: #1a1728;
@@ -293,7 +293,7 @@ body.page-landing {
             letter-spacing: -0.02em;
         }
 
-        body.page-landing .hero-description {
+        :where(body.page-landing) .hero-description {
             font-size: 1.1rem;
             color: var(--ink-muted);
             line-height: 1.7;
@@ -302,7 +302,7 @@ body.page-landing {
         }
 
         /* Hero Graphic Illustration (Homage to reference orange burst fan) */
-        body.page-landing .hero-illustration-wrapper {
+        :where(body.page-landing) .hero-illustration-wrapper {
             position: relative;
             margin-top: 10px;
             height: 140px;
@@ -310,7 +310,7 @@ body.page-landing {
             overflow: visible;
         }
 
-        body.page-landing .sunburst-graphic {
+        :where(body.page-landing) .sunburst-graphic {
             position: absolute;
             left: 0;
             bottom: -20px;
@@ -331,7 +331,7 @@ body.page-landing {
         }
 
         /* Hero Right: iPhone Showcase */
-        body.page-landing .hero-right {
+        :where(body.page-landing) .hero-right {
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -339,7 +339,7 @@ body.page-landing {
         }
 
         /* Interactive Showcase Controls */
-        body.page-landing .trailer-tabs-bar {
+        :where(body.page-landing) .trailer-tabs-bar {
             display: flex;
             gap: 8px;
             padding: 6px;
@@ -354,11 +354,11 @@ body.page-landing {
             scrollbar-width: none;
         }
 
-        body.page-landing .trailer-tabs-bar::-webkit-scrollbar {
+        :where(body.page-landing) .trailer-tabs-bar::-webkit-scrollbar {
             display: none;
         }
 
-        body.page-landing .trailer-pill {
+        :where(body.page-landing) .trailer-pill {
             padding: 8px 16px;
             border-radius: 999px;
             border: none;
@@ -374,23 +374,23 @@ body.page-landing {
             transition: all 0.25s ease;
         }
 
-        body.page-landing .trailer-pill:hover {
+        :where(body.page-landing) .trailer-pill:hover {
             color: var(--primary);
             background: var(--primary-soft);
         }
 
-        body.page-landing .trailer-pill.active {
+        :where(body.page-landing) .trailer-pill.active {
             background: var(--primary);
             color: #ffffff;
             box-shadow: 0 4px 14px rgba(90, 31, 224, 0.3);
         }
 
-        body.page-landing .trailer-pill .material-symbols-outlined {
+        :where(body.page-landing) .trailer-pill .material-symbols-outlined {
             font-size: 16px;
         }
 
         /* (2026-07-13) Set flex column for aspect-ratio responsive frame; was block */
-        body.page-landing .iphone-mockup-wrap {
+        :where(body.page-landing) .iphone-mockup-wrap {
             position: relative;
             width: 340px;
             height: 690px;
@@ -403,12 +403,12 @@ body.page-landing {
             flex-direction: column;
         }
 
-        body.page-landing .iphone-mockup-wrap:hover {
+        :where(body.page-landing) .iphone-mockup-wrap:hover {
             transform: translateY(-4px);
         }
 
         /* Dynamic Island & Speaker */
-        body.page-landing .iphone-island {
+        :where(body.page-landing) .iphone-island {
             position: absolute;
             top: 22px;
             left: 50%;
@@ -424,7 +424,7 @@ body.page-landing {
             padding: 0 8px;
         }
 
-        body.page-landing .island-camera {
+        :where(body.page-landing) .island-camera {
             width: 10px;
             height: 10px;
             border-radius: 50%;
@@ -432,7 +432,7 @@ body.page-landing {
             border: 1px solid #23283f;
         }
 
-        body.page-landing .island-sensor {
+        :where(body.page-landing) .island-sensor {
             width: 8px;
             height: 8px;
             border-radius: 50%;
@@ -440,7 +440,7 @@ body.page-landing {
         }
 
         /* (2026-07-13) Flex child fits aspect-ratio parent cleanly; was height 100% only */
-        body.page-landing .iphone-screen {
+        :where(body.page-landing) .iphone-screen {
             width: 100%;
             height: 100%;
             flex: 1;
@@ -451,7 +451,7 @@ body.page-landing {
             position: relative;
         }
 
-        body.page-landing .iphone-screenshot-img {
+        :where(body.page-landing) .iphone-screenshot-img {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -461,7 +461,7 @@ body.page-landing {
         }
 
         /* Floating Badge Over iPhone */
-        body.page-landing .phone-floating-pill {
+        :where(body.page-landing) .phone-floating-pill {
             position: absolute;
             bottom: 30px;
             left: 50%;
@@ -482,7 +482,7 @@ body.page-landing {
             z-index: 50;
         }
 
-        body.page-landing .phone-floating-pill .live-dot {
+        :where(body.page-landing) .phone-floating-pill .live-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
@@ -506,13 +506,13 @@ body.page-landing {
         }
 
         /* Section Title Block */
-        body.page-landing .section-header {
+        :where(body.page-landing) .section-header {
             text-align: center;
             max-width: 760px;
             margin: 0 auto 60px;
         }
 
-        body.page-landing .section-eyebrow {
+        :where(body.page-landing) .section-eyebrow {
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -527,7 +527,7 @@ body.page-landing {
             margin-bottom: 16px;
         }
 
-        body.page-landing .section-title {
+        :where(body.page-landing) .section-title {
             font-family: "Fraunces", Georgia, serif;
             font-size: clamp(2.2rem, 4vw, 3.4rem);
             font-weight: 700;
@@ -537,27 +537,27 @@ body.page-landing {
             margin-bottom: 16px;
         }
 
-        body.page-landing .section-lead {
+        :where(body.page-landing) .section-lead {
             font-size: 1.15rem;
             color: var(--ink-muted);
             line-height: 1.6;
         }
 
         /* Feature Pillars Grid (Trailer Highlights) */
-        body.page-landing .features-section {
+        :where(body.page-landing) .features-section {
             padding: 100px 0;
             background: #ffffff;
             border-top: 1px solid var(--line);
             border-bottom: 1px solid var(--line);
         }
 
-        body.page-landing .features-grid {
+        :where(body.page-landing) .features-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 32px;
         }
 
-        body.page-landing .feature-card {
+        :where(body.page-landing) .feature-card {
             background: var(--bg);
             border: 1px solid var(--line);
             border-radius: var(--radius-lg);
@@ -569,13 +569,13 @@ body.page-landing {
             flex-direction: column;
         }
 
-        body.page-landing .feature-card:hover {
+        :where(body.page-landing) .feature-card:hover {
             transform: translateY(-6px);
             border-color: var(--line-primary);
             box-shadow: var(--shadow-card);
         }
 
-        body.page-landing .feature-icon-box {
+        :where(body.page-landing) .feature-icon-box {
             width: 58px;
             height: 58px;
             border-radius: 18px;
@@ -586,36 +586,36 @@ body.page-landing {
             transition: transform 0.3s ease;
         }
 
-        body.page-landing .feature-card:hover .feature-icon-box {
+        :where(body.page-landing) .feature-card:hover .feature-icon-box {
             transform: scale(1.08);
         }
 
-        body.page-landing .feature-icon-box.purple {
+        :where(body.page-landing) .feature-icon-box.purple {
             background: #f1ecff;
             color: var(--primary);
         }
 
-        body.page-landing .feature-icon-box.rose {
+        :where(body.page-landing) .feature-icon-box.rose {
             background: #fff0f3;
             color: var(--accent-rose);
         }
 
-        body.page-landing .feature-icon-box.emerald {
+        :where(body.page-landing) .feature-icon-box.emerald {
             background: #ecfdf5;
             color: var(--accent-green);
         }
 
-        body.page-landing .feature-icon-box.orange {
+        :where(body.page-landing) .feature-icon-box.orange {
             background: #fff4ed;
             color: var(--accent-orange);
         }
 
-        body.page-landing .feature-icon-box.amber {
+        :where(body.page-landing) .feature-icon-box.amber {
             background: #fefce8;
             color: var(--accent-amber);
         }
 
-        body.page-landing .feature-card h3 {
+        :where(body.page-landing) .feature-card h3 {
             font-family: "Sora", sans-serif;
             font-size: 1.25rem;
             font-weight: 700;
@@ -624,7 +624,7 @@ body.page-landing {
             letter-spacing: -0.02em;
         }
 
-        body.page-landing .feature-card p {
+        :where(body.page-landing) .feature-card p {
             font-size: 0.96rem;
             color: var(--ink-muted);
             line-height: 1.6;
@@ -632,14 +632,14 @@ body.page-landing {
             flex-grow: 1;
         }
 
-        body.page-landing .feature-badge-row {
+        :where(body.page-landing) .feature-badge-row {
             display: flex;
             align-items: center;
             gap: 8px;
             margin-top: auto;
         }
 
-        body.page-landing .feature-tag {
+        :where(body.page-landing) .feature-tag {
             font-size: 0.74rem;
             font-weight: 700;
             padding: 4px 10px;
@@ -649,21 +649,21 @@ body.page-landing {
         }
 
         /* (2026-07-13) Match dual-view bg to overview var(--bg); was purple gradient */
-        body.page-landing .dual-view-section {
+        :where(body.page-landing) .dual-view-section {
             padding: 110px 0;
             background: var(--bg);
             border-top: 1px solid var(--line);
             border-bottom: 1px solid var(--line);
         }
 
-        body.page-landing .dual-view-grid {
+        :where(body.page-landing) .dual-view-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 40px;
             align-items: stretch;
         }
 
-        body.page-landing .perspective-card {
+        :where(body.page-landing) .perspective-card {
             background: #ffffff;
             border-radius: var(--radius-xl);
             border: 1px solid var(--line-primary);
@@ -675,7 +675,7 @@ body.page-landing {
             overflow: hidden;
         }
 
-        body.page-landing .perspective-tag {
+        :where(body.page-landing) .perspective-tag {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -688,17 +688,17 @@ body.page-landing {
             align-self: flex-start;
         }
 
-        body.page-landing .perspective-tag.student {
+        :where(body.page-landing) .perspective-tag.student {
             background: var(--primary-soft);
             color: var(--primary);
         }
 
-        body.page-landing .perspective-tag.guardian {
+        :where(body.page-landing) .perspective-tag.guardian {
             background: #fff0f3;
             color: var(--accent-rose);
         }
 
-        body.page-landing .perspective-card h3 {
+        :where(body.page-landing) .perspective-card h3 {
             font-family: "Fraunces", Georgia, serif;
             font-size: 1.85rem;
             font-weight: 700;
@@ -707,14 +707,14 @@ body.page-landing {
             letter-spacing: -0.02em;
         }
 
-        body.page-landing .perspective-card p {
+        :where(body.page-landing) .perspective-card p {
             font-size: 1.02rem;
             color: var(--ink-muted);
             line-height: 1.6;
             margin-bottom: 28px;
         }
 
-        body.page-landing .perspective-screenshot-box {
+        :where(body.page-landing) .perspective-screenshot-box {
             width: 100%;
             height: 380px;
             border-radius: var(--radius-md);
@@ -725,7 +725,7 @@ body.page-landing {
             margin-top: auto;
         }
 
-        body.page-landing .perspective-screenshot-box img {
+        :where(body.page-landing) .perspective-screenshot-box img {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -734,12 +734,12 @@ body.page-landing {
             transition: transform 0.4s ease;
         }
 
-        body.page-landing .perspective-card:hover .perspective-screenshot-box img {
+        :where(body.page-landing) .perspective-card:hover .perspective-screenshot-box img {
             transform: scale(1.03);
         }
 
         /* (2026-07-13) Match roles bg to features #ffffff; was #ffffff */
-        body.page-landing .roles-section {
+        :where(body.page-landing) .roles-section {
             padding: 80px 0 50px;
             background: #ffffff;
             border-top: 1px solid var(--line);
@@ -748,7 +748,7 @@ body.page-landing {
         }
 
         /* (2026-07-13) Match about-us bg to overview var(--bg); was purple gradient */
-        body.page-landing .about-us-section {
+        :where(body.page-landing) .about-us-section {
             padding: 80px 0 100px;
             background: var(--bg);
             border-top: 1px solid var(--line);
@@ -757,7 +757,7 @@ body.page-landing {
         }
 
         /* (2026-07-13) Set 3-column roles grid without admin; was 4-column grid */
-        body.page-landing .roles-grid {
+        :where(body.page-landing) .roles-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
@@ -765,7 +765,7 @@ body.page-landing {
         }
 
         /* (2026-07-13) Set 3 containers per line for team grid; was auto-fit 4 cards */
-        body.page-landing .team-grid {
+        :where(body.page-landing) .team-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 24px;
@@ -773,7 +773,7 @@ body.page-landing {
             margin: 0 auto;
         }
 
-        body.page-landing .team-member-card {
+        :where(body.page-landing) .team-member-card {
             background: white;
             border: 1px solid rgba(90, 31, 224, 0.1);
             border-radius: 20px;
@@ -783,13 +783,13 @@ body.page-landing {
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        body.page-landing .team-member-card:hover {
+        :where(body.page-landing) .team-member-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 14px 30px rgba(90, 31, 224, 0.08);
         }
 
         /* (2026-07-13) Prevent badge wrap with nowrap; was wrapping across lines */
-        body.page-landing .role-portal-card {
+        :where(body.page-landing) .role-portal-card {
             background: var(--bg);
             border: 2px solid var(--line);
             border-radius: var(--radius-xl);
@@ -801,19 +801,19 @@ body.page-landing {
             transition: all 0.3s ease;
         }
 
-        body.page-landing .role-portal-card:hover {
+        :where(body.page-landing) .role-portal-card:hover {
             transform: translateY(-8px);
             border-color: var(--primary);
             box-shadow: 0 24px 60px rgba(90, 31, 224, 0.14);
         }
 
-        body.page-landing .role-portal-card.featured {
+        :where(body.page-landing) .role-portal-card.featured {
             border-color: var(--primary);
             background: #ffffff;
             box-shadow: 0 16px 40px rgba(90, 31, 224, 0.08);
         }
 
-        body.page-landing .role-portal-card.featured::before {
+        :where(body.page-landing) .role-portal-card.featured::before {
             content: "PRIMARY STUDENT EXPERIENCE";
             position: absolute;
             top: -14px;
@@ -830,7 +830,7 @@ body.page-landing {
             box-shadow: 0 4px 12px rgba(90, 31, 224, 0.3);
         }
 
-        body.page-landing .role-avatar-circle {
+        :where(body.page-landing) .role-avatar-circle {
             width: 64px;
             height: 64px;
             border-radius: 20px;
@@ -840,22 +840,22 @@ body.page-landing {
             margin-bottom: 24px;
         }
 
-        body.page-landing .role-avatar-circle.student {
+        :where(body.page-landing) .role-avatar-circle.student {
             background: #f1ecff;
             color: var(--primary);
         }
 
-        body.page-landing .role-avatar-circle.guardian {
+        :where(body.page-landing) .role-avatar-circle.guardian {
             background: #fff0f3;
             color: var(--accent-rose);
         }
 
-        body.page-landing .role-avatar-circle.admin {
+        :where(body.page-landing) .role-avatar-circle.admin {
             background: #ecfdf5;
             color: var(--accent-green);
         }
 
-        body.page-landing .role-portal-card h3 {
+        :where(body.page-landing) .role-portal-card h3 {
             font-family: "Sora", sans-serif;
             font-size: 1.45rem;
             font-weight: 700;
@@ -864,7 +864,7 @@ body.page-landing {
             letter-spacing: -0.02em;
         }
 
-        body.page-landing .role-portal-card .role-desc {
+        :where(body.page-landing) .role-portal-card .role-desc {
             font-size: 0.95rem;
             color: var(--ink-muted);
             line-height: 1.55;
@@ -873,7 +873,7 @@ body.page-landing {
         }
 
         /* Demo Credentials Pill Box */
-        body.page-landing .demo-credentials-box {
+        :where(body.page-landing) .demo-credentials-box {
             background: rgba(90, 31, 224, 0.04);
             border: 1px dashed rgba(90, 31, 224, 0.22);
             border-radius: 14px;
@@ -882,7 +882,7 @@ body.page-landing {
             font-size: 0.82rem;
         }
 
-        body.page-landing .demo-credentials-box .box-title {
+        :where(body.page-landing) .demo-credentials-box .box-title {
             display: flex;
             align-items: center;
             gap: 6px;
@@ -894,23 +894,23 @@ body.page-landing {
             letter-spacing: 0.05em;
         }
 
-        body.page-landing .demo-row {
+        :where(body.page-landing) .demo-row {
             display: flex;
             justify-content: space-between;
             margin-bottom: 4px;
             color: var(--ink);
         }
 
-        body.page-landing .demo-row:last-child {
+        :where(body.page-landing) .demo-row:last-child {
             margin-bottom: 0;
         }
 
-        body.page-landing .demo-row .key {
+        :where(body.page-landing) .demo-row .key {
             color: var(--ink-muted);
             font-weight: 500;
         }
 
-        body.page-landing .demo-row .val {
+        :where(body.page-landing) .demo-row .val {
             font-family: monospace;
             font-weight: 700;
             color: var(--primary-strong);
@@ -921,7 +921,7 @@ body.page-landing {
         }
 
         /* (2026-07-13) Prevent button text break and unify sizing; was wrapping */
-        body.page-landing .role-cta-btn {
+        :where(body.page-landing) .role-cta-btn {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -938,42 +938,42 @@ body.page-landing {
             margin-top: auto;
         }
 
-        body.page-landing .role-cta-btn.student {
+        :where(body.page-landing) .role-cta-btn.student {
             background: linear-gradient(135deg, var(--primary), var(--primary-strong));
             color: #ffffff;
             box-shadow: 0 8px 20px rgba(90, 31, 224, 0.25);
         }
 
-        body.page-landing .role-cta-btn.student:hover {
+        :where(body.page-landing) .role-cta-btn.student:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 28px rgba(90, 31, 224, 0.35);
         }
 
-        body.page-landing .role-cta-btn.guardian {
+        :where(body.page-landing) .role-cta-btn.guardian {
             background: linear-gradient(135deg, var(--accent-rose), #e11d48);
             color: #ffffff;
             box-shadow: 0 8px 20px rgba(244, 63, 94, 0.25);
         }
 
-        body.page-landing .role-cta-btn.guardian:hover {
+        :where(body.page-landing) .role-cta-btn.guardian:hover {
             transform: translateY(-2px);
             box-shadow: 0 12px 28px rgba(244, 63, 94, 0.35);
         }
 
-        body.page-landing .role-cta-btn.admin {
+        :where(body.page-landing) .role-cta-btn.admin {
             background: #ffffff;
             color: var(--ink);
             border: 1.5px solid var(--line);
         }
 
-        body.page-landing .role-cta-btn.admin:hover {
+        :where(body.page-landing) .role-cta-btn.admin:hover {
             background: #f8fafc;
             border-color: var(--ink);
             transform: translateY(-2px);
         }
 
         /* Demo Notice Banner */
-        body.page-landing .demo-instant-banner {
+        :where(body.page-landing) .demo-instant-banner {
             background: linear-gradient(135deg, #f7f4ff 0%, #fff7f9 100%);
             border: 1px solid var(--line-primary);
             border-radius: var(--radius-lg);
@@ -984,13 +984,13 @@ body.page-landing {
             gap: 24px;
         }
 
-        body.page-landing .banner-info {
+        :where(body.page-landing) .banner-info {
             display: flex;
             align-items: center;
             gap: 16px;
         }
 
-        body.page-landing .banner-icon {
+        :where(body.page-landing) .banner-icon {
             width: 48px;
             height: 48px;
             border-radius: 14px;
@@ -1002,7 +1002,7 @@ body.page-landing {
             flex-shrink: 0;
         }
 
-        body.page-landing .banner-text h4 {
+        :where(body.page-landing) .banner-text h4 {
             font-family: "Sora", sans-serif;
             font-size: 1.1rem;
             font-weight: 700;
@@ -1010,18 +1010,18 @@ body.page-landing {
             margin-bottom: 4px;
         }
 
-        body.page-landing .banner-text p {
+        :where(body.page-landing) .banner-text p {
             font-size: 0.9rem;
             color: var(--ink-muted);
         }
 
-        body.page-landing .banner-actions {
+        :where(body.page-landing) .banner-actions {
             display: flex;
             gap: 12px;
             flex-shrink: 0;
         }
 
-        body.page-landing .banner-btn {
+        :where(body.page-landing) .banner-btn {
             padding: 10px 20px;
             border-radius: 999px;
             text-decoration: none;
@@ -1031,18 +1031,18 @@ body.page-landing {
             white-space: nowrap;
         }
 
-        body.page-landing .banner-btn.student {
+        :where(body.page-landing) .banner-btn.student {
             background: var(--primary);
             color: #ffffff;
         }
 
-        body.page-landing .banner-btn.guardian {
+        :where(body.page-landing) .banner-btn.guardian {
             background: var(--accent-rose);
             color: #ffffff;
         }
 
         /* Institutional Footer */
-        body.page-landing .footer-main {
+        :where(body.page-landing) .footer-main {
             background: #100d20;
             color: #ffffff;
             padding: 70px 0 40px;
@@ -1050,14 +1050,14 @@ body.page-landing {
         }
 
         /* (2026-07-13) 3-column footer grid without Ecosystem; was 4 columns */
-        body.page-landing .footer-grid {
+        :where(body.page-landing) .footer-grid {
             display: grid;
             grid-template-columns: 1.6fr 1fr 1fr;
             gap: 50px;
             margin-bottom: 60px;
         }
 
-        body.page-landing .footer-brand h2 {
+        :where(body.page-landing) .footer-brand h2 {
             font-family: "Sora", sans-serif;
             font-size: 1.6rem;
             font-weight: 800;
@@ -1066,14 +1066,14 @@ body.page-landing {
             color: #ffffff;
         }
 
-        body.page-landing .footer-brand p {
+        :where(body.page-landing) .footer-brand p {
             color: #9b94b0;
             font-size: 0.94rem;
             line-height: 1.6;
             max-width: 320px;
         }
 
-        body.page-landing .footer-col h4 {
+        :where(body.page-landing) .footer-col h4 {
             font-family: "Sora", sans-serif;
             font-size: 0.9rem;
             font-weight: 700;
@@ -1083,27 +1083,27 @@ body.page-landing {
             margin-bottom: 20px;
         }
 
-        body.page-landing .footer-col ul {
+        :where(body.page-landing) .footer-col ul {
             list-style: none;
         }
 
-        body.page-landing .footer-col ul li {
+        :where(body.page-landing) .footer-col ul li {
             margin-bottom: 12px;
         }
 
-        body.page-landing .footer-col ul li a {
+        :where(body.page-landing) .footer-col ul li a {
             color: #9b94b0;
             text-decoration: none;
             font-size: 0.92rem;
             transition: color 0.2s ease;
         }
 
-        body.page-landing .footer-col ul li a:hover {
+        :where(body.page-landing) .footer-col ul li a:hover {
             color: #ffffff;
         }
 
         /* (2026-07-13) Move hotlines to dedicated page; was inline in footer */
-        body.page-landing .footer-bottom {
+        :where(body.page-landing) .footer-bottom {
             padding-top: 30px;
             border-top: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
@@ -1115,52 +1115,52 @@ body.page-landing {
 
         /* (2026-07-13) Polished responsive breakpoints for tablet and mobile; was messy wrap */
         @media (max-width: 1080px) {
-            body.page-landing .hero-grid {
+            :where(body.page-landing) .hero-grid {
                 grid-template-columns: 1fr;
                 gap: 40px;
                 text-align: center;
             }
 
-            body.page-landing .hero-left {
+            :where(body.page-landing) .hero-left {
                 padding-right: 0;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
             }
 
-            body.page-landing .hero-description {
+            :where(body.page-landing) .hero-description {
                 max-width: 600px;
             }
 
-            body.page-landing .app-store-badges {
+            :where(body.page-landing) .app-store-badges {
                 justify-content: center;
             }
 
-            body.page-landing .hero-illustration-wrapper {
+            :where(body.page-landing) .hero-illustration-wrapper {
                 display: none;
             }
 
-            body.page-landing .features-grid {
+            :where(body.page-landing) .features-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 20px;
             }
 
-            body.page-landing .roles-grid {
+            :where(body.page-landing) .roles-grid {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 20px;
             }
 
-            body.page-landing .dual-view-grid {
+            :where(body.page-landing) .dual-view-grid {
                 grid-template-columns: 1fr;
                 gap: 28px;
             }
 
-            body.page-landing .team-grid {
+            :where(body.page-landing) .team-grid {
                 grid-template-columns: repeat(3, 1fr);
                 gap: 20px;
             }
 
-            body.page-landing .footer-grid {
+            :where(body.page-landing) .footer-grid {
                 grid-template-columns: 1fr 1fr;
                 gap: 36px;
             }
@@ -1177,11 +1177,11 @@ body.page-landing {
                 padding: 0;
             }
 
-            body.page-landing .ambient-glow-top, body.page-landing .ambient-glow-bottom {
+            :where(body.page-landing) .ambient-glow-top, :where(body.page-landing) .ambient-glow-bottom {
                 display: none !important;
             }
 
-            body.page-landing .page-container {
+            :where(body.page-landing) .page-container {
                 width: 100% !important;
                 max-width: 100% !important;
                 padding: 0 18px !important;
@@ -1189,7 +1189,7 @@ body.page-landing {
             }
 
             /* Navbar */
-            body.page-landing .navbar-main {
+            :where(body.page-landing) .navbar-main {
                 padding: 10px 0;
                 background: rgba(252, 251, 254, 0.92);
                 backdrop-filter: blur(20px);
@@ -1197,22 +1197,22 @@ body.page-landing {
                 border-bottom: 1px solid rgba(90, 31, 224, 0.08);
             }
 
-            body.page-landing .nav-links {
+            :where(body.page-landing) .nav-links {
                 display: none;
             }
 
-            body.page-landing .brand-logo-img {
+            :where(body.page-landing) .brand-logo-img {
                 height: 30px;
                 width: auto;
                 max-width: 135px;
                 object-fit: contain;
             }
 
-            body.page-landing .nav-actions .btn-ghost {
+            :where(body.page-landing) .nav-actions .btn-ghost {
                 display: none;
             }
 
-            body.page-landing .nav-actions .btn-primary {
+            :where(body.page-landing) .nav-actions .btn-primary {
                 padding: 7px 14px;
                 font-size: 0.8rem;
                 font-weight: 600;
@@ -1222,7 +1222,7 @@ body.page-landing {
             }
 
             /* (2026-07-13) Simple basic mobile nav; was complex card system */
-            body.page-landing .mobile-nav-toggle {
+            :where(body.page-landing) .mobile-nav-toggle {
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
@@ -1237,11 +1237,11 @@ body.page-landing {
                 padding: 0;
             }
 
-            body.page-landing .mobile-nav-toggle:active {
+            :where(body.page-landing) .mobile-nav-toggle:active {
                 background: rgba(0, 0, 0, 0.05);
             }
 
-            body.page-landing .mobile-nav-accordion {
+            :where(body.page-landing) .mobile-nav-accordion {
                 display: block;
                 max-height: 0;
                 overflow: hidden;
@@ -1252,12 +1252,12 @@ body.page-landing {
                 box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
             }
 
-            body.page-landing .mobile-nav-accordion.open {
+            :where(body.page-landing) .mobile-nav-accordion.open {
                 max-height: 320px;
                 opacity: 1;
             }
 
-            body.page-landing .mobile-nav-links {
+            :where(body.page-landing) .mobile-nav-links {
                 list-style: none;
                 padding: 8px 0 12px;
                 margin: 0;
@@ -1265,15 +1265,15 @@ body.page-landing {
                 flex-direction: column;
             }
 
-            body.page-landing .mobile-nav-links li {
+            :where(body.page-landing) .mobile-nav-links li {
                 border-bottom: 1px solid #f8fafc;
             }
 
-            body.page-landing .mobile-nav-links li:last-child {
+            :where(body.page-landing) .mobile-nav-links li:last-child {
                 border-bottom: none;
             }
 
-            body.page-landing .mobile-nav-link {
+            :where(body.page-landing) .mobile-nav-link {
                 display: block;
                 padding: 12px 16px;
                 font-size: 0.95rem;
@@ -1284,25 +1284,25 @@ body.page-landing {
                 transition: all 0.15s ease;
             }
 
-            body.page-landing .mobile-nav-link:hover, body.page-landing .mobile-nav-link:active {
+            :where(body.page-landing) .mobile-nav-link:hover, :where(body.page-landing) .mobile-nav-link:active {
                 background: #f1f5f9;
                 color: var(--primary);
             }
 
-            body.page-landing .mobile-nav-link.active {
+            :where(body.page-landing) .mobile-nav-link.active {
                 color: var(--primary);
                 font-weight: 700;
                 background: rgba(90, 31, 224, 0.06);
             }
 
             /* Hero Section */
-            body.page-landing .hero-section {
+            :where(body.page-landing) .hero-section {
                 padding: 24px 0 36px;
                 min-height: auto;
                 overflow: hidden;
             }
 
-            body.page-landing .hero-grid {
+            :where(body.page-landing) .hero-grid {
                 display: flex !important;
                 flex-direction: column !important;
                 width: 100% !important;
@@ -1313,7 +1313,7 @@ body.page-landing {
                 align-items: center;
             }
 
-            body.page-landing .hero-left {
+            :where(body.page-landing) .hero-left {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
@@ -1325,7 +1325,7 @@ body.page-landing {
                 box-sizing: border-box;
             }
 
-            body.page-landing .hero-headline {
+            :where(body.page-landing) .hero-headline {
                 order: 1;
                 font-family: "Fraunces", Georgia, serif;
                 font-size: clamp(2.35rem, 8.5vw, 3.1rem);
@@ -1344,11 +1344,11 @@ body.page-landing {
                 word-break: normal;
             }
 
-            body.page-landing .hero-headline span {
+            :where(body.page-landing) .hero-headline span {
                 display: inline-block;
             }
 
-            body.page-landing .hero-subhead {
+            :where(body.page-landing) .hero-subhead {
                 order: 2;
                 font-family: "Outfit", sans-serif;
                 font-size: clamp(1.05rem, 4vw, 1.22rem);
@@ -1359,7 +1359,7 @@ body.page-landing {
                 letter-spacing: -0.01em;
             }
 
-            body.page-landing .hero-description {
+            :where(body.page-landing) .hero-description {
                 order: 3;
                 font-size: 0.92rem;
                 line-height: 1.58;
@@ -1372,7 +1372,7 @@ body.page-landing {
                 box-sizing: border-box;
             }
 
-            body.page-landing .app-store-badges {
+            :where(body.page-landing) .app-store-badges {
                 order: 4;
                 display: flex;
                 flex-direction: row;
@@ -1386,7 +1386,7 @@ body.page-landing {
                 box-sizing: border-box;
             }
 
-            body.page-landing .store-badge-btn {
+            :where(body.page-landing) .store-badge-btn {
                 flex: 1;
                 padding: 8px 12px;
                 background: #111019;
@@ -1401,25 +1401,25 @@ body.page-landing {
                 justify-content: center;
             }
 
-            body.page-landing .store-badge-btn svg {
+            :where(body.page-landing) .store-badge-btn svg {
                 width: 20px;
                 height: 20px;
             }
 
-            body.page-landing .store-badge-text .caption {
+            :where(body.page-landing) .store-badge-text .caption {
                 font-size: 0.58rem;
                 letter-spacing: 0.04em;
                 text-transform: uppercase;
                 opacity: 0.8;
             }
 
-            body.page-landing .store-badge-text .store-title {
+            :where(body.page-landing) .store-badge-text .store-title {
                 font-size: 0.82rem;
                 font-weight: 700;
             }
 
             /* Trailer Mockup Showcase */
-            body.page-landing .hero-right {
+            :where(body.page-landing) .hero-right {
                 width: 100% !important;
                 max-width: 100% !important;
                 min-width: 0 !important;
@@ -1432,7 +1432,7 @@ body.page-landing {
             }
 
             /* (2026-07-13) Responsive 3x2 grid tabs bar; was rigid cut-off single row */
-            body.page-landing .trailer-tabs-bar {
+            :where(body.page-landing) .trailer-tabs-bar {
                 width: 100% !important;
                 max-width: 100% !important;
                 min-width: 0 !important;
@@ -1450,11 +1450,11 @@ body.page-landing {
                 box-shadow: 0 8px 24px rgba(90, 31, 224, 0.06);
             }
 
-            body.page-landing .trailer-tabs-bar::-webkit-scrollbar {
+            :where(body.page-landing) .trailer-tabs-bar::-webkit-scrollbar {
                 display: none;
             }
 
-            body.page-landing .trailer-pill {
+            :where(body.page-landing) .trailer-pill {
                 width: 100%;
                 justify-content: center;
                 padding: 7px 4px;
@@ -1475,17 +1475,17 @@ body.page-landing {
                 transition: all 0.2s ease;
             }
 
-            body.page-landing .trailer-pill.active {
+            :where(body.page-landing) .trailer-pill.active {
                 background: linear-gradient(135deg, var(--primary), var(--primary-strong));
                 color: #ffffff;
                 box-shadow: 0 4px 12px rgba(90, 31, 224, 0.3);
             }
 
-            body.page-landing .trailer-pill .material-symbols-outlined {
+            :where(body.page-landing) .trailer-pill .material-symbols-outlined {
                 font-size: 16px;
             }
 
-            body.page-landing .iphone-mockup-wrap {
+            :where(body.page-landing) .iphone-mockup-wrap {
                 width: min(285px, 80vw);
                 height: auto;
                 aspect-ratio: 340 / 700;
@@ -1501,7 +1501,7 @@ body.page-landing {
                 box-sizing: border-box;
             }
 
-            body.page-landing .iphone-mockup-wrap::before {
+            :where(body.page-landing) .iphone-mockup-wrap::before {
                 content: '';
                 position: absolute;
                 inset: -14px;
@@ -1512,7 +1512,7 @@ body.page-landing {
                 pointer-events: none;
             }
 
-            body.page-landing .iphone-screen {
+            :where(body.page-landing) .iphone-screen {
                 flex: 1;
                 min-height: 0;
                 width: 100%;
@@ -1523,7 +1523,7 @@ body.page-landing {
                 background: #ffffff;
             }
 
-            body.page-landing .iphone-screenshot-img {
+            :where(body.page-landing) .iphone-screenshot-img {
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
@@ -1531,7 +1531,7 @@ body.page-landing {
                 display: block;
             }
 
-            body.page-landing .iphone-island {
+            :where(body.page-landing) .iphone-island {
                 top: 10px;
                 width: 86px;
                 height: 20px;
@@ -1547,7 +1547,7 @@ body.page-landing {
                 justify-content: space-between;
             }
 
-            body.page-landing .island-camera {
+            :where(body.page-landing) .island-camera {
                 width: 8px;
                 height: 8px;
                 border-radius: 50%;
@@ -1555,14 +1555,14 @@ body.page-landing {
                 border: 1px solid #23283f;
             }
 
-            body.page-landing .island-sensor {
+            :where(body.page-landing) .island-sensor {
                 width: 6px;
                 height: 6px;
                 border-radius: 50%;
                 background: #111422;
             }
 
-            body.page-landing .phone-floating-pill {
+            :where(body.page-landing) .phone-floating-pill {
                 bottom: 16px;
                 font-size: 0.68rem;
                 font-weight: 700;
@@ -1589,14 +1589,14 @@ body.page-landing {
             }
 
             /* Sections General */
-            body.page-landing .section-header {
+            :where(body.page-landing) .section-header {
                 text-align: center;
                 margin: 0 auto 28px;
                 width: 100%;
                 min-width: 0;
             }
 
-            body.page-landing .section-eyebrow {
+            :where(body.page-landing) .section-eyebrow {
                 font-size: 0.72rem;
                 font-weight: 800;
                 letter-spacing: 0.08em;
@@ -1608,7 +1608,7 @@ body.page-landing {
                 border-radius: 999px;
             }
 
-            body.page-landing .section-title {
+            :where(body.page-landing) .section-title {
                 font-family: "Fraunces", Georgia, serif;
                 font-size: clamp(1.65rem, 6vw, 2.15rem);
                 line-height: 1.16;
@@ -1617,7 +1617,7 @@ body.page-landing {
                 color: var(--ink);
             }
 
-            body.page-landing .section-lead {
+            :where(body.page-landing) .section-lead {
                 font-size: 0.88rem;
                 line-height: 1.5;
                 color: var(--ink-muted);
@@ -1626,17 +1626,17 @@ body.page-landing {
             }
 
             /* Features Section */
-            body.page-landing .features-section, body.page-landing .roles-section {
+            :where(body.page-landing) .features-section, :where(body.page-landing) .roles-section {
                 background: #ffffff;
                 padding: 48px 0;
             }
 
-            body.page-landing .dual-view-section, body.page-landing .about-us-section {
+            :where(body.page-landing) .dual-view-section, :where(body.page-landing) .about-us-section {
                 background: var(--bg);
                 padding: 48px 0;
             }
 
-            body.page-landing .features-grid {
+            :where(body.page-landing) .features-grid {
                 display: flex;
                 flex-direction: column;
                 gap: 14px;
@@ -1644,7 +1644,7 @@ body.page-landing {
                 min-width: 0 !important;
             }
 
-            body.page-landing .feature-card {
+            :where(body.page-landing) .feature-card {
                 padding: 22px 18px;
                 border-radius: 20px;
                 background: linear-gradient(180deg, #ffffff 0%, #fcfbfe 100%);
@@ -1655,38 +1655,38 @@ body.page-landing {
                 box-sizing: border-box;
             }
 
-            body.page-landing .feature-icon-box {
+            :where(body.page-landing) .feature-icon-box {
                 width: 46px;
                 height: 46px;
                 border-radius: 14px;
                 margin-bottom: 12px;
             }
 
-            body.page-landing .feature-icon-box .material-symbols-outlined {
+            :where(body.page-landing) .feature-icon-box .material-symbols-outlined {
                 font-size: 24px;
             }
 
-            body.page-landing .feature-card h3 {
+            :where(body.page-landing) .feature-card h3 {
                 font-family: "Sora", sans-serif;
                 font-size: 1.1rem;
                 line-height: 1.3;
                 margin-bottom: 6px;
             }
 
-            body.page-landing .feature-card p {
+            :where(body.page-landing) .feature-card p {
                 font-size: 0.86rem;
                 line-height: 1.48;
                 color: var(--ink-muted);
                 margin-bottom: 14px;
             }
 
-            body.page-landing .feature-badge-row {
+            :where(body.page-landing) .feature-badge-row {
                 display: flex;
                 flex-wrap: wrap;
                 gap: 6px;
             }
 
-            body.page-landing .feature-tag {
+            :where(body.page-landing) .feature-tag {
                 font-size: 0.7rem;
                 font-weight: 700;
                 padding: 3px 8px;
@@ -1694,7 +1694,7 @@ body.page-landing {
             }
 
             /* Dual View Section */
-            body.page-landing .dual-view-grid {
+            :where(body.page-landing) .dual-view-grid {
                 display: flex;
                 flex-direction: column;
                 gap: 20px;
@@ -1702,7 +1702,7 @@ body.page-landing {
                 min-width: 0 !important;
             }
 
-            body.page-landing .perspective-card {
+            :where(body.page-landing) .perspective-card {
                 padding: 24px 18px;
                 border-radius: 22px;
                 background: #ffffff;
@@ -1713,27 +1713,27 @@ body.page-landing {
                 box-sizing: border-box;
             }
 
-            body.page-landing .perspective-tag {
+            :where(body.page-landing) .perspective-tag {
                 font-size: 0.72rem;
                 padding: 4px 12px;
                 border-radius: 999px;
                 margin-bottom: 12px;
             }
 
-            body.page-landing .perspective-card h3 {
+            :where(body.page-landing) .perspective-card h3 {
                 font-family: "Fraunces", Georgia, serif;
                 font-size: 1.25rem;
                 line-height: 1.25;
                 margin-bottom: 8px;
             }
 
-            body.page-landing .perspective-card p {
+            :where(body.page-landing) .perspective-card p {
                 font-size: 0.86rem;
                 line-height: 1.46;
                 margin-bottom: 16px;
             }
 
-            body.page-landing .perspective-screenshot-box {
+            :where(body.page-landing) .perspective-screenshot-box {
                 width: 100%;
                 height: auto;
                 aspect-ratio: 16 / 10;
@@ -1744,7 +1744,7 @@ body.page-landing {
             }
 
             /* Roles Section */
-            body.page-landing .roles-grid {
+            :where(body.page-landing) .roles-grid {
                 display: flex;
                 flex-direction: column;
                 gap: 16px;
@@ -1753,7 +1753,7 @@ body.page-landing {
                 margin-top: 16px;
             }
 
-            body.page-landing .role-portal-card {
+            :where(body.page-landing) .role-portal-card {
                 padding: 22px 18px;
                 border-radius: 22px;
                 background: #ffffff;
@@ -1764,51 +1764,51 @@ body.page-landing {
                 box-sizing: border-box;
             }
 
-            body.page-landing .role-portal-card.featured {
+            :where(body.page-landing) .role-portal-card.featured {
                 border-color: var(--primary);
                 background: linear-gradient(180deg, #ffffff 0%, #fbf9ff 100%);
                 box-shadow: 0 8px 28px rgba(90, 31, 224, 0.12);
             }
 
-            body.page-landing .role-portal-card.featured::before {
+            :where(body.page-landing) .role-portal-card.featured::before {
                 font-size: 0.62rem;
                 padding: 3px 12px;
                 top: -11px;
                 letter-spacing: 0.06em;
             }
 
-            body.page-landing .role-avatar-circle {
+            :where(body.page-landing) .role-avatar-circle {
                 width: 48px;
                 height: 48px;
                 border-radius: 14px;
                 margin-bottom: 12px;
             }
 
-            body.page-landing .role-avatar-circle .material-symbols-outlined {
+            :where(body.page-landing) .role-avatar-circle .material-symbols-outlined {
                 font-size: 26px !important;
             }
 
-            body.page-landing .role-portal-card h3 {
+            :where(body.page-landing) .role-portal-card h3 {
                 font-family: "Sora", sans-serif;
                 font-size: 1.15rem;
                 margin-bottom: 6px;
             }
 
-            body.page-landing .role-desc {
+            :where(body.page-landing) .role-desc {
                 font-size: 0.85rem;
                 line-height: 1.45;
                 margin-bottom: 16px;
                 min-height: auto;
             }
 
-            body.page-landing .demo-credentials-box {
+            :where(body.page-landing) .demo-credentials-box {
                 padding: 12px 14px;
                 border-radius: 12px;
                 margin-bottom: 16px;
                 font-size: 0.78rem;
             }
 
-            body.page-landing .role-cta-btn {
+            :where(body.page-landing) .role-cta-btn {
                 width: 100%;
                 padding: 12px 18px;
                 font-size: 0.86rem;
@@ -1822,7 +1822,7 @@ body.page-landing {
             }
 
             /* About Us Section */
-            body.page-landing .team-grid {
+            :where(body.page-landing) .team-grid {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 12px;
@@ -1830,7 +1830,7 @@ body.page-landing {
                 min-width: 0 !important;
             }
 
-            body.page-landing .team-member-card {
+            :where(body.page-landing) .team-member-card {
                 padding: 16px 10px;
                 border-radius: 16px;
                 background: #ffffff;
@@ -1846,7 +1846,7 @@ body.page-landing {
                 box-sizing: border-box;
             }
 
-            body.page-landing .team-member-card>div:first-child {
+            :where(body.page-landing) .team-member-card>div:first-child {
                 width: 44px !important;
                 height: 44px !important;
                 font-size: 0.95rem !important;
@@ -1854,14 +1854,14 @@ body.page-landing {
                 margin-bottom: 8px !important;
             }
 
-            body.page-landing .team-member-card h4 {
+            :where(body.page-landing) .team-member-card h4 {
                 font-family: "Sora", sans-serif;
                 font-size: 0.88rem !important;
                 line-height: 1.25;
                 margin: 0 !important;
             }
 
-            body.page-landing .team-member-card p {
+            :where(body.page-landing) .team-member-card p {
                 font-size: 0.74rem !important;
                 margin: 4px 0 0 !important;
                 color: var(--primary);
@@ -1869,53 +1869,53 @@ body.page-landing {
             }
 
             /* Footer */
-            body.page-landing .footer-main {
+            :where(body.page-landing) .footer-main {
                 padding: 40px 0 24px;
                 background: #120f26;
                 color: #ffffff;
             }
 
-            body.page-landing .footer-grid {
+            :where(body.page-landing) .footer-grid {
                 display: flex;
                 flex-direction: column;
                 gap: 24px;
                 margin-bottom: 24px;
             }
 
-            body.page-landing .footer-brand h2 {
+            :where(body.page-landing) .footer-brand h2 {
                 font-size: 1.35rem;
                 margin-bottom: 6px;
             }
 
-            body.page-landing .footer-brand p {
+            :where(body.page-landing) .footer-brand p {
                 font-size: 0.85rem;
                 line-height: 1.5;
                 color: rgba(255, 255, 255, 0.7);
             }
 
-            body.page-landing .footer-col h4 {
+            :where(body.page-landing) .footer-col h4 {
                 font-size: 0.9rem;
                 margin-bottom: 10px;
                 color: #ffffff;
             }
 
-            body.page-landing .footer-col ul {
+            :where(body.page-landing) .footer-col ul {
                 list-style: none;
                 padding: 0;
                 margin: 0;
             }
 
-            body.page-landing .footer-col ul li {
+            :where(body.page-landing) .footer-col ul li {
                 margin-bottom: 8px;
             }
 
-            body.page-landing .footer-col ul li a {
+            :where(body.page-landing) .footer-col ul li a {
                 font-size: 0.84rem;
                 color: rgba(255, 255, 255, 0.65);
                 text-decoration: none;
             }
 
-            body.page-landing .footer-bottom {
+            :where(body.page-landing) .footer-bottom {
                 padding-top: 18px;
                 border-top: 1px solid rgba(255, 255, 255, 0.1);
                 display: flex;
@@ -1957,19 +1957,19 @@ body.page-landing {
         }
 
         @media (max-width: 380px) {
-            body.page-landing .page-container {
+            :where(body.page-landing) .page-container {
                 padding: 0 12px !important;
             }
 
-            body.page-landing .hero-headline {
+            :where(body.page-landing) .hero-headline {
                 font-size: 1.95rem;
             }
 
-            body.page-landing .iphone-mockup-wrap {
+            :where(body.page-landing) .iphone-mockup-wrap {
                 width: 250px;
             }
 
-            body.page-landing .team-grid {
+            :where(body.page-landing) .team-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -2007,7 +2007,7 @@ body.page-about {
         }
 
         /* (2026-07-13) Disable dragging for all images; was default draggable */
-        body.page-about img {
+        :where(body.page-about) img {
             -webkit-user-drag: none;
             -khtml-user-drag: none;
             -moz-user-drag: none;
@@ -2018,7 +2018,7 @@ body.page-about {
         }
 
         /* (2026-07-13) Light mode and responsive mobile styling; prev: dark sections */
-        body.page-about, body.page-about * { box-sizing: border-box; }
+        body.page-about, :where(body.page-about) * { box-sizing: border-box; }
         body.page-about {
             font-family: "Outfit", sans-serif;
             background: linear-gradient(180deg, #f7f4ff 0%, #ffffff 32%, #f8f6fe 100%);
@@ -2029,7 +2029,7 @@ body.page-about {
             -webkit-tap-highlight-color: transparent;
         }
 
-        body.page-about .about-nav {
+        :where(body.page-about) .about-nav {
             position: sticky;
             top: 0;
             left: 0;
@@ -2046,7 +2046,7 @@ body.page-about {
             z-index: 100;
         }
 
-        body.page-about .about-nav-back {
+        :where(body.page-about) .about-nav-back {
             display: flex;
             align-items: center;
             gap: 6px;
@@ -2061,24 +2061,24 @@ body.page-about {
             border-radius: 10px;
             transition: all 0.2s ease;
         }
-        body.page-about .about-nav-back:hover {
+        :where(body.page-about) .about-nav-back:hover {
             background: var(--primary);
             color: #fff;
         }
 
-        body.page-about .about-nav-brand {
+        :where(body.page-about) .about-nav-brand {
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        body.page-about .about-nav-logo {
+        :where(body.page-about) .about-nav-logo {
             width: 24px;
             height: 24px;
             object-fit: contain;
         }
 
-        body.page-about .about-nav-title {
+        :where(body.page-about) .about-nav-title {
             color: var(--ink);
             font-family: 'Sora', sans-serif;
             font-weight: 800;
@@ -2086,7 +2086,7 @@ body.page-about {
             letter-spacing: -0.02em;
         }
 
-        body.page-about .about-nav-link {
+        :where(body.page-about) .about-nav-link {
             color: var(--muted);
             font-size: 0.86rem;
             text-decoration: none;
@@ -2095,17 +2095,17 @@ body.page-about {
             border-radius: 8px;
             transition: color 0.2s;
         }
-        body.page-about .about-nav-link:hover {
+        :where(body.page-about) .about-nav-link:hover {
             color: var(--primary);
         }
 
-        body.page-about .about-container {
+        :where(body.page-about) .about-container {
             max-width: 920px;
             margin: 0 auto;
             padding: 24px 16px 60px;
         }
 
-        body.page-about .about-hero {
+        :where(body.page-about) .about-hero {
             background: var(--surface-strong);
             border-radius: var(--radius-lg);
             padding: 36px 28px;
@@ -2115,7 +2115,7 @@ body.page-about {
             border: 1px solid rgba(255, 255, 255, 0.8);
         }
 
-        body.page-about .about-logo-wrap {
+        :where(body.page-about) .about-logo-wrap {
             width: 80px;
             height: 80px;
             margin: 0 auto 16px;
@@ -2127,7 +2127,7 @@ body.page-about {
             box-shadow: 0 10px 24px rgba(90, 31, 224, 0.15);
         }
 
-        body.page-about .about-hero h1 {
+        :where(body.page-about) .about-hero h1 {
             font-family: "Sora", sans-serif;
             font-size: 1.85rem;
             font-weight: 800;
@@ -2135,7 +2135,7 @@ body.page-about {
             margin: 0 0 10px;
         }
 
-        body.page-about .about-hero p {
+        :where(body.page-about) .about-hero p {
             font-size: 1.05rem;
             color: var(--muted);
             line-height: 1.6;
@@ -2143,14 +2143,14 @@ body.page-about {
             margin: 0 auto;
         }
 
-        body.page-about .pillar-grid {
+        :where(body.page-about) .pillar-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 18px;
             margin-bottom: 24px;
         }
 
-        body.page-about .pillar-card {
+        :where(body.page-about) .pillar-card {
             background: #fff;
             border-radius: var(--radius-md);
             padding: 24px;
@@ -2161,12 +2161,12 @@ body.page-about {
             gap: 12px;
             transition: transform 0.2s, box-shadow 0.2s;
         }
-        body.page-about .pillar-card:hover {
+        :where(body.page-about) .pillar-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 14px 28px rgba(90, 31, 224, 0.08);
         }
 
-        body.page-about .pillar-icon {
+        :where(body.page-about) .pillar-icon {
             width: 48px;
             height: 48px;
             border-radius: 14px;
@@ -2176,7 +2176,7 @@ body.page-about {
             font-size: 24px;
         }
 
-        body.page-about .pillar-card h3 {
+        :where(body.page-about) .pillar-card h3 {
             font-family: "Sora", sans-serif;
             font-size: 1.08rem;
             font-weight: 700;
@@ -2184,14 +2184,14 @@ body.page-about {
             margin: 0;
         }
 
-        body.page-about .pillar-card p {
+        :where(body.page-about) .pillar-card p {
             font-size: 0.88rem;
             color: var(--muted);
             line-height: 1.55;
             margin: 0;
         }
 
-        body.page-about .info-panel {
+        :where(body.page-about) .info-panel {
             background: #fff;
             border-radius: var(--radius-lg);
             padding: 30px;
@@ -2200,7 +2200,7 @@ body.page-about {
             margin-bottom: 24px;
         }
 
-        body.page-about .info-panel h2 {
+        :where(body.page-about) .info-panel h2 {
             font-family: "Sora", sans-serif;
             font-size: 1.35rem;
             font-weight: 700;
@@ -2212,14 +2212,14 @@ body.page-about {
             gap: 10px;
         }
 
-        body.page-about .info-panel p {
+        :where(body.page-about) .info-panel p {
             font-size: 0.92rem;
             color: #334155;
             line-height: 1.65;
             margin-bottom: 14px;
         }
 
-        body.page-about .badge-chip {
+        :where(body.page-about) .badge-chip {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -2230,7 +2230,7 @@ body.page-about {
             text-transform: uppercase;
         }
 
-        body.page-about .programs-showcase-section {
+        :where(body.page-about) .programs-showcase-section {
             background: linear-gradient(180deg, #ffffff 0%, #f7f4ff 100%);
             border: 1px solid rgba(90, 31, 224, 0.14);
             border-radius: var(--radius-xl);
@@ -2240,13 +2240,13 @@ body.page-about {
             color: var(--ink);
         }
 
-        body.page-about .programs-header {
+        :where(body.page-about) .programs-header {
             text-align: center;
             max-width: 680px;
             margin: 0 auto 36px;
         }
 
-        body.page-about .programs-badge {
+        :where(body.page-about) .programs-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -2262,7 +2262,7 @@ body.page-about {
             margin-bottom: 12px;
         }
 
-        body.page-about .programs-title {
+        :where(body.page-about) .programs-title {
             font-family: "Sora", sans-serif;
             font-size: clamp(1.45rem, 3.5vw, 1.95rem);
             font-weight: 800;
@@ -2271,20 +2271,20 @@ body.page-about {
             letter-spacing: -0.02em;
         }
 
-        body.page-about .programs-subtitle {
+        :where(body.page-about) .programs-subtitle {
             font-size: 0.95rem;
             color: var(--muted);
             line-height: 1.55;
             margin: 0;
         }
 
-        body.page-about .academic-programs-grid {
+        :where(body.page-about) .academic-programs-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 18px;
         }
 
-        body.page-about .academic-card {
+        :where(body.page-about) .academic-card {
             background: #ffffff;
             border: 1px solid rgba(226, 232, 240, 0.95);
             border-radius: 20px;
@@ -2295,13 +2295,13 @@ body.page-about {
             transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
-        body.page-about .academic-card:hover {
+        :where(body.page-about) .academic-card:hover {
             transform: translateY(-3px);
             border-color: rgba(90, 31, 224, 0.35);
             box-shadow: 0 14px 28px rgba(90, 31, 224, 0.1);
         }
 
-        body.page-about .academic-icon-wrap {
+        :where(body.page-about) .academic-icon-wrap {
             width: 46px;
             height: 46px;
             border-radius: 14px;
@@ -2315,7 +2315,7 @@ body.page-about {
             flex-shrink: 0;
         }
 
-        body.page-about .academic-card h3 {
+        :where(body.page-about) .academic-card h3 {
             font-family: "Sora", sans-serif;
             font-size: 1.1rem;
             font-weight: 700;
@@ -2324,21 +2324,21 @@ body.page-about {
             letter-spacing: -0.01em;
         }
 
-        body.page-about .academic-card p {
+        :where(body.page-about) .academic-card p {
             font-size: 0.88rem;
             color: #475569;
             line-height: 1.55;
             margin: 0;
         }
 
-        body.page-about .metrics-strip {
+        :where(body.page-about) .metrics-strip {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 14px;
             margin-bottom: 24px;
         }
 
-        body.page-about .metric-card {
+        :where(body.page-about) .metric-card {
             background: #fff;
             border: 1px solid rgba(226, 232, 240, 0.9);
             border-radius: var(--radius-md);
@@ -2349,7 +2349,7 @@ body.page-about {
             gap: 14px;
         }
 
-        body.page-about .metric-icon {
+        :where(body.page-about) .metric-icon {
             width: 42px;
             height: 42px;
             border-radius: 12px;
@@ -2360,7 +2360,7 @@ body.page-about {
             flex-shrink: 0;
         }
 
-        body.page-about .metric-value {
+        :where(body.page-about) .metric-value {
             font-family: "Sora", sans-serif;
             font-size: 1.15rem;
             font-weight: 800;
@@ -2368,7 +2368,7 @@ body.page-about {
             line-height: 1.2;
         }
 
-        body.page-about .metric-label {
+        :where(body.page-about) .metric-label {
             font-size: 0.76rem;
             font-weight: 700;
             color: var(--muted);
@@ -2376,7 +2376,7 @@ body.page-about {
             letter-spacing: 0.04em;
         }
 
-        body.page-about .campus-contact-card {
+        :where(body.page-about) .campus-contact-card {
             background: linear-gradient(135deg, rgba(90, 31, 224, 0.06), rgba(124, 58, 237, 0.1));
             border: 1px solid rgba(90, 31, 224, 0.18);
             border-radius: var(--radius-lg);
@@ -2390,79 +2390,79 @@ body.page-about {
         }
 
         @media (max-width: 768px) {
-            body.page-about .about-container {
+            :where(body.page-about) .about-container {
                 padding: 16px 14px 48px;
             }
-            body.page-about .about-hero {
+            :where(body.page-about) .about-hero {
                 padding: 28px 20px;
                 border-radius: 22px;
                 margin-bottom: 18px;
             }
-            body.page-about .about-logo-wrap {
+            :where(body.page-about) .about-logo-wrap {
                 width: 68px;
                 height: 68px;
                 border-radius: 18px;
                 margin-bottom: 14px;
             }
-            body.page-about .about-hero h1 {
+            :where(body.page-about) .about-hero h1 {
                 font-size: 1.45rem;
             }
-            body.page-about .about-hero p {
+            :where(body.page-about) .about-hero p {
                 font-size: 0.92rem;
             }
-            body.page-about .metrics-strip {
+            :where(body.page-about) .metrics-strip {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
                 margin-bottom: 18px;
             }
-            body.page-about .metric-card {
+            :where(body.page-about) .metric-card {
                 padding: 14px 12px;
                 gap: 10px;
             }
-            body.page-about .metric-icon {
+            :where(body.page-about) .metric-icon {
                 width: 36px;
                 height: 36px;
                 font-size: 18px;
                 border-radius: 10px;
             }
-            body.page-about .metric-value {
+            :where(body.page-about) .metric-value {
                 font-size: 0.98rem;
             }
-            body.page-about .metric-label {
+            :where(body.page-about) .metric-label {
                 font-size: 0.68rem;
             }
-            body.page-about .programs-showcase-section {
+            :where(body.page-about) .programs-showcase-section {
                 padding: 28px 16px;
                 border-radius: 22px;
                 margin-bottom: 18px;
             }
-            body.page-about .programs-header {
+            :where(body.page-about) .programs-header {
                 margin-bottom: 24px;
             }
-            body.page-about .academic-programs-grid {
+            :where(body.page-about) .academic-programs-grid {
                 grid-template-columns: 1fr;
                 gap: 12px;
             }
-            body.page-about .academic-card {
+            :where(body.page-about) .academic-card {
                 padding: 18px 16px;
             }
-            body.page-about .info-panel {
+            :where(body.page-about) .info-panel {
                 padding: 22px 18px;
                 border-radius: 20px;
                 margin-bottom: 18px;
             }
-            body.page-about .info-panel h2 {
+            :where(body.page-about) .info-panel h2 {
                 font-size: 1.2rem;
             }
-            body.page-about .pillar-grid {
+            :where(body.page-about) .pillar-grid {
                 grid-template-columns: 1fr;
                 gap: 12px;
                 margin-bottom: 18px;
             }
-            body.page-about .pillar-card {
+            :where(body.page-about) .pillar-card {
                 padding: 18px 16px;
             }
-            body.page-about .campus-contact-card {
+            :where(body.page-about) .campus-contact-card {
                 padding: 22px 18px;
                 border-radius: 20px;
                 flex-direction: column;
@@ -2470,7 +2470,7 @@ body.page-about {
                 text-align: center;
                 gap: 16px;
             }
-            body.page-about .campus-contact-card button {
+            :where(body.page-about) .campus-contact-card button {
                 width: 100%;
                 justify-content: center;
                 padding: 12px 20px;
@@ -2478,7 +2478,7 @@ body.page-about {
         }
 
         @media (max-width: 400px) {
-            body.page-about .metrics-strip {
+            :where(body.page-about) .metrics-strip {
                 grid-template-columns: 1fr;
             }
         }
@@ -2515,7 +2515,7 @@ body.page-terms {
             --radius-md: 18px;
         }
 
-        body.page-terms, body.page-terms * { box-sizing: border-box; }
+        body.page-terms, :where(body.page-terms) * { box-sizing: border-box; }
         body.page-terms {
             font-family: "Outfit", sans-serif;
             background:
@@ -2528,7 +2528,7 @@ body.page-terms {
         }
 
         /* Fixed Header Navigation */
-        body.page-terms .terms-nav {
+        :where(body.page-terms) .terms-nav {
             position: sticky;
             top: 0;
             left: 0;
@@ -2544,7 +2544,7 @@ body.page-terms {
             z-index: 100;
         }
 
-        body.page-terms .nav-back-btn {
+        :where(body.page-terms) .nav-back-btn {
             background: rgba(255, 255, 255, 0.2);
             border: none;
             color: white;
@@ -2558,11 +2558,11 @@ body.page-terms {
             transition: background 0.2s ease;
         }
 
-        body.page-terms .nav-back-btn:active {
+        :where(body.page-terms) .nav-back-btn:active {
             background: rgba(255, 255, 255, 0.3);
         }
 
-        body.page-terms .nav-title {
+        :where(body.page-terms) .nav-title {
             font-family: "Sora", sans-serif;
             font-weight: 700;
             font-size: 1.1rem;
@@ -2571,7 +2571,7 @@ body.page-terms {
             flex: 1;
         }
 
-        body.page-terms .terms-container {
+        :where(body.page-terms) .terms-container {
             max-width: 100%;
             margin: 0;
             background: white;
@@ -2584,19 +2584,19 @@ body.page-terms {
             min-height: calc(100vh - 64px);
         }
 
-        body.page-terms .terms-header {
+        :where(body.page-terms) .terms-header {
             text-align: center;
             margin-bottom: 20px;
             padding-top: 10px;
         }
 
-        body.page-terms .terms-logo {
+        :where(body.page-terms) .terms-logo {
             width: 50px;
             height: auto;
             margin-bottom: 10px;
         }
 
-        body.page-terms .terms-title {
+        :where(body.page-terms) .terms-title {
             font-family: "Sora", sans-serif;
             font-weight: 800;
             font-size: 1.5rem;
@@ -2605,18 +2605,18 @@ body.page-terms {
             line-height: 1.2;
         }
 
-        body.page-terms .terms-subtitle {
+        :where(body.page-terms) .terms-subtitle {
             color: var(--muted);
             font-size: 0.8rem;
             line-height: 1.4;
         }
 
-        body.page-terms .terms-content {
+        :where(body.page-terms) .terms-content {
             line-height: 1.6;
             font-size: 0.85rem;
         }
 
-        body.page-terms .terms-content h2 {
+        :where(body.page-terms) .terms-content h2 {
             font-family: "Sora", sans-serif;
             font-weight: 700;
             font-size: 1rem;
@@ -2625,30 +2625,30 @@ body.page-terms {
             margin-bottom: 8px;
         }
 
-        body.page-terms .terms-content h2:first-child {
+        :where(body.page-terms) .terms-content h2:first-child {
             margin-top: 0;
         }
 
         /* (2026-07-13) Indent bullets and tighten description margins; was 6px li */
-        body.page-terms .terms-content p {
+        :where(body.page-terms) .terms-content p {
             text-indent: 40px;
             margin-bottom: 4px;
             color: var(--ink);
             font-size: 0.85rem;
         }
 
-        body.page-terms .terms-content ul {
+        :where(body.page-terms) .terms-content ul {
             margin-top: 2px;
             margin-bottom: 20px;
             padding-left: 45px;
         }
 
-        body.page-terms .terms-content li {
+        :where(body.page-terms) .terms-content li {
             margin-bottom: 2px;
             font-size: 0.85rem;
         }
 
-        body.page-terms .back-btn {
+        :where(body.page-terms) .back-btn {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -2667,15 +2667,15 @@ body.page-terms {
             cursor: pointer;
         }
 
-        body.page-terms .back-btn:active {
+        :where(body.page-terms) .back-btn:active {
             transform: scale(0.98);
         }
 
-        body.page-terms .back-btn:hover {
+        :where(body.page-terms) .back-btn:hover {
             color: white;
         }
 
-        body.page-terms .last-updated {
+        :where(body.page-terms) .last-updated {
             text-align: center;
             color: var(--muted);
             font-size: 0.75rem;
@@ -2690,7 +2690,7 @@ body.page-terms {
                 padding: 40px 20px;
             }
 
-            body.page-terms .terms-nav {
+            :where(body.page-terms) .terms-nav {
                 position: relative;
                 background: transparent;
                 backdrop-filter: none;
@@ -2700,21 +2700,21 @@ body.page-terms {
                 margin-bottom: 20px;
             }
 
-            body.page-terms .nav-back-btn {
+            :where(body.page-terms) .nav-back-btn {
                 background: rgba(90, 31, 224, 0.1);
                 color: var(--primary);
             }
 
-            body.page-terms .nav-back-btn:hover {
+            :where(body.page-terms) .nav-back-btn:hover {
                 background: rgba(90, 31, 224, 0.2);
             }
 
-            body.page-terms .nav-title {
+            :where(body.page-terms) .nav-title {
                 color: var(--ink);
                 font-size: 1.3rem;
             }
 
-            body.page-terms .terms-container {
+            :where(body.page-terms) .terms-container {
                 max-width: 800px;
                 margin: 0 auto;
                 background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.72));
@@ -2727,63 +2727,63 @@ body.page-terms {
                 min-height: auto;
             }
 
-            body.page-terms .terms-header {
+            :where(body.page-terms) .terms-header {
                 margin-bottom: 30px;
             }
 
-            body.page-terms .terms-logo {
+            :where(body.page-terms) .terms-logo {
                 width: 70px;
                 margin-bottom: 15px;
             }
 
-            body.page-terms .terms-title {
+            :where(body.page-terms) .terms-title {
                 font-size: 2rem;
                 margin: 0 0 10px;
             }
 
-            body.page-terms .terms-subtitle {
+            :where(body.page-terms) .terms-subtitle {
                 font-size: 0.9rem;
             }
 
-            body.page-terms .terms-content {
+            :where(body.page-terms) .terms-content {
                 font-size: 1rem;
             }
 
-            body.page-terms .terms-content h2 {
+            :where(body.page-terms) .terms-content h2 {
                 font-size: 1.3rem;
                 margin-top: 30px;
                 margin-bottom: 15px;
             }
 
             /* (2026-07-13) Indent bullets and tighten description margins; was 8px */
-            body.page-terms .terms-content p {
+            :where(body.page-terms) .terms-content p {
                 text-indent: 40px;
                 margin-bottom: 4px;
                 font-size: 1rem;
             }
 
-            body.page-terms .terms-content ul {
+            :where(body.page-terms) .terms-content ul {
                 margin-top: 2px;
                 margin-bottom: 24px;
                 padding-left: 45px;
             }
 
-            body.page-terms .terms-content li {
+            :where(body.page-terms) .terms-content li {
                 margin-bottom: 3px;
                 font-size: 1rem;
             }
 
-            body.page-terms .back-btn {
+            :where(body.page-terms) .back-btn {
                 display: inline-flex;
                 width: auto;
                 margin-top: 30px;
             }
 
-            body.page-terms .back-btn:hover {
+            :where(body.page-terms) .back-btn:hover {
                 transform: translateY(-2px);
             }
 
-            body.page-terms .last-updated {
+            :where(body.page-terms) .last-updated {
                 font-size: 0.85rem;
                 margin-top: 30px;
                 padding-top: 20px;
@@ -2814,7 +2814,7 @@ body.page-hotlines {
             --shadow: 0 20px 50px rgba(18, 15, 38, 0.08);
         }
 
-        body.page-hotlines, body.page-hotlines * {
+        body.page-hotlines, :where(body.page-hotlines) * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -2833,7 +2833,7 @@ body.page-hotlines {
                 #f6f4fe;
         }
 
-        body.page-hotlines .screen-container {
+        :where(body.page-hotlines) .screen-container {
             height: 100vh;
             width: 100vw;
             display: flex;
@@ -2844,7 +2844,7 @@ body.page-hotlines {
         }
 
         /* Top Header */
-        body.page-hotlines .top-nav {
+        :where(body.page-hotlines) .top-nav {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -2852,7 +2852,7 @@ body.page-hotlines {
             flex-shrink: 0;
         }
 
-        body.page-hotlines .brand-pill {
+        :where(body.page-hotlines) .brand-pill {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -2860,13 +2860,13 @@ body.page-hotlines {
             color: var(--ink);
         }
 
-        body.page-hotlines .brand-pill img {
+        :where(body.page-hotlines) .brand-pill img {
             width: 34px;
             height: 34px;
             object-fit: contain;
         }
 
-        body.page-hotlines .brand-name {
+        :where(body.page-hotlines) .brand-name {
             font-family: "Sora", sans-serif;
             font-size: 1.15rem;
             font-weight: 800;
@@ -2874,7 +2874,7 @@ body.page-hotlines {
             letter-spacing: -0.02em;
         }
 
-        body.page-hotlines .back-link {
+        :where(body.page-hotlines) .back-link {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -2890,7 +2890,7 @@ body.page-hotlines {
             transition: all 0.2s ease;
         }
 
-        body.page-hotlines .back-link:hover {
+        :where(body.page-hotlines) .back-link:hover {
             background: var(--primary-soft);
             color: var(--primary);
             border-color: var(--primary);
@@ -2898,7 +2898,7 @@ body.page-hotlines {
         }
 
         /* Split-View Main Body */
-        body.page-hotlines .split-stage {
+        :where(body.page-hotlines) .split-stage {
             flex: 1;
             display: grid;
             grid-template-columns: 1.25fr 0.75fr;
@@ -2908,7 +2908,7 @@ body.page-hotlines {
         }
 
         /* Left Column: Hotlines & Quotes */
-        body.page-hotlines .info-pane {
+        :where(body.page-hotlines) .info-pane {
             display: flex;
             flex-direction: column;
             background: rgba(255, 255, 255, 0.78);
@@ -2923,11 +2923,11 @@ body.page-hotlines {
             gap: 12px;
         }
 
-        body.page-hotlines .hero-headline-wrap {
+        :where(body.page-hotlines) .hero-headline-wrap {
             flex-shrink: 0;
         }
 
-        body.page-hotlines .badge-row {
+        :where(body.page-hotlines) .badge-row {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -2935,7 +2935,7 @@ body.page-hotlines {
             flex-wrap: wrap;
         }
 
-        body.page-hotlines .official-badge {
+        :where(body.page-hotlines) .official-badge {
             display: inline-flex;
             align-items: center;
             gap: 5px;
@@ -2949,7 +2949,7 @@ body.page-hotlines {
             border-radius: 999px;
         }
 
-        body.page-hotlines .date-badge {
+        :where(body.page-hotlines) .date-badge {
             display: inline-flex;
             align-items: center;
             gap: 5px;
@@ -2961,7 +2961,7 @@ body.page-hotlines {
             border-radius: 999px;
         }
 
-        body.page-hotlines .page-title {
+        :where(body.page-hotlines) .page-title {
             font-family: "Sora", sans-serif;
             font-size: clamp(1.25rem, 2vw, 1.6rem);
             font-weight: 800;
@@ -2971,7 +2971,7 @@ body.page-hotlines {
         }
 
         /* Quotes Card */
-        body.page-hotlines .quotes-card {
+        :where(body.page-hotlines) .quotes-card {
             flex-shrink: 0;
             background: linear-gradient(135deg, rgba(90, 31, 224, 0.08) 0%, rgba(244, 63, 94, 0.05) 100%);
             border-left: 4px solid var(--primary);
@@ -2982,20 +2982,20 @@ body.page-hotlines {
             gap: 10px;
         }
 
-        body.page-hotlines .quote-icon {
+        :where(body.page-hotlines) .quote-icon {
             color: var(--primary);
             font-size: 22px;
             flex-shrink: 0;
         }
 
-        body.page-hotlines .quote-text {
+        :where(body.page-hotlines) .quote-text {
             font-size: 0.82rem;
             font-style: italic;
             color: #433878;
             line-height: 1.3;
         }
 
-        body.page-hotlines .quote-author {
+        :where(body.page-hotlines) .quote-author {
             font-weight: 700;
             font-style: normal;
             font-size: 0.75rem;
@@ -3005,7 +3005,7 @@ body.page-hotlines {
         }
 
         /* Maximized Hotlines Grid: 2x2 filling remaining vertical space */
-        body.page-hotlines .hotlines-grid {
+        :where(body.page-hotlines) .hotlines-grid {
             flex: 1;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -3015,7 +3015,7 @@ body.page-hotlines {
         }
 
         /* Category Card: Occupies full container slot */
-        body.page-hotlines .hotline-item {
+        :where(body.page-hotlines) .hotline-item {
             background: var(--surface-card);
             border: 1px solid rgba(90, 31, 224, 0.12);
             border-radius: var(--radius-lg);
@@ -3029,26 +3029,26 @@ body.page-hotlines {
             overflow: hidden;
         }
 
-        body.page-hotlines .hotline-item:hover {
+        :where(body.page-hotlines) .hotline-item:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 26px rgba(90, 31, 224, 0.12);
             border-color: rgba(90, 31, 224, 0.35);
         }
 
-        body.page-hotlines .hotline-agency-head {
+        :where(body.page-hotlines) .hotline-agency-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 8px;
         }
 
-        body.page-hotlines .agency-info-left {
+        :where(body.page-hotlines) .agency-info-left {
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        body.page-hotlines .agency-icon-circle {
+        :where(body.page-hotlines) .agency-icon-circle {
             width: 38px;
             height: 38px;
             border-radius: 12px;
@@ -3059,12 +3059,12 @@ body.page-hotlines {
             flex-shrink: 0;
         }
 
-        body.page-hotlines .icon-mdrrmo { background: #fee2e2; color: #dc2626; }
-        body.page-hotlines .icon-police { background: #dbeafe; color: #2563eb; }
-        body.page-hotlines .icon-bfp { background: #ffedd5; color: #ea580c; }
-        body.page-hotlines .icon-coastguard { background: #ccfbf1; color: #0d9488; }
+        :where(body.page-hotlines) .icon-mdrrmo { background: #fee2e2; color: #dc2626; }
+        :where(body.page-hotlines) .icon-police { background: #dbeafe; color: #2563eb; }
+        :where(body.page-hotlines) .icon-bfp { background: #ffedd5; color: #ea580c; }
+        :where(body.page-hotlines) .icon-coastguard { background: #ccfbf1; color: #0d9488; }
 
-        body.page-hotlines .agency-name {
+        :where(body.page-hotlines) .agency-name {
             font-family: "Sora", sans-serif;
             font-weight: 800;
             font-size: 0.96rem;
@@ -3073,14 +3073,14 @@ body.page-hotlines {
             line-height: 1.1;
         }
 
-        body.page-hotlines .agency-sub {
+        :where(body.page-hotlines) .agency-sub {
             font-size: 0.72rem;
             color: var(--muted);
             display: block;
             margin-top: 1px;
         }
 
-        body.page-hotlines .status-chip {
+        :where(body.page-hotlines) .status-chip {
             font-size: 0.68rem;
             font-weight: 700;
             text-transform: uppercase;
@@ -3092,7 +3092,7 @@ body.page-hotlines {
         }
 
         /* (2026-07-13) Maximize buttons to occupy category container; was fixed padding */
-        body.page-hotlines .number-buttons-box {
+        :where(body.page-hotlines) .number-buttons-box {
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -3102,7 +3102,7 @@ body.page-hotlines {
             margin-top: 6px;
         }
 
-        body.page-hotlines .copy-btn {
+        :where(body.page-hotlines) .copy-btn {
             width: 100%;
             flex: 1;
             min-height: 44px;
@@ -3119,7 +3119,7 @@ body.page-hotlines {
             position: relative;
         }
 
-        body.page-hotlines .number-display {
+        :where(body.page-hotlines) .number-display {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -3130,13 +3130,13 @@ body.page-hotlines {
             letter-spacing: 0.02em;
         }
 
-        body.page-hotlines .number-display .material-symbols-outlined {
+        :where(body.page-hotlines) .number-display .material-symbols-outlined {
             font-size: 16px;
             color: var(--primary);
             transition: color 0.18s ease;
         }
 
-        body.page-hotlines .copy-pill-indicator {
+        :where(body.page-hotlines) .copy-pill-indicator {
             display: inline-flex;
             align-items: center;
             gap: 4px;
@@ -3150,42 +3150,42 @@ body.page-hotlines {
             transition: all 0.18s ease;
         }
 
-        body.page-hotlines .copy-btn:hover {
+        :where(body.page-hotlines) .copy-btn:hover {
             background: #ffffff;
             border-color: var(--primary);
             box-shadow: 0 4px 12px rgba(90, 31, 224, 0.1);
         }
 
-        body.page-hotlines .copy-btn:hover .copy-pill-indicator {
+        :where(body.page-hotlines) .copy-btn:hover .copy-pill-indicator {
             background: var(--primary);
             color: #ffffff;
         }
 
-        body.page-hotlines .copy-btn:active {
+        :where(body.page-hotlines) .copy-btn:active {
             transform: scale(0.985);
         }
 
         /* Copied State */
-        body.page-hotlines .copy-btn.copied {
+        :where(body.page-hotlines) .copy-btn.copied {
             background: var(--emerald-soft) !important;
             border-color: var(--emerald) !important;
         }
 
-        body.page-hotlines .copy-btn.copied .number-display {
+        :where(body.page-hotlines) .copy-btn.copied .number-display {
             color: #065f46 !important;
         }
 
-        body.page-hotlines .copy-btn.copied .number-display .material-symbols-outlined {
+        :where(body.page-hotlines) .copy-btn.copied .number-display .material-symbols-outlined {
             color: var(--emerald) !important;
         }
 
-        body.page-hotlines .copy-btn.copied .copy-pill-indicator {
+        :where(body.page-hotlines) .copy-btn.copied .copy-pill-indicator {
             background: var(--emerald) !important;
             color: #ffffff !important;
         }
 
         /* (2026-07-13) Match single number note height to buttons; was 7px padding */
-        body.page-hotlines .single-number-hint {
+        :where(body.page-hotlines) .single-number-hint {
             flex: 1;
             min-height: 44px;
             display: flex;
@@ -3200,7 +3200,7 @@ body.page-hotlines {
         }
 
         /* Bottom Status Banner */
-        body.page-hotlines .safety-mini-banner {
+        :where(body.page-hotlines) .safety-mini-banner {
             flex-shrink: 0;
             padding: 7px 12px;
             border-radius: 10px;
@@ -3215,7 +3215,7 @@ body.page-hotlines {
         }
 
         /* Right Column: Facebook Embed Card */
-        body.page-hotlines .embed-pane {
+        :where(body.page-hotlines) .embed-pane {
             background: var(--surface-card);
             border-radius: var(--radius-xl);
             border: 1px solid rgba(90, 31, 224, 0.12);
@@ -3227,7 +3227,7 @@ body.page-hotlines {
             overflow: hidden;
         }
 
-        body.page-hotlines .embed-header {
+        :where(body.page-hotlines) .embed-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -3237,13 +3237,13 @@ body.page-hotlines {
             flex-shrink: 0;
         }
 
-        body.page-hotlines .embed-header-left {
+        :where(body.page-hotlines) .embed-header-left {
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
-        body.page-hotlines .fb-logo-icon {
+        :where(body.page-hotlines) .fb-logo-icon {
             width: 24px;
             height: 24px;
             border-radius: 50%;
@@ -3257,26 +3257,26 @@ body.page-hotlines {
             font-family: sans-serif;
         }
 
-        body.page-hotlines .embed-header-title {
+        :where(body.page-hotlines) .embed-header-title {
             font-family: "Sora", sans-serif;
             font-size: 0.86rem;
             font-weight: 700;
             color: var(--ink);
         }
 
-        body.page-hotlines .embed-source-tag {
+        :where(body.page-hotlines) .embed-source-tag {
             font-size: 0.72rem;
             color: var(--muted);
             text-decoration: none;
             font-weight: 600;
         }
 
-        body.page-hotlines .embed-source-tag:hover {
+        :where(body.page-hotlines) .embed-source-tag:hover {
             color: var(--primary);
             text-decoration: underline;
         }
 
-        body.page-hotlines .embed-frame-wrapper {
+        :where(body.page-hotlines) .embed-frame-wrapper {
             flex: 1;
             width: 100%;
             min-height: 0;
@@ -3288,7 +3288,7 @@ body.page-hotlines {
             border-radius: var(--radius-md);
         }
 
-        body.page-hotlines .embed-frame-wrapper iframe {
+        :where(body.page-hotlines) .embed-frame-wrapper iframe {
             width: 100%;
             height: 100%;
             max-width: 500px;
@@ -3297,7 +3297,7 @@ body.page-hotlines {
         }
 
         /* Floating Toast Notification */
-        body.page-hotlines .hotline-toast {
+        :where(body.page-hotlines) .hotline-toast {
             position: fixed;
             bottom: 22px;
             left: 50%;
@@ -3319,7 +3319,7 @@ body.page-hotlines {
             z-index: 9999;
         }
 
-        body.page-hotlines .hotline-toast.show {
+        :where(body.page-hotlines) .hotline-toast.show {
             transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
@@ -3330,22 +3330,22 @@ body.page-hotlines {
                 overflow: hidden;
             }
 
-            body.page-hotlines .split-stage {
+            :where(body.page-hotlines) .split-stage {
                 grid-template-columns: 1fr;
                 gap: 10px;
             }
 
-            body.page-hotlines .embed-pane {
+            :where(body.page-hotlines) .embed-pane {
                 display: none; /* Keep clean 1-screen fit on mobile */
             }
 
-            body.page-hotlines .hotlines-grid {
+            :where(body.page-hotlines) .hotlines-grid {
                 grid-template-columns: 1fr;
                 grid-template-rows: repeat(4, 1fr);
                 gap: 8px;
             }
 
-            body.page-hotlines .screen-container {
+            :where(body.page-hotlines) .screen-container {
                 padding: 10px 14px;
             }
         }
@@ -3377,7 +3377,7 @@ body.page-incident {
             --radius-md: 18px;
         }
 
-        body.page-incident, body.page-incident * { box-sizing: border-box; }
+        body.page-incident, :where(body.page-incident) * { box-sizing: border-box; }
 
         body.page-incident {
             margin: 0;
@@ -3389,12 +3389,12 @@ body.page-incident {
             padding: 24px;
         }
 
-        body.page-incident .page-shell {
+        :where(body.page-incident) .page-shell {
             max-width: 1180px;
             margin: 0 auto;
         }
 
-        body.page-incident .glass-shell {
+        :where(body.page-incident) .glass-shell {
             min-height: calc(100vh - 48px);
             background: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(255,255,255,0.56));
             border: 1px solid rgba(255,255,255,0.68);
@@ -3408,7 +3408,7 @@ body.page-incident {
             contain: paint;
         }
 
-        body.page-incident .topbar {
+        :where(body.page-incident) .topbar {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -3418,13 +3418,13 @@ body.page-incident {
             background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.52));
         }
 
-        body.page-incident .brand-wrap {
+        :where(body.page-incident) .brand-wrap {
             display: flex;
             align-items: center;
             gap: 16px;
         }
 
-        body.page-incident .brand-badge {
+        :where(body.page-incident) .brand-badge {
             width: 56px;
             height: 56px;
             border-radius: 18px;
@@ -3436,27 +3436,27 @@ body.page-incident {
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 12px 24px rgba(90,31,224,0.12);
         }
 
-        body.page-incident .brand-wrap h1 {
+        :where(body.page-incident) .brand-wrap h1 {
             margin: 0;
             font-family: "Sora", sans-serif;
             font-size: 1.4rem;
             letter-spacing: -0.04em;
         }
 
-        body.page-incident .brand-wrap p {
+        :where(body.page-incident) .brand-wrap p {
             margin: 4px 0 0;
             color: var(--muted);
             font-size: 0.92rem;
         }
 
-        body.page-incident .topbar-actions {
+        :where(body.page-incident) .topbar-actions {
             display: flex;
             align-items: center;
             gap: 12px;
             flex-wrap: wrap;
         }
 
-        body.page-incident .ghost-btn {
+        :where(body.page-incident) .ghost-btn {
             min-height: 48px;
             padding: 0 18px;
             border-radius: 16px;
@@ -3471,13 +3471,13 @@ body.page-incident {
             box-shadow: var(--shadow-soft);
         }
 
-        body.page-incident .content {
+        :where(body.page-incident) .content {
             padding: 24px;
             display: grid;
             gap: 20px;
         }
 
-        body.page-incident .panel-card {
+        :where(body.page-incident) .panel-card {
             background: linear-gradient(180deg, rgba(255,255,255,0.88), rgba(255,255,255,0.66));
             border: 1px solid rgba(255,255,255,0.74);
             border-radius: var(--radius-lg);
@@ -3485,7 +3485,7 @@ body.page-incident {
             padding: 24px;
         }
 
-        body.page-incident .eyebrow {
+        :where(body.page-incident) .eyebrow {
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -3499,33 +3499,33 @@ body.page-incident {
             letter-spacing: 0.12em;
         }
 
-        body.page-incident .hero-title {
+        :where(body.page-incident) .hero-title {
             margin: 14px 0 8px;
             font-family: "Sora", sans-serif;
             font-size: clamp(1.6rem, 2vw, 2.2rem);
             letter-spacing: -0.04em;
         }
 
-        body.page-incident .hero-copy {
+        :where(body.page-incident) .hero-copy {
             margin: 0;
             color: var(--muted);
             line-height: 1.55;
         }
 
-        body.page-incident .info-grid {
+        :where(body.page-incident) .info-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 16px;
         }
 
-        body.page-incident .info-card {
+        :where(body.page-incident) .info-card {
             padding: 18px;
             border-radius: 20px;
             background: rgba(255,255,255,0.76);
             border: 1px solid rgba(255,255,255,0.72);
         }
 
-        body.page-incident .info-card strong {
+        :where(body.page-incident) .info-card strong {
             display: block;
             font-size: 0.76rem;
             letter-spacing: 0.12em;
@@ -3534,19 +3534,19 @@ body.page-incident {
             margin-bottom: 8px;
         }
 
-        body.page-incident .info-card span {
+        :where(body.page-incident) .info-card span {
             display: block;
             font-weight: 700;
             line-height: 1.45;
         }
 
-        body.page-incident .attachment-grid {
+        :where(body.page-incident) .attachment-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 16px;
         }
 
-        body.page-incident .attachment-card {
+        :where(body.page-incident) .attachment-card {
             overflow: hidden;
             border-radius: 22px;
             background: rgba(255,255,255,0.8);
@@ -3554,7 +3554,7 @@ body.page-incident {
             box-shadow: var(--shadow-soft);
         }
 
-        body.page-incident .attachment-card img, body.page-incident .attachment-card video {
+        :where(body.page-incident) .attachment-card img, :where(body.page-incident) .attachment-card video {
             width: 100%;
             height: 220px;
             object-fit: cover;
@@ -3562,35 +3562,35 @@ body.page-incident {
             background: #f3efff;
         }
 
-        body.page-incident .attachment-card audio {
+        :where(body.page-incident) .attachment-card audio {
             width: calc(100% - 24px);
             margin: 16px 12px 0;
         }
 
-        body.page-incident .attachment-copy {
+        :where(body.page-incident) .attachment-copy {
             padding: 16px 16px 18px;
         }
 
-        body.page-incident .attachment-copy strong {
+        :where(body.page-incident) .attachment-copy strong {
             display: block;
             font-size: 0.96rem;
             line-height: 1.35;
         }
 
-        body.page-incident .attachment-copy span {
+        :where(body.page-incident) .attachment-copy span {
             display: block;
             margin-top: 6px;
             color: var(--muted);
             font-size: 0.84rem;
         }
 
-        body.page-incident .empty-state {
+        :where(body.page-incident) .empty-state {
             padding: 40px 24px;
             text-align: center;
             color: var(--muted);
         }
 
-        body.page-incident .toast-stack {
+        :where(body.page-incident) .toast-stack {
             position: fixed;
             top: 20px;
             right: 20px;
@@ -3601,7 +3601,7 @@ body.page-incident {
             width: min(360px, calc(100vw - 32px));
         }
 
-        body.page-incident .toast-card {
+        :where(body.page-incident) .toast-card {
             display: flex;
             gap: 12px;
             align-items: flex-start;
@@ -3616,7 +3616,7 @@ body.page-incident {
             will-change: transform, opacity;
         }
 
-        body.page-incident .toast-icon {
+        :where(body.page-incident) .toast-icon {
             width: 36px;
             height: 36px;
             border-radius: 12px;
@@ -3628,32 +3628,32 @@ body.page-incident {
             flex: 0 0 auto;
         }
 
-        body.page-incident .toast-card.error .toast-icon { background: #fff1f2; color: var(--red); }
+        :where(body.page-incident) .toast-card.error .toast-icon { background: #fff1f2; color: var(--red); }
 
-        body.page-incident .toast-copy strong {
+        :where(body.page-incident) .toast-copy strong {
             display: block;
             font-size: 0.9rem;
             margin-bottom: 4px;
         }
 
-        body.page-incident .toast-copy span {
+        :where(body.page-incident) .toast-copy span {
             font-size: 0.82rem;
             color: var(--muted);
             line-height: 1.4;
         }
 
         @media (max-width: 960px) {
-            body.page-incident .info-grid {
+            :where(body.page-incident) .info-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
 
         @media (max-width: 640px) {
             body.page-incident { padding: 14px; }
-            body.page-incident .glass-shell { min-height: calc(100vh - 28px); }
-            body.page-incident .topbar, body.page-incident .content { padding-left: 16px; padding-right: 16px; }
-            body.page-incident .topbar { align-items: flex-start; flex-direction: column; }
-            body.page-incident .info-grid { grid-template-columns: 1fr; }
+            :where(body.page-incident) .glass-shell { min-height: calc(100vh - 28px); }
+            :where(body.page-incident) .topbar, :where(body.page-incident) .content { padding-left: 16px; padding-right: 16px; }
+            :where(body.page-incident) .topbar { align-items: flex-start; flex-direction: column; }
+            :where(body.page-incident) .info-grid { grid-template-columns: 1fr; }
         }
 
 /* (2026-07-13) Extracted inline styles for pub-incident; was style attrs */
@@ -3679,7 +3679,7 @@ body.page-role-selection {
             --radius: 32px;
         }
 
-        body.page-role-selection, body.page-role-selection * { box-sizing: border-box; }
+        body.page-role-selection, :where(body.page-role-selection) * { box-sizing: border-box; }
 
         body.page-role-selection {
             margin: 0;
@@ -3697,7 +3697,7 @@ body.page-role-selection {
         }
 
         /* (2026-07-13) Disable dragging for all images; was default draggable */
-        body.page-role-selection img {
+        :where(body.page-role-selection) img {
             -webkit-user-drag: none;
             -khtml-user-drag: none;
             -moz-user-drag: none;
@@ -3707,7 +3707,7 @@ body.page-role-selection {
             -webkit-user-select: none;
         }
 
-        body.page-role-selection .selection-card {
+        :where(body.page-role-selection) .selection-card {
             width: 100%;
             max-width: 480px;
             text-align: center;
@@ -3719,11 +3719,11 @@ body.page-role-selection {
             to { opacity: 1; transform: translateY(0); }
         }
 
-        body.page-role-selection .logo-area {
+        :where(body.page-role-selection) .logo-area {
             margin-bottom: 48px;
         }
 
-        body.page-role-selection .logo-icon {
+        :where(body.page-role-selection) .logo-icon {
             width: 72px;
             height: 72px;
             background: white;
@@ -3736,9 +3736,9 @@ body.page-role-selection {
             color: var(--primary);
         }
 
-        body.page-role-selection .logo-icon span { font-size: 36px; }
+        :where(body.page-role-selection) .logo-icon span { font-size: 36px; }
 
-        body.page-role-selection h1 {
+        :where(body.page-role-selection) h1 {
             font-family: "Sora", sans-serif;
             font-size: 2rem;
             font-weight: 800;
@@ -3746,18 +3746,18 @@ body.page-role-selection {
             margin-bottom: 12px;
         }
 
-        body.page-role-selection .subtitle {
+        :where(body.page-role-selection) .subtitle {
             color: var(--muted);
             font-size: 1.1rem;
             margin-bottom: 48px;
         }
 
-        body.page-role-selection .role-grid {
+        :where(body.page-role-selection) .role-grid {
             display: grid;
             gap: 20px;
         }
 
-        body.page-role-selection .role-btn {
+        :where(body.page-role-selection) .role-btn {
             width: 100%;
             padding: 24px;
             background: white;
@@ -3774,39 +3774,39 @@ body.page-role-selection {
             overflow: hidden;
         }
 
-        body.page-role-selection .role-btn:hover {
+        :where(body.page-role-selection) .role-btn:hover {
             transform: translateY(-4px);
             box-shadow: 0 25px 60px rgba(0,0,0,0.08);
         }
 
-        body.page-role-selection .role-btn.student {
+        :where(body.page-role-selection) .role-btn.student {
             border-color: rgba(99, 102, 241, 0.1);
         }
 
-        body.page-role-selection .role-btn.student:hover {
+        :where(body.page-role-selection) .role-btn.student:hover {
             border-color: var(--primary);
             background: var(--primary-soft);
         }
 
-        body.page-role-selection .role-btn.guardian {
+        :where(body.page-role-selection) .role-btn.guardian {
             border-color: rgba(244, 63, 94, 0.1);
         }
 
-        body.page-role-selection .role-btn.guardian:hover {
+        :where(body.page-role-selection) .role-btn.guardian:hover {
             border-color: var(--guardian);
             background: var(--guardian-soft);
         }
 
-        body.page-role-selection .role-btn.staff {
+        :where(body.page-role-selection) .role-btn.staff {
             border-color: rgba(15, 118, 110, 0.12);
         }
 
-        body.page-role-selection .role-btn.staff:hover {
+        :where(body.page-role-selection) .role-btn.staff:hover {
             border-color: var(--staff);
             background: var(--staff-soft);
         }
 
-        body.page-role-selection .icon-circle {
+        :where(body.page-role-selection) .icon-circle {
             width: 64px;
             height: 64px;
             border-radius: 20px;
@@ -3816,24 +3816,24 @@ body.page-role-selection {
             flex-shrink: 0;
         }
 
-        body.page-role-selection .student .icon-circle {
+        :where(body.page-role-selection) .student .icon-circle {
             background: var(--primary-soft);
             color: var(--primary);
         }
 
-        body.page-role-selection .guardian .icon-circle {
+        :where(body.page-role-selection) .guardian .icon-circle {
             background: var(--guardian-soft);
             color: var(--guardian);
         }
 
-        body.page-role-selection .staff .icon-circle {
+        :where(body.page-role-selection) .staff .icon-circle {
             background: var(--staff-soft);
             color: var(--staff);
         }
 
-        body.page-role-selection .icon-circle span { font-size: 28px; }
+        :where(body.page-role-selection) .icon-circle span { font-size: 28px; }
 
-        body.page-role-selection .role-info h2 {
+        :where(body.page-role-selection) .role-info h2 {
             font-family: "Sora", sans-serif;
             font-size: 1.25rem;
             font-weight: 700;
@@ -3841,41 +3841,41 @@ body.page-role-selection {
             letter-spacing: -0.02em;
         }
 
-        body.page-role-selection .role-info p {
+        :where(body.page-role-selection) .role-info p {
             margin: 0;
             color: var(--muted);
             font-size: 0.92rem;
             line-height: 1.4;
         }
 
-        body.page-role-selection .arrow {
+        :where(body.page-role-selection) .arrow {
             margin-left: auto;
             color: var(--muted);
             opacity: 0.3;
             transition: all 0.3s;
         }
 
-        body.page-role-selection .role-btn:hover .arrow {
+        :where(body.page-role-selection) .role-btn:hover .arrow {
             opacity: 1;
             transform: translateX(4px);
             color: inherit;
         }
 
-        body.page-role-selection .footer-note {
+        :where(body.page-role-selection) .footer-note {
             margin-top: 48px;
             font-size: 0.85rem;
             color: var(--muted);
         }
 
         /* (2026-10-07) Footer links shared style; was only Admin Terminal */
-        body.page-role-selection .footer-note a {
+        :where(body.page-role-selection) .footer-note a {
             color: inherit;
             text-decoration: none;
             opacity: 0.5;
             transition: opacity 0.2s;
         }
 
-        body.page-role-selection .footer-note a:hover { opacity: 0.9; }
+        :where(body.page-role-selection) .footer-note a:hover { opacity: 0.9; }
 
         /* (2026-07-13) Optimize mobile layout & role cards; was oversized & wrapping */
         @media (max-width: 600px) {
@@ -3883,67 +3883,67 @@ body.page-role-selection {
                 padding: 16px 12px;
                 min-height: 100dvh;
             }
-            body.page-role-selection .selection-card {
+            :where(body.page-role-selection) .selection-card {
                 padding: 0;
                 width: 100%;
                 max-width: 100%;
             }
-            body.page-role-selection .logo-area {
+            :where(body.page-role-selection) .logo-area {
                 margin-bottom: 20px;
             }
-            body.page-role-selection .logo-icon {
+            :where(body.page-role-selection) .logo-icon {
                 width: 58px;
                 height: 58px;
                 border-radius: 18px;
                 margin: 0 auto 12px;
             }
-            body.page-role-selection .logo-icon span {
+            :where(body.page-role-selection) .logo-icon span {
                 font-size: 30px;
             }
-            body.page-role-selection h1 {
+            :where(body.page-role-selection) h1 {
                 font-size: 1.55rem;
                 margin-bottom: 6px;
             }
-            body.page-role-selection .subtitle {
+            :where(body.page-role-selection) .subtitle {
                 font-size: 0.9rem;
                 margin-bottom: 20px;
             }
-            body.page-role-selection .role-grid {
+            :where(body.page-role-selection) .role-grid {
                 gap: 12px;
             }
-            body.page-role-selection .role-btn {
+            :where(body.page-role-selection) .role-btn {
                 padding: 14px 16px;
                 gap: 14px;
                 border-radius: 20px;
             }
-            body.page-role-selection .role-btn:active {
+            :where(body.page-role-selection) .role-btn:active {
                 transform: scale(0.98);
             }
-            body.page-role-selection .icon-circle {
+            :where(body.page-role-selection) .icon-circle {
                 width: 50px;
                 height: 50px;
                 border-radius: 16px;
             }
-            body.page-role-selection .icon-circle span {
+            :where(body.page-role-selection) .icon-circle span {
                 font-size: 24px;
             }
-            body.page-role-selection .role-info {
+            :where(body.page-role-selection) .role-info {
                 flex: 1;
                 min-width: 0;
             }
-            body.page-role-selection .role-info h2 {
+            :where(body.page-role-selection) .role-info h2 {
                 font-size: 1.08rem;
                 margin-bottom: 2px;
                 white-space: nowrap;
             }
-            body.page-role-selection .role-info p {
+            :where(body.page-role-selection) .role-info p {
                 font-size: 0.82rem;
                 line-height: 1.35;
             }
-            body.page-role-selection .arrow {
+            :where(body.page-role-selection) .arrow {
                 font-size: 18px;
             }
-            body.page-role-selection .footer-note {
+            :where(body.page-role-selection) .footer-note {
                 margin-top: 22px;
                 font-size: 0.8rem;
             }
@@ -3978,7 +3978,7 @@ body.page-role-selection {
         }
 
         /* (2026-07-13) Disable dragging for all images; was default draggable */
-        body.page-login img {
+        :where(body.page-login) img {
             -webkit-user-drag: none;
             -khtml-user-drag: none;
             -moz-user-drag: none;
@@ -3989,7 +3989,7 @@ body.page-role-selection {
         }
 
         /* Base Styles */
-        body.page-login, body.page-login * { box-sizing: border-box; }
+        body.page-login, :where(body.page-login) * { box-sizing: border-box; }
         body.page-login {
             font-family: "Outfit", sans-serif;
             /* Perf: simplified from 4 gradient layers to 2 */
@@ -4005,7 +4005,7 @@ body.page-role-selection {
         }
 
         /* Premium Glassmorphism Card */
-        body.page-login .login-card {
+        :where(body.page-login) .login-card {
             width: 100%;
             max-width: 440px;
             background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.72));
@@ -4026,18 +4026,18 @@ body.page-role-selection {
         }
 
         /* Brand Elements */
-        body.page-login .brand-section {
+        :where(body.page-login) .brand-section {
             text-align: center;
             margin-bottom: 20px;
         }
 
-        body.page-login .brand-logo-img {
+        :where(body.page-login) .brand-logo-img {
             width: 80px;
             height: auto;
             margin-bottom: 10px;
         }
 
-        body.page-login .brand-name {
+        :where(body.page-login) .brand-name {
             font-family: "Sora", sans-serif;
             font-weight: 800;
             font-size: 1.8rem;
@@ -4047,7 +4047,7 @@ body.page-role-selection {
         }
 
         /* Tabs */
-        body.page-login .auth-tabs {
+        :where(body.page-login) .auth-tabs {
             display: flex;
             background: rgba(255, 255, 255, 0.4);
             border-radius: 14px;
@@ -4055,7 +4055,7 @@ body.page-role-selection {
             margin-bottom: 25px;
         }
 
-        body.page-login .tab-btn {
+        :where(body.page-login) .tab-btn {
             flex: 1;
             padding: 10px;
             border: none;
@@ -4070,15 +4070,15 @@ body.page-role-selection {
             transform: translateZ(0);
         }
 
-        body.page-login .tab-btn.active {
+        :where(body.page-login) .tab-btn.active {
             background: white;
             color: var(--primary);
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
 
         /* Form Components */
-        body.page-login .form-group { margin-bottom: 18px; }
-        body.page-login .form-label {
+        :where(body.page-login) .form-group { margin-bottom: 18px; }
+        :where(body.page-login) .form-label {
             display: block;
             font-weight: 600;
             font-size: 0.85rem;
@@ -4088,7 +4088,7 @@ body.page-role-selection {
         }
 
         /* (2026-07-13) Add visible input outlines; was transparent white border */
-        body.page-login .input-wrapper {
+        :where(body.page-login) .input-wrapper {
             display: flex;
             align-items: center;
             background: rgba(255, 255, 255, 0.85);
@@ -4100,17 +4100,17 @@ body.page-role-selection {
             transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
 
-        body.page-login .input-wrapper:hover {
+        :where(body.page-login) .input-wrapper:hover {
             border-color: rgba(90, 31, 224, 0.45);
         }
 
-        body.page-login .input-wrapper:focus-within {
+        :where(body.page-login) .input-wrapper:focus-within {
             background: white;
             border-color: var(--primary);
             box-shadow: 0 0 0 4px rgba(90, 31, 224, 0.14);
         }
 
-        body.page-login .input-wrapper input {
+        :where(body.page-login) .input-wrapper input {
             border: none;
             background: transparent;
             width: 100%;
@@ -4120,14 +4120,14 @@ body.page-role-selection {
             color: var(--ink);
         }
 
-        body.page-login .input-icon {
+        :where(body.page-login) .input-icon {
             color: var(--muted);
             margin-right: 12px;
             font-size: 18px;
         }
 
         /* Google Button */
-        body.page-login .btn-google {
+        :where(body.page-login) .btn-google {
             width: 100%;
             height: 54px;
             border-radius: var(--radius-md);
@@ -4147,15 +4147,15 @@ body.page-role-selection {
             transform: translateZ(0);
         }
 
-        body.page-login .btn-google:hover {
+        :where(body.page-login) .btn-google:hover {
             opacity: 0.85;
         }
 
-        body.page-login .btn-google img {
+        :where(body.page-login) .btn-google img {
             width: 20px;
         }
 
-        body.page-login .divider {
+        :where(body.page-login) .divider {
             display: flex;
             align-items: center;
             text-align: center;
@@ -4164,17 +4164,17 @@ body.page-role-selection {
             font-size: 0.8rem;
         }
 
-        body.page-login .divider::before, body.page-login .divider::after {
+        :where(body.page-login) .divider::before, :where(body.page-login) .divider::after {
             content: '';
             flex: 1;
             border-bottom: 1px solid rgba(0,0,0,0.06);
         }
 
-        body.page-login .divider:not(:empty)::before { margin-right: 15px; }
-        body.page-login .divider:not(:empty)::after { margin-left: 15px; }
+        :where(body.page-login) .divider:not(:empty)::before { margin-right: 15px; }
+        :where(body.page-login) .divider:not(:empty)::after { margin-left: 15px; }
 
         /* Primary Action Button */
-        body.page-login .btn-action {
+        :where(body.page-login) .btn-action {
             width: 100%;
             height: 56px;
             border-radius: var(--radius-md);
@@ -4193,18 +4193,18 @@ body.page-role-selection {
             position: relative;
         }
 
-        body.page-login .btn-action:active { transform: scale(0.98); }
-        body.page-login .btn-action:disabled {
+        :where(body.page-login) .btn-action:active { transform: scale(0.98); }
+        :where(body.page-login) .btn-action:disabled {
             opacity: 0.75;
             cursor: not-allowed;
         }
-        body.page-login .btn-action.is-busy {
+        :where(body.page-login) .btn-action.is-busy {
             color: transparent;
         }
-        body.page-login .btn-action.is-busy > * {
+        :where(body.page-login) .btn-action.is-busy > * {
             opacity: 0;
         }
-        body.page-login .btn-action.is-busy::after {
+        :where(body.page-login) .btn-action.is-busy::after {
             content: "";
             width: 20px;
             height: 20px;
@@ -4221,7 +4221,7 @@ body.page-role-selection {
             to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
-        body.page-login .error-msg {
+        :where(body.page-login) .error-msg {
             color: var(--red);
             font-size: 0.8rem;
             margin-top: 10px;
@@ -4230,7 +4230,7 @@ body.page-role-selection {
             font-weight: 500;
         }
 
-        body.page-login .toast-stack {
+        :where(body.page-login) .toast-stack {
             position: fixed;
             top: 20px;
             right: 20px;
@@ -4241,7 +4241,7 @@ body.page-role-selection {
             width: min(360px, calc(100vw - 32px));
         }
 
-        body.page-login .toast-card {
+        :where(body.page-login) .toast-card {
             display: flex;
             align-items: flex-start;
             gap: 12px;
@@ -4257,11 +4257,11 @@ body.page-role-selection {
             will-change: transform, opacity;
         }
 
-        body.page-login .toast-card.error { border-color: rgba(209, 31, 52, 0.2); }
-        body.page-login .toast-card.success { border-color: rgba(15, 155, 103, 0.2); }
-        body.page-login .toast-card.info { border-color: rgba(90, 31, 224, 0.2); }
+        :where(body.page-login) .toast-card.error { border-color: rgba(209, 31, 52, 0.2); }
+        :where(body.page-login) .toast-card.success { border-color: rgba(15, 155, 103, 0.2); }
+        :where(body.page-login) .toast-card.info { border-color: rgba(90, 31, 224, 0.2); }
 
-        body.page-login .toast-icon {
+        :where(body.page-login) .toast-icon {
             width: 36px;
             height: 36px;
             border-radius: 12px;
@@ -4273,16 +4273,16 @@ body.page-role-selection {
             flex: 0 0 auto;
         }
 
-        body.page-login .toast-card.error .toast-icon { background: #fff1f2; color: var(--red); }
-        body.page-login .toast-card.success .toast-icon { background: #eefdf6; color: var(--green); }
+        :where(body.page-login) .toast-card.error .toast-icon { background: #fff1f2; color: var(--red); }
+        :where(body.page-login) .toast-card.success .toast-icon { background: #eefdf6; color: var(--green); }
 
-        body.page-login .toast-copy strong {
+        :where(body.page-login) .toast-copy strong {
             display: block;
             font-size: 0.9rem;
             margin-bottom: 3px;
         }
 
-        body.page-login .toast-copy span {
+        :where(body.page-login) .toast-copy span {
             font-size: 0.82rem;
             color: var(--muted);
             line-height: 1.4;
@@ -4294,7 +4294,7 @@ body.page-role-selection {
         }
 
         /* Modal Overlay for Profile Completion */
-        body.page-login #profileModal {
+        :where(body.page-login) #profileModal {
             position: fixed;
             inset: 0;
             background: rgba(23, 20, 40, 0.6);
@@ -4308,9 +4308,9 @@ body.page-role-selection {
             will-change: opacity;
         }
 
-        body.page-login #profileModal.active { display: flex; }
+        :where(body.page-login) #profileModal.active { display: flex; }
 
-        body.page-login .modal-card {
+        :where(body.page-login) .modal-card {
             background: white;
             width: 100%;
             max-width: 400px;
@@ -4326,7 +4326,7 @@ body.page-role-selection {
         }
 
         /* (2026-07-13) Required post-registration onboarding modal styles; was none */
-        body.page-login .onboarding-modal-backdrop {
+        :where(body.page-login) .onboarding-modal-backdrop {
             position: fixed;
             inset: 0;
             background: rgba(18, 12, 34, 0.75);
@@ -4339,8 +4339,8 @@ body.page-role-selection {
             padding: 16px;
             overflow-y: auto;
         }
-        body.page-login .onboarding-modal-backdrop.active { display: flex; }
-        body.page-login .onboarding-modal-card {
+        :where(body.page-login) .onboarding-modal-backdrop.active { display: flex; }
+        :where(body.page-login) .onboarding-modal-card {
             background: rgba(255, 255, 255, 0.98);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
@@ -4353,34 +4353,34 @@ body.page-role-selection {
             position: relative;
         }
         /* (2026-07-13) Apply terms content spacing; was default modal spacing */
-        body.page-login #termsScrollBox h4, body.page-login .terms-content h4 {
+        :where(body.page-login) #termsScrollBox h4, :where(body.page-login) .terms-content h4 {
             font-size: 0.95rem;
             font-weight: 700;
             color: var(--primary);
             margin-top: 24px !important;
             margin-bottom: 8px !important;
         }
-        body.page-login #termsScrollBox h4:first-of-type, body.page-login .terms-content h4:first-of-type {
+        :where(body.page-login) #termsScrollBox h4:first-of-type, :where(body.page-login) .terms-content h4:first-of-type {
             margin-top: 0 !important;
         }
-        body.page-login #termsScrollBox p, body.page-login .terms-content p {
+        :where(body.page-login) #termsScrollBox p, :where(body.page-login) .terms-content p {
             text-indent: 40px;
             margin-bottom: 4px !important;
             color: var(--ink);
             font-size: 0.82rem;
             line-height: 1.55;
         }
-        body.page-login #termsScrollBox ul, body.page-login .terms-content ul {
+        :where(body.page-login) #termsScrollBox ul, :where(body.page-login) .terms-content ul {
             margin-top: 2px !important;
             margin-bottom: 20px !important;
             padding-left: 45px !important;
         }
-        body.page-login #termsScrollBox li, body.page-login .terms-content li {
+        :where(body.page-login) #termsScrollBox li, :where(body.page-login) .terms-content li {
             margin-bottom: 2px;
             font-size: 0.82rem;
         }
-        body.page-login .onboarding-header { text-align: center; margin-bottom: 16px; }
-        body.page-login .onboarding-badge-icon {
+        :where(body.page-login) .onboarding-header { text-align: center; margin-bottom: 16px; }
+        :where(body.page-login) .onboarding-badge-icon {
             width: 48px;
             height: 48px;
             border-radius: 16px;
@@ -4391,27 +4391,27 @@ body.page-role-selection {
             margin-bottom: 10px;
             box-shadow: 0 8px 16px rgba(90, 31, 224, 0.12);
         }
-        body.page-login .onboarding-title {
+        :where(body.page-login) .onboarding-title {
             font-family: 'Sora', sans-serif;
             font-weight: 800;
             font-size: 1.35rem;
             color: var(--ink);
             margin: 0 0 4px;
         }
-        body.page-login .onboarding-subtitle {
+        :where(body.page-login) .onboarding-subtitle {
             font-size: 0.82rem;
             color: var(--muted);
             line-height: 1.4;
             margin: 0;
         }
-        body.page-login .onboarding-avatar-section {
+        :where(body.page-login) .onboarding-avatar-section {
             display: flex;
             flex-direction: column;
             align-items: center;
             margin-bottom: 16px;
         }
-        body.page-login .onboarding-avatar-wrapper { position: relative; margin-bottom: 10px; }
-        body.page-login .onboarding-avatar-circle {
+        :where(body.page-login) .onboarding-avatar-wrapper { position: relative; margin-bottom: 10px; }
+        :where(body.page-login) .onboarding-avatar-circle {
             width: 92px;
             height: 92px;
             border-radius: 50%;
@@ -4427,20 +4427,20 @@ body.page-role-selection {
             overflow: hidden;
             position: relative;
         }
-        body.page-login .onboarding-avatar-circle img {
+        :where(body.page-login) .onboarding-avatar-circle img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
         }
-        body.page-login .onboarding-photo-actions {
+        :where(body.page-login) .onboarding-photo-actions {
             display: flex;
             align-items: center;
             gap: 8px;
             flex-wrap: wrap;
             justify-content: center;
         }
-        body.page-login .photo-action-btn {
+        :where(body.page-login) .photo-action-btn {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -4454,23 +4454,23 @@ body.page-role-selection {
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        body.page-login .photo-action-btn:hover {
+        :where(body.page-login) .photo-action-btn:hover {
             background: rgba(90, 31, 224, 0.12);
             transform: translateY(-1px);
         }
-        body.page-login .photo-action-btn.secondary {
+        :where(body.page-login) .photo-action-btn.secondary {
             border-color: #e2e8f0;
             background: #f8fafc;
             color: var(--muted);
         }
-        body.page-login .photo-action-btn .material-symbols-outlined { font-size: 15px; }
-        body.page-login .onboarding-photo-note {
+        :where(body.page-login) .photo-action-btn .material-symbols-outlined { font-size: 15px; }
+        :where(body.page-login) .onboarding-photo-note {
             font-size: 0.72rem;
             color: var(--muted);
             margin: 6px 0 0;
             text-align: center;
         }
-        body.page-login .onboarding-camera-stage {
+        :where(body.page-login) .onboarding-camera-stage {
             background: #0f0c1b;
             border-radius: 20px;
             padding: 14px;
@@ -4482,7 +4482,7 @@ body.page-role-selection {
             position: relative;
             animation: zoomIn 0.25s ease;
         }
-        body.page-login .camera-viewport-circle {
+        :where(body.page-login) .camera-viewport-circle {
             width: 140px;
             height: 140px;
             border-radius: 50%;
@@ -4491,26 +4491,26 @@ body.page-role-selection {
             box-shadow: 0 0 0 3px #5a1fe0, 0 8px 24px rgba(0,0,0,0.5);
             background: black;
         }
-        body.page-login .camera-viewport-circle video {
+        :where(body.page-login) .camera-viewport-circle video {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        body.page-login .camera-circular-guide {
+        :where(body.page-login) .camera-circular-guide {
             position: absolute;
             inset: 0;
             border: 2px dashed rgba(255,255,255,0.7);
             border-radius: 50%;
             pointer-events: none;
         }
-        body.page-login .camera-controls-row {
+        :where(body.page-login) .camera-controls-row {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 16px;
             width: 100%;
         }
-        body.page-login .cam-control-btn {
+        :where(body.page-login) .cam-control-btn {
             border: none;
             cursor: pointer;
             display: flex;
@@ -4518,15 +4518,15 @@ body.page-role-selection {
             justify-content: center;
             transition: transform 0.15s ease;
         }
-        body.page-login .cam-control-btn:active { transform: scale(0.92); }
-        body.page-login .cam-control-btn.cancel, body.page-login .cam-control-btn.flip {
+        :where(body.page-login) .cam-control-btn:active { transform: scale(0.92); }
+        :where(body.page-login) .cam-control-btn.cancel, :where(body.page-login) .cam-control-btn.flip {
             width: 38px;
             height: 38px;
             border-radius: 50%;
             background: rgba(255,255,255,0.15);
             color: white;
         }
-        body.page-login .cam-control-btn.snap {
+        :where(body.page-login) .cam-control-btn.snap {
             width: 50px;
             height: 50px;
             border-radius: 50%;
@@ -4534,32 +4534,32 @@ body.page-role-selection {
             padding: 4px;
             box-shadow: 0 0 0 3px rgba(255,255,255,0.3);
         }
-        body.page-login .cam-control-btn.snap .snap-inner {
+        :where(body.page-login) .cam-control-btn.snap .snap-inner {
             width: 100%;
             height: 100%;
             border-radius: 50%;
             background: #5a1fe0;
             display: block;
         }
-        body.page-login .form-row-grid {
+        :where(body.page-login) .form-row-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
         }
         @media (max-width: 480px) {
-            body.page-login .form-row-grid { grid-template-columns: 1fr; gap: 0; }
+            :where(body.page-login) .form-row-grid { grid-template-columns: 1fr; gap: 0; }
         }
 
         /* Registration Fields Toggle */
-        body.page-login .signup-only { display: none; }
+        :where(body.page-login) .signup-only { display: none; }
 
         /* (2026-07-13) Add outlines to year-section; was transparent white border */
-        body.page-login .year-section-wrapper {
+        :where(body.page-login) .year-section-wrapper {
             background: rgba(255, 255, 255, 0.85) !important;
             border: 1.5px solid rgba(90, 31, 224, 0.28) !important;
             box-shadow: 0 2px 6px rgba(90, 31, 224, 0.04);
         }
-        body.page-login .year-section-wrapper:focus-within {
+        :where(body.page-login) .year-section-wrapper:focus-within {
             background: white !important;
             border-color: var(--primary) !important;
             box-shadow: 0 0 0 4px rgba(90, 31, 224, 0.14) !important;
@@ -4671,7 +4671,7 @@ body.page-permissions {
         }
 
         /* (2026-07-13) Disable dragging for all images; was default draggable */
-        body.page-permissions img {
+        :where(body.page-permissions) img {
             -webkit-user-drag: none;
             -khtml-user-drag: none;
             -moz-user-drag: none;
@@ -4681,7 +4681,7 @@ body.page-permissions {
             -webkit-user-select: none;
         }
 
-        body.page-permissions .onboarding-container {
+        :where(body.page-permissions) .onboarding-container {
             width: 100%;
             max-width: 440px;
             display: flex;
@@ -4692,7 +4692,7 @@ body.page-permissions {
             box-sizing: border-box;
         }
 
-        body.page-permissions .permission-card {
+        :where(body.page-permissions) .permission-card {
             background: var(--surface);
             border-radius: 28px;
             padding: 30px 24px;
@@ -4707,7 +4707,7 @@ body.page-permissions {
             animation: fadeSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        body.page-permissions .permission-card.active {
+        :where(body.page-permissions) .permission-card.active {
             display: flex;
         }
 
@@ -4716,7 +4716,7 @@ body.page-permissions {
             to { opacity: 1; transform: translateY(0); }
         }
 
-        body.page-permissions .progress-bar {
+        :where(body.page-permissions) .progress-bar {
             display: flex;
             gap: 8px;
             margin-bottom: 22px;
@@ -4724,7 +4724,7 @@ body.page-permissions {
             background: transparent;
         }
 
-        body.page-permissions .progress-dot {
+        :where(body.page-permissions) .progress-dot {
             flex: 1;
             height: 4px;
             border-radius: 999px;
@@ -4732,11 +4732,11 @@ body.page-permissions {
             transition: background 0.3s ease;
         }
 
-        body.page-permissions .progress-dot.active {
+        :where(body.page-permissions) .progress-dot.active {
             background: linear-gradient(135deg, var(--primary), var(--primary-strong));
         }
 
-        body.page-permissions .permission-icon {
+        :where(body.page-permissions) .permission-icon {
             width: 72px;
             height: 72px;
             border-radius: 22px;
@@ -4749,35 +4749,35 @@ body.page-permissions {
             flex-shrink: 0;
         }
 
-        body.page-permissions .permission-icon .material-symbols-outlined {
+        :where(body.page-permissions) .permission-icon .material-symbols-outlined {
             font-size: 36px;
         }
 
-        body.page-permissions .permission-icon.camera {
+        :where(body.page-permissions) .permission-icon.camera {
             background: linear-gradient(135deg, #a78bfa, #7c3aed);
             color: white;
             box-shadow: 0 12px 26px rgba(124, 58, 237, 0.3);
         }
 
-        body.page-permissions .permission-icon.location {
+        :where(body.page-permissions) .permission-icon.location {
             background: linear-gradient(135deg, #34d399, #059669);
             color: white;
             box-shadow: 0 12px 26px rgba(5, 150, 105, 0.3);
         }
 
-        body.page-permissions .permission-icon.complete {
+        :where(body.page-permissions) .permission-icon.complete {
             background: linear-gradient(135deg, #60a5fa, #2563eb);
             color: white;
             box-shadow: 0 12px 26px rgba(37, 99, 235, 0.3);
         }
 
-        body.page-permissions .permission-icon.denied {
+        :where(body.page-permissions) .permission-icon.denied {
             background: linear-gradient(135deg, #f87171, #dc2626);
             color: white;
             box-shadow: 0 12px 26px rgba(220, 38, 38, 0.3);
         }
 
-        body.page-permissions .card-title {
+        :where(body.page-permissions) .card-title {
             font-family: "Sora", sans-serif;
             font-size: 1.55rem;
             font-weight: 800;
@@ -4788,7 +4788,7 @@ body.page-permissions {
             letter-spacing: -0.01em;
         }
 
-        body.page-permissions .card-subtitle {
+        :where(body.page-permissions) .card-subtitle {
             text-align: center;
             color: var(--muted);
             font-size: 0.92rem;
@@ -4797,7 +4797,7 @@ body.page-permissions {
             padding: 0 6px;
         }
 
-        body.page-permissions .warning-box {
+        :where(body.page-permissions) .warning-box {
             padding: 12px 14px;
             border-radius: 16px;
             background: rgba(245, 158, 11, 0.08);
@@ -4806,7 +4806,7 @@ body.page-permissions {
             text-align: left;
         }
 
-        body.page-permissions .warning-box strong {
+        :where(body.page-permissions) .warning-box strong {
             display: flex;
             align-items: center;
             gap: 6px;
@@ -4816,14 +4816,14 @@ body.page-permissions {
             margin-bottom: 4px;
         }
 
-        body.page-permissions .warning-box p {
+        :where(body.page-permissions) .warning-box p {
             margin: 0;
             color: var(--muted);
             font-size: 0.82rem;
             line-height: 1.35;
         }
 
-        body.page-permissions .feature-list {
+        :where(body.page-permissions) .feature-list {
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -4831,7 +4831,7 @@ body.page-permissions {
             width: 100%;
         }
 
-        body.page-permissions .feature-item {
+        :where(body.page-permissions) .feature-item {
             display: flex;
             align-items: center;
             gap: 14px;
@@ -4842,7 +4842,7 @@ body.page-permissions {
             transition: transform 0.15s ease, background 0.15s ease;
         }
 
-        body.page-permissions .feature-icon {
+        :where(body.page-permissions) .feature-icon {
             width: 38px;
             height: 38px;
             border-radius: 11px;
@@ -4856,17 +4856,17 @@ body.page-permissions {
             box-shadow: 0 4px 10px rgba(90, 31, 224, 0.2);
         }
 
-        body.page-permissions .feature-icon .material-symbols-outlined {
+        :where(body.page-permissions) .feature-icon .material-symbols-outlined {
             font-size: 20px;
         }
 
-        body.page-permissions .feature-text {
+        :where(body.page-permissions) .feature-text {
             flex: 1;
             min-width: 0;
             text-align: left;
         }
 
-        body.page-permissions .feature-title {
+        :where(body.page-permissions) .feature-title {
             font-weight: 700;
             font-size: 0.92rem;
             margin: 0;
@@ -4874,14 +4874,14 @@ body.page-permissions {
             line-height: 1.25;
         }
 
-        body.page-permissions .feature-desc {
+        :where(body.page-permissions) .feature-desc {
             font-size: 0.8rem;
             color: var(--muted);
             margin: 2px 0 0;
             line-height: 1.3;
         }
 
-        body.page-permissions .btn-primary, body.page-permissions .btn-secondary {
+        :where(body.page-permissions) .btn-primary, :where(body.page-permissions) .btn-secondary {
             width: 100%;
             min-height: 52px;
             height: 52px;
@@ -4898,56 +4898,56 @@ body.page-permissions {
             margin-bottom: 10px;
         }
 
-        body.page-permissions .btn-primary {
+        :where(body.page-permissions) .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--primary-strong));
             color: white;
             box-shadow: 0 10px 24px rgba(90, 31, 224, 0.28);
         }
 
-        body.page-permissions .btn-primary:hover {
+        :where(body.page-permissions) .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 14px 28px rgba(90, 31, 224, 0.35);
         }
 
-        body.page-permissions .btn-primary:active {
+        :where(body.page-permissions) .btn-primary:active {
             transform: translateY(0);
         }
 
-        body.page-permissions .btn-secondary {
+        :where(body.page-permissions) .btn-secondary {
             background: rgba(90, 31, 224, 0.08);
             color: var(--primary);
             box-shadow: none;
         }
 
-        body.page-permissions .btn-secondary:hover {
+        :where(body.page-permissions) .btn-secondary:hover {
             background: rgba(90, 31, 224, 0.12);
         }
 
         @media (max-height: 680px) {
             body.page-permissions { padding: 10px; }
-            body.page-permissions .permission-card { padding: 18px 16px; border-radius: 20px; }
-            body.page-permissions .progress-bar { margin-bottom: 12px; }
-            body.page-permissions .permission-icon { width: 56px; height: 56px; font-size: 28px; margin-bottom: 10px; }
-            body.page-permissions .permission-icon .material-symbols-outlined { font-size: 28px; }
-            body.page-permissions .card-title { font-size: 1.3rem; margin-bottom: 4px; }
-            body.page-permissions .card-subtitle { font-size: 0.82rem; margin-bottom: 12px; }
-            body.page-permissions .warning-box { padding: 8px 12px; margin-bottom: 10px; }
-            body.page-permissions .feature-list { gap: 6px; margin-bottom: 14px; }
-            body.page-permissions .feature-item { padding: 8px 10px; gap: 10px; }
-            body.page-permissions .feature-icon { width: 32px; height: 32px; font-size: 16px; }
-            body.page-permissions .feature-icon .material-symbols-outlined { font-size: 16px; }
-            body.page-permissions .feature-title { font-size: 0.84rem; }
-            body.page-permissions .feature-desc { font-size: 0.74rem; }
-            body.page-permissions .btn-primary, body.page-permissions .btn-secondary { height: 46px; min-height: 46px; font-size: 0.92rem; margin-bottom: 6px; }
-            body.page-permissions .permission-requirement-notice { font-size: 0.72rem; }
+            :where(body.page-permissions) .permission-card { padding: 18px 16px; border-radius: 20px; }
+            :where(body.page-permissions) .progress-bar { margin-bottom: 12px; }
+            :where(body.page-permissions) .permission-icon { width: 56px; height: 56px; font-size: 28px; margin-bottom: 10px; }
+            :where(body.page-permissions) .permission-icon .material-symbols-outlined { font-size: 28px; }
+            :where(body.page-permissions) .card-title { font-size: 1.3rem; margin-bottom: 4px; }
+            :where(body.page-permissions) .card-subtitle { font-size: 0.82rem; margin-bottom: 12px; }
+            :where(body.page-permissions) .warning-box { padding: 8px 12px; margin-bottom: 10px; }
+            :where(body.page-permissions) .feature-list { gap: 6px; margin-bottom: 14px; }
+            :where(body.page-permissions) .feature-item { padding: 8px 10px; gap: 10px; }
+            :where(body.page-permissions) .feature-icon { width: 32px; height: 32px; font-size: 16px; }
+            :where(body.page-permissions) .feature-icon .material-symbols-outlined { font-size: 16px; }
+            :where(body.page-permissions) .feature-title { font-size: 0.84rem; }
+            :where(body.page-permissions) .feature-desc { font-size: 0.74rem; }
+            :where(body.page-permissions) .btn-primary, :where(body.page-permissions) .btn-secondary { height: 46px; min-height: 46px; font-size: 0.92rem; margin-bottom: 6px; }
+            :where(body.page-permissions) .permission-requirement-notice { font-size: 0.72rem; }
         }
 
         /* (2026-07-13) Hide standalone status badges; was visible badge */
-        body.page-permissions #cameraStatus, body.page-permissions #locationStatus {
+        :where(body.page-permissions) #cameraStatus, :where(body.page-permissions) #locationStatus {
             display: none !important;
         }
 
-        body.page-permissions .status-badge {
+        :where(body.page-permissions) .status-badge {
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -4959,22 +4959,22 @@ body.page-permissions {
             flex-shrink: 0;
         }
 
-        body.page-permissions .status-badge.granted {
+        :where(body.page-permissions) .status-badge.granted {
             background: rgba(15, 155, 103, 0.15);
             color: var(--green);
         }
 
-        body.page-permissions .status-badge.denied {
+        :where(body.page-permissions) .status-badge.denied {
             background: rgba(209, 31, 52, 0.15);
             color: var(--red);
         }
 
-        body.page-permissions .status-badge.pending {
+        :where(body.page-permissions) .status-badge.pending {
             background: rgba(245, 158, 11, 0.15);
             color: var(--amber);
         }
 
-        body.page-permissions .complete-checklist {
+        :where(body.page-permissions) .complete-checklist {
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -4982,7 +4982,7 @@ body.page-permissions {
             width: 100%;
         }
 
-        body.page-permissions .checklist-item {
+        :where(body.page-permissions) .checklist-item {
             display: flex;
             align-items: center;
             gap: 12px;
@@ -4992,7 +4992,7 @@ body.page-permissions {
             border: 1px solid rgba(90, 31, 224, 0.08);
         }
 
-        body.page-permissions .checklist-icon {
+        :where(body.page-permissions) .checklist-icon {
             width: 32px;
             height: 32px;
             border-radius: 50%;
@@ -5007,7 +5007,7 @@ body.page-permissions {
         }
 
         /* (2026-07-13) Mandatory requirement notice styles; was skip-link styles */
-        body.page-permissions .permission-requirement-notice {
+        :where(body.page-permissions) .permission-requirement-notice {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -5019,13 +5019,13 @@ body.page-permissions {
             text-align: center;
         }
 
-        body.page-permissions .permission-requirement-notice .material-symbols-outlined {
+        :where(body.page-permissions) .permission-requirement-notice .material-symbols-outlined {
             font-size: 16px;
             color: var(--amber);
         }
 
         /* (2026-07-13) Modal popup overlay for denied permissions; was missing */
-        body.page-permissions .permission-denied-overlay {
+        :where(body.page-permissions) .permission-denied-overlay {
             position: fixed;
             inset: 0;
             background: rgba(15, 12, 30, 0.72);
@@ -5039,7 +5039,7 @@ body.page-permissions {
             animation: fadeInOverlay 0.25s ease;
         }
 
-        body.page-permissions .permission-denied-box {
+        :where(body.page-permissions) .permission-denied-box {
             background: #ffffff;
             border-radius: 20px;
             max-width: 380px;
@@ -5062,7 +5062,7 @@ body.page-permissions {
             to { opacity: 1; transform: scale(1); }
         }
 
-        body.page-permissions .denied-icon-badge {
+        :where(body.page-permissions) .denied-icon-badge {
             width: clamp(44px, 5.8vh, 52px);
             height: clamp(44px, 5.8vh, 52px);
             border-radius: 50%;
@@ -5075,7 +5075,7 @@ body.page-permissions {
             font-size: clamp(24px, 3.2vh, 30px);
         }
 
-        body.page-permissions .denied-title {
+        :where(body.page-permissions) .denied-title {
             font-family: "Sora", sans-serif;
             font-size: clamp(1.05rem, 2vh, 1.25rem);
             font-weight: 800;
@@ -5083,14 +5083,14 @@ body.page-permissions {
             margin: 0 0 clamp(4px, 0.6vh, 6px);
         }
 
-        body.page-permissions .denied-desc {
+        :where(body.page-permissions) .denied-desc {
             color: var(--muted);
             font-size: clamp(0.7rem, 1.2vh, 0.8rem);
             line-height: 1.35;
             margin: 0 0 clamp(8px, 1.2vh, 12px);
         }
 
-        body.page-permissions .denied-instructions {
+        :where(body.page-permissions) .denied-instructions {
             background: #f8f6fc;
             border: 1px solid #e9e3f7;
             border-radius: 12px;
@@ -5099,14 +5099,14 @@ body.page-permissions {
             margin-bottom: clamp(10px, 1.5vh, 14px);
         }
 
-        body.page-permissions .denied-instructions p {
+        :where(body.page-permissions) .denied-instructions p {
             margin: 0 0 4px;
             font-size: clamp(0.7rem, 1.15vh, 0.76rem);
             font-weight: 700;
             color: var(--ink);
         }
 
-        body.page-permissions .denied-instructions ol {
+        :where(body.page-permissions) .denied-instructions ol {
             margin: 0;
             padding-left: 18px;
             font-size: clamp(0.65rem, 1.1vh, 0.72rem);
@@ -5114,7 +5114,7 @@ body.page-permissions {
             line-height: 1.35;
         }
 
-        body.page-permissions .denied-instructions li {
+        :where(body.page-permissions) .denied-instructions li {
             margin-bottom: 2px;
         }
 
@@ -5146,12 +5146,12 @@ body.page-profile {
             --radius-sm: 14px;
         }
 
-        body.page-profile, body.page-profile * {
+        body.page-profile, :where(body.page-profile) * {
             box-sizing: border-box;
         }
 
         /* (2026-07-13) Disable dragging for all images; was default draggable */
-        body.page-profile img {
+        :where(body.page-profile) img {
             -webkit-user-drag: none;
             -khtml-user-drag: none;
             -moz-user-drag: none;
@@ -5210,31 +5210,31 @@ body.page-profile {
             border-color: rgba(244, 63, 94, 0.14);
         }
 
-        body.page-profile button, body.page-profile a {
+        :where(body.page-profile) button, :where(body.page-profile) a {
             transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, color 0.18s ease;
         }
 
-        body.page-profile button:hover:not(:disabled), body.page-profile a:hover {
+        :where(body.page-profile) button:hover:not(:disabled), :where(body.page-profile) a:hover {
             transform: translateY(-1px);
         }
 
-        body.page-profile button:disabled {
+        :where(body.page-profile) button:disabled {
             opacity: 0.62;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
 
-        body.page-profile button.is-busy {
+        :where(body.page-profile) button.is-busy {
             position: relative;
             pointer-events: none;
         }
 
-        body.page-profile button.is-busy > * {
+        :where(body.page-profile) button.is-busy > * {
             opacity: 0;
         }
 
-        body.page-profile button.is-busy::after {
+        :where(body.page-profile) button.is-busy::after {
             content: "";
             position: absolute;
             top: 50%;
@@ -5280,7 +5280,7 @@ body.page-profile {
         }
 
         /* (2026-10-07) Page shell + stagger entry animations; was static */
-        body.page-profile .page-shell {
+        :where(body.page-profile) .page-shell {
             width: 100%;
             max-width: 520px;
             margin: 0 auto;
@@ -5288,23 +5288,23 @@ body.page-profile {
 
 
         /* Staggered card fade-up */
-        body.page-profile .profile-stack > * {
+        :where(body.page-profile) .profile-stack > * {
             animation: fadeUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        body.page-profile .profile-stack > *:nth-child(1) { animation-delay: 0.05s; }
-        body.page-profile .profile-stack > *:nth-child(2) { animation-delay: 0.12s; }
-        body.page-profile .profile-stack > *:nth-child(3) { animation-delay: 0.19s; }
-        body.page-profile .profile-stack > *:nth-child(4) { animation-delay: 0.26s; }
-        body.page-profile .profile-stack > *:nth-child(5) { animation-delay: 0.33s; }
+        :where(body.page-profile) .profile-stack > *:nth-child(1) { animation-delay: 0.05s; }
+        :where(body.page-profile) .profile-stack > *:nth-child(2) { animation-delay: 0.12s; }
+        :where(body.page-profile) .profile-stack > *:nth-child(3) { animation-delay: 0.19s; }
+        :where(body.page-profile) .profile-stack > *:nth-child(4) { animation-delay: 0.26s; }
+        :where(body.page-profile) .profile-stack > *:nth-child(5) { animation-delay: 0.33s; }
 
         /* Avatar pop-in */
-        body.page-profile .profile-avatar {
+        :where(body.page-profile) .profile-avatar {
             animation: avatarPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.25s both;
         }
 
         /* Hero cover shimmer sweep */
-        body.page-profile .hero-cover::before {
+        :where(body.page-profile) .hero-cover::before {
             content: "";
             position: absolute;
             inset: 0;
@@ -5320,7 +5320,7 @@ body.page-profile {
         }
 
         /* (2026-10-07) Topbar: merged layout + slide-in animation; was missing animation */
-        body.page-profile .profile-topbar {
+        :where(body.page-profile) .profile-topbar {
             position: sticky;
             top: 0;
             z-index: 40;
@@ -5339,7 +5339,7 @@ body.page-profile {
             animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        body.page-profile .profile-topbar-title {
+        :where(body.page-profile) .profile-topbar-title {
             font-family: "Sora", sans-serif;
             font-size: 1rem;
             font-weight: 800;
@@ -5347,12 +5347,12 @@ body.page-profile {
             letter-spacing: -0.03em;
         }
 
-        body.page-profile .profile-stack {
+        :where(body.page-profile) .profile-stack {
             display: grid;
             gap: 18px;
         }
 
-        body.page-profile .hero-card, body.page-profile .profile-card {
+        :where(body.page-profile) .hero-card, :where(body.page-profile) .profile-card {
             background: var(--surface);
             border: 1px solid rgba(255, 255, 255, 0.78);
             box-shadow: var(--shadow);
@@ -5361,11 +5361,11 @@ body.page-profile {
             overflow: hidden;
         }
 
-        body.page-profile .hero-card {
+        :where(body.page-profile) .hero-card {
             position: relative;
         }
 
-        body.page-profile .hero-back-btn {
+        :where(body.page-profile) .hero-back-btn {
             width: 46px;
             height: 46px;
             border-radius: 16px;
@@ -5381,18 +5381,18 @@ body.page-profile {
             transition: transform 0.18s ease, background 0.18s ease;
         }
 
-        body.page-profile .hero-back-btn:hover, body.page-profile .hero-back-btn:focus-visible {
+        :where(body.page-profile) .hero-back-btn:hover, :where(body.page-profile) .hero-back-btn:focus-visible {
             transform: translateY(-1px);
             background: #fff;
             color: var(--primary);
         }
 
-        body.page-profile .hero-back-btn .material-symbols-outlined {
+        :where(body.page-profile) .hero-back-btn .material-symbols-outlined {
             font-size: 24px;
             font-variation-settings: 'FILL' 1;
         }
 
-        body.page-profile .hero-cover {
+        :where(body.page-profile) .hero-cover {
             height: 156px;
             background:
                 linear-gradient(125deg, rgba(90, 31, 224, 0.96), rgba(65, 17, 197, 0.84)),
@@ -5400,7 +5400,7 @@ body.page-profile {
             position: relative;
         }
 
-        body.page-profile .hero-cover::after {
+        :where(body.page-profile) .hero-cover::after {
             content: "";
             position: absolute;
             inset: 18px;
@@ -5408,19 +5408,19 @@ body.page-profile {
             border: 1px solid rgba(255, 255, 255, 0.14);
         }
 
-        body.page-profile .hero-body {
+        :where(body.page-profile) .hero-body {
             padding: 0 24px 24px;
             position: relative;
             margin-top: -46px;
         }
 
-        body.page-profile .avatar-wrap {
+        :where(body.page-profile) .avatar-wrap {
             position: relative;
             display: inline-flex;
             width: fit-content;
         }
 
-        body.page-profile .profile-avatar {
+        :where(body.page-profile) .profile-avatar {
             width: 92px;
             height: 92px;
             border-radius: 28px;
@@ -5438,19 +5438,19 @@ body.page-profile {
             position: relative;
         }
 
-        body.page-profile .profile-avatar.has-photo {
+        :where(body.page-profile) .profile-avatar.has-photo {
             background: #fff;
             color: transparent;
         }
 
-        body.page-profile .profile-avatar img {
+        :where(body.page-profile) .profile-avatar img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             display: block;
         }
 
-        body.page-profile .avatar-edit-btn {
+        :where(body.page-profile) .avatar-edit-btn {
             position: absolute;
             right: -8px;
             bottom: -8px;
@@ -5467,18 +5467,18 @@ body.page-profile {
             padding: 0;
         }
 
-        body.page-profile .avatar-edit-btn .material-symbols-outlined, body.page-profile .icon-edit-btn .material-symbols-outlined {
+        :where(body.page-profile) .avatar-edit-btn .material-symbols-outlined, :where(body.page-profile) .icon-edit-btn .material-symbols-outlined {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             line-height: 1;
         }
 
-        body.page-profile .hero-meta {
+        :where(body.page-profile) .hero-meta {
             margin-top: 18px;
         }
 
-        body.page-profile .eyebrow {
+        :where(body.page-profile) .eyebrow {
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -5492,7 +5492,7 @@ body.page-profile {
             text-transform: uppercase;
         }
 
-        body.page-profile .name-row {
+        :where(body.page-profile) .name-row {
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
             gap: 12px;
@@ -5500,7 +5500,7 @@ body.page-profile {
             margin-top: 14px;
         }
 
-        body.page-profile .profile-name-input {
+        :where(body.page-profile) .profile-name-input {
             flex: 1;
             border: none;
             background: transparent;
@@ -5515,12 +5515,12 @@ body.page-profile {
             width: 100%;
         }
 
-        body.page-profile .profile-name-input:disabled {
+        :where(body.page-profile) .profile-name-input:disabled {
             opacity: 1;
             cursor: default;
         }
 
-        body.page-profile .icon-edit-btn {
+        :where(body.page-profile) .icon-edit-btn {
             width: 44px;
             height: 44px;
             border-radius: 14px;
@@ -5534,19 +5534,19 @@ body.page-profile {
             padding: 0;
         }
 
-        body.page-profile .user-email {
+        :where(body.page-profile) .user-email {
             margin: 8px 0 0;
             color: var(--muted);
             font-size: 0.95rem;
         }
 
-        body.page-profile .hero-actions {
+        :where(body.page-profile) .hero-actions {
             display: flex;
             gap: 12px;
             margin-top: 18px;
         }
 
-        body.page-profile .hero-note {
+        :where(body.page-profile) .hero-note {
             margin-top: 16px;
             padding: 14px 16px;
             border-radius: 18px;
@@ -5557,11 +5557,11 @@ body.page-profile {
             line-height: 1.5;
         }
 
-        body.page-profile .profile-card {
+        :where(body.page-profile) .profile-card {
             padding: 22px;
         }
 
-        body.page-profile .card-head {
+        :where(body.page-profile) .card-head {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -5569,21 +5569,21 @@ body.page-profile {
             margin-bottom: 16px;
         }
 
-        body.page-profile .card-title {
+        :where(body.page-profile) .card-title {
             margin: 0;
             font-family: "Sora", sans-serif;
             font-size: 1rem;
             font-weight: 800;
         }
 
-        body.page-profile .card-copy {
+        :where(body.page-profile) .card-copy {
             margin: 4px 0 0;
             color: var(--muted);
             font-size: 0.84rem;
             line-height: 1.5;
         }
 
-        body.page-profile .id-chip {
+        :where(body.page-profile) .id-chip {
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -5595,23 +5595,23 @@ body.page-profile {
             font-weight: 700;
         }
 
-        body.page-profile .info-grid {
+        :where(body.page-profile) .info-grid {
             display: grid;
             gap: 12px;
         }
 
-        body.page-profile .info-row, body.page-profile .connection-item {
+        :where(body.page-profile) .info-row, :where(body.page-profile) .connection-item {
             background: var(--surface-soft);
             border: 1px solid var(--line);
             border-radius: 18px;
             padding: 16px;
         }
 
-        body.page-profile .is-hidden {
+        :where(body.page-profile) .is-hidden {
             display: none !important;
         }
 
-        body.page-profile .info-label {
+        :where(body.page-profile) .info-label {
             font-size: 0.76rem;
             font-weight: 800;
             color: var(--muted);
@@ -5619,7 +5619,7 @@ body.page-profile {
             letter-spacing: 0.08em;
         }
 
-        body.page-profile .info-value {
+        :where(body.page-profile) .info-value {
             margin-top: 6px;
             font-size: 0.98rem;
             font-weight: 700;
@@ -5627,25 +5627,25 @@ body.page-profile {
             word-break: break-word;
         }
 
-        body.page-profile .connection-item {
+        :where(body.page-profile) .connection-item {
             display: flex;
             justify-content: space-between;
             gap: 12px;
             align-items: flex-start;
         }
 
-        body.page-profile .connection-main {
+        :where(body.page-profile) .connection-main {
             flex: 1;
         }
 
-        body.page-profile .connection-side {
+        :where(body.page-profile) .connection-side {
             display: grid;
             gap: 8px;
             justify-items: end;
             flex-shrink: 0;
         }
 
-        body.page-profile .connection-action-btn {
+        :where(body.page-profile) .connection-action-btn {
             min-height: 38px;
             padding: 0 12px;
             border-radius: 12px;
@@ -5661,21 +5661,21 @@ body.page-profile {
             gap: 6px;
         }
 
-        body.page-profile .connection-name {
+        :where(body.page-profile) .connection-name {
             display: block;
             font-weight: 700;
             color: var(--ink);
             margin-bottom: 4px;
         }
 
-        body.page-profile .connection-meta {
+        :where(body.page-profile) .connection-meta {
             display: block;
             color: var(--muted);
             font-size: 0.82rem;
             line-height: 1.4;
         }
 
-        body.page-profile .status-badge {
+        :where(body.page-profile) .status-badge {
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -5688,22 +5688,22 @@ body.page-profile {
             letter-spacing: 0.05em;
         }
 
-        body.page-profile .status-badge.accepted {
+        :where(body.page-profile) .status-badge.accepted {
             background: var(--green-soft);
             color: var(--green);
         }
 
-        body.page-profile .status-badge.pending {
+        :where(body.page-profile) .status-badge.pending {
             background: var(--amber-soft);
             color: var(--amber);
         }
 
-        body.page-profile .status-badge.rejected {
+        :where(body.page-profile) .status-badge.rejected {
             background: var(--red-soft);
             color: var(--red);
         }
 
-        body.page-profile .context-menu {
+        :where(body.page-profile) .context-menu {
             position: fixed;
             background: var(--surface);
             border: 1px solid var(--line);
@@ -5714,7 +5714,7 @@ body.page-profile {
             min-width: 180px;
         }
 
-        body.page-profile .context-menu-btn {
+        :where(body.page-profile) .context-menu-btn {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -5730,11 +5730,11 @@ body.page-profile {
             text-align: left;
         }
 
-        body.page-profile .context-menu-btn:hover {
+        :where(body.page-profile) .context-menu-btn:hover {
             background: var(--surface-soft);
         }
 
-        body.page-profile .empty-state {
+        :where(body.page-profile) .empty-state {
             padding: 24px 18px;
             border-radius: 18px;
             background: var(--surface-soft);
@@ -5744,16 +5744,16 @@ body.page-profile {
             text-align: center;
         }
 
-        body.page-profile .input-stack {
+        :where(body.page-profile) .input-stack {
             display: grid;
             gap: 12px;
         }
 
-        body.page-profile .search-field-wrap {
+        :where(body.page-profile) .search-field-wrap {
             position: relative;
         }
 
-        body.page-profile .input-field {
+        :where(body.page-profile) .input-field {
             width: 100%;
             min-height: 54px;
             border-radius: 16px;
@@ -5765,25 +5765,25 @@ body.page-profile {
             outline: none;
         }
 
-        body.page-profile .input-field:focus {
+        :where(body.page-profile) .input-field:focus {
             border-color: rgba(90, 31, 224, 0.5);
             box-shadow: 0 0 0 4px rgba(90, 31, 224, 0.08);
         }
 
-        body.page-profile .input-field:disabled {
+        :where(body.page-profile) .input-field:disabled {
             color: var(--muted);
             background: rgba(248, 246, 255, 0.72);
         }
 
-        body.page-profile .password-input-wrap {
+        :where(body.page-profile) .password-input-wrap {
             position: relative;
         }
 
-        body.page-profile .password-input-wrap .input-field {
+        :where(body.page-profile) .password-input-wrap .input-field {
             padding-right: 54px;
         }
 
-        body.page-profile .password-toggle-btn {
+        :where(body.page-profile) .password-toggle-btn {
             position: absolute;
             top: 50%;
             right: 10px;
@@ -5799,7 +5799,7 @@ body.page-profile {
             justify-content: center;
         }
 
-        body.page-profile .guardian-search-results {
+        :where(body.page-profile) .guardian-search-results {
             position: absolute;
             top: calc(100% + 8px);
             left: 0;
@@ -5815,11 +5815,11 @@ body.page-profile {
             backdrop-filter: blur(12px);
         }
 
-        body.page-profile .guardian-search-results.is-hidden {
+        :where(body.page-profile) .guardian-search-results.is-hidden {
             display: none;
         }
 
-        body.page-profile .guardian-search-item {
+        :where(body.page-profile) .guardian-search-item {
             width: 100%;
             border: 1px solid rgba(23, 20, 40, 0.06);
             background: var(--surface-soft);
@@ -5833,29 +5833,29 @@ body.page-profile {
             gap: 12px;
         }
 
-        body.page-profile .guardian-search-item.disabled {
+        :where(body.page-profile) .guardian-search-item.disabled {
             opacity: 0.68;
         }
 
-        body.page-profile .guardian-search-copy {
+        :where(body.page-profile) .guardian-search-copy {
             display: grid;
             gap: 3px;
             min-width: 0;
         }
 
-        body.page-profile .guardian-search-name {
+        :where(body.page-profile) .guardian-search-name {
             font-size: 0.96rem;
             font-weight: 700;
         }
 
-        body.page-profile .guardian-search-email {
+        :where(body.page-profile) .guardian-search-email {
             font-size: 0.8rem;
             color: var(--muted);
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        body.page-profile .guardian-search-badge {
+        :where(body.page-profile) .guardian-search-badge {
             flex: 0 0 auto;
             padding: 6px 10px;
             border-radius: 999px;
@@ -5865,7 +5865,7 @@ body.page-profile {
             font-weight: 700;
         }
 
-        body.page-profile .guardian-search-empty {
+        :where(body.page-profile) .guardian-search-empty {
             padding: 14px 12px;
             border-radius: 16px;
             background: var(--surface-soft);
@@ -5874,13 +5874,13 @@ body.page-profile {
             text-align: center;
         }
 
-        body.page-profile .section-actions, body.page-profile .footer-actions {
+        :where(body.page-profile) .section-actions, :where(body.page-profile) .footer-actions {
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
         }
 
-        body.page-profile .btn-primary, body.page-profile .btn-secondary, body.page-profile .btn-danger {
+        :where(body.page-profile) .btn-primary, :where(body.page-profile) .btn-secondary, :where(body.page-profile) .btn-danger {
             min-height: 54px;
             padding: 0 18px;
             border-radius: 18px;
@@ -5894,40 +5894,40 @@ body.page-profile {
             text-decoration: none;
         }
 
-        body.page-profile .btn-primary {
+        :where(body.page-profile) .btn-primary {
             background: linear-gradient(135deg, var(--primary), var(--primary-strong));
             color: #fff;
             box-shadow: 0 16px 28px rgba(90, 31, 224, 0.24);
         }
 
-        body.page-profile .btn-secondary {
+        :where(body.page-profile) .btn-secondary {
             background: rgba(23, 20, 40, 0.06);
             color: var(--ink);
         }
 
-        body.page-profile .btn-danger {
+        :where(body.page-profile) .btn-danger {
             background: transparent;
             color: var(--red);
             border: 1px solid rgba(209, 31, 52, 0.12);
         }
 
-        body.page-profile .btn-secondary.is-busy::after {
+        :where(body.page-profile) .btn-secondary.is-busy::after {
             border-color: rgba(23, 20, 40, 0.16);
             border-top-color: var(--ink);
         }
 
-        body.page-profile .password-panel.disabled .input-field {
+        :where(body.page-profile) .password-panel.disabled .input-field {
             pointer-events: none;
         }
 
-        body.page-profile .helper-copy {
+        :where(body.page-profile) .helper-copy {
             margin: 12px 0 0;
             color: var(--muted);
             font-size: 0.82rem;
             line-height: 1.5;
         }
 
-        body.page-profile .status-modal {
+        :where(body.page-profile) .status-modal {
             position: fixed;
             inset: 0;
             background: rgba(23, 20, 40, 0.84);
@@ -5939,11 +5939,11 @@ body.page-profile {
             padding: 24px;
         }
 
-        body.page-profile .status-modal.active {
+        :where(body.page-profile) .status-modal.active {
             display: flex;
         }
 
-        body.page-profile .status-card {
+        :where(body.page-profile) .status-card {
             width: 100%;
             max-width: 380px;
             border-radius: 32px;
@@ -5953,7 +5953,7 @@ body.page-profile {
             text-align: center;
         }
 
-        body.page-profile .status-icon-wrap {
+        :where(body.page-profile) .status-icon-wrap {
             width: 78px;
             height: 78px;
             border-radius: 24px;
@@ -5964,30 +5964,30 @@ body.page-profile {
             font-size: 40px;
         }
 
-        body.page-profile .status-icon-wrap.success {
+        :where(body.page-profile) .status-icon-wrap.success {
             background: #eefdf6;
             color: var(--green);
         }
 
-        body.page-profile .status-icon-wrap.error {
+        :where(body.page-profile) .status-icon-wrap.error {
             background: #fff1f2;
             color: var(--red);
         }
 
-        body.page-profile .status-title {
+        :where(body.page-profile) .status-title {
             margin: 0 0 10px;
             font-family: "Sora", sans-serif;
             font-size: 1.45rem;
             font-weight: 800;
         }
 
-        body.page-profile .status-msg {
+        :where(body.page-profile) .status-msg {
             margin: 0 0 24px;
             color: var(--muted);
             line-height: 1.6;
         }
 
-        body.page-profile .status-btn {
+        :where(body.page-profile) .status-btn {
             width: 100%;
             min-height: 56px;
             border: none;
@@ -5998,7 +5998,7 @@ body.page-profile {
             font-weight: 800;
         }
 
-        body.page-profile .sos-fab {
+        :where(body.page-profile) .sos-fab {
             position: fixed;
             right: 24px;
             bottom: 24px;
@@ -6015,7 +6015,7 @@ body.page-profile {
             z-index: 1000;
         }
 
-        body.page-profile .sos-fab .material-symbols-outlined {
+        :where(body.page-profile) .sos-fab .material-symbols-outlined {
             font-size: 32px;
             font-variation-settings: 'FILL' 1;
         }
@@ -6026,102 +6026,102 @@ body.page-profile {
         @media (min-width: 521px) and (max-width: 768px) {
             body.page-profile { padding-inline: 20px; }
 
-            body.page-profile .hero-cover { height: 140px; }
+            :where(body.page-profile) .hero-cover { height: 140px; }
 
-            body.page-profile .profile-avatar {
+            :where(body.page-profile) .profile-avatar {
                 width: 84px;
                 height: 84px;
                 font-size: 1.7rem;
             }
 
-            body.page-profile .profile-name-input { font-size: 1.5rem; }
+            :where(body.page-profile) .profile-name-input { font-size: 1.5rem; }
 
-            body.page-profile .btn-primary, body.page-profile .btn-secondary, body.page-profile .btn-danger { min-height: 50px; }
+            :where(body.page-profile) .btn-primary, :where(body.page-profile) .btn-secondary, :where(body.page-profile) .btn-danger { min-height: 50px; }
         }
 
         /* ── Phone (≤ 520px) ── */
         @media (max-width: 520px) {
             body.page-profile { padding-inline: 12px; }
 
-            body.page-profile .hero-body, body.page-profile .profile-card { padding-inline: 18px; }
+            :where(body.page-profile) .hero-body, :where(body.page-profile) .profile-card { padding-inline: 18px; }
 
-            body.page-profile .profile-topbar {
+            :where(body.page-profile) .profile-topbar {
                 margin-inline: -16px;
                 padding-inline: 16px;
                 border-radius: 0 0 18px 18px;
             }
 
-            body.page-profile .hero-cover { height: 130px; }
+            :where(body.page-profile) .hero-cover { height: 130px; }
 
-            body.page-profile .profile-avatar {
+            :where(body.page-profile) .profile-avatar {
                 width: 80px;
                 height: 80px;
                 font-size: 1.65rem;
                 border-radius: 24px;
             }
 
-            body.page-profile .profile-name-input { font-size: 1.4rem; }
+            :where(body.page-profile) .profile-name-input { font-size: 1.4rem; }
 
-            body.page-profile .hero-actions, body.page-profile .section-actions, body.page-profile .footer-actions { flex-direction: column; }
+            :where(body.page-profile) .hero-actions, :where(body.page-profile) .section-actions, :where(body.page-profile) .footer-actions { flex-direction: column; }
 
-            body.page-profile .hero-actions > *, body.page-profile .section-actions > *, body.page-profile .footer-actions > * { width: 100%; }
+            :where(body.page-profile) .hero-actions > *, :where(body.page-profile) .section-actions > *, :where(body.page-profile) .footer-actions > * { width: 100%; }
 
-            body.page-profile .card-head { flex-wrap: wrap; }
+            :where(body.page-profile) .card-head { flex-wrap: wrap; }
 
-            body.page-profile .id-chip { font-size: 0.78rem; }
+            :where(body.page-profile) .id-chip { font-size: 0.78rem; }
 
-            body.page-profile .connection-item { flex-wrap: wrap; }
-            body.page-profile .connection-side { justify-items: start; }
+            :where(body.page-profile) .connection-item { flex-wrap: wrap; }
+            :where(body.page-profile) .connection-side { justify-items: start; }
 
-            body.page-profile .status-card {
+            :where(body.page-profile) .status-card {
                 border-radius: 24px;
                 padding: 28px 22px 22px;
             }
 
-            body.page-profile .sos-fab {
+            :where(body.page-profile) .sos-fab {
                 right: 16px;
                 bottom: 16px;
                 width: 56px;
                 height: 56px;
             }
 
-            body.page-profile .sos-fab .material-symbols-outlined { font-size: 28px; }
+            :where(body.page-profile) .sos-fab .material-symbols-outlined { font-size: 28px; }
         }
 
         /* ── Small phone (≤ 360px) ── */
         @media (max-width: 360px) {
             body.page-profile { padding-inline: 8px; padding-bottom: 100px; }
 
-            body.page-profile .profile-topbar {
+            :where(body.page-profile) .profile-topbar {
                 margin-inline: -12px;
                 padding-inline: 12px;
             }
 
-            body.page-profile .hero-body, body.page-profile .profile-card { padding-inline: 14px; }
+            :where(body.page-profile) .hero-body, :where(body.page-profile) .profile-card { padding-inline: 14px; }
 
-            body.page-profile .hero-cover { height: 110px; }
+            :where(body.page-profile) .hero-cover { height: 110px; }
 
-            body.page-profile .profile-avatar {
+            :where(body.page-profile) .profile-avatar {
                 width: 70px;
                 height: 70px;
                 font-size: 1.45rem;
                 border-radius: 20px;
             }
 
-            body.page-profile .profile-name-input { font-size: 1.25rem; }
+            :where(body.page-profile) .profile-name-input { font-size: 1.25rem; }
 
-            body.page-profile .eyebrow { font-size: 0.65rem; padding: 5px 10px; }
+            :where(body.page-profile) .eyebrow { font-size: 0.65rem; padding: 5px 10px; }
 
-            body.page-profile .btn-primary, body.page-profile .btn-secondary, body.page-profile .btn-danger { min-height: 48px; font-size: 0.88rem; }
+            :where(body.page-profile) .btn-primary, :where(body.page-profile) .btn-secondary, :where(body.page-profile) .btn-danger { min-height: 48px; font-size: 0.88rem; }
 
-            body.page-profile .input-field { min-height: 48px; }
+            :where(body.page-profile) .input-field { min-height: 48px; }
 
-            body.page-profile .status-card {
+            :where(body.page-profile) .status-card {
                 border-radius: 20px;
                 padding: 24px 18px 18px;
             }
 
-            body.page-profile .sos-fab {
+            :where(body.page-profile) .sos-fab {
                 right: 12px;
                 bottom: 12px;
                 width: 52px;
@@ -6172,7 +6172,7 @@ body.page-settings {
             --shadow-soft: 0 24px 48px rgba(53, 33, 110, 0.14);
         }
 
-        body.page-settings, body.page-settings * { box-sizing: border-box; }
+        body.page-settings, :where(body.page-settings) * { box-sizing: border-box; }
 
         body.page-settings, body.page-settings {
             margin: 0;
@@ -6188,19 +6188,19 @@ body.page-settings {
             --line: rgba(255, 79, 123, 0.14);
         }
 
-        body.page-settings .page-shell {
+        :where(body.page-settings) .page-shell {
             min-height: 100vh;
             padding: 24px 16px 40px;
         }
 
-        body.page-settings .settings-stack {
+        :where(body.page-settings) .settings-stack {
             width: min(100%, 760px);
             margin: 0 auto;
             display: grid;
             gap: 18px;
         }
 
-        body.page-settings .hero-card, body.page-settings .settings-card {
+        :where(body.page-settings) .hero-card, :where(body.page-settings) .settings-card {
             background: var(--surface);
             border: 1px solid rgba(255, 255, 255, 0.78);
             border-radius: 28px;
@@ -6208,11 +6208,11 @@ body.page-settings {
             overflow: hidden;
         }
 
-        body.page-settings .hero-card {
+        :where(body.page-settings) .hero-card {
             position: relative;
         }
 
-        body.page-settings .hero-back-btn {
+        :where(body.page-settings) .hero-back-btn {
             position: absolute;
             top: 18px;
             left: 18px;
@@ -6229,20 +6229,20 @@ body.page-settings {
             z-index: 2;
         }
 
-        body.page-settings .hero-cover {
+        :where(body.page-settings) .hero-cover {
             min-height: 156px;
             background:
                 linear-gradient(125deg, rgba(90, 31, 224, 0.96), rgba(65, 17, 197, 0.84)),
                 radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 28%);
         }
 
-        body.page-settings .hero-body {
+        :where(body.page-settings) .hero-body {
             padding: 0 24px 24px;
             margin-top: -36px;
             position: relative;
         }
 
-        body.page-settings .settings-badge {
+        :where(body.page-settings) .settings-badge {
             width: 78px;
             height: 78px;
             border-radius: 24px;
@@ -6255,7 +6255,7 @@ body.page-settings {
             color: var(--primary);
         }
 
-        body.page-settings .eyebrow {
+        :where(body.page-settings) .eyebrow {
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -6270,59 +6270,59 @@ body.page-settings {
             text-transform: uppercase;
         }
 
-        body.page-settings .hero-title {
+        :where(body.page-settings) .hero-title {
             margin: 14px 0 8px;
             font-family: "Sora", sans-serif;
             font-size: 2rem;
             letter-spacing: -0.04em;
         }
 
-        body.page-settings .hero-copy, body.page-settings .helper-copy {
+        :where(body.page-settings) .hero-copy, :where(body.page-settings) .helper-copy {
             margin: 0;
             color: var(--muted);
             line-height: 1.55;
             font-size: 0.92rem;
         }
 
-        body.page-settings .hero-user {
+        :where(body.page-settings) .hero-user {
             margin-top: 12px;
             font-size: 0.86rem;
             color: var(--muted);
             font-weight: 700;
         }
 
-        body.page-settings .settings-card {
+        :where(body.page-settings) .settings-card {
             padding: 20px;
             display: grid;
             gap: 16px;
         }
 
-        body.page-settings .card-head {
+        :where(body.page-settings) .card-head {
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
             gap: 12px;
         }
 
-        body.page-settings .card-title {
+        :where(body.page-settings) .card-title {
             margin: 0;
             font-family: "Sora", sans-serif;
             font-size: 1.08rem;
         }
 
-        body.page-settings .card-copy {
+        :where(body.page-settings) .card-copy {
             margin: 6px 0 0;
             color: var(--muted);
             font-size: 0.86rem;
             line-height: 1.5;
         }
 
-        body.page-settings .settings-list {
+        :where(body.page-settings) .settings-list {
             display: grid;
             gap: 12px;
         }
 
-        body.page-settings .setting-row {
+        :where(body.page-settings) .setting-row {
             display: flex;
             align-items: center;
             gap: 14px;
@@ -6332,7 +6332,7 @@ body.page-settings {
             border: 1px solid var(--line);
         }
 
-        body.page-settings .setting-icon {
+        :where(body.page-settings) .setting-icon {
             width: 42px;
             height: 42px;
             border-radius: 16px;
@@ -6344,38 +6344,38 @@ body.page-settings {
             flex: 0 0 auto;
         }
 
-        body.page-settings .setting-copy {
+        :where(body.page-settings) .setting-copy {
             flex: 1;
             min-width: 0;
         }
 
-        body.page-settings .setting-title {
+        :where(body.page-settings) .setting-title {
             margin: 0;
             font-weight: 800;
             font-size: 0.95rem;
         }
 
-        body.page-settings .setting-desc {
+        :where(body.page-settings) .setting-desc {
             margin: 4px 0 0;
             color: var(--muted);
             font-size: 0.8rem;
             line-height: 1.45;
         }
 
-        body.page-settings .ios-switch {
+        :where(body.page-settings) .ios-switch {
             position: relative;
             width: 52px;
             height: 32px;
             flex: 0 0 auto;
         }
 
-        body.page-settings .ios-switch input {
+        :where(body.page-settings) .ios-switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
 
-        body.page-settings .ios-slider {
+        :where(body.page-settings) .ios-slider {
             position: absolute;
             inset: 0;
             background: rgba(126, 117, 156, 0.32);
@@ -6383,7 +6383,7 @@ body.page-settings {
             transition: 0.25s ease;
         }
 
-        body.page-settings .ios-slider::before {
+        :where(body.page-settings) .ios-slider::before {
             content: "";
             position: absolute;
             left: 4px;
@@ -6396,20 +6396,20 @@ body.page-settings {
             transition: 0.25s ease;
         }
 
-        body.page-settings .ios-switch input:checked + .ios-slider {
+        :where(body.page-settings) .ios-switch input:checked + .ios-slider {
             background: linear-gradient(135deg, var(--green), #0c7e54);
         }
 
-        body.page-settings .ios-switch input:checked + .ios-slider::before {
+        :where(body.page-settings) .ios-switch input:checked + .ios-slider::before {
             transform: translateX(20px);
         }
 
-        body.page-settings .quick-links {
+        :where(body.page-settings) .quick-links {
             display: grid;
             gap: 10px;
         }
 
-        body.page-settings .quick-link {
+        :where(body.page-settings) .quick-link {
             width: 100%;
             min-height: 54px;
             padding: 0 16px;
@@ -6426,7 +6426,7 @@ body.page-settings {
             gap: 10px;
         }
 
-        body.page-settings .status-pill {
+        :where(body.page-settings) .status-pill {
             display: inline-flex;
             align-items: center;
             gap: 8px;
@@ -6439,15 +6439,15 @@ body.page-settings {
         }
 
         @media (max-width: 640px) {
-            body.page-settings .page-shell {
+            :where(body.page-settings) .page-shell {
                 padding: 18px 12px 34px;
             }
 
-            body.page-settings .hero-title {
+            :where(body.page-settings) .hero-title {
                 font-size: 1.72rem;
             }
 
-            body.page-settings .setting-row {
+            :where(body.page-settings) .setting-row {
                 padding: 13px 14px;
             }
         }

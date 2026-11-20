@@ -3,16 +3,26 @@ import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device }
 import { auth, db, firebaseConfig } from '../js/firebase-config.js';
 import { onAuthStateChanged, getAuth, signInWithEmailAndPassword, updatePassword, createUserWithEmailAndPassword, confirmPasswordReset } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { doc, onSnapshot, collection, query, where, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, sendChatMessage, subscribeToMessagesByThread, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword } from '../js/db.js';
+// (2026-07-13) Import findStudentUid & guardian vault query; was missing
+import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, getGuardianSharedEmergencyPosts, findStudentUidByStudentId, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, sendChatMessage, subscribeToMessagesByThread, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword } from '../js/db.js';
 import { login, signUp, forgotPassword, getFriendlyAuthMessage } from '../js/auth.js';
 import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import '../js/install-sw.js';
 
+// (2026-07-13) Reset all modals on parent mode switch; was lingering
 window.switchParentMode = function(mode) {
     const authSec = document.getElementById('parentAuthSection');
     const dashShell = document.getElementById('parentDashboardShell');
     if (authSec) authSec.classList.toggle('is-hidden', mode !== 'auth');
     if (dashShell) dashShell.classList.toggle('is-hidden', mode !== 'dashboard');
+    ['guardianOtpModal', 'guardianTermsModal', 'guardianNotifDropdown'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    ['linkModal', 'vaultViewerModal', 'deleteAccountModal', 'guardianChatOverlay'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+    });
 };
 
 (function() {
@@ -1312,6 +1322,15 @@ window.switchParentMode = function(mode) {
                     }
                 }
                 if (guardianProfile) guardianProfile.uid = user.uid;
+                // (2026-07-13) Ensure guardian role in Firestore for rules; was unchecked
+                if (!guardianProfile || guardianProfile.role !== 'guardian') {
+                    guardianProfile = { ...(guardianProfile || {}), uid: user.uid, role: 'guardian', email: user.email || guardianProfile?.email || '' };
+                    await saveUserProfile(user.uid, {
+                        name: guardianProfile.name || user.displayName || (user.email ? user.email.split('@')[0] : 'Guardian'),
+                        email: user.email || guardianProfile.email || '',
+                        role: 'guardian'
+                    }).catch(() => {});
+                }
                 console.log("Guardian Profile:", guardianProfile);
                 updateGuardianProfileUI(guardianProfile?.name);
 
@@ -1958,9 +1977,39 @@ window.switchParentMode = function(mode) {
             }
         }
 
+        // (2026-07-13) Fast child switch with shimmer skeletons; was slow multi-fetch
+        let _vaultLoadToken = 0;
+
+        function renderVaultSkeleton(count = 6) {
+            const container = document.getElementById('sharedVaultGrid');
+            const empty = document.getElementById('vaultEmpty');
+            if (empty) empty.style.display = 'none';
+            if (!container) return;
+            container.innerHTML = Array.from({ length: count }, () => `
+                <div class="vault-skeleton-tile" aria-hidden="true">
+                    <div class="vault-skeleton-badge"></div>
+                    <div class="vault-skeleton-meta"></div>
+                </div>
+            `).join('');
+        }
+
+        function renderAlertsSkeleton(count = 3) {
+            const container = document.getElementById('alertHistory');
+            const empty = document.getElementById('alertsEmpty');
+            if (empty) empty.style.display = 'none';
+            if (!container) return;
+            container.innerHTML = Array.from({ length: count }, () => '<div class="alert-skeleton-card" aria-hidden="true"></div>').join('');
+        }
+
         async function selectStudent(link, fetchedName = null) {
             activeLink = link;
+            const initialLabel = fetchedName || link?.studentName || 'Loading...';
+            document.querySelectorAll('.selector-chip').forEach(c => c.classList.toggle('active', c.textContent === initialLabel));
+            renderVaultSkeleton(6);
+            renderAlertsSkeleton(3);
+
             const displayName = fetchedName || await resolveChildDisplayName(link);
+            if (activeLink !== link) return;
             const studentStatusCard = document.querySelector('.student-status-card');
             if (studentStatusCard) studentStatusCard.style.display = 'flex';
 
@@ -1983,15 +2032,17 @@ window.switchParentMode = function(mode) {
             renderLocationAlert("Waiting for your child's live location...");
             document.getElementById('lastSeen').textContent = "Waiting for location...";
             document.getElementById('statusDot').style.background = 'var(--red)';
-            // (2026-07-13) Pass UID, ID & name to vault loader; was bare UID
             startMonitoring(link.studentUid);
             loadSharedVault(link.studentUid, link.studentId, displayName);
         }
 
-        // (2026-07-13) Resolve vault by UID, ID, name or local cache; was UID only
+        // (2026-07-13) Single cached vault query with shimmer loader; was 4-step scan
         async function loadSharedVault(studentUid, studentId = null, childName = null) {
+            const loadToken = ++_vaultLoadToken;
             const container = document.getElementById('sharedVaultGrid');
             const empty = document.getElementById('vaultEmpty');
+            renderVaultSkeleton(6);
+            const shimmerStart = Date.now();
 
             try {
                 const targetName = (childName || document.getElementById('activeStudentName')?.textContent || activeLink?.studentName || '').trim();
@@ -2003,56 +2054,45 @@ window.switchParentMode = function(mode) {
                     if (studentRecord?.uid) targetUid = studentRecord.uid;
                 }
 
-                // Query emergency posts matching UID, Student ID, or Student Name
-                let posts = await getUserEmergencyPosts(targetUid || targetSid, targetName);
-                if ((!posts || posts.length === 0) && targetSid) {
-                    posts = await getUserEmergencyPosts(targetSid, targetName);
+                const posts = await getGuardianSharedEmergencyPosts(targetUid, targetSid, targetName).catch(() => []);
+                const elapsed = Date.now() - shimmerStart;
+                if (elapsed < 240) {
+                    await new Promise((r) => setTimeout(r, 240 - elapsed));
                 }
-                if (!posts || posts.length === 0) {
-                    const allPosts = await getAllEmergencyPosts().catch(() => []);
-                    posts = allPosts.filter(p => {
-                        if (targetUid && String(p.userId) === String(targetUid)) return true;
-                        if (targetSid && String(p.studentId) === String(targetSid)) return true;
-                        if (targetName) {
-                            const n = targetName.toLowerCase();
-                            if (p.userName && String(p.userName).toLowerCase().includes(n)) return true;
-                            if (p.studentName && String(p.studentName).toLowerCase().includes(n)) return true;
-                        }
-                        return false;
-                    });
-                }
-                if (!posts || posts.length === 0) {
-                    const localPosts = readLocalEmergencyPosts();
-                    if (localPosts.length > 0) {
-                        posts = localPosts;
-                    }
-                }
+                if (loadToken !== _vaultLoadToken) return;
+
                 const sharedItems = [];
-                posts.forEach(post => {
+                const seenSrc = new Set();
+                (posts || []).forEach(post => {
                     if (post.guardianVisible !== false && Array.isArray(post.attachments)) {
                         post.attachments.forEach(att => {
-                            if (att?.kind === 'image' || att?.kind === 'video') {
-                                sharedItems.push({
-                                    ...att,
-                                    timestamp: post.timestamp || post.createdAt,
-                                    location: post.location
-                                });
+                            if ((att?.kind === 'image' || att?.kind === 'video') && att.src) {
+                                const sig = att.src.length > 160 ? `${att.src.slice(0, 60)}_${att.src.slice(-60)}` : att.src;
+                                if (!seenSrc.has(sig)) {
+                                    seenSrc.add(sig);
+                                    sharedItems.push({
+                                        ...att,
+                                        timestamp: post.timestamp || post.createdAt,
+                                        location: post.location
+                                    });
+                                }
                             }
                         });
                     }
                 });
 
                 currentSharedVaultItems = sharedItems.sort((a, b) => {
-                    const aTime = a.timestamp?.seconds || (a.timestamp ? new Date(a.timestamp).getTime() : 0);
-                    const bTime = b.timestamp?.seconds || (b.timestamp ? new Date(b.timestamp).getTime() : 0);
+                    const aTime = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : (a.timestamp ? new Date(a.timestamp).getTime() : 0);
+                    const bTime = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : (b.timestamp ? new Date(b.timestamp).getTime() : 0);
                     return bTime - aTime;
                 });
 
                 if (currentSharedVaultItems.length === 0) {
-                    container.innerHTML = '';
-                    empty.style.display = 'block';
+                    if (container) container.innerHTML = '';
+                    if (empty) empty.style.display = 'block';
                     return;
                 }
+                if (empty) empty.style.display = 'none';
 
                 const _blobUrlMap = new Map();
                 function getPlayableVideoUrl(src) {
@@ -2729,6 +2769,8 @@ window.switchParentMode = function(mode) {
                     }
                 }, 30000);
             } else {
+                // (2026-07-13) Show auth section when signed out; was empty dashboard
+                window.switchParentMode('auth');
                 if (guardianPresenceInterval) clearInterval(guardianPresenceInterval);
             }
         });
