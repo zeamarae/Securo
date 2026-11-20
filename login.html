@@ -1133,7 +1133,8 @@
         // (2026-07-13) Import student password reset helpers from db; was basic
         import { saveUserProfile, saveUserDirectoryMarker, getUserProfile, isStudentIdTaken, getEmailByStudentId, saveAdminUserPassword, findStudentUidByStudentId, getLinksForStudent, sendAccountNotification } from './js/db.js';
         import { Validation, UI, Logger, Permissions } from './js/utils.js';
-        import './install-sw.js'; // Initialize offline support
+        // (2026-07-13) Fix install-sw path to js/ folder; was broken root path
+        import './js/install-sw.js'; // Initialize offline support
 
         // (2026-07-13) Keep session active on entry; was auto signOut on role select
         sessionStorage.removeItem('securo_from_role_selection');

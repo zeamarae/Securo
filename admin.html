@@ -3295,7 +3295,8 @@
                     </div>
                     <div class="field-block" id="manageUserEmailBlock">
                         <label for="manageUserEmail" id="manageUserEmailLabel">Email</label>
-                        <input id="manageUserEmail" class="glass-input" type="email" placeholder="user@example.com">
+                        <!-- (2026-07-13) Add autocomplete for user email; was missing attribute -->
+                        <input id="manageUserEmail" class="glass-input" type="email" placeholder="user@example.com" autocomplete="username">
                     </div>
                     <div class="field-block">
                         <label for="manageUserPassword">Password</label>
@@ -3511,7 +3512,8 @@
     <script type="module">
         // Core utilities and offline support
         import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './js/utils.js';
-        import './install-sw.js'; // Initialize service worker for offline support
+        // (2026-07-13) Fix install-sw path to js/ folder; was broken root path
+        import './js/install-sw.js'; // Initialize service worker for offline support
         
         import { auth, app, firebaseConfig } from './js/firebase-config.js';
         import { logout, roleIdToEmail } from './js/auth.js';

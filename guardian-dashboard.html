@@ -1952,7 +1952,8 @@
     <script type="module">
         // Core utilities and offline support
         import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './js/utils.js';
-        import './install-sw.js'; // Initialize service worker for offline support
+        // (2026-07-13) Fix install-sw path to js/ folder; was broken root path
+        import './js/install-sw.js'; // Initialize service worker for offline support
         
         // (2026-07-13) Add Firestore & findUserByEmail imports; was auth only
         import { auth, db } from './js/firebase-config.js';

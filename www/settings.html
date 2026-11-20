@@ -475,7 +475,8 @@
     <script type="module">
         // Core utilities and offline support
         import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './js/utils.js';
-        import './install-sw.js'; // Initialize service worker for offline support
+        // (2026-07-13) Fix install-sw path to js/ folder; was broken root path
+        import './js/install-sw.js'; // Initialize service worker for offline support
         
         import { auth } from './js/firebase-config.js';
         import { checkAuth } from './js/auth.js';
