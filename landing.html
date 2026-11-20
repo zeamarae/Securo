@@ -181,6 +181,15 @@
             box-shadow: 0 4px 14px rgba(90, 31, 224, 0.28);
         }
 
+        /* (2026-07-13) Add mobile nav accordion styles; was hidden desktop nav */
+        .mobile-nav-toggle {
+            display: none;
+        }
+
+        .mobile-nav-accordion {
+            display: none;
+        }
+
         .nav-actions {
             display: flex;
             align-items: center;
@@ -783,10 +792,10 @@
             position: relative;
         }
 
-        /* (2026-07-13) Responsive 4-card grid for roles; was repeat(3, 1fr) */
+        /* (2026-07-13) Set 3-column roles grid without admin; was 4-column grid */
         .roles-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 24px;
             margin-bottom: 24px;
         }
@@ -1242,12 +1251,86 @@
             }
 
             .nav-actions .btn-primary {
-                padding: 8px 16px;
-                font-size: 0.82rem;
-                font-weight: 700;
-                border-radius: 999px;
+                padding: 7px 14px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                border-radius: 9px;
                 gap: 5px;
-                box-shadow: 0 4px 14px rgba(90, 31, 224, 0.22);
+                box-shadow: 0 2px 8px rgba(90, 31, 224, 0.2);
+            }
+
+            /* (2026-07-13) Simple basic mobile nav; was complex card system */
+            .mobile-nav-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 38px;
+                height: 38px;
+                border-radius: 8px;
+                background: transparent;
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                color: #1e293b;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                padding: 0;
+            }
+
+            .mobile-nav-toggle:active {
+                background: rgba(0, 0, 0, 0.05);
+            }
+
+            .mobile-nav-accordion {
+                display: block;
+                max-height: 0;
+                overflow: hidden;
+                opacity: 0;
+                transition: max-height 0.28s ease, opacity 0.2s ease;
+                background: #ffffff;
+                border-bottom: 1px solid #eef2f6;
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.06);
+            }
+
+            .mobile-nav-accordion.open {
+                max-height: 320px;
+                opacity: 1;
+            }
+
+            .mobile-nav-links {
+                list-style: none;
+                padding: 8px 0 12px;
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .mobile-nav-links li {
+                border-bottom: 1px solid #f8fafc;
+            }
+
+            .mobile-nav-links li:last-child {
+                border-bottom: none;
+            }
+
+            .mobile-nav-link {
+                display: block;
+                padding: 12px 16px;
+                font-size: 0.95rem;
+                font-weight: 500;
+                color: #334155;
+                text-decoration: none;
+                border-radius: 8px;
+                transition: all 0.15s ease;
+            }
+
+            .mobile-nav-link:hover, .mobile-nav-link:active {
+                background: #f1f5f9;
+                color: var(--primary);
+            }
+
+            .mobile-nav-link.active {
+                color: var(--primary);
+                font-weight: 700;
+                background: rgba(90, 31, 224, 0.06);
             }
 
             /* Hero Section */
@@ -1386,26 +1469,23 @@
                 box-sizing: border-box;
             }
 
+            /* (2026-07-13) Responsive 3x2 grid tabs bar; was rigid cut-off single row */
             .trailer-tabs-bar {
                 width: 100% !important;
                 max-width: 100% !important;
                 min-width: 0 !important;
                 box-sizing: border-box;
-                display: flex;
-                align-items: center;
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
                 gap: 6px;
                 padding: 6px;
                 margin-bottom: 20px;
-                background: rgba(255, 255, 255, 0.92);
+                background: rgba(255, 255, 255, 0.94);
                 backdrop-filter: blur(16px);
                 -webkit-backdrop-filter: blur(16px);
                 border: 1px solid rgba(90, 31, 224, 0.14);
-                border-radius: 999px;
+                border-radius: 18px;
                 box-shadow: 0 8px 24px rgba(90, 31, 224, 0.06);
-                overflow-x: auto;
-                scroll-snap-type: x mandatory;
-                -webkit-overflow-scrolling: touch;
-                scrollbar-width: none;
             }
 
             .trailer-tabs-bar::-webkit-scrollbar {
@@ -1413,12 +1493,12 @@
             }
 
             .trailer-pill {
-                flex-shrink: 0;
-                scroll-snap-align: center;
-                padding: 7px 14px;
-                font-size: 0.74rem;
+                width: 100%;
+                justify-content: center;
+                padding: 7px 4px;
+                font-size: 0.72rem;
                 font-weight: 700;
-                border-radius: 999px;
+                border-radius: 12px;
                 border: none;
                 background: transparent;
                 color: var(--ink-muted);
@@ -1426,7 +1506,10 @@
                 white-space: nowrap;
                 display: flex;
                 align-items: center;
-                gap: 5px;
+                gap: 4px;
+                transition: all 0.2s ease;
+                box-sizing: border-box;
+            }
                 transition: all 0.2s ease;
             }
 
@@ -1982,6 +2065,22 @@
                     <span>Enter Portal</span>
                     <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
                 </a>
+                <!-- (2026-07-13) Add mobile nav toggle button; was absent -->
+                <button class="mobile-nav-toggle" id="mobileNavToggle" aria-label="Toggle Navigation" aria-expanded="false">
+                    <span class="material-symbols-outlined" id="mobileNavIcon">menu</span>
+                </button>
+            </div>
+        </div>
+        <!-- (2026-07-13) Simple basic mobile nav links; was complex cards -->
+        <div class="mobile-nav-accordion" id="mobileNavAccordion">
+            <div class="page-container">
+                <ul class="mobile-nav-links">
+                    <li><a href="#hero" class="mobile-nav-link">Overview</a></li>
+                    <li><a href="#features" class="mobile-nav-link">Features</a></li>
+                    <li><a href="#dual-view" class="mobile-nav-link">Student vs. Guardian</a></li>
+                    <li><a href="#roles" class="mobile-nav-link">Role Selection</a></li>
+                    <li><a href="#about-us" class="mobile-nav-link">About Us</a></li>
+                </ul>
             </div>
         </div>
     </header>
@@ -2288,21 +2387,7 @@
                             <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
                         </a>
                     </div>
-
-                    <!-- Administration Card -->
-                    <div class="role-portal-card">
-                        <div class="role-avatar-circle admin">
-                            <span class="material-symbols-outlined" style="font-size:32px;">admin_panel_settings</span>
-                        </div>
-                        <h3>Admin Terminal</h3>
-                        <p class="role-desc">Campus security dispatch console, attendance analytics, student
-                            verification, and audit logs.</p>
-                        <a href="admin-login.html" class="role-cta-btn admin" style="margin-top:auto;"
-                            onclick="enterPortal('admin-login.html', 'admin'); return false;">
-                            <span>Access Security Console</span>
-                            <span class="material-symbols-outlined" style="font-size:18px;">arrow_forward</span>
-                        </a>
-                    </div>
+                    <!-- (2026-07-13) Remove admin card from landing; was admin card -->
                 </div>
 
             </div>
@@ -2385,9 +2470,7 @@
                         <li><a href="guardian.html"
                                 onclick="enterPortal('guardian.html', 'guardian'); return false;">Guardian Portal</a>
                         </li>
-                        <li><a href="admin-login.html"
-                                onclick="enterPortal('admin-login.html', 'admin'); return false;">Admin Terminal</a>
-                        </li>
+                        <!-- (2026-07-13) Remove admin terminal link from footer; was admin link -->
                         <li><a href="role-selection.html"
                                 onclick="enterPortal('role-selection.html'); return false;">Role Selector</a></li>
                     </ul>
@@ -2512,6 +2595,37 @@
             });
         });
 
+        // (2026-07-13) Mobile nav accordion toggle & active sync; was no mobile nav
+        const mobileNavToggle = document.getElementById('mobileNavToggle');
+        const mobileNavAccordion = document.getElementById('mobileNavAccordion');
+        const mobileNavIcon = document.getElementById('mobileNavIcon');
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+
+        if (mobileNavToggle && mobileNavAccordion) {
+            mobileNavToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = mobileNavAccordion.classList.toggle('open');
+                if (mobileNavIcon) mobileNavIcon.textContent = isOpen ? 'close' : 'menu';
+                mobileNavToggle.setAttribute('aria-expanded', String(isOpen));
+            });
+
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    mobileNavAccordion.classList.remove('open');
+                    if (mobileNavIcon) mobileNavIcon.textContent = 'menu';
+                    mobileNavToggle.setAttribute('aria-expanded', 'false');
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.navbar-main')) {
+                    mobileNavAccordion.classList.remove('open');
+                    if (mobileNavIcon) mobileNavIcon.textContent = 'menu';
+                    mobileNavToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
         // (2026-07-13) Sync active nav link on scroll; was unmonitored scroll
         const landingSections = document.querySelectorAll('section[id], header[id]');
         const landingNavLinks = document.querySelectorAll('.nav-links a');
@@ -2532,6 +2646,9 @@
                 });
             }
             landingNavLinks.forEach(link => {
+                link.classList.toggle('active', link.getAttribute('href') === currentSec);
+            });
+            mobileNavLinks.forEach(link => {
                 link.classList.toggle('active', link.getAttribute('href') === currentSec);
             });
         }
