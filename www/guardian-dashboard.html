@@ -2032,7 +2032,10 @@
                 initMap();
                 if (map) setTimeout(() => map.invalidateSize(), 300);
             }
-            if (viewId === 'vault' && activeLink?.studentUid) loadSharedVault(activeLink.studentUid);
+            // (2026-07-13) Load vault with UID and studentId fallback; was UID only
+            if (viewId === 'vault') {
+                loadSharedVault(activeLink?.studentUid, activeLink?.studentId);
+            }
             // (2026-07-13) Render combined safety alerts; was attendance only
             if (viewId === 'alerts') renderAlerts();
             if (viewId === 'gad') loadGADPosts();
@@ -3588,17 +3591,31 @@
             renderLocationAlert("Waiting for your child's live location...");
             document.getElementById('lastSeen').textContent = "Waiting for location...";
             document.getElementById('statusDot').style.background = 'var(--red)';
+            // (2026-07-13) Pass UID & studentId to vault loader; was bare UID
             startMonitoring(link.studentUid);
-            loadSharedVault(link.studentUid);
+            loadSharedVault(link.studentUid, link.studentId);
         }
 
-        async function loadSharedVault(studentUid) {
+        // (2026-07-13) Fetch vault with UID/ID fallback & createdAt ts; was UID only
+        async function loadSharedVault(studentUid, studentId = null) {
             const container = document.getElementById('sharedVaultGrid');
             const empty = document.getElementById('vaultEmpty');
 
             try {
+                let targetUid = studentUid;
+                if (!targetUid && (studentId || activeLink?.studentId)) {
+                    const studentRecord = await findStudentUidByStudentId(studentId || activeLink?.studentId).catch(() => null);
+                    if (studentRecord?.uid) targetUid = studentRecord.uid;
+                }
+                if (!targetUid && activeLink?.studentUid) {
+                    targetUid = activeLink.studentUid;
+                }
+
                 // Get emergency posts for this student
-                const posts = await getUserEmergencyPosts(studentUid);
+                let posts = targetUid ? await getUserEmergencyPosts(targetUid) : [];
+                if ((!posts || posts.length === 0) && (studentId || activeLink?.studentId)) {
+                    posts = await getUserEmergencyPosts(studentId || activeLink?.studentId);
+                }
                 const sharedItems = [];
                 posts.forEach(post => {
                     if (post.guardianVisible !== false && Array.isArray(post.attachments)) {
@@ -3606,7 +3623,7 @@
                             if (att?.kind === 'image' || att?.kind === 'video') {
                                 sharedItems.push({
                                     ...att,
-                                    timestamp: post.timestamp,
+                                    timestamp: post.timestamp || post.createdAt,
                                     location: post.location
                                 });
                             }
@@ -3615,8 +3632,8 @@
                 });
 
                 currentSharedVaultItems = sharedItems.sort((a, b) => {
-                    const aTime = a.timestamp?.seconds || 0;
-                    const bTime = b.timestamp?.seconds || 0;
+                    const aTime = a.timestamp?.seconds || (a.timestamp ? new Date(a.timestamp).getTime() : 0);
+                    const bTime = b.timestamp?.seconds || (b.timestamp ? new Date(b.timestamp).getTime() : 0);
                     return bTime - aTime;
                 });
 

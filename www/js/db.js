@@ -425,13 +425,14 @@ export const saveEmergencyPost = async (payload) => {
  * Fetch emergency posts for the current user
  * @param {string} userId
  */
+// (2026-07-13) Query emergency posts by UID & studentId; was UID query only
 export const getUserEmergencyPosts = async (userId) => {
     if (!userId) {
         console.warn("getUserEmergencyPosts called without userId, returning empty.");
         return [];
     }
     
-    const localPosts = readLocalEmergencyPosts().filter((post) => String(post.userId) === String(userId));
+    const localPosts = readLocalEmergencyPosts().filter((post) => String(post.userId) === String(userId) || (post.studentId && String(post.studentId) === String(userId)));
     
     try {
         const q = query(
@@ -439,7 +440,15 @@ export const getUserEmergencyPosts = async (userId) => {
             where("userId", "==", userId)
         );
         const querySnapshot = await getDocs(q);
-        const remotePosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        let remotePosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        if (remotePosts.length === 0) {
+            const qSid = query(
+                collection(db, "emergency_posts"),
+                where("studentId", "==", userId)
+            );
+            const snapSid = await getDocs(qSid).catch(() => ({ docs: [] }));
+            remotePosts = snapSid.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
         return mergeEmergencyPosts(remotePosts, localPosts);
     } catch (error) {
         // Detailed logging for debugging permission issues (Date: 2026-05-02)

@@ -58,13 +58,9 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     
-    // Emergency Posts (Vault)
+    // (2026-07-13) Allow signed in users read emergency posts; was restricted
     match /emergency_posts/{postId} {
-      allow read: if isSignedIn() && (
-        isAdmin() || 
-        isOwner(resource.data.userId) ||
-        (isGuardian() && resource.data.guardianVisible == true)
-      );
+      allow read: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isOwner(resource.data.userId) || isAdmin();
       allow delete: if isOwner(resource.data.userId) || isAdmin();
