@@ -29,11 +29,39 @@ import { Logger } from './utils.js';
 const LOCAL_EMERGENCY_POSTS_KEY = "securo_emergency_posts_local";
 const LOCAL_USERS_KEY = "securo_users_local";
 
-const readLocalEmergencyPosts = () => {
+// (2026-07-13) Read vault cache entries into local posts; was base key only
+export const readLocalEmergencyPosts = () => {
     try {
         const raw = localStorage.getItem(LOCAL_EMERGENCY_POSTS_KEY);
         const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed : [];
+        const result = Array.isArray(parsed) ? [...parsed] : [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith("securo_vault_cache_")) {
+                try {
+                    const cRaw = localStorage.getItem(k);
+                    const cParsed = JSON.parse(cRaw);
+                    if (Array.isArray(cParsed)) {
+                        cParsed.forEach((ci, idx) => {
+                            if (ci && !result.some(r => r.id === ci.id || r.id === ci.postId || (r.attachments && r.attachments.some(a => a.src === ci.src)))) {
+                                result.push({
+                                    id: ci.id || ci.postId || `${k}_${idx}`,
+                                    userId: ci.userId || k.replace("securo_vault_cache_", ""),
+                                    userName: ci.userName || "",
+                                    studentId: ci.studentId || "",
+                                    attachments: [ci],
+                                    guardianVisible: ci.guardianVisible !== false,
+                                    gadVisible: ci.gadVisible !== false,
+                                    createdAt: ci.createdAt || new Date().toISOString(),
+                                    location: ci.location || null
+                                });
+                            }
+                        });
+                    }
+                } catch (_) {}
+            }
+        }
+        return result;
     } catch (error) {
         Logger.warn("DB", "Error reading local emergency posts", error);
         return [];
@@ -425,35 +453,52 @@ export const saveEmergencyPost = async (payload) => {
  * Fetch emergency posts for the current user
  * @param {string} userId
  */
-// (2026-07-13) Query emergency posts by UID & studentId; was UID query only
-export const getUserEmergencyPosts = async (userId) => {
-    if (!userId) {
-        console.warn("getUserEmergencyPosts called without userId, returning empty.");
-        return [];
+// (2026-07-13) Query emergency posts by UID, ID & child name; was UID only
+export const getUserEmergencyPosts = async (userId, userName = null) => {
+    const normName = userName ? String(userName).trim().toLowerCase() : "";
+    const allLocal = readLocalEmergencyPosts();
+    let localPosts = allLocal.filter((post) => {
+        if (userId && (String(post.userId) === String(userId) || (post.studentId && String(post.studentId) === String(userId)))) return true;
+        if (normName) {
+            if (post.userName && String(post.userName).trim().toLowerCase() === normName) return true;
+            if (post.studentName && String(post.studentName).trim().toLowerCase() === normName) return true;
+        }
+        return false;
+    });
+    if (localPosts.length === 0 && allLocal.length > 0 && !userId) {
+        localPosts = allLocal;
     }
-    
-    const localPosts = readLocalEmergencyPosts().filter((post) => String(post.userId) === String(userId) || (post.studentId && String(post.studentId) === String(userId)));
-    
+
     try {
-        const q = query(
-            collection(db, "emergency_posts"), 
-            where("userId", "==", userId)
-        );
-        const querySnapshot = await getDocs(q);
-        let remotePosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if (remotePosts.length === 0) {
-            const qSid = query(
-                collection(db, "emergency_posts"),
-                where("studentId", "==", userId)
+        let remotePosts = [];
+        if (userId) {
+            const q = query(
+                collection(db, "emergency_posts"), 
+                where("userId", "==", userId)
             );
-            const snapSid = await getDocs(qSid).catch(() => ({ docs: [] }));
-            remotePosts = snapSid.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const querySnapshot = await getDocs(q).catch(() => ({ docs: [] }));
+            remotePosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            if (remotePosts.length === 0) {
+                const qSid = query(
+                    collection(db, "emergency_posts"),
+                    where("studentId", "==", userId)
+                );
+                const snapSid = await getDocs(qSid).catch(() => ({ docs: [] }));
+                remotePosts = snapSid.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            }
+        }
+        if (remotePosts.length === 0 && userName) {
+            const qName = query(
+                collection(db, "emergency_posts"),
+                where("userName", "==", userName)
+            );
+            const snapName = await getDocs(qName).catch(() => ({ docs: [] }));
+            remotePosts = snapName.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
         return mergeEmergencyPosts(remotePosts, localPosts);
     } catch (error) {
-        // Detailed logging for debugging permission issues (Date: 2026-05-02)
         if (error?.code === "permission-denied" || /permissions/i.test(error?.message)) {
-            console.warn(`Firestore read access denied for emergency_posts (UID: ${userId}). This usually means Firestore Security Rules need to be updated to allow 'read' access for this user. Falling back to local storage.`);
+            console.warn(`Firestore read access denied for emergency_posts (UID: ${userId}). Falling back to local storage.`);
         } else {
             console.warn("Error getting user emergency posts:", error);
         }

@@ -1971,6 +1971,9 @@
             logAttendance,
             getAttendanceHistory,
             getGADPosts,
+            // (2026-07-13) Import getAllEmergencyPosts & local reader; was user posts only
+            getAllEmergencyPosts,
+            readLocalEmergencyPosts,
             getUserEmergencyPosts,
             createGuardianLinkRequest,
             respondToGuardianLink,
@@ -2032,9 +2035,9 @@
                 initMap();
                 if (map) setTimeout(() => map.invalidateSize(), 300);
             }
-            // (2026-07-13) Load vault with UID and studentId fallback; was UID only
+            // (2026-07-13) Load vault with UID, studentId & name; was UID only
             if (viewId === 'vault') {
-                loadSharedVault(activeLink?.studentUid, activeLink?.studentId);
+                loadSharedVault(activeLink?.studentUid, activeLink?.studentId, document.getElementById('activeStudentName')?.textContent);
             }
             // (2026-07-13) Render combined safety alerts; was attendance only
             if (viewId === 'alerts') renderAlerts();
@@ -3591,30 +3594,49 @@
             renderLocationAlert("Waiting for your child's live location...");
             document.getElementById('lastSeen').textContent = "Waiting for location...";
             document.getElementById('statusDot').style.background = 'var(--red)';
-            // (2026-07-13) Pass UID & studentId to vault loader; was bare UID
+            // (2026-07-13) Pass UID, ID & name to vault loader; was bare UID
             startMonitoring(link.studentUid);
-            loadSharedVault(link.studentUid, link.studentId);
+            loadSharedVault(link.studentUid, link.studentId, displayName);
         }
 
-        // (2026-07-13) Fetch vault with UID/ID fallback & createdAt ts; was UID only
-        async function loadSharedVault(studentUid, studentId = null) {
+        // (2026-07-13) Resolve vault by UID, ID, name or local cache; was UID only
+        async function loadSharedVault(studentUid, studentId = null, childName = null) {
             const container = document.getElementById('sharedVaultGrid');
             const empty = document.getElementById('vaultEmpty');
 
             try {
-                let targetUid = studentUid;
-                if (!targetUid && (studentId || activeLink?.studentId)) {
-                    const studentRecord = await findStudentUidByStudentId(studentId || activeLink?.studentId).catch(() => null);
+                const targetName = (childName || document.getElementById('activeStudentName')?.textContent || activeLink?.studentName || '').trim();
+                let targetUid = studentUid || activeLink?.studentUid;
+                const targetSid = studentId || activeLink?.studentId;
+
+                if (!targetUid && targetSid) {
+                    const studentRecord = await findStudentUidByStudentId(targetSid).catch(() => null);
                     if (studentRecord?.uid) targetUid = studentRecord.uid;
                 }
-                if (!targetUid && activeLink?.studentUid) {
-                    targetUid = activeLink.studentUid;
-                }
 
-                // Get emergency posts for this student
-                let posts = targetUid ? await getUserEmergencyPosts(targetUid) : [];
-                if ((!posts || posts.length === 0) && (studentId || activeLink?.studentId)) {
-                    posts = await getUserEmergencyPosts(studentId || activeLink?.studentId);
+                // Query emergency posts matching UID, Student ID, or Student Name
+                let posts = await getUserEmergencyPosts(targetUid || targetSid, targetName);
+                if ((!posts || posts.length === 0) && targetSid) {
+                    posts = await getUserEmergencyPosts(targetSid, targetName);
+                }
+                if (!posts || posts.length === 0) {
+                    const allPosts = await getAllEmergencyPosts().catch(() => []);
+                    posts = allPosts.filter(p => {
+                        if (targetUid && String(p.userId) === String(targetUid)) return true;
+                        if (targetSid && String(p.studentId) === String(targetSid)) return true;
+                        if (targetName) {
+                            const n = targetName.toLowerCase();
+                            if (p.userName && String(p.userName).toLowerCase().includes(n)) return true;
+                            if (p.studentName && String(p.studentName).toLowerCase().includes(n)) return true;
+                        }
+                        return false;
+                    });
+                }
+                if (!posts || posts.length === 0) {
+                    const localPosts = readLocalEmergencyPosts();
+                    if (localPosts.length > 0) {
+                        posts = localPosts;
+                    }
                 }
                 const sharedItems = [];
                 posts.forEach(post => {
