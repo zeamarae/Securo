@@ -1,58 +1,439 @@
+// (2026-07-13) Consolidated Admin JS (login, dashboard, analytics); was 3 files
+import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from '../js/utils.js';
+import { auth, app, firebaseConfig } from '../js/firebase-config.js';
+import { logout, roleIdToEmail, login, checkAuth } from '../js/auth.js';
+import { getGADPosts, saveGADPost, deleteGADPost, updateGADPost, getAllUsers, getUserProfile, saveUserProfile, updateUserProfile, sendChatMessage, subscribeToMessages, getAllChatThreads, getAllChatThreadsOnce, getAllGuardianLinksAdmin, deleteConversationThread, deleteUserRecord, getAllSOSLogs, getAllEmergencyPosts, getStudentLiveLocationOnce, subscribeToAccountNotifications, subscribeToMessagesByThread, subscribeToGADMessages, replyToGADMessage, saveCampusMapConfig, logAttendance, updateStudentLiveLocation, notifyGuardiansOfGeofenceEvent, getAttendanceHistory, getAllAttendance, subscribeToCampusMapConfig, removeGuardianLink, createGuardianLinkRequest, getUserSOSLogs, saveAdminUserPassword, syncGuardianLinksForGuardian, markThreadMessagesSeen, getAttendanceStats, getSOSStats, getAllAuditLogs } from '../js/db.js';
+import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import '../js/install-sw.js';
+
+// Extracted pre-hydration script from admin.html
+(function hydrateAdminStatsSync() {
+                            try {
+                                var summaryRaw = localStorage.getItem('securo_admin_summary') || sessionStorage.getItem('securo_admin_summary');
+                                var masterRaw = localStorage.getItem('securo_admin_master_cache') || sessionStorage.getItem('securo_admin_master_cache');
+                                var summary = null;
+                                var master = null;
+                                if (summaryRaw) { try { summary = JSON.parse(summaryRaw); } catch(e) {} }
+                                if (masterRaw) { try { master = JSON.parse(masterRaw); } catch(e) {} }
+                                if (!summary && master) {
+                                    var users = Array.isArray(master.users) ? master.users : [];
+                                    var rCounts = users.reduce(function(acc, u) {
+                                        var isStf = u && (u.role === 'staff' || String(u.name || '').toLowerCase().indexOf('staff') !== -1 || String(u.email || '').toLowerCase().indexOf('staff.') === 0);
+                                        var r = (u && (u.role === 'admin' || String(u.email || '').toLowerCase().indexOf('admin@') === 0)) ? 'admin' : (u && u.role === 'guardian') ? 'guardian' : isStf ? 'staff' : 'student';
+                                        acc[r] = (acc[r] || 0) + 1;
+                                        return acc;
+                                    }, { student: 0, guardian: 0, staff: 0, admin: 0 });
+                                    summary = {
+                                        totalUsers: users.length,
+                                        students: rCounts.student,
+                                        guardians: rCounts.guardian,
+                                        staff: rCounts.staff,
+                                        admins: rCounts.admin,
+                                        threads: Array.isArray(master.threads) ? master.threads.length : 0,
+                                        posts: Array.isArray(master.posts) ? master.posts.length : 0,
+                                        gadEngaged: 0,
+                                        savedAdminName: master.savedAdminName || 'Administrator'
+                                    };
+                                }
+                                if (summary) {
+                                    var uEl = document.getElementById('metricUsers');
+                                    var sEl = document.getElementById('metricStudents');
+                                    var gEl = document.getElementById('metricGuardians');
+                                    var tEl = document.getElementById('metricThreads');
+                                    var cTot = document.getElementById('roleChartTotal');
+                                    var rLg = document.getElementById('roleLegend');
+                                    var rCh = document.getElementById('roleChart');
+                                    var sBar = document.getElementById('statsBarList');
+                                    if (uEl && summary.totalUsers !== undefined) uEl.textContent = summary.totalUsers;
+                                    if (sEl && summary.students !== undefined) sEl.textContent = summary.students;
+                                    if (gEl && summary.guardians !== undefined) gEl.textContent = summary.guardians;
+                                    if (tEl && summary.threads !== undefined) tEl.textContent = summary.threads;
+                                    if (cTot && summary.totalUsers !== undefined) cTot.textContent = summary.totalUsers;
+                                    if (rCh && summary.totalUsers > 0) {
+                                        var sDeg = (summary.students / summary.totalUsers) * 360;
+                                        var gDeg = (summary.guardians / summary.totalUsers) * 360;
+                                        var stDeg = (summary.staff / summary.totalUsers) * 360;
+                                        rCh.style.background = 'conic-gradient(#8b5cf6 0deg ' + sDeg + 'deg, #fb7185 ' + sDeg + 'deg ' + (sDeg + gDeg) + 'deg, #60a5fa ' + (sDeg + gDeg) + 'deg ' + (sDeg + gDeg + stDeg) + 'deg, #cbd5e1 ' + (sDeg + gDeg + stDeg) + 'deg 360deg)';
+                                    }
+                                    if (rLg) {
+                                        rLg.innerHTML = '<div class="legend-item"><div class="legend-meta"><span class="legend-swatch" style="background:#8b5cf6;"></span><span>Students</span></div><strong style="font-variant-numeric: tabular-nums;">' + (summary.students || 0) + '</strong></div>' +
+                                            '<div class="legend-item"><div class="legend-meta"><span class="legend-swatch" style="background:#fb7185;"></span><span>Guardians</span></div><strong style="font-variant-numeric: tabular-nums;">' + (summary.guardians || 0) + '</strong></div>' +
+                                            '<div class="legend-item"><div class="legend-meta"><span class="legend-swatch" style="background:#60a5fa;"></span><span>Staff</span></div><strong style="font-variant-numeric: tabular-nums;">' + (summary.staff || 0) + '</strong></div>' +
+                                            '<div class="legend-item"><div class="legend-meta"><span class="legend-swatch" style="background:#cbd5e1;"></span><span>Admins</span></div><strong style="font-variant-numeric: tabular-nums;">' + (summary.admins || 0) + '</strong></div>';
+                                    }
+                                    if (sBar) {
+                                        var maxM = Math.max(summary.totalUsers || 0, summary.posts || 0, summary.threads || 0, summary.gadEngaged || 0, 1);
+                                        var rows = [
+                                            { label: 'Registered Users', value: summary.totalUsers || 0, g: 'linear-gradient(90deg, #8b5cf6, #7c3aed)' },
+                                            { label: 'Published GAD Posts', value: summary.posts || 0, g: 'linear-gradient(90deg, #60a5fa, #3b82f6)' },
+                                            { label: 'Support Conversations', value: summary.threads || 0, g: 'linear-gradient(90deg, #38bdf8, #0ea5e9)' },
+                                            { label: 'Engaged Users', value: summary.gadEngaged || 0, g: 'linear-gradient(90deg, #fb7185, #f43f5e)' }
+                                        ];
+                                        sBar.innerHTML = rows.map(function(r) {
+                                            return '<div class="bar-row">' +
+                                                '<div class="bar-top"><span style="font-weight:600; color:var(--ink);">' + r.label + '</span><strong style="font-variant-numeric: tabular-nums; color:var(--ink);">' + r.value + '</strong></div>' +
+                                                '<div class="bar-track" style="background:#f1f0f7; border-radius:999px; height:8px;"><div class="bar-fill" style="width:' + Math.max(6, Math.round((r.value / maxM) * 100)) + '%; background:' + r.g + '; border-radius:999px;"></div></div>' +
+                                            '</div>';
+                                        }).join('');
+                                    }
+                                }
+                            } catch(e) {}
+                        })();
+
+let _adminAnalyticsLoaded = false;
+let _initAdminAnalyticsFn = null;
+
+window.switchAdminMode = function(mode) {
+    const loginSec = document.getElementById('adminLoginSection');
+    const dashShell = document.getElementById('adminDashboardShell');
+    const analyticsSec = document.getElementById('adminAnalyticsSection');
+    if (loginSec) loginSec.classList.toggle('is-hidden', mode !== 'login');
+    if (dashShell) dashShell.classList.toggle('is-hidden', mode !== 'dashboard');
+    if (analyticsSec) analyticsSec.classList.toggle('is-hidden', mode !== 'analytics');
+    if (mode === 'analytics' && !_adminAnalyticsLoaded && typeof _initAdminAnalyticsFn === 'function') {
+        _adminAnalyticsLoaded = true;
+        _initAdminAnalyticsFn();
+    }
+};
+
+// Initial view check based on URL query
+(function() {
+    const view = new URLSearchParams(window.location.search).get('view');
+    if (view === 'login') window.switchAdminMode('login');
+    else if (view === 'analytics') window.switchAdminMode('analytics');
+    const backBtn = document.getElementById('analyticsBackToDashboardBtn');
+    if (backBtn) {
+        backBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.switchAdminMode('dashboard');
+        });
+    }
+})();
+
+// --- Admin Login Module ---
+(function initAdminLoginModule() {
+const ADMIN_EMAIL = 'admin@admin.com';
+        const ADMIN_PASSWORD = 'admin123';
+        const loginForm = document.getElementById('adminLoginForm');
+        const adminEmailInput = document.getElementById('adminEmail');
+        const passwordInput = document.getElementById('password');
+        const submitBtn = document.getElementById('submitBtn');
+        const spinner = document.getElementById('spinner');
+        const errorMessage = document.getElementById('errorMessage');
+
+        adminEmailInput.value = ADMIN_EMAIL;
+
+        // (2026-07-13) Toggle password disc masking; was standard type attribute toggle
+        document.querySelectorAll('[data-password-target]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = document.getElementById(btn.dataset.passwordTarget);
+                if (!target) return;
+                const isMasked = target.classList.contains('secure-mask-input') && !target.classList.contains('unmasked');
+                if (isMasked) {
+                    target.classList.add('unmasked');
+                } else {
+                    target.classList.remove('unmasked');
+                }
+                const icon = btn.querySelector('.material-symbols-outlined');
+                if (icon) icon.textContent = isMasked ? 'visibility_off' : 'visibility';
+            });
+        });
+
+        const showError = (msg) => {
+            errorMessage.textContent = msg;
+            errorMessage.style.display = 'block';
+            setTimeout(() => {
+                errorMessage.style.display = 'none';
+            }, 5000);
+        };
+
+        // Redirect if already logged in as admin
+        // Auth state managed by consolidated admin controller
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = adminEmailInput.value.trim();
+            const pass = passwordInput.value;
+
+            submitBtn.disabled = true;
+            spinner.style.display = 'block';
+
+            try {
+                // (2026-07-13) Auth with reliable admin fallback; was strict network only
+                let user;
+                try {
+                    user = await login(email, pass);
+                } catch (authErr) {
+                    if (email === ADMIN_EMAIL && (pass === 'admin123' || pass === ADMIN_PASSWORD)) {
+                        console.warn("Using admin session fallback:", authErr);
+                        user = { email: ADMIN_EMAIL, uid: 'system_admin_securo' };
+                    } else {
+                        throw authErr;
+                    }
+                }
+                if (user?.uid) {
+                    localStorage.setItem('securo_session_token', user.uid);
+                    sessionStorage.setItem('securo_authenticated', '1');
+                    sessionStorage.setItem('securo_session_token', user.uid);
+                }
+
+                // (2026-07-13) Instant admin redirect on login; was waiting for auth listener
+                if (user.email === ADMIN_EMAIL) {
+                    window.switchAdminMode('dashboard');
+                    return;
+                }
+
+                const profile = await getUserProfile(user.uid);
+                if (profile?.role !== 'admin') {
+                    await signOut(auth);
+                    showError("Access restricted. This account does not have administrator privileges.");
+                    submitBtn.disabled = false;
+                    spinner.style.display = 'none';
+                    return;
+                }
+                
+                window.switchAdminMode('dashboard');
+            } catch (error) {
+                console.error("Auth error:", error);
+                let msg = error.message;
+                if (error.code === 'auth/invalid-credential') msg = "Incorrect password or account not found.";
+                if (error.code === 'auth/email-already-in-use') msg = "This static admin email is already registered. Please sign in instead.";
+                showError(msg || "Authentication failed.");
+                submitBtn.disabled = false;
+                spinner.style.display = 'none';
+            }
+        });
+
+        // (2026-07-13) Prevent image drag across entire application; was draggable
+        window.addEventListener('dragstart', (e) => {
+            if (e.target && e.target.tagName === 'IMG') {
+                e.preventDefault();
+            }
+        }, false);
+})();
+
+// --- Admin Analytics Module ---
+(function registerAdminAnalyticsModule() {
+checkAuth();
+
+        let attendanceChart, userDistributionChart, sosTypeChart;
+
+        async function loadAnalytics() {
+            try {
+                Logger.info('Analytics', 'Loading dashboard data');
+
+                const [users, attendanceStats, sosStats, guardianLinks, auditLogs] = await Promise.all([
+                    getAllUsers(),
+                    getAttendanceStats(),
+                    getSOSStats(),
+                    getAllGuardianLinksAdmin(),
+                    getAllAuditLogs(50)
+                ]);
+
+                // Update stats
+                document.getElementById('statTotalUsers').textContent = users.length;
+                document.getElementById('statAttendance').textContent = attendanceStats?.totalCheckIns || 0;
+                document.getElementById('statSOS').textContent = sosStats?.total || 0;
+                document.getElementById('statGuardians').textContent = guardianLinks.length;
+
+                // User distribution by role
+                const roleCounts = users.reduce((acc, user) => {
+                    const role = user.role || 'unknown';
+                    acc[role] = (acc[role] || 0) + 1;
+                    return acc;
+                }, {});
+
+                // Create charts
+                createUserDistributionChart(roleCounts);
+                createAttendanceChart(attendanceStats);
+                createSOSTypeChart(sosStats);
+
+                // Recent activity
+                displayRecentActivity(auditLogs);
+
+                // Show content
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('dashboardContent').style.display = 'block';
+
+                Logger.info('Analytics', 'Dashboard loaded successfully');
+            } catch (error) {
+                Logger.error('Analytics', 'Failed to load dashboard', error);
+                document.getElementById('loadingState').innerHTML = `
+                    <span class="material-symbols-outlined" style="font-size: 48px; color: var(--red);">error</span>
+                    <p>Failed to load analytics</p>
+                    <button class="btn-export" onclick="window.location.reload()">Retry</button>
+                `;
+            }
+        }
+
+        function createUserDistributionChart(roleCounts) {
+            const ctx = document.getElementById('userDistributionChart').getContext('2d');
+            userDistributionChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(roleCounts).map(r => r.charAt(0).toUpperCase() + r.slice(1)),
+                    datasets: [{
+                        data: Object.values(roleCounts),
+                        backgroundColor: [
+                            'rgba(90, 31, 224, 0.8)',
+                            'rgba(244, 63, 94, 0.8)',
+                            'rgba(15, 155, 103, 0.8)',
+                            'rgba(245, 158, 11, 0.8)'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAttendanceChart(stats) {
+            if (!stats || !stats.byDate) return;
+
+            const dates = Object.keys(stats.byDate).slice(-14);
+            const values = dates.map(d => stats.byDate[d]);
+
+            const ctx = document.getElementById('attendanceChart').getContext('2d');
+            attendanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Check-ins',
+                        data: values,
+                        borderColor: 'rgba(90, 31, 224, 1)',
+                        backgroundColor: 'rgba(90, 31, 224, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function createSOSTypeChart(stats) {
+            if (!stats || !stats.byStatus) return;
+
+            const ctx = document.getElementById('sosTypeChart').getContext('2d');
+            sosTypeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(stats.byStatus),
+                    datasets: [{
+                        label: 'Count',
+                        data: Object.values(stats.byStatus),
+                        backgroundColor: 'rgba(209, 31, 52, 0.8)',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function displayRecentActivity(logs) {
+            const list = document.getElementById('recentActivityList');
+            
+            if (!logs || logs.length === 0) {
+                list.innerHTML = '<p style="text-align: center; color: var(--muted);">No recent activity</p>';
+                return;
+            }
+
+            list.innerHTML = logs.slice(0, 10).map(log => {
+                const iconMap = {
+                    login: 'login',
+                    logout: 'logout',
+                    signup: 'person_add',
+                    password_change: 'lock_reset',
+                    sos: 'emergency',
+                    attendance: 'schedule'
+                };
+
+                const icon = iconMap[log.action] || 'info';
+                const colorMap = {
+                    login: 'green',
+                    signup: 'cyan',
+                    sos: 'red',
+                    password_change: 'amber'
+                };
+                const color = colorMap[log.action] || 'primary';
+
+                return `
+                    <div class="activity-item">
+                        <div class="activity-icon ${color}">
+                            <span class="material-symbols-outlined">${icon}</span>
+                        </div>
+                        <div class="activity-content">
+                            <p class="activity-title">${log.action.replace('_', ' ').toUpperCase()}</p>
+                            <p class="activity-meta">User: ${log.userId} • ${Format.date(log.timestamp, 'relative')}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Export functionality
+        document.getElementById('exportBtn').addEventListener('click', async () => {
+            try {
+                const data = {
+                    users: await getAllUsers(),
+                    attendance: await getAttendanceStats(),
+                    sos: await getSOSStats(),
+                    exportedAt: new Date().toISOString()
+                };
+
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `securo-analytics-${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                Logger.error('Analytics', 'Export failed', error);
+                alert('Failed to export data');
+            }
+        });
+
+        // Load on mount
+        loadAnalytics();
+    _initAdminAnalyticsFn = init;
+    if (new URLSearchParams(window.location.search).get('view') === 'analytics') {
+        _adminAnalyticsLoaded = true;
+        init();
+    }
+})();
+
+// --- Admin Dashboard Main Module ---
 // (2026-07-13) Extracted unified admin script; was inline module
 // Core utilities and offline support
-        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from '../js/utils.js';
         // (2026-07-13) Fix install-sw path to js/ folder; was broken root path
-        import './js/install-sw.js'; // Initialize service worker for offline support
         
-        import { auth, app, firebaseConfig } from '../js/firebase-config.js';
-        import { logout, roleIdToEmail } from '../js/auth.js';
-        import { 
-            getGADPosts, 
-            saveGADPost, 
-            deleteGADPost, 
-            updateGADPost,
-            getAllUsers, 
-            getUserProfile,
-            saveUserProfile,
-            updateUserProfile,
-            sendChatMessage,
-            subscribeToMessages,
-            getAllChatThreads,
-            getAllChatThreadsOnce,
-            getAllGuardianLinksAdmin,
-// (2026-07-13) Add GAD messages and reply helpers to admin imports; was db imports
-            deleteConversationThread,
-            deleteUserRecord,
-            getAllSOSLogs,
-            getAllEmergencyPosts,
-            getStudentLiveLocationOnce,
-            subscribeToAccountNotifications,
-            subscribeToMessagesByThread,
-            subscribeToGADMessages,
-            replyToGADMessage,
-            saveCampusMapConfig,
-            // (2026-07-13) Import attendance & geofence simulator methods; was base imports
-            logAttendance,
-            updateStudentLiveLocation,
-            notifyGuardiansOfGeofenceEvent,
-            getAttendanceHistory,
-            getAllAttendance,
-            subscribeToCampusMapConfig,
-            // (2026-07-13) Import link management for user editor; was absent
-            removeGuardianLink,
-            createGuardianLinkRequest,
-            // (2026-07-13) Import SOS log fetcher for user history tab; was absent
-            getUserSOSLogs,
-            // (2026-07-13) Import admin password setter; was absent
-            saveAdminUserPassword,
-            // (2026-07-13) Import guardian link sync function; was absent
-            syncGuardianLinksForGuardian,
-            // (2026-07-13) Import markThreadMessagesSeen for read receipts; was absent
-            markThreadMessagesSeen
-        } from '../js/db.js';
-        import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         // (2026-07-13) Import auth credentials & password updater; was absent
-        import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         // (2026-07-13) Add isAdminEmail & hoist admin state; was undefined helper
         const ADMIN_EMAILS = ['admin@admin.com', 'zearamil9@gmail.com'];
         const ADMIN_ID = "system_admin_securo";
@@ -1659,7 +2040,7 @@
                 await logout();
 
                 // 4. Replace window location to prevent browser back navigation
-                window.location.replace('admin-login.html');
+                window.switchAdminMode('login');
             } catch (error) {
                 console.warn("Admin logout failed:", error);
                 showToast("Logout failed", error.message || "Could not sign out right now.", "error");
@@ -1943,10 +2324,15 @@
 
         // (2026-07-13) Fast admin auth and progressive data streaming; was blocking
         onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const reqView = new URLSearchParams(window.location.search).get('view');
+                if (reqView === 'analytics') { window.switchAdminMode('analytics'); }
+                else if (reqView !== 'login') { window.switchAdminMode('dashboard'); }
+            }
             if (!user) {
                 showToast("Access denied", "Please sign in to the terminal first.", "error");
                 window.setTimeout(() => {
-                    window.location.href = 'admin-login.html';
+                    window.switchAdminMode('login');
                 }, 900);
                 return;
             }
@@ -4082,7 +4468,7 @@
 
         if (btnToggleStudentDossier && activeUserDossierPanel) {
             btnToggleStudentDossier.addEventListener('click', () => {
-                const isHidden = activeUserDossierPanel.style.display === 'none';
+                const isHidden = getComputedStyle(activeUserDossierPanel).display === 'none';
                 activeUserDossierPanel.style.display = isHidden ? 'block' : 'none';
                 btnToggleStudentDossier.style.background = isHidden ? '#e2e8f0' : '#f1f5f9';
             });
@@ -4433,7 +4819,7 @@
                                         ${p.items.slice(0, 4).map(it => `
                                             <div style="aspect-ratio:1/1; background:#181528; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
                                                 ${it.kind === 'image'
-                                                    ? `<img src="${escapeHtml(it.thumb || it.url)}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null; this.src='logo with text.png';">`
+                                                    ? `<img src="${escapeHtml(it.thumb || it.url)}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null; this.src='../assets/images/logo with text.png';">`
                                                     : `<span class="material-symbols-outlined" style="font-size:18px; color:#94a3b8;">videocam</span>`
                                                 }
                                             </div>
@@ -4526,7 +4912,7 @@
                     <div class="vault-evidence-card" data-item-id="${escapeHtml(item.id)}" style="min-height:280px;">
                         <div class="vault-media-preview-wrap" onclick="window.openVaultLightbox('${escapeHtml(item.id)}')" style="width:100%; height:180px; min-height:180px; background:#181528; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; cursor:pointer;">
                             ${isImage 
-                                ? `<img src="${escapeHtml(item.thumb || item.url)}" alt="${escapeHtml(item.name)}" loading="lazy" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.onerror=null; this.src='logo with text.png';">`
+                                ? `<img src="${escapeHtml(item.thumb || item.url)}" alt="${escapeHtml(item.name)}" loading="lazy" style="width:100%; height:100%; object-fit:cover; display:block;" onerror="this.onerror=null; this.src='../assets/images/logo with text.png';">`
                                 : `<div style="display:flex; flex-direction:column; align-items:center; gap:6px; color:#94a3b8;">
                                     <span class="material-symbols-outlined" style="font-size:40px;">videocam</span>
                                     <span style="font-size:0.75rem; font-weight:700;">Video Recording</span>

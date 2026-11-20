@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8">
+<meta charset="utf-8">
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Securo - Guardian Dashboard</title>
-    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="icon" type="image/png" href="../assets/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,99 +26,429 @@
 
     <link rel="stylesheet" href="parent.css">
 </head>
-
 <body>
-    <div class="app-shell">
-        <header class="topbar">
-            <div class="content-frame" style="display:flex; align-items:center; justify-content:space-between;">
-                <!-- (2026-07-13) Topbar logo redirects to map homepage; was static header -->
-                <div style="display: flex; align-items: center;">
-                    <div class="topbar-left" id="guardianHomeBrand"
-                        onclick="document.querySelector('.nav-item[data-nav=\'map\']')?.click();"
-                        style="cursor:pointer;" title="Go to Map Homepage">
-                        <div class="logo-wrap" style="display:flex; align-items:center; gap:10px;">
-                            <img src="../logo with text.png" alt="Securo" style="height: 28px; max-height: 28px; max-width: 155px; object-fit: contain; display: block;" draggable="false">
-                            <div class="portal-title" style="font-size:0.75rem; font-weight:800; padding:3px 8px; border-radius:6px; background:rgba(225,29,72,0.1); color:var(--primary); letter-spacing:0.04em;">Guardian</div>
+<!-- (2026-07-13) Consolidated parent auth & dashboard views; was 2 files -->
+<section id="parentAuthSection" class="parent-view-section is-hidden">
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+    <div class="login-card">
+        <div class="brand-section">
+            <img src="../assets/images/logo.png" alt="Securo Logo" class="brand-logo-img">
+            <h1 class="brand-name">Securo</h1>
+            <p class="text-muted small">Guardian Presence Portal</p>
+        </div>
+
+        <div class="divider">USE YOUR GUARDIAN ACCOUNT</div>
+
+        <div class="auth-tabs">
+            <button class="tab-btn active" id="loginTab" type="button">Sign In</button>
+            <button class="tab-btn" id="signupTab" type="button">Register</button>
+        </div>
+
+        <form id="guardianAuthForm">
+            <div class="form-group" id="emailGroup">
+                <label class="form-label">Email Address</label>
+                <div class="input-wrapper">
+                    <span class="material-symbols-outlined input-icon">mail</span>
+                    <!-- (2026-07-13) Add email input placeholder; was parent@example.com -->
+                    <input type="email" id="emailInput" placeholder="Enter email address" required>
+                </div>
+            </div>
+
+            <div class="form-group signup-only">
+                <label class="form-label">Full Name</label>
+                <div class="input-wrapper">
+                    <span class="material-symbols-outlined input-icon">edit_square</span>
+                    <!-- (2026-07-13) Add name input placeholder; was Guardian Full Name -->
+                    <input type="text" id="fullNameSignup" placeholder="Enter guardian full name" autocomplete="name">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <div class="input-wrapper">
+                    <span class="material-symbols-outlined input-icon">lock</span>
+                    <!-- (2026-07-13) Add password placeholder; was empty string -->
+                    <input type="password" id="passwordInput" placeholder="Enter password" autocomplete="new-password" required>
+                    <button type="button" class="btn par-u1" data-password-target="passwordInput">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- (2026-07-13) Forgot password trigger link; was OTP modal button -->
+            <div class="login-only par-u2">
+                <button type="button" id="openOtpModalBtn" class="par-u3">Forgot Password?</button>
+            </div>
+
+            <div class="form-group signup-only">
+                <label class="form-label">Confirm Password</label>
+                <div class="input-wrapper">
+                    <span class="material-symbols-outlined input-icon">verified_user</span>
+                    <!-- (2026-07-13) Add confirm password placeholder; was empty string -->
+                    <input type="password" id="confirmPasswordSignup" placeholder="Confirm password" autocomplete="new-password">
+                    <button type="button" class="btn par-u1" data-password-target="confirmPasswordSignup">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="errorMsg" class="error-msg"></div>
+            <div class="signup-only par-u4">
+                You will enter your child’s Student ID after registration inside the guardian dashboard.
+            </div>
+
+            <button type="submit" class="btn-action" id="submitBtn">
+                <span id="btnText">Enter Guardian Hub</span>
+                <span class="material-symbols-outlined">login</span>
+            </button>
+
+            <div class="par-u5">
+                <a href="../public/role-selection.html" class="text-link">Change Role</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- (2026-07-13) Password reset link modal; was 3-step OTP modal -->
+    <div id="guardianOtpModal" class="otp-modal-backdrop par-u6">
+        <div class="otp-modal-card">
+            <div class="otp-modal-header">
+                <div class="par-u7">
+                    <div class="otp-icon-bubble">
+                        <span class="material-symbols-outlined">lock_reset</span>
+                    </div>
+                    <div>
+                        <h3 class="par-u8">Reset Password</h3>
+                        <p class="par-u9">Receive a password reset link to your email</p>
+                    </div>
+                </div>
+                <button type="button" id="closeOtpModalBtn" class="otp-close-btn" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <!-- View 1: Request reset link -->
+            <div id="resetRequestView" class="otp-step">
+                <div class="otp-explain-container par-u10">
+                    <div class="par-u11">
+                        <span class="material-symbols-outlined par-u12">info</span>
+                        Reset password via email link
+                    </div>
+                    <p class="par-u13">
+                        Enter your registered Guardian Gmail address below. We'll send you an official password reset link directly to your inbox.
+                    </p>
+                </div>
+                <div class="form-group par-u14">
+                    <label class="form-label">Guardian Gmail Address</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined input-icon">mail</span>
+                        <input type="email" id="resetEmailInput" placeholder="parent@gmail.com">
+                    </div>
+                </div>
+                <div id="resetEmailError" class="error-msg par-u15"></div>
+                <button type="button" id="sendResetLinkBtn" class="btn-action">
+                    <span>Send Password Reset Link</span>
+                    <span class="material-symbols-outlined">send</span>
+                </button>
+            </div>
+
+            <!-- View 2: Link sent confirmation -->
+            <div id="resetSentView" class="otp-step par-u6">
+                <div class="par-u16">
+                    <div class="par-u17">
+                        <span class="material-symbols-outlined par-u18">mark_email_read</span>
+                    </div>
+                    <h4 class="par-u19">Reset Link Sent!</h4>
+                    <p class="par-u20">
+                        We sent a password reset link to <strong id="resetTargetEmailDisplay" class="par-u21"></strong>.
+                    </p>
+                    <div class="par-u22">
+                        <span class="material-symbols-outlined par-u23">mail</span>
+                        <strong>Next Steps:</strong>
+                        <ol class="par-u24">
+                            <li>Open your Gmail (check Inbox and Spam/Junk folder).</li>
+                            <li>Click the reset link in the email from <em>Securo</em>.</li>
+                            <li>Type your new password and submit.</li>
+                            <li>Return to Securo and sign in with your new password!</li>
+                        </ol>
+                    </div>
+                    <button type="button" id="backToSignInBtn" class="btn-action par-u25">
+                        <span>Return to Sign In</span>
+                        <span class="material-symbols-outlined">login</span>
+                    </button>
+                    <button type="button" id="resendResetLinkBtn" class="par-u26">
+                        Didn't get the email? Send again
+                    </button>
+                </div>
+            </div>
+
+            <!-- View 3: In-app new password (if opened via reset link oobCode) -->
+            <div id="resetNewPasswordView" class="otp-step par-u6">
+                <div class="par-u27">
+                    <span class="material-symbols-outlined par-u28">check_circle</span>
+                    <span class="par-u29">Reset token verified! Enter your new password below.</span>
+                </div>
+                <form id="newPasswordForm" onsubmit="event.preventDefault();">
+                    <div class="form-group par-u15">
+                        <label class="form-label">New Password</label>
+                        <div class="input-wrapper">
+                            <span class="material-symbols-outlined input-icon">lock</span>
+                            <input type="password" id="modalNewPassword" placeholder="Minimum 8 characters" autocomplete="new-password">
+                            <button type="button" class="btn par-u1" data-password-target="modalNewPassword">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="desktop-nav-tabs" style="display:none;">
+                    <div class="form-group par-u14">
+                        <label class="form-label">Confirm New Password</label>
+                        <div class="input-wrapper">
+                            <span class="material-symbols-outlined input-icon">verified_user</span>
+                            <input type="password" id="modalConfirmPassword" placeholder="Confirm your new password" autocomplete="new-password">
+                            <button type="button" class="btn par-u1" data-password-target="modalConfirmPassword">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="newPasswordError" class="error-msg par-u15"></div>
+                    <button type="submit" id="saveNewPasswordBtn" class="btn-action">
+                        <span>Save Password &amp; Sign In</span>
+                        <span class="material-symbols-outlined">login</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- (2026-07-13) Add Terms modal with I Agree button; was none -->
+    <div id="guardianTermsModal" class="otp-modal-backdrop par-u6">
+        <div class="otp-modal-card par-u30">
+            <div class="otp-modal-header par-u15">
+                <div class="par-u7">
+                    <div class="otp-icon-bubble">
+                        <span class="material-symbols-outlined">description</span>
+                    </div>
+                    <div>
+                        <h3 class="par-u8">Terms and Conditions</h3>
+                        <p class="par-u9">Guardian Portal Terms of Service</p>
+                    </div>
+                </div>
+                <button type="button" id="closeGuardianTermsModalBtn" class="otp-close-btn" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <!-- (2026-07-13) Full 1-15 terms in modal; was abbreviated 4 items -->
+            <div id="guardianTermsScrollBox" class="par-u31">
+                <h4 class="par-u32">1. Acceptance of Terms</h4>
+                <p class="par-u25">By registering for and using the Securo campus safety application ("the App"), you agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use the App.</p>
+
+                <h4 class="par-u32">2. Purpose of the App</h4>
+                <p class="par-u33">Securo is designed to enhance campus safety and security by providing:</p>
+                <ul class="par-u34">
+                    <li>Real-time incident reporting capabilities</li>
+                    <li>Emergency notifications and alerts</li>
+                    <li>Campus security communication tools</li>
+                    <li>Safety resource access for students, staff, and guardians</li>
+                </ul>
+
+                <h4 class="par-u32">3. User Accounts and Registration</h4>
+                <p class="par-u33">To use Securo, you must:</p>
+                <ul class="par-u34">
+                    <li>Provide accurate and complete registration information</li>
+                    <li>Use a valid student or staff ID number</li>
+                    <li>Maintain the confidentiality of your account credentials</li>
+                    <li>Notify us immediately of any unauthorized access to your account</li>
+                    <li>Be responsible for all activities that occur under your account</li>
+                </ul>
+
+                <h4 class="par-u32">4. User Responsibilities</h4>
+                <p class="par-u33">When using the App, you agree to:</p>
+                <ul class="par-u34">
+                    <li>Use the App only for legitimate campus safety purposes</li>
+                    <li>Provide truthful and accurate information when reporting incidents</li>
+                    <li>Not submit false reports or misuse emergency features</li>
+                    <li>Respect the privacy and rights of other users</li>
+                    <li>Comply with all applicable campus policies and local laws</li>
+                </ul>
+
+                <h4 class="par-u32">5. Privacy and Data Protection</h4>
+                <p class="par-u33">We take your privacy seriously. By using Securo:</p>
+                <ul class="par-u34">
+                    <li>You consent to the collection and use of your personal information as described in our Privacy Policy</li>
+                    <li>Your profile information, including name, ID number, and photo (if provided), will be stored securely</li>
+                    <li>Incident reports and communications may be monitored by campus security personnel</li>
+                    <li>We will not share your personal information with third parties without your consent, except as required by law</li>
+                </ul>
+
+                <h4 class="par-u32">6. Incident Reporting</h4>
+                <p class="par-u33">When reporting incidents through the App:</p>
+                <ul class="par-u34">
+                    <li>Submit reports promptly and accurately</li>
+                    <li>False reporting is strictly prohibited and may result in disciplinary action</li>
+                    <li>Reports are reviewed by campus security and appropriate authorities</li>
+                    <li>Emergency situations should always be reported to campus security or local emergency services (911) immediately</li>
+                </ul>
+
+                <h4 class="par-u32">7. Guardian Access</h4>
+                <p class="par-u33">For guardian accounts:</p>
+                <ul class="par-u34">
+                    <li>Guardians must be invited and approved by the student</li>
+                    <li>Guardians have limited access to student safety information</li>
+                    <li>Guardian access can be revoked by the student at any time</li>
+                </ul>
+
+                <h4 class="par-u32">8. Prohibited Activities</h4>
+                <p class="par-u33">You may not:</p>
+                <ul class="par-u34">
+                    <li>Submit false or misleading information</li>
+                    <li>Attempt to access accounts or data that do not belong to you</li>
+                    <li>Interfere with the App's operation or security features</li>
+                    <li>Use the App to harass, threaten, or harm others</li>
+                    <li>Reverse engineer or attempt to extract source code from the App</li>
+                </ul>
+
+                <h4 class="par-u32">9. Service Availability</h4>
+                <p class="par-u33">While we strive to maintain reliable service:</p>
+                <ul class="par-u34">
+                    <li>The App is provided "as is" without warranties of any kind</li>
+                    <li>We do not guarantee uninterrupted or error-free service</li>
+                    <li>We may modify, suspend, or discontinue features at any time</li>
+                    <li>In case of actual emergencies, always contact campus security or emergency services directly</li>
+                </ul>
+
+                <h4 class="par-u32">10. Limitation of Liability</h4>
+                <p class="par-u33">To the maximum extent permitted by law:</p>
+                <ul class="par-u34">
+                    <li>We are not liable for any damages arising from your use of the App</li>
+                    <li>We are not responsible for the actions or inactions of campus security personnel</li>
+                    <li>The App is a tool to assist campus safety efforts, not a substitute for emergency services</li>
+                </ul>
+
+                <h4 class="par-u32">11. Account Termination</h4>
+                <p class="par-u33">We reserve the right to:</p>
+                <ul class="par-u34">
+                    <li>Suspend or terminate accounts that violate these terms</li>
+                    <li>Remove content that is inappropriate or violates policies</li>
+                    <li>Terminate accounts upon graduation, employment termination, or at the user's request</li>
+                </ul>
+
+                <h4 class="par-u32">12. Changes to Terms</h4>
+                <p class="par-u25">We may update these Terms and Conditions from time to time. Continued use of the App after changes are posted constitutes acceptance of the updated terms. We will notify users of significant changes through the App or email.</p>
+
+                <h4 class="par-u32">13. Governing Law</h4>
+                <p class="par-u25">These Terms and Conditions are governed by applicable local laws and campus policies. Any disputes will be resolved according to the procedures established by the educational institution.</p>
+
+                <h4 class="par-u32">14. Contact Information</h4>
+                <p class="par-u25">If you have questions about these Terms and Conditions, please contact campus security or the App administrator through the official campus channels.</p>
+
+                <h4 class="par-u32">15. Acknowledgment</h4>
+                <p class="par-u35">By clicking "I Agree", you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.</p>
+            </div>
+            <!-- (2026-07-13) Align Decline and I Agree buttons; prev: mismatched margins -->
+            <div class="par-u36">
+                <button type="button" id="declineGuardianTermsBtn" class="par-u37">
+                    <span class="material-symbols-outlined par-u38">cancel</span>
+                    <span>Decline</span>
+                </button>
+                <button type="button" id="agreeGuardianTermsBtn" class="btn-action par-u39">
+                    <span class="material-symbols-outlined par-u38">check_circle</span>
+                    <span>I Agree</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+<div id="parentDashboardShell" class="parent-view-section">
+<div class="app-shell">
+        <header class="topbar">
+            <div class="content-frame par-u40">
+                <!-- (2026-07-13) Topbar logo redirects to map homepage; was static header -->
+                <div class="par-u41">
+                    <div class="topbar-left par-u42" id="guardianHomeBrand"
+                        onclick="document.querySelector('.nav-item[data-nav=\'map\']')?.click();"
+                        title="Go to Map Homepage">
+                        <div class="logo-wrap par-u43">
+                            <img src="../assets/images/logo with text.png" alt="Securo" draggable="false" class="par-u44">
+                            <div class="portal-title par-u45">Guardian</div>
+                        </div>
+                    </div>
+                    <div class="desktop-nav-tabs par-u46">
                         <a href="#" class="desktop-nav-item active" data-nav="map"><span class="material-symbols-outlined">map</span><span>Child Map</span></a>
                         <a href="#" class="desktop-nav-item" data-nav="vault"><span class="material-symbols-outlined">shield</span><span>Vault</span></a>
                         <a href="#" class="desktop-nav-item" data-nav="alerts"><span class="material-symbols-outlined">emergency_home</span><span>Safety</span></a>
                         <a href="#" class="desktop-nav-item" data-nav="gad"><span class="material-symbols-outlined">campaign</span><span>GAD</span></a>
                     </div>
                 </div>
-                <div class="topbar-right" style="display:flex; align-items:center; gap:10px;">
+                <div class="topbar-right par-u43">
                     <!-- (2026-07-13) Move emergency & location modals to dropdown; was map overlay -->
-                    <div class="notif-btn" style="position:relative;">
-                        <button class="surface-icon" type="button" id="guardianNotifBell"
-                            aria-label="Notifications" style="width:40px; height:40px; border-radius:12px; background:white; border:1px solid rgba(225,29,72,0.12); display:flex; align-items:center; justify-content:center; cursor:pointer; position:relative; color:var(--ink); box-shadow:0 2px 6px rgba(0,0,0,0.04);">
+                    <div class="notif-btn par-u47">
+                        <button class="surface-icon par-u48" type="button" id="guardianNotifBell"
+                            aria-label="Notifications">
                             <span class="material-symbols-outlined">notifications</span>
-                            <div class="notif-badge" id="guardianNotifBadge" style="display:none; position:absolute; top:6px; right:6px; width:10px; height:10px; background:#e11d48; border-radius:50%; border:2px solid #fff;"></div>
+                            <div class="notif-badge par-u49" id="guardianNotifBadge"></div>
                         </button>
                         <!-- (2026-07-13) Fix notif dropdown clipping on mobile; was overflow left -->
-                        <div class="notif-dropdown" id="guardianNotifDropdown" style="display:none; position:fixed; top:60px; right:12px; width:min(340px, calc(100vw - 24px)); max-width:calc(100vw - 24px); background:#fff; border-radius:18px; box-shadow:0 12px 36px rgba(0,0,0,0.14); border:1px solid rgba(0,0,0,0.08); padding:16px; z-index:3200; max-height:80vh; overflow-y:auto; box-sizing:border-box;">
-                            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding-bottom:8px; border-bottom:1px solid #f1f5f9;">
+                        <div class="notif-dropdown par-u50" id="guardianNotifDropdown">
+                            <div class="par-u51">
                                 <div>
-                                    <strong style="font-size:0.92rem; color:var(--ink); display:block;">Alerts & Requests</strong>
-                                    <span style="font-size:0.75rem; color:var(--muted);">Emergency and location status</span>
+                                    <strong class="par-u52">Alerts & Requests</strong>
+                                    <span class="par-u53">Emergency and location status</span>
                                 </div>
-                                <button type="button" id="closeGuardianNotifDropdown" style="background:none; border:none; cursor:pointer; color:var(--muted); padding:2px; display:flex;">
-                                    <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+                                <button type="button" id="closeGuardianNotifDropdown" class="par-u54">
+                                    <span class="material-symbols-outlined par-u55">close</span>
                                 </button>
                             </div>
 
-                            <div id="guardianNotifCards" style="display:flex; flex-direction:column; gap:10px;">
+                            <div id="guardianNotifCards" class="par-u56">
                                 <!-- (2026-07-13) Render account notifications in dropdown; was missing -->
-                                <div id="guardianAccountNotifList" style="display:flex; flex-direction:column; gap:8px;"></div>
-                                <div class="location-alert-card" id="sosEmergencyCard" style="display:none; background:#fff1f2; border:1px solid #fda4af; margin:0;">
-                                    <div class="location-alert-icon" style="background:#fee2e2; color:#e11d48;">
+                                <div id="guardianAccountNotifList" class="par-u57"></div>
+                                <div class="location-alert-card par-u58" id="sosEmergencyCard">
+                                    <div class="location-alert-icon par-u59">
                                         <span class="material-symbols-outlined">emergency</span>
                                     </div>
-                                    <div style="flex:1; min-width:0;">
-                                        <strong style="font-size:0.84rem; color:#9f1239; font-weight:800; display:block;">🚨 EMERGENCY SOS ACTIVE</strong>
-                                        <div id="sosEmergencyText" style="font-size:0.75rem; color:#be123c; line-height:1.35; margin-top:1px;">
+                                    <div class="par-u60">
+                                        <strong class="par-u61">🚨 EMERGENCY SOS ACTIVE</strong>
+                                        <div id="sosEmergencyText" class="par-u62">
                                             Your child triggered an emergency alert.
                                         </div>
-                                        <button class="btn-primary" id="viewSosLocationBtn" type="button" style="margin-top:6px; background:#e11d48; border-color:#e11d48; padding:6px 12px; min-height:32px; height:32px; font-size:0.75rem; border-radius:10px; width:100%;">
+                                        <button class="btn-primary par-u63" id="viewSosLocationBtn" type="button">
                                             Locate Child on Map
                                         </button>
                                     </div>
                                 </div>
 
                                 <!-- (2026-07-13) Add pending request notif card; was modal on map only -->
-                                <div class="location-alert-card" id="pendingNotifCard" style="display:none; margin:0; background:#fff5f7; border:1px solid rgba(244,63,94,0.18);">
-                                    <div class="location-alert-icon" style="background:#fee2e2; color:#e11d48;">
+                                <div class="location-alert-card par-u64" id="pendingNotifCard">
+                                    <div class="location-alert-icon par-u59">
                                         <span class="material-symbols-outlined">hourglass_top</span>
                                     </div>
-                                    <div style="flex:1; min-width:0;">
-                                        <strong style="font-size:0.84rem; color:var(--ink); font-weight:800; display:block;">Parent Request Pending</strong>
-                                        <div id="pendingNotifText" style="font-size:0.75rem; color:var(--muted); line-height:1.35; margin-top:1px;">
+                                    <div class="par-u60">
+                                        <strong class="par-u65">Parent Request Pending</strong>
+                                        <div id="pendingNotifText" class="par-u66">
                                             Waiting for child approval.
                                         </div>
-                                        <button class="btn-secondary" id="viewPendingRequestBtn" type="button" style="margin-top:6px; padding:6px 12px; min-height:32px; height:32px; font-size:0.75rem; border-radius:10px; width:100%; box-shadow:none;">
+                                        <button class="btn-secondary par-u67" id="viewPendingRequestBtn" type="button">
                                             View Request Details
                                         </button>
                                     </div>
                                 </div>
 
-                                <div class="location-alert-card" id="locationAlertCard" style="margin:0;">
+                                <div class="location-alert-card par-u68" id="locationAlertCard">
                                     <div class="location-alert-icon">
                                         <span class="material-symbols-outlined">location_off</span>
                                     </div>
-                                    <div style="flex:1; min-width:0;">
-                                        <strong style="font-size:0.84rem; color:var(--ink); font-weight:800; display:block;">Child location required</strong>
-                                        <div id="locationAlertText" style="font-size:0.75rem; color:var(--muted); line-height:1.35; margin-top:1px;">
+                                    <div class="par-u60">
+                                        <strong class="par-u65">Child location required</strong>
+                                        <div id="locationAlertText" class="par-u66">
                                             Your child needs to turn on location sharing before live tracking can continue.
                                         </div>
-                                        <button class="btn-primary" id="requestLocationBtn" type="button" style="margin-top:6px; padding:6px 12px; min-height:32px; height:32px; font-size:0.75rem; border-radius:10px; width:100%; box-shadow:none;">
+                                        <button class="btn-primary par-u67" id="requestLocationBtn" type="button">
                                             Ask Child to Turn On Location
                                         </button>
                                     </div>
                                 </div>
 
-                                <div id="guardianDropdownEmptyState" style="text-align:center; padding:16px 8px; color:var(--muted); font-size:0.8rem;">
-                                    <span class="material-symbols-outlined" style="font-size:24px; color:#cbd5e1; display:block; margin-bottom:4px;">notifications_none</span>
+                                <div id="guardianDropdownEmptyState" class="par-u69">
+                                    <span class="material-symbols-outlined par-u70">notifications_none</span>
                                     No active alerts or requests right now.
                                 </div>
                             </div>
@@ -128,21 +457,21 @@
                     <div class="profile-chip" id="profileBtn">
                         <span id="userInitials">P</span>
                         <div class="profile-dropdown" id="profileDropdown">
-                            <div style="padding: 10px 15px;">
-                                <div id="dropdownName" style="font-weight: 800; font-size: 0.95rem; color: var(--ink);">Loading...</div>
-                                <div style="font-size: 0.75rem; color: var(--muted); font-weight: 700;">GUARDIAN ACCOUNT</div>
+                            <div class="par-u71">
+                                <div id="dropdownName" class="par-u72">Loading...</div>
+                                <div class="par-u73">GUARDIAN ACCOUNT</div>
                             </div>
                             <div class="dropdown-divider"></div>
-                            <a href="profile.html" class="dropdown-item">
+                            <a href="../public/profile.html" class="dropdown-item">
                                 <span class="material-symbols-outlined">account_circle</span>
                                 <span>My Profile</span>
                             </a>
-                            <a href="settings.html" class="dropdown-item">
+                            <a href="../public/settings.html" class="dropdown-item">
                                 <span class="material-symbols-outlined">settings</span>
                                 <span>Settings</span>
                             </a>
                             <!-- (2026-07-13) Add About Us link to guardian dropdown; was settings only -->
-                            <a href="about.html" class="dropdown-item">
+                            <a href="../public/about.html" class="dropdown-item">
                                 <span class="material-symbols-outlined">info</span>
                                 <span>About Us</span>
                             </a>
@@ -157,19 +486,19 @@
         </header>
 
         <div class="student-selector-bar" id="studentSelectorBar">
-            <div id="studentSelector" style="display:flex; gap:12px; overflow-x:auto; flex:1;">
+            <div id="studentSelector" class="par-u74">
                 <!-- Chips will be injected -->
             </div>
-            <button class="selector-chip" id="addStudentBtn"
-                style="background:var(--primary-soft); color:var(--primary); border:none; display:flex; align-items:center; gap:6px;">
-                <span class="material-symbols-outlined" style="font-size:18px;">add</span>
+            <button class="selector-chip par-u75" id="addStudentBtn"
+               >
+                <span class="material-symbols-outlined par-u55">add</span>
                 Link Child
             </button>
         </div>
 
         <div class="view-container">
             <!-- Map View -->
-            <div class="view active" id="mapView" style="position:relative;">
+            <div class="view active par-u47" id="mapView">
                 <div id="map"></div>
 
                 <!-- (2026-07-13) Map controls matching student view; was missing control buttons -->
@@ -196,59 +525,59 @@
                 </div>
                 <div class="map-overlay">
                     <!-- (2026-07-13) Move child presence chip into overlay; was floating above -->
-                    <div class="guardian-map-chip-container" style="pointer-events:auto; display:flex;">
-                        <div class="tracking-status-pill is-on is-inside" id="guardianTrackingStatusBanner" style="display:none; cursor:default; max-width:100%;">
+                    <div class="guardian-map-chip-container par-u76">
+                        <div class="tracking-status-pill is-on is-inside par-u77" id="guardianTrackingStatusBanner">
                             <span class="pulse-status-dot" id="guardianTrackingStatusDot"></span>
                             <span class="material-symbols-outlined tracking-status-icon" id="guardianTrackingStatusIcon">login</span>
                             <span class="tracking-status-label-text" id="guardianTrackingStatusCopy">Child Campus Status</span>
                         </div>
                     </div>
                     <!-- (2026-07-13) Hide child card when no child linked; was static loading -->
-                    <div class="student-status-card" style="display:none;">
+                    <div class="student-status-card par-u46">
                         <div class="student-avatar" id="studentAvatar"></div>
-                        <div style="flex:1; min-width:0;">
-                            <div style="font-weight:800; font-size:0.86rem; display:flex; align-items:center; gap:6px;">
-                                <span id="activeStudentName" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Loading...</span>
+                        <div class="par-u60">
+                            <div class="par-u78">
+                                <span id="activeStudentName" class="par-u79">Loading...</span>
                                 <div class="status-dot" id="statusDot"></div>
                             </div>
-                            <div style="font-size:0.67rem; color:var(--muted); font-weight:600; line-height:1.35;" id="lastSeen">Awaiting
+                            <div id="lastSeen" class="par-u80">Awaiting
                                 guardian signal...</div>
                         </div>
                         <button id="locateBtn"
-                            style="background:var(--primary-soft); color:var(--primary); width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-                            <span class="material-symbols-outlined" style="font-size:1.15rem;">my_location</span>
+                            class="par-u81">
+                            <span class="material-symbols-outlined par-u82">my_location</span>
                         </button>
                     </div>
                     <div class="pending-state-card" id="pendingStateCard">
-                        <div class="pending-state-head" style="position:relative;">
+                        <div class="pending-state-head par-u47">
                             <div class="pending-state-icon">
                                 <span class="material-symbols-outlined">hourglass_top</span>
                             </div>
-                            <div style="flex:1; padding-right:28px;">
+                            <div class="par-u83">
                                 <!-- (2026-07-13) Dynamic pending card title by request type; was static parent -->
-                                <div id="pendingStateTitle" style="font-weight:800; font-size:1rem;">Parent request pending approval</div>
-                                <div id="pendingStateCopy" style="font-size:0.86rem; color:var(--muted); line-height:1.55; margin-top:4px;">
+                                <div id="pendingStateTitle" class="par-u84">Parent request pending approval</div>
+                                <div id="pendingStateCopy" class="par-u85">
                                     Your child still needs to accept your invitation before live map tracking, vault access, and safety updates become available.
                                 </div>
                             </div>
                             <!-- (2026-07-13) Close button for pending card; was unclosable overlay -->
-                            <button type="button" id="closePendingCardBtn" aria-label="Close" style="position:absolute; top:0; right:0; background:none; border:none; color:var(--muted); cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center; border-radius:50%;">
-                                <span class="material-symbols-outlined" style="font-size:20px;">close</span>
+                            <button type="button" id="closePendingCardBtn" aria-label="Close" class="par-u86">
+                                <span class="material-symbols-outlined par-u87">close</span>
                             </button>
                         </div>
                         <div class="pending-state-meta">
                             <div class="pending-meta-chip" id="pendingStudentMeta">
-                                <span class="material-symbols-outlined" style="font-size:18px;">badge</span>
+                                <span class="material-symbols-outlined par-u55">badge</span>
                                 <span>Student ID pending</span>
                             </div>
                             <div class="pending-meta-chip" id="pendingNotifMetaChip">
-                                <span class="material-symbols-outlined" style="font-size:18px;">notifications_active</span>
+                                <span class="material-symbols-outlined par-u55">notifications_active</span>
                                 <span>Your child will see the request in their notification center.</span>
                             </div>
                         </div>
                         <div class="pending-state-actions">
-                            <button class="btn-secondary" id="cancelPendingRequestBtn" type="button" style="margin-top:0;">Cancel Wrong Student ID</button>
-                            <button class="btn-secondary" id="editPendingRequestBtn" type="button" style="margin-top:0;">Enter Another Student ID</button>
+                            <button class="btn-secondary par-u88" id="cancelPendingRequestBtn" type="button">Cancel Wrong Student ID</button>
+                            <button class="btn-secondary par-u88" id="editPendingRequestBtn" type="button">Enter Another Student ID</button>
                         </div>
                     <!-- (2026-07-13) Close pending card container; was unclosed tag -->
                     </div>
@@ -261,7 +590,7 @@
                 <div class="section-header">
                     <h2>Child Vault</h2>
                 </div>
-                <p style="color:var(--muted); font-size:0.9rem; margin-bottom:20px;">Images and videos from your child's vault appear here for guardian review.</p>
+                <p class="par-u89">Images and videos from your child's vault appear here for guardian review.</p>
                 <!-- (2026-07-13) 3-column vault grid container; was bootstrap row -->
                 <div id="sharedVaultGrid" class="vault-grid">
                     <!-- Media items -->
@@ -279,10 +608,10 @@
                     <h2>Guardian Alerts</h2>
                 </div>
                 <!-- (2026-07-13) Remove notification history on safety page; was visible -->
-                <div id="notificationHistory" style="display: none;"></div>
-                <div id="notificationHistoryEmpty" style="display: none;"></div>
-                <div class="section-header" style="margin-top:24px;">
-                    <h2 style="font-size:1rem;">Safety Activity</h2>
+                <div id="notificationHistory" class="par-u6"></div>
+                <div id="notificationHistoryEmpty" class="par-u6"></div>
+                <div class="section-header par-u90">
+                    <h2 class="par-u91">Safety Activity</h2>
                 </div>
                 <div id="alertHistory">
                     <!-- Alert items -->
@@ -296,21 +625,21 @@
 
             <!-- GAD View -->
             <div class="view" id="gadView">
-                <div class="page-header"
-                    style="display: flex; gap: 14px; align-items: flex-start; margin-bottom: 28px;">
-                    <div class="icon-badge"
-                        style="background: var(--primary-soft); color: var(--primary); flex-shrink: 0;">
+                <div class="page-header par-u92"
+                   >
+                    <div class="icon-badge par-u93"
+                       >
                         <span class="material-symbols-outlined">campaign</span>
                     </div>
                     <div>
-                        <h1 class="page-title"
-                            style="margin: 2px 0 4px; font-family: 'Sora', sans-serif; font-size: 1.18rem; color: #262033; letter-spacing: -0.04em;">
+                        <h1 class="page-title par-u94"
+                           >
                             Guardian Bulletin</h1>
-                        <p class="page-copy" style="margin: 0; color: #4f4a62; line-height: 1.5; font-size: 0.95rem;">
+                        <p class="page-copy par-u95">
                             Official campus updates guardians may want to review alongside their child.</p>
                     </div>
                 </div>
-                <button class="support-chat-trigger" id="openGuardianSupportBtn" type="button" style="margin-bottom: 18px;">
+                <button class="support-chat-trigger par-u96" id="openGuardianSupportBtn" type="button">
                     <span class="material-symbols-outlined">support_agent</span>
                     <span>Message GAD Support</span>
                 </button>
@@ -385,8 +714,8 @@
 
     <!-- (2026-07-13) Delete Guardian Account confirmation modal; was missing -->
     <div class="modal-overlay" id="deleteAccountModal">
-        <div class="modal-card" style="border: 1px solid rgba(209, 31, 52, 0.2);">
-            <div class="modal-title" style="color: var(--red); display:flex; align-items:center; gap:8px;">
+        <div class="modal-card par-u97">
+            <div class="modal-title par-u98">
                 <span class="material-symbols-outlined">warning</span>
                 Delete Account
             </div>
@@ -395,17 +724,17 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="deleteAccountPassword">Confirm Password</label>
-                <div style="position:relative; display:flex; align-items:center;">
+                <div class="par-u99">
                     <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
-                    <input type="password" id="deleteAccountPassword" class="form-input" placeholder="Enter your current password" style="width:100%; padding-right:42px;">
-                    <button type="button" class="btn" data-password-target="deleteAccountPassword" style="position:absolute; right:12px; background:none; border:none; color:var(--muted,#94a3b8); padding:0; cursor:pointer; display:flex; align-items:center;">
+                    <input type="password" id="deleteAccountPassword" class="form-input par-u100" placeholder="Enter your current password">
+                    <button type="button" class="btn par-u101" data-password-target="deleteAccountPassword">
                         <span class="material-symbols-outlined">visibility</span>
                     </button>
                 </div>
             </div>
-            <div style="display:flex; gap:10px; justify-content:flex-end;">
-                <button class="btn-secondary" type="button" id="cancelDeleteAccountBtn" style="padding:10px 16px; border-radius:12px; border:1px solid var(--line); background:#f1f5f9; font-weight:700;">Cancel</button>
-                <button class="btn-primary" type="button" id="confirmDeleteAccountBtn" style="padding:10px 16px; border-radius:12px; background:var(--red); border:none; color:white; font-weight:700;">Confirm Delete</button>
+            <div class="par-u102">
+                <button class="btn-secondary par-u103" type="button" id="cancelDeleteAccountBtn">Cancel</button>
+                <button class="btn-primary par-u104" type="button" id="confirmDeleteAccountBtn">Confirm Delete</button>
             </div>
         </div>
     </div>
@@ -413,9 +742,9 @@
     <div class="chat-overlay" id="guardianChatOverlay">
         <div class="chat-box">
             <div class="chat-header">
-                <div style="display:flex; align-items:center; gap:12px;">
+                <div class="par-u105">
                     <span class="material-symbols-outlined">support_agent</span>
-                    <strong style="font-family:'Sora';">GAD Support</strong>
+                    <strong class="par-u106">GAD Support</strong>
                 </div>
                 <button id="closeGuardianChatBtn" type="button" aria-label="Close chat">
                     <span class="material-symbols-outlined">close</span>
@@ -432,7 +761,7 @@
     </div>
 
     <script type="module" src="parent.js"></script>
+</div>
+<script type="module" src="parent.js"></script>
 </body>
-
 </html>
-

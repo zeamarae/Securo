@@ -1,45 +1,385 @@
+// (2026-07-13) Consolidated Parent JS (auth + dashboard); was 2 files
+import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from '../js/utils.js';
+import { auth, db, firebaseConfig } from '../js/firebase-config.js';
+import { onAuthStateChanged, getAuth, signInWithEmailAndPassword, updatePassword, createUserWithEmailAndPassword, confirmPasswordReset } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import { doc, onSnapshot, collection, query, where, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, sendChatMessage, subscribeToMessagesByThread, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword } from '../js/db.js';
+import { login, signUp, forgotPassword, getFriendlyAuthMessage } from '../js/auth.js';
+import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+import '../js/install-sw.js';
+
+window.switchParentMode = function(mode) {
+    const authSec = document.getElementById('parentAuthSection');
+    const dashShell = document.getElementById('parentDashboardShell');
+    if (authSec) authSec.classList.toggle('is-hidden', mode !== 'auth');
+    if (dashShell) dashShell.classList.toggle('is-hidden', mode !== 'dashboard');
+};
+
+(function() {
+    const view = new URLSearchParams(window.location.search).get('view');
+    if (view === 'auth') window.switchParentMode('auth');
+})();
+
+// --- Guardian Auth & Password Reset Module ---
+(function initParentAuthModule() {
+// (2026-07-13) Import Firebase secondary auth helpers; was basic auth
+        // (2026-07-13) Import getAdminUserPassword; was not imported
+
+        const mainAuthForm = document.getElementById('guardianAuthForm');
+        const loginTab = document.getElementById('loginTab');
+        const signupTab = document.getElementById('signupTab');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const errorMsg = document.getElementById('errorMsg');
+        const toastStack = document.getElementById('toastStack');
+        const emailInput = document.getElementById('emailInput');
+        let isLoginMode = true;
+
+        // (2026-07-13) Add password eye toggle; was password input without toggle
+        document.querySelectorAll('[data-password-target]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = document.getElementById(btn.dataset.passwordTarget);
+                if (!target) return;
+                const isPass = target.type === 'password';
+                target.type = isPass ? 'text' : 'password';
+                const icon = btn.querySelector('.material-symbols-outlined');
+                if (icon) icon.textContent = isPass ? 'visibility_off' : 'visibility';
+            });
+        });
+
+        const showToast = (title, message, type = 'info') => {
+            const icon = type === 'error' ? 'error' : type === 'success' ? 'check_circle' : 'info';
+            const toast = document.createElement('div');
+            toast.className = `toast-card ${type}`;
+            toast.innerHTML = `
+                <div class="toast-icon">
+                    <span class="material-symbols-outlined">${icon}</span>
+                </div>
+                <div class="toast-copy">
+                    <strong>${title}</strong>
+                    <span>${message}</span>
+                </div>
+            `;
+            toastStack.appendChild(toast);
+            setTimeout(() => toast.remove(), 3200);
+        };
+
+        function setButtonBusy(button, isBusy = true) {
+            if (!button) return;
+            button.classList.toggle('is-busy', isBusy);
+            button.disabled = isBusy;
+        }
+
+        const setMode = (mode) => {
+            isLoginMode = mode === 'login';
+            loginTab.classList.toggle('active', isLoginMode);
+            signupTab.classList.toggle('active', !isLoginMode);
+
+            document.querySelectorAll('.signup-only').forEach((el) => {
+                el.style.display = isLoginMode ? 'none' : 'block';
+                const field = el.querySelector('input');
+                if (field) {
+                    if (isLoginMode) field.removeAttribute('required');
+                    else field.setAttribute('required', 'required');
+                }
+            });
+            document.querySelectorAll('.login-only').forEach((el) => {
+                el.style.display = isLoginMode ? 'block' : 'none';
+            });
+
+            emailInput.setAttribute('required', 'required');
+            btnText.textContent = isLoginMode ? 'Enter Guardian Hub' : 'Create Guardian Account';
+            errorMsg.textContent = '';
+            // (2026-07-13) Blank register inputs on switch; was persistent inputs
+            if (!isLoginMode) {
+                const fn = document.getElementById('fullNameSignup');
+                if (fn) fn.value = '';
+                if (emailInput) emailInput.value = '';
+                const pwd = document.getElementById('passwordInput');
+                if (pwd) pwd.value = '';
+                const cpwd = document.getElementById('confirmPasswordSignup');
+                if (cpwd) cpwd.value = '';
+            }
+        };
+
+        loginTab.addEventListener('click', () => setMode('login'));
+        signupTab.addEventListener('click', () => setMode('signup'));
+
+        // (2026-07-13) Password reset link modal handler; was 3-step OTP flow
+        const openOtpModalBtn = document.getElementById('openOtpModalBtn');
+        const guardianOtpModal = document.getElementById('guardianOtpModal');
+        const closeOtpModalBtn = document.getElementById('closeOtpModalBtn');
+        const resetRequestView = document.getElementById('resetRequestView');
+        const resetSentView = document.getElementById('resetSentView');
+        const resetNewPasswordView = document.getElementById('resetNewPasswordView');
+        const resetEmailInput = document.getElementById('resetEmailInput');
+        const sendResetLinkBtn = document.getElementById('sendResetLinkBtn');
+        const resetEmailError = document.getElementById('resetEmailError');
+        const resetTargetEmailDisplay = document.getElementById('resetTargetEmailDisplay');
+        const backToSignInBtn = document.getElementById('backToSignInBtn');
+        const resendResetLinkBtn = document.getElementById('resendResetLinkBtn');
+        const modalNewPassword = document.getElementById('modalNewPassword');
+        const modalConfirmPassword = document.getElementById('modalConfirmPassword');
+        const newPasswordError = document.getElementById('newPasswordError');
+        const saveNewPasswordBtn = document.getElementById('saveNewPasswordBtn');
+
+        const openResetModal = () => {
+            const currentVal = emailInput.value.trim();
+            if (currentVal && resetEmailInput) resetEmailInput.value = currentVal;
+            if (resetEmailError) resetEmailError.textContent = '';
+            if (resetRequestView) resetRequestView.style.display = 'block';
+            if (resetSentView) resetSentView.style.display = 'none';
+            if (resetNewPasswordView) resetNewPasswordView.style.display = 'none';
+            if (guardianOtpModal) guardianOtpModal.style.display = 'flex';
+        };
+
+        const closeResetModal = () => {
+            if (guardianOtpModal) guardianOtpModal.style.display = 'none';
+        };
+
+        openOtpModalBtn?.addEventListener('click', openResetModal);
+        closeOtpModalBtn?.addEventListener('click', closeResetModal);
+        guardianOtpModal?.addEventListener('click', (e) => {
+            if (e.target === guardianOtpModal) closeResetModal();
+        });
+
+        const handleSendResetLink = async () => {
+            if (resetEmailError) resetEmailError.textContent = '';
+            let email = (resetEmailInput?.value || '').trim().toLowerCase();
+            if (email.includes('@') && !email.includes('.')) {
+                if (email.endsWith('@gmail')) email += '.com';
+            }
+            if (!email || !email.includes('@')) {
+                if (resetEmailError) resetEmailError.textContent = 'Please enter a valid guardian Gmail address.';
+                return;
+            }
+
+            setButtonBusy(sendResetLinkBtn, true);
+            if (resendResetLinkBtn) setButtonBusy(resendResetLinkBtn, true);
+            try {
+                await forgotPassword(email);
+                if (resetTargetEmailDisplay) resetTargetEmailDisplay.textContent = email;
+                if (resetRequestView) resetRequestView.style.display = 'none';
+                if (resetSentView) resetSentView.style.display = 'block';
+                showToast('Reset Link Sent', `Password reset link sent to ${email}.`, 'success');
+            } catch (err) {
+                const message = getFriendlyAuthMessage(err, 'reset', 'guardian');
+                if (resetEmailError) resetEmailError.textContent = message;
+                showToast('Reset Failed', message, 'error');
+            } finally {
+                setButtonBusy(sendResetLinkBtn, false);
+                if (resendResetLinkBtn) setButtonBusy(resendResetLinkBtn, false);
+            }
+        };
+
+        sendResetLinkBtn?.addEventListener('click', handleSendResetLink);
+        resendResetLinkBtn?.addEventListener('click', handleSendResetLink);
+
+        backToSignInBtn?.addEventListener('click', () => {
+            closeResetModal();
+            const email = (resetEmailInput?.value || '').trim();
+            if (email && emailInput) {
+                emailInput.value = email;
+                setMode('login');
+                const pwd = document.getElementById('passwordInput');
+                if (pwd) pwd.focus();
+            }
+        });
+
+        saveNewPasswordBtn?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (newPasswordError) newPasswordError.textContent = '';
+            const newPassword = (modalNewPassword?.value || '');
+            const confirmPassword = (modalConfirmPassword?.value || '');
+
+            if (newPassword.length < 8) {
+                newPasswordError.textContent = 'New password must be at least 8 characters.';
+                return;
+            }
+            if (newPassword !== confirmPassword) {
+                newPasswordError.textContent = 'New password and confirm password do not match.';
+                return;
+            }
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const oobCode = urlParams.get('oobCode');
+            if (!oobCode) {
+                newPasswordError.textContent = 'Reset code missing. Please use the link from your email.';
+                return;
+            }
+
+            setButtonBusy(saveNewPasswordBtn, true);
+            try {
+                await confirmPasswordReset(auth, oobCode, newPassword);
+                showToast('Password Changed', 'Password reset successfully! Please sign in.', 'success');
+                closeResetModal();
+                setMode('login');
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            } catch (err) {
+                const message = getFriendlyAuthMessage(err, 'reset', 'guardian');
+                newPasswordError.textContent = message;
+                showToast('Reset Error', message, 'error');
+            } finally {
+                setButtonBusy(saveNewPasswordBtn, false);
+            }
+        });
+
+        mainAuthForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            errorMsg.textContent = '';
+            setButtonBusy(submitBtn, true);
+
+            try {
+                let email = emailInput.value.trim().replace(/\s+/g, '');
+                if (email.includes('@') && !email.includes('.')) {
+                    if (email.endsWith('@gmail')) email += '.com';
+                }
+                const password = document.getElementById('passwordInput').value;
+
+                if (isLoginMode) {
+                    if (!email || !password) {
+                        throw new Error('Please enter your guardian email and password.');
+                    }
+                    // (2026-07-13) Pass guardian role and sanitize email on login; was omitted
+                    const loggedInUser = await login(email, password, 'guardian');
+                    if (loggedInUser?.uid) {
+                        localStorage.setItem('securo_session_token', loggedInUser.uid);
+                    }
+                    sessionStorage.setItem('securo_authenticated', '1');
+                    window.history.replaceState({}, '', 'parent.html'); window.switchParentMode('dashboard'); if (auth.currentUser) { window.location.reload(); }
+                    return;
+                }
+
+                const name = document.getElementById('fullNameSignup').value.trim();
+                const confirmPassword = document.getElementById('confirmPasswordSignup').value;
+
+                if (name.length < 3) {
+                    throw new Error('Please enter your full name.');
+                }
+                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    throw new Error('Please enter a valid email address.');
+                }
+                if (password.length < 8) {
+                    throw new Error('Password must be at least 8 characters.');
+                }
+                if (password !== confirmPassword) {
+                    throw new Error('Passwords do not match.');
+                }
+
+                let emailTaken = false;
+                try {
+                    const raw = localStorage.getItem('securo_user_directory');
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        emailTaken = Object.values(parsed).some(u => String(u.email || '').toLowerCase() === email.toLowerCase());
+                    }
+                } catch (_) {}
+                if (emailTaken) {
+                    throw new Error('That guardian email is already registered. Please sign in.');
+                }
+
+                setButtonBusy(submitBtn, false);
+                // (2026-07-13) Open terms modal on register; was direct submit signup
+                const guardianTermsModal = document.getElementById('guardianTermsModal');
+                if (guardianTermsModal) guardianTermsModal.style.display = 'flex';
+            } catch (error) {
+                const message = getFriendlyAuthMessage(error, isLoginMode ? 'login' : 'signup', 'guardian');
+                errorMsg.textContent = message;
+                showToast(isLoginMode ? 'Login failed' : 'Registration failed', message, 'error');
+                setButtonBusy(submitBtn, false);
+            }
+        });
+
+        // (2026-07-13) Register guardian on Terms agree; prev: direct form signup
+        const guardianTermsModal = document.getElementById('guardianTermsModal');
+        const declineGuardianTermsBtn = document.getElementById('declineGuardianTermsBtn');
+        const agreeGuardianTermsBtn = document.getElementById('agreeGuardianTermsBtn');
+        const closeGuardianTermsModalBtn = document.getElementById('closeGuardianTermsModalBtn');
+
+        const closeGuardianTerms = () => {
+            if (guardianTermsModal) guardianTermsModal.style.display = 'none';
+        };
+
+        // (2026-07-13) Show decline terms error; was silent modal dismissal
+        const handleGuardianTermsDecline = () => {
+            closeGuardianTerms();
+            const declineMsg = "Can't proceed without agreeing to the terms and conditions.";
+            errorMsg.textContent = declineMsg;
+            showToast("Terms Required", declineMsg, "error");
+        };
+
+        if (declineGuardianTermsBtn) declineGuardianTermsBtn.addEventListener('click', handleGuardianTermsDecline);
+        if (closeGuardianTermsModalBtn) closeGuardianTermsModalBtn.addEventListener('click', handleGuardianTermsDecline);
+        if (guardianTermsModal) {
+            guardianTermsModal.addEventListener('click', (e) => {
+                if (e.target === guardianTermsModal) handleGuardianTermsDecline();
+            });
+        }
+
+        if (agreeGuardianTermsBtn) {
+            agreeGuardianTermsBtn.addEventListener('click', async () => {
+                setButtonBusy(agreeGuardianTermsBtn, true);
+                try {
+                    const email = emailInput.value.trim();
+                    const password = document.getElementById('passwordInput').value;
+                    const name = document.getElementById('fullNameSignup').value.trim();
+                    const confirmPassword = document.getElementById('confirmPasswordSignup').value;
+
+                    if (name.length < 3) throw new Error('Please enter your full name.');
+                    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Please enter a valid email address.');
+                    if (password.length < 8) throw new Error('Password must be at least 8 characters.');
+                    if (password !== confirmPassword) throw new Error('Passwords do not match.');
+
+                    const user = await signUp(email, password);
+                    await saveUserProfile(user.uid, {
+                        name,
+                        email,
+                        role: 'guardian'
+                    });
+                    // (2026-07-13) Save admin password on register; was profile only save
+                    await saveAdminUserPassword(user.uid, email, password);
+                    localStorage.setItem('securo_session_token', user.uid);
+                    sessionStorage.setItem('securo_authenticated', '1');
+
+                    try {
+                        const raw = localStorage.getItem('securo_user_directory');
+                        const dir = raw ? JSON.parse(raw) : {};
+                        dir[user.uid] = { ...(dir[user.uid] || {}), name, email, role: 'guardian', updatedAt: new Date().toISOString() };
+                        localStorage.setItem('securo_user_directory', JSON.stringify(dir));
+                    } catch (_) {}
+
+                    closeGuardianTerms();
+                    showToast('Account created', 'Your guardian account is ready. Add your child’s Student ID next in the dashboard.', 'success');
+                    setTimeout(() => {
+                        window.history.replaceState({}, '', 'parent.html'); window.switchParentMode('dashboard'); if (auth.currentUser) { window.location.reload(); }
+                    }, 1200);
+                } catch (error) {
+                    const message = getFriendlyAuthMessage(error, 'signup', 'guardian');
+                    errorMsg.textContent = message;
+                    showToast('Registration failed', message, 'error');
+                    closeGuardianTerms();
+                } finally {
+                    setButtonBusy(agreeGuardianTermsBtn, false);
+                }
+            });
+        }
+        // (2026-07-13) Auto-open password reset modal from email link; was unhandled
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('mode') === 'resetPassword' || urlParams.get('oobCode')) {
+            openResetModal();
+            if (resetRequestView) resetRequestView.style.display = 'none';
+            if (resetSentView) resetSentView.style.display = 'none';
+            if (resetNewPasswordView) resetNewPasswordView.style.display = 'block';
+        }
+})();
+
+// --- Guardian Dashboard Main Module ---
 // (2026-07-13) Extracted unified parent script; was inline module
 // Core utilities and offline support
-        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from '../js/utils.js';
         // (2026-07-13) Fix install-sw path to js/ folder; was broken root path
-        import './js/install-sw.js'; // Initialize service worker for offline support
         
         // (2026-07-13) Add Firestore & findUserByEmail imports; was auth only
-        import { auth, db } from '../js/firebase-config.js';
-        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { doc, onSnapshot, collection, query, where, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import {
-            getUserProfile,
-            getAcceptedLinksForGuardian,
-            getAllLinksForGuardian,
-            subscribeToGuardianLinks,
-            getAllUsers,
-            getStudentBootstrapProfile,
-            subscribeToStudentLocation,
-            subscribeToStudentAttendance,
-            logAttendance,
-            getAttendanceHistory,
-            getGADPosts,
-            // (2026-07-13) Import getAllEmergencyPosts & local reader; was user posts only
-            getAllEmergencyPosts,
-            readLocalEmergencyPosts,
-            getUserEmergencyPosts,
-            createGuardianLinkRequest,
-            respondToGuardianLink,
-            removeGuardianLink,
-            updateGuardianLinkStudentId,
-            toggleLikeGADPost,
-            sendAccountNotification,
-            subscribeToAccountNotifications,
-            sendChatMessage,
-            subscribeToMessagesByThread,
-            sendGuardianLocationReminder,
-            subscribeToCampusMapConfig,
-            subscribeToStudentSOS,
-            deleteCurrentUserAccount,
-            findUserByEmail,
-            syncGuardianLinksForGuardian
-        } from '../js/db.js';
 
         let map, studentMarker, polyline;
         let activeLink = null;
@@ -336,9 +676,9 @@
             const locCard = document.getElementById('locationAlertCard');
             const pendingNotifCard = document.getElementById('pendingNotifCard');
             const empty = document.getElementById('guardianDropdownEmptyState');
-            const hasSos = sosCard && sosCard.style.display !== 'none';
+            const hasSos = sosCard && getComputedStyle(sosCard).display !== 'none';
             const hasLoc = locCard && locCard.classList.contains('active');
-            const hasPending = pendingNotifCard && pendingNotifCard.style.display !== 'none';
+            const hasPending = pendingNotifCard && getComputedStyle(pendingNotifCard).display !== 'none';
             const unreadItems = (window._guardianAccountNotifications || []).filter(n => !n.isRead);
             const hasAlerts = hasSos || hasLoc || hasPending || unreadItems.length > 0;
             if (badge) {
@@ -441,7 +781,7 @@
                                 id: Math.floor(Date.now() % 100000) + Math.floor(Math.random() * 1000),
                                 schedule: { at: new Date(Date.now() + 100) },
                                 smallIcon: "ic_stat_securo",
-                                largeIcon: "logo.png",
+                                largeIcon: "../assets/images/logo.png",
                                 iconColor: options.urgent ? "#e11d48" : "#5b21b6",
                                 sound: options.urgent ? "alarm.mp3" : null,
                                 actionTypeId: "",
@@ -458,13 +798,13 @@
             if ("Notification" in window) {
                 if (Notification.permission === "granted") {
                     try {
-                        new Notification(title, { body, icon: "logo.png", badge: "logo.png" });
+                        new Notification(title, { body, icon: "../assets/images/logo.png", badge: "../assets/images/logo.png" });
                     } catch (e) { }
                 } else if (Notification.permission !== "denied") {
                     Notification.requestPermission().then(permission => {
                         if (permission === "granted") {
                             try {
-                                new Notification(title, { body, icon: "logo.png", badge: "logo.png" });
+                                new Notification(title, { body, icon: "../assets/images/logo.png", badge: "../assets/images/logo.png" });
                             } catch (e) {}
                         }
                     });
@@ -1183,7 +1523,7 @@
             guardianNotifBell.onclick = (e) => {
                 e.stopPropagation();
                 profileDropdown?.classList.remove('active');
-                const isShown = guardianNotifDropdown.style.display === 'block';
+                const isShown = getComputedStyle(guardianNotifDropdown).display === 'block';
                 guardianNotifDropdown.style.display = isShown ? 'none' : 'block';
             };
             closeGuardianNotifDropdown?.addEventListener('click', (e) => {
@@ -1203,7 +1543,7 @@
         document.getElementById('logoutBtn').onclick = async () => {
             if (typeof setGuardianWatchingPresence === 'function') await setGuardianWatchingPresence(false);
             await auth.signOut();
-            window.location.href = 'login.html';
+            window.switchParentMode('auth');
         };
 
         // (2026-07-13) Wire guardian account deletion with password; was missing
@@ -1241,7 +1581,7 @@
             try {
                 await deleteCurrentUserAccount(pwd);
                 showToast("Account deleted successfully.");
-                window.location.href = 'login.html';
+                window.switchParentMode('auth');
             } catch (err) {
                 console.warn("Guardian account deletion failed:", err);
                 showToast(err.message || "Failed to delete account. Check password.", "error");
@@ -2377,7 +2717,9 @@
 
         // --- Auth Hub ---
         onAuthStateChanged(auth, (user) => {
-            if (user) {
+            const reqView = new URLSearchParams(window.location.search).get('view');
+            if (user && reqView !== 'auth') {
+                window.switchParentMode('dashboard');
                 initDashboard(user);
                 setGuardianWatchingPresence(true);
                 if (guardianPresenceInterval) clearInterval(guardianPresenceInterval);
@@ -2444,7 +2786,7 @@
                 return true;
             }
             const notifDropdown = document.getElementById('guardianNotifDropdown');
-            if (notifDropdown && notifDropdown.style.display !== 'none') {
+            if (notifDropdown && getComputedStyle(notifDropdown).display !== 'none') {
                 notifDropdown.style.display = 'none';
                 return true;
             }

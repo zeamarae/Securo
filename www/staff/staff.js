@@ -1,59 +1,211 @@
+// (2026-07-13) Consolidated staff script with inline scripts; was mixed
+import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from '../js/utils.js';
+import { renderEmergencyContactWidget } from '../js/emergency-contacts.js';
+import { checkAuth, logout } from '../js/auth.js';
+import { auth } from '../js/firebase-config.js';
+import { getUserProfile, saveUserProfile, saveUserDirectoryMarker, getGADPosts, toggleLikeGADPost, logAttendance, getAttendanceHistory, logSOS, getUserSOSLogs, saveEmergencyPost, getUserEmergencyPosts, deleteEmergencyPost, updateEmergencyPostAttachments, getEmergencyPostById, toggleEmergencyPostAccess, toggleEmergencyPostGuardianAccess, sendChatMessage, subscribeToMessages, subscribeToMessagesByThread, subscribeToGuardianRequests, getLinksForStudent, createGuardianLinkFromStudent, respondToGuardianLink, removeGuardianLink, updateStudentLiveLocation, syncGuardianLinksForStudent, setStudentLocationSharingStatus, subscribeToAccountNotifications, markAccountNotificationRead, sendAccountNotification, subscribeToStudentLinks, sendGADMessage, subscribeToGADMessages, subscribeToCampusMapConfig, notifyGuardiansOfGeofenceEvent, attachPhotoToActiveSOS, fetchLatestCampusMapConfig } from '../js/db.js';
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import '../js/install-sw.js';
+
+// Extracted inline scripts from staff.html
+(() => {
+            try {
+                if (localStorage.getItem('securo_user_role') === 'staff') {
+                    document.documentElement.classList.add('role-staff');
+                }
+            } catch (_) {}
+            const pathname = window.location.pathname;
+            const isRootUrl = (pathname === '/' || pathname === '/index.html' || pathname.endsWith('/index.html') || !pathname) &&
+                              !window.location.search &&
+                              (!window.location.hash || window.location.hash === '#' || window.location.hash === '');
+            const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web')) ||
+                                window.location.protocol.startsWith('file:') ||
+                                window.location.protocol.startsWith('capacitor:') ||
+                                !!window.cordova;
+            const isLoggedIn = Boolean(localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated') === '1');
+
+            if (isNativeApk) {
+                if (!isLoggedIn) {
+                    window.__securoAppPending = true;
+                    window.location.replace('../public/role-selection.html');
+                }
+            } else if (isRootUrl && !isLoggedIn) {
+                window.__securoLandingPending = true;
+                sessionStorage.setItem('securo_allow_landing', '1');
+                window.location.replace('../index.html');
+            }
+        })();
+
+setTimeout(() => {
+            const p = document.getElementById('securo-preloader-overlay');
+            if (p) {
+                p.classList.add('hidden');
+                p.style.setProperty('display', 'none', 'important');
+                if (p.parentNode) p.parentNode.removeChild(p);
+            }
+            document.body.removeAttribute('data-preloader-active');
+        }, 1200);
+
+// Meta apps style swipe down to close
+        document.addEventListener('DOMContentLoaded', () => {
+            const modals = document.querySelectorAll('.status-modal, .mandatory-modal, .notif-dropdown, .profile-dropdown');
+
+            modals.forEach(modal => {
+                let startY = 0;
+                let currentY = 0;
+                let isDragging = false;
+                const innerCard = modal.querySelector('.status-card, .modal-inner, .notif-panel, .dropdown-item') || modal;
+
+                modal.classList.add('swipe-to-close-element');
+                innerCard.style.transition = 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)';
+
+                modal.addEventListener('touchstart', (e) => {
+                    startY = e.touches[0].clientY;
+                    isDragging = true;
+                    innerCard.style.transition = 'none';
+                }, { passive: true });
+
+                modal.addEventListener('touchmove', (e) => {
+                    if (!isDragging) return;
+                    currentY = e.touches[0].clientY;
+                    const deltaY = currentY - startY;
+                    if (deltaY > 0) { // Only allow swipe down
+                        innerCard.style.transform = `translateY(${deltaY}px)`;
+                    }
+                }, { passive: true });
+
+                modal.addEventListener('touchend', (e) => {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    const deltaY = currentY - startY;
+                    innerCard.style.transition = 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                    if (deltaY > 100) { // Threshold for closing
+                        // Hide modal (simulate close)
+                        innerCard.style.transform = 'translateY(100vh)';
+                        setTimeout(() => {
+                            modal.classList.remove('active');
+                            modal.style.display = 'none';
+                            innerCard.style.transform = ''; // reset
+                        }, 200);
+                    } else {
+                        // Snap back
+                        innerCard.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+
+            // Add pop up animations to standard buttons and cards
+            const clickableCards = document.querySelectorAll('.vault-card, .menu-item, .history-item');
+            clickableCards.forEach(card => {
+                card.addEventListener('mousedown', () => card.classList.add('anim-pop-up'));
+                card.addEventListener('mouseup', () => card.classList.remove('anim-pop-up'));
+                card.addEventListener('mouseleave', () => card.classList.remove('anim-pop-up'));
+
+                card.addEventListener('touchstart', () => card.classList.add('anim-pop-up'), { passive: true });
+                card.addEventListener('touchend', () => card.classList.remove('anim-pop-up'));
+                card.addEventListener('touchcancel', () => card.classList.remove('anim-pop-up'));
+            });
+        });
+
+        // (2026-07-13) Handle universal back button to close modals; was exiting app
+        function handleUniversalBackClose() {
+            const cameraOverlay = document.getElementById("cameraOverlay");
+            if (cameraOverlay && (cameraOverlay.classList.contains("active") || getComputedStyle(cameraOverlay).display !== "none")) {
+                closeEmergencyCameraPanel();
+                return true;
+            }
+            const chatOverlay = document.getElementById("chatOverlay");
+            if (chatOverlay && chatOverlay.classList.contains("active")) {
+                closeChat();
+                return true;
+            }
+            const gadPmModal = document.getElementById("gadPmModal");
+            if (gadPmModal && gadPmModal.classList.contains("active")) {
+                gadPmModal.classList.remove("active");
+                return true;
+            }
+            const vaultOverlay = document.getElementById("vaultDetailsOverlay");
+            if (vaultOverlay && vaultOverlay.classList.contains("active")) {
+                const closeBtn = document.getElementById("closeDetailsBtn");
+                if (closeBtn) closeBtn.click();
+                else {
+                    const v = document.getElementById("detailsMediaWrap")?.querySelector("video");
+                    if (v) { v.pause(); v.src = ""; }
+                    vaultOverlay.classList.remove("active");
+                }
+                return true;
+            }
+            const attModal = document.getElementById("attendanceActionModal");
+            if (attModal && attModal.classList.contains("active")) {
+                const cancelBtn = document.getElementById("attendanceCancelBtn");
+                if (cancelBtn) cancelBtn.click();
+                else attModal.classList.remove("active");
+                return true;
+            }
+            const statusModal = document.getElementById("statusModal");
+            if (statusModal && statusModal.classList.contains("active")) {
+                statusModal.classList.remove("active");
+                return true;
+            }
+            const mandatoryModal = document.getElementById("mandatoryModal");
+            if (mandatoryModal && mandatoryModal.classList.contains("active")) {
+                mandatoryModal.classList.remove("active");
+                return true;
+            }
+            const profileDropdown = document.getElementById("profileDropdown");
+            if (profileDropdown && profileDropdown.classList.contains("active")) {
+                profileDropdown.classList.remove("active");
+                return true;
+            }
+            const notifDropdown = document.getElementById("notifDropdown");
+            if (notifDropdown && notifDropdown.classList.contains("active")) {
+                notifDropdown.classList.remove("active");
+                return true;
+            }
+            const activeModal = document.querySelector(".modal.active, .overlay.active, .status-modal.active, [role='dialog'].active");
+            if (activeModal && activeModal !== document.body) {
+                const modalClose = activeModal.querySelector(".btn-close, .modal-close, [data-dismiss], .close-btn");
+                if (modalClose) modalClose.click();
+                else activeModal.classList.remove("active");
+                return true;
+            }
+            if (typeof appState !== "undefined" && appState.currentPage && appState.currentPage !== "map") {
+                if (typeof setActiveView === "function") {
+                    setActiveView("map");
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        try {
+            const AppPlugin = window.Capacitor?.Plugins?.App;
+            if (AppPlugin?.addListener) {
+                AppPlugin.addListener('backButton', ({ canGoBack }) => {
+                    const handled = handleUniversalBackClose();
+                    if (!handled) {
+                        if (canGoBack) window.history.back();
+                        else if (AppPlugin.exitApp) AppPlugin.exitApp();
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn("Capacitor backButton setup failed:", e);
+        }
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') handleUniversalBackClose();
+        });
+        window.addEventListener('popstate', () => {
+            handleUniversalBackClose();
+        });
+
 // (2026-07-13) Staff portal initialization with staff theme; was student role
 window.__SECURO_FORCED_ROLE = 'staff';
 // (2026-07-13) Extracted unified student script; was inline module
 // Core utilities and offline support
-        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from '../js/utils.js';
         // (2026-07-13) Fix install-sw path to js/ folder; was broken root path
-        import './js/install-sw.js'; // Initialize service worker for offline support
-        import { renderEmergencyContactWidget } from '../js/emergency-contacts.js'; // Emergency quick-dial
 
-        import { checkAuth, logout } from '../js/auth.js';
-        import { auth } from '../js/firebase-config.js';
-        import {
-            getUserProfile,
-            saveUserProfile,
-            saveUserDirectoryMarker,
-            getGADPosts,
-            toggleLikeGADPost,
-            logAttendance,
-            getAttendanceHistory,
-            logSOS,
-            getUserSOSLogs,
-            saveEmergencyPost,
-            getUserEmergencyPosts,
-            deleteEmergencyPost,
-            updateEmergencyPostAttachments,
-            getEmergencyPostById,
-            toggleEmergencyPostAccess,
-            toggleEmergencyPostGuardianAccess,
-            sendChatMessage,
-            subscribeToMessages,
-            subscribeToMessagesByThread,
-            subscribeToGuardianRequests,
-            getLinksForStudent,
-            // (2026-07-13) Import createGuardianLinkFromStudent; was absent
-            createGuardianLinkFromStudent,
-            respondToGuardianLink,
-            // (2026-07-13) Import removeGuardianLink for unlink gesture; was absent
-            removeGuardianLink,
-            updateStudentLiveLocation,
-            syncGuardianLinksForStudent,
-            setStudentLocationSharingStatus,
-            // (2026-08-17) Add GAD messaging imports to index.html; was standard db imports
-            subscribeToAccountNotifications,
-            markAccountNotificationRead,
-            sendAccountNotification,
-            subscribeToStudentLinks,
-            sendGADMessage,
-            subscribeToGADMessages,
-            subscribeToCampusMapConfig,
-            // (2026-07-13) Import attachPhotoToActiveSOS; was geofence notify only
-            notifyGuardiansOfGeofenceEvent,
-            attachPhotoToActiveSOS,
-            fetchLatestCampusMapConfig
-        } from '../js/db.js';
 
-        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
 
 
@@ -375,7 +527,7 @@ window.__SECURO_FORCED_ROLE = 'staff';
                                 id: Math.floor(Date.now() % 100000) + Math.floor(Math.random() * 1000),
                                 schedule: { at: new Date(Date.now() + 100) },
                                 smallIcon: "ic_stat_securo",
-                                largeIcon: "logo.png",
+                                largeIcon: "../assets/images/logo.png",
                                 iconColor: options.urgent ? "#e11d48" : "#5b21b6",
                                 sound: options.urgent ? "alarm.mp3" : null,
                                 actionTypeId: "",
@@ -391,11 +543,11 @@ window.__SECURO_FORCED_ROLE = 'staff';
 
             if ("Notification" in window) {
                 if (Notification.permission === "granted") {
-                    try { new Notification(title, { body, icon: "logo.png", badge: "logo.png" }); } catch (e) { }
+                    try { new Notification(title, { body, icon: "../assets/images/logo.png", badge: "../assets/images/logo.png" }); } catch (e) { }
                 } else if (Notification.permission !== "denied") {
                     Notification.requestPermission().then(perm => {
                         if (perm === "granted") {
-                            try { new Notification(title, { body, icon: "logo.png", badge: "logo.png" }); } catch (e) { }
+                            try { new Notification(title, { body, icon: "../assets/images/logo.png", badge: "../assets/images/logo.png" }); } catch (e) { }
                         }
                     });
                 }
@@ -2887,10 +3039,10 @@ window.__SECURO_FORCED_ROLE = 'staff';
                     window.location.protocol.startsWith('capacitor') ||
                     (Boolean(window.Capacitor) && window.location.hostname === 'localhost');
                 if (!isNative) {
-                    return window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '/guardian.html');
+                    return window.location.origin + window.location.pathname.replace(/\/(student|staff)\/[^/]*$/, '/parent/parent.html?view=auth');
                 }
             }
-            return "https://securo.cebutech.digital/guardian.html";
+            return "https://securo.cebutech.digital/parent/parent.html?view=auth";
         }
 
         // (2026-07-13) Skip course, section, & parents for staff; was required student
@@ -3226,7 +3378,7 @@ window.__SECURO_FORCED_ROLE = 'staff';
                                  window.location.protocol.startsWith('file:') ||
                                  window.location.protocol.startsWith('capacitor:') ||
                                  !!window.cordova;
-                window.location.replace(isNative ? "role-selection.html" : "landing.html");
+                window.location.replace(isNative ? "../public/role-selection.html" : "../index.html");
                 return;
             }
 
@@ -3258,7 +3410,7 @@ window.__SECURO_FORCED_ROLE = 'staff';
             }
 
             if (cachedProfile?.role === 'guardian' || user.email?.startsWith('guardian.')) {
-                window.location.replace("guardian-dashboard.html");
+                window.location.replace("../parent/parent.html");
                 return;
             }
 
@@ -3269,7 +3421,7 @@ window.__SECURO_FORCED_ROLE = 'staff';
                 const camAllowed = localStorage.getItem('securo_camera_granted') === 'true';
                 const locAllowed = localStorage.getItem('securo_location_granted') === 'true';
                 if (!camAllowed || !locAllowed) {
-                    window.location.replace('permissions-onboarding.html');
+                    window.location.replace('../public/permissions-onboarding.html');
                     return;
                 }
             }
@@ -3281,7 +3433,7 @@ window.__SECURO_FORCED_ROLE = 'staff';
                         if (p.state === 'denied') {
                             localStorage.setItem('securo_camera_granted', 'false');
                             localStorage.removeItem('securo_permissions_completed');
-                            window.location.replace('permissions-onboarding.html');
+                            window.location.replace('../public/permissions-onboarding.html');
                         }
                     });
                 }).catch(() => {});
@@ -3290,7 +3442,7 @@ window.__SECURO_FORCED_ROLE = 'staff';
                         if (p.state === 'denied') {
                             localStorage.setItem('securo_location_granted', 'false');
                             localStorage.removeItem('securo_permissions_completed');
-                            window.location.replace('permissions-onboarding.html');
+                            window.location.replace('../public/permissions-onboarding.html');
                         }
                     });
                 }).catch(() => {});
@@ -3311,11 +3463,11 @@ window.__SECURO_FORCED_ROLE = 'staff';
                 let profile = await Promise.race([profilePromise, new Promise(r => setTimeout(() => r(cachedProfile || null), 2000))]);
                 if (!profile) profile = cachedProfile || { onboardingCompleted: true };
                 if (profile?.role === 'guardian' && user.email !== ADMIN_EMAIL) {
-                    window.location.replace("guardian-dashboard.html");
+                    window.location.replace("../parent/parent.html");
                     return;
                 }
                 if (profile?.role === 'admin' || user.email === ADMIN_EMAIL) {
-                    window.location.replace("admin.html");
+                    window.location.replace("../admin/admin.html");
                     return;
                 }
 
@@ -3889,7 +4041,7 @@ window.__SECURO_FORCED_ROLE = 'staff';
                 // (2026-07-13) Redirect to login.html on logout; was landing.html
                 if (typeof stopTracking === "function") stopTracking();
                 await logout();
-                window.location.href = "login.html";
+                window.location.href = "../public/login.html";
             }
         });
 

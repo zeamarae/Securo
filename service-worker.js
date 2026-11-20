@@ -7,28 +7,40 @@
 const CACHE_NAME = 'securo-v2.0';
 const RUNTIME_CACHE = 'securo-runtime';
 
-// Core assets to cache for offline use
+// (2026-07-13) Update SW cached routes to modular folders; was root
 const CORE_ASSETS = [
     '/',
     '/index.html',
-    '/login.html',
-    '/role-selection.html',
-    '/guardian.html',
-    '/guardian-dashboard.html',
-    '/admin.html',
-    '/admin-login.html',
-    '/profile.html',
-    '/settings.html',
-    '/permissions-onboarding.html',
-    // (2026-07-13) Update core asset paths to js/ and css/; was root files
+    '/public/public.css',
+    '/public/public.js',
+    '/public/login.html',
+    '/public/role-selection.html',
+    '/public/about.html',
+    '/public/terms.html',
+    '/public/hotlines.html',
+    '/public/profile.html',
+    '/public/settings.html',
+    '/public/permissions-onboarding.html',
+    '/admin/admin.html',
+    '/admin/admin.css',
+    '/admin/admin.js',
+    '/staff/staff.html',
+    '/staff/staff.css',
+    '/staff/staff.js',
+    '/student/student.html',
+    '/student/student.css',
+    '/student/student.js',
+    '/parent/parent.html',
+    '/parent/parent.css',
+    '/parent/parent.js',
     '/js/auth.js',
     '/js/db.js',
     '/js/router.js',
     '/js/utils.js',
     '/js/firebase-config.js',
     '/css/preloader.css',
-    '/logo.png',
-    '/manifest.json'
+    '/assets/images/logo.png',
+    '/assets/data/manifest.json'
 ];
 
 // Install event - cache core assets
@@ -178,10 +190,11 @@ self.addEventListener('push', (event) => {
     
     const data = event.data ? event.data.json() : {};
     const title = data.title || 'Securo Alert';
+    // (2026-07-13) Point SW push icons to assets/images; was root logo
     const options = {
         body: data.body || 'You have a new notification',
-        icon: '/logo.png',
-        badge: '/logo.png',
+        icon: '/assets/images/logo.png',
+        badge: '/assets/images/logo.png',
         data: data,
         actions: data.actions || [],
         requireInteraction: data.priority === 'high'

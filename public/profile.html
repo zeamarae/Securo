@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Securo - My Profile</title>
+    <meta name="description" content="View your Securo account, guardian links, and password settings.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="../assets/images/logo.png">
+    
+    <!-- (2026-07-13) Link consolidated public styles; was inline style tag -->
+    <link rel="stylesheet" href="public.css">
+</head>
+<body class="page-profile" data-page="profile">
+    <button class="sos-fab" id="globalSosFab" type="button" title="Emergency SOS" onclick="window.location.href='../student/student.html?page=sos'">
+        <span class="material-symbols-outlined">emergency</span>
+    </button>
+
+    <main class="page-shell">
+        <header class="profile-topbar">
+            <a id="profileBackBtn" class="hero-back-btn" href="../student/student.html" aria-label="Go back">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </a>
+            <div class="profile-topbar-title">Profile</div>
+        </header>
+        <div class="profile-stack">
+            <section class="hero-card">
+                <div class="hero-cover"></div>
+                <div class="hero-body">
+                    <div class="avatar-wrap">
+                        <div class="profile-avatar" id="profileAvatar">SU</div>
+                        <button id="editAvatarBtn" class="avatar-edit-btn" type="button" aria-label="Change profile picture">
+                            <span class="material-symbols-outlined">photo_camera</span>
+                        </button>
+                    </div>
+                    <input id="avatarInput" type="file" accept="image/*" hidden>
+                    <div class="hero-meta">
+                        <div class="eyebrow" id="roleBadge">Student Account</div>
+                        <div class="name-row">
+                            <input id="profileNameInput" class="profile-name-input" type="text" value="Loading..." disabled>
+                            <button id="editNameBtn" class="icon-edit-btn" type="button" aria-label="Edit name">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                        </div>
+                        <p class="user-email" id="profileEmail">Loading account...</p>
+                        <div class="hero-actions">
+                            <button id="saveNameBtn" class="btn-primary" type="button" disabled>
+                                <span class="material-symbols-outlined">save</span>
+                                <span>Save Name</span>
+                            </button>
+                            <a href="../public/settings.html" class="btn-secondary">
+                                <span class="material-symbols-outlined">settings</span>
+                                <span>Settings</span>
+                            </a>
+                            <a href="../student/student.html" class="btn-secondary">
+                                <span class="material-symbols-outlined">dashboard</span>
+                                <span>Back to Dashboard</span>
+                            </a>
+                        </div>
+                        <div class="hero-note" id="heroNote">
+                            Your student ID stays locked after signup. Only your display name and password can be updated here.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- (2026-07-13) Set id on profile card; was anonymous profile-card -->
+            <section class="profile-card" id="myProfileCard">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title">My Profile</h2>
+                        <p class="card-copy">Your core account details and permanent ID.</p>
+                    </div>
+                    <div class="id-chip" id="myIdChip">
+                        <span class="material-symbols-outlined">badge</span>
+                        <span id="myIdLabel">ID: --</span>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-row" id="studentIdRow">
+                        <div class="info-label">Student ID</div>
+                        <div class="info-value" id="profileStudentId">Not linked</div>
+                    </div>
+                    <!-- (2026-07-13) Add section info row; was missing from profile card -->
+                    <div class="info-row" id="sectionRow">
+                        <div class="info-label">Section</div>
+                        <div class="info-value" id="profileSectionValue">--</div>
+                    </div>
+                    <!-- (2026-07-13) Support personal email input and hide synthetic auth email; was static text -->
+                    <div class="info-row" id="emailRow">
+                        <div class="info-label">Email Address</div>
+                        <div id="emailDisplayWrap" class="pub-profile-u1">
+                            <div class="info-value pub-profile-u2" id="profileEmailValue">No email registered</div>
+                            <button id="editEmailBtn" class="btn-secondary pub-profile-u3" type="button">
+                                <span class="material-symbols-outlined pub-profile-u4">edit</span>
+                                <span>Edit</span>
+                            </button>
+                        </div>
+                        <div id="emailEditWrap" class="pub-profile-u5">
+                            <input type="email" id="personalEmailInput" class="input-field pub-profile-u6" placeholder="Enter your email address">
+                            <button id="savePersonalEmailBtn" class="btn-primary pub-profile-u7" type="button">Save</button>
+                            <button id="cancelPersonalEmailBtn" class="btn-secondary pub-profile-u8" type="button">Cancel</button>
+                        </div>
+                    </div>
+                    <div class="info-row" id="roleRow">
+                        <div class="info-label">Role</div>
+                        <div class="info-value" id="profileRoleValue">Student</div>
+                    </div>
+                    <div class="info-row is-hidden" id="guardianOfRow">
+                        <div class="info-label">Guardian Of</div>
+                        <div class="info-value" id="guardianOfValue">Pending child link</div>
+                        <div class="helper-copy pub-profile-u9" id="guardianOfMeta">Student ID pending</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="profile-card">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title" id="connectionsTitle">Parents / Guardians</h2>
+                        <p class="card-copy" id="connectionsCopy">Pending requests and approved family links appear here.</p>
+                    </div>
+                </div>
+                <div id="connectionsList" class="info-grid">
+                    <div class="empty-state">Loading connections...</div>
+                </div>
+                <p class="helper-copy" id="connectionsHelper">
+                    Students can have up to three parents or guardians. Guardian accounts can track one child at a time.
+                </p>
+            </section>
+
+            <section class="profile-card" id="guardianRequestCard">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title">Request a Parent / Guardian</h2>
+                        <p class="card-copy">Enter the registered guardian name and email to link them to your account.</p>
+                    </div>
+                </div>
+                <div class="input-stack">
+                    <div class="search-field-wrap">
+                        <input id="guardianRequestName" class="input-field" type="text" placeholder="Parent / Guardian full name" autocomplete="off">
+                        <div id="guardianSearchResults" class="guardian-search-results is-hidden"></div>
+                    </div>
+                    <input id="guardianRequestEmail" class="input-field" type="email" placeholder="Registered guardian email">
+                </div>
+                <div class="section-actions pub-profile-u10">
+                    <button id="guardianRequestBtn" class="btn-primary" type="button">
+                        <span class="material-symbols-outlined">person_add</span>
+                        <span>Send Parent Request</span>
+                    </button>
+                </div>
+                <p class="helper-copy" id="guardianSearchHint">Search registered guardian names, then tap a result to fill the correct email.</p>
+            </section>
+
+            <section class="profile-card">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title">Change Password</h2>
+                        <p class="card-copy">Enter your current password first, then choose a new one.</p>
+                    </div>
+                    <button id="togglePasswordEditBtn" class="btn-secondary" type="button">
+                        <span class="material-symbols-outlined">lock_reset</span>
+                        <span>Edit</span>
+                    </button>
+                </div>
+                <div class="password-panel disabled" id="passwordPanel">
+                    <div class="input-stack">
+                        <div class="password-input-wrap">
+                            <input id="currentPasswordInput" class="input-field" type="password" placeholder="Current password" disabled>
+                            <button class="password-toggle-btn" type="button" data-password-target="currentPasswordInput" aria-label="Show current password">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
+                        <div class="password-input-wrap">
+                            <input id="newPasswordInput" class="input-field" type="password" placeholder="New password" disabled>
+                            <button class="password-toggle-btn" type="button" data-password-target="newPasswordInput" aria-label="Show new password">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
+                        <div class="password-input-wrap">
+                            <input id="confirmPasswordInput" class="input-field" type="password" placeholder="Confirm new password" disabled>
+                            <button class="password-toggle-btn" type="button" data-password-target="confirmPasswordInput" aria-label="Show confirm password">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-actions pub-profile-u10">
+                    <button id="savePasswordBtn" class="btn-primary" type="button" disabled>
+                        <span class="material-symbols-outlined">password</span>
+                        <span>Save Password</span>
+                    </button>
+                </div>
+                <p class="helper-copy">If Firebase asks for a recent login before saving, sign in again and retry.</p>
+            </section>
+
+            <!-- (2026-07-13) Add account deletion section & modal; was missing -->
+            <section class="profile-card danger-zone-card pub-profile-u11" id="dangerZoneCard">
+                <div class="card-head">
+                    <div>
+                        <h2 class="card-title pub-profile-u12">Delete Account</h2>
+                        <p class="card-copy">Permanently erase your account, attendance, and all personal safety data.</p>
+                    </div>
+                </div>
+                <div class="section-actions pub-profile-u13">
+                    <button id="openDeleteModalBtn" class="btn-danger pub-profile-u14" type="button">
+                        <span class="material-symbols-outlined">delete_forever</span>
+                        <span>Delete My Account</span>
+                    </button>
+                </div>
+            </section>
+
+            <div class="footer-actions">
+                <button id="logoutBtn" class="btn-danger" type="button">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span>Sign Out</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Toast -->
+        <div id="statusToast" class="status-toast is-hidden">
+            <span id="statusIcon" class="material-symbols-outlined status-toast-icon">check_circle</span>
+            <div class="status-toast-content">
+                <span id="statusTitle" class="status-toast-title">Success</span>
+                <span id="statusMessage" class="status-toast-message">Action completed successfully.</span>
+            </div>
+        </div>
+
+        <!-- Guardian Context Menu -->
+        <div id="guardianContextMenu" class="context-menu is-hidden">
+            <button id="cancelGuardianBtn" class="context-menu-btn" type="button">
+                <span class="material-symbols-outlined">person_remove</span>
+                <span>Remove Guardian</span>
+            </button>
+        </div>
+    </main>
+
+    <div class="status-modal" id="statusModal">
+        <div class="status-card">
+            <div id="statusIconWrap" class="status-icon-wrap success">
+                <span class="material-symbols-outlined" id="statusIcon">check_circle</span>
+            </div>
+            <h3 id="statusTitle" class="status-title">Success</h3>
+            <p id="statusMessage" class="status-msg">Message goes here.</p>
+            <button id="statusOkBtn" class="status-btn" type="button">Continue</button>
+        </div>
+    </div>
+
+    <div class="status-modal" id="deleteAccountModal">
+        <div class="status-card pub-profile-u15">
+            <div class="status-icon-wrap error pub-profile-u16">
+                <span class="material-symbols-outlined">warning</span>
+            </div>
+            <h3 class="status-title pub-profile-u17">Delete Account Permanently</h3>
+            <p class="status-msg pub-profile-u18">This action cannot be undone. All your emergency records, attendance logs, and linked data will be deleted. Enter your password to confirm:</p>
+            <div class="pub-profile-u19">
+                <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
+                <input id="deletePasswordConfirmInput" class="input-field pub-profile-u20" type="password" placeholder="Enter current password">
+                <button class="password-toggle-btn pub-profile-u21" type="button" data-password-target="deletePasswordConfirmInput" aria-label="Show password">
+                    <span class="material-symbols-outlined">visibility</span>
+                </button>
+            </div>
+            <div class="pub-profile-u22">
+                <button id="cancelDeleteBtn" class="btn-secondary pub-profile-u23" type="button">Cancel</button>
+                <button id="confirmDeleteBtn" class="btn-danger pub-profile-u24" type="button">Confirm Delete</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- (2026-07-13) Link consolidated public module; was inline script -->
+    <script type="module" src="public.js"></script>
+</body>
+</html>
+

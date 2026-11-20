@@ -259,9 +259,10 @@ export function showLocalNotification(title, options = {}) {
     }
 
     try {
+        // (2026-07-13) Update notification icons to assets/images; was root
         const notification = new Notification(title, {
-            icon: '/logo.png',
-            badge: '/logo.png',
+            icon: '/assets/images/logo.png',
+            badge: '/assets/images/logo.png',
             ...options
         });
 

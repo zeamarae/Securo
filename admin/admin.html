@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
+<meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Securo - Admin Command Center</title>
-    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="icon" type="image/png" href="../assets/images/logo.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,56 +17,104 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
     <!-- (2026-07-13) Remove splash preloader blocking admin dashboard; was intro splash -->
     <link rel="stylesheet" href="admin.css">
+    <!-- (2026-07-13) Chart.js for consolidated admin analytics; was separate page -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
-    <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+<!-- (2026-07-13) Consolidated admin login, dashboard & analytics views; was 3 files -->
+<section id="adminLoginSection" class="admin-view-section is-hidden">
+<div class="login-container">
+        <div class="header">
+            <div class="logo-wrap">
+                <span class="material-symbols-outlined">admin_panel_settings</span>
+            </div>
+            <h1>Command Center</h1>
+            <p class="subtitle">Official Admin Authentication</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="adminLoginForm">
+            <div class="form-group">
+                <label for="adminEmail">Administrator Email</label>
+                <div class="input-wrapper">
+                    <span class="material-symbols-outlined">mail</span>
+                    <!-- (2026-07-13) Add admin email autocomplete and placeholder; was admin@securo.app -->
+                    <input type="email" id="adminEmail" placeholder="Enter administrator email" autocomplete="username" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Security Password</label>
+                <div class="input-wrapper">
+                    <span class="material-symbols-outlined">lock</span>
+                    <!-- (2026-07-13) Use masked text to suppress breach alert; was pass input -->
+                    <input type="text" id="password" class="secure-mask-input" placeholder="Enter password" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" required>
+                    <button type="button" class="btn adm-u1" data-password-target="password">
+                        <span class="material-symbols-outlined">visibility</span>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="login-btn">
+                <span id="submitBtnText">Access Command Center</span>
+                <div class="spinner" id="spinner"></div>
+            </button>
+        </form>
+
+        <!-- (2026-07-13) Remove public admin registration; was toggle register account -->
+        <a href="../index.html" class="back-link">Return to Student Application</a>
+    </div>
+</section>
+<div id="adminDashboardShell" class="admin-view-section">
+<div class="toast-stack" id="toastStack" aria-live="polite"></div>
 
     <div class="admin-shell">
         <div class="glass-shell">
             <header class="topbar">
                 <!-- (2026-07-13) Logo switches to Command Stats tab; was history back -->
                 <div class="brand-wrap">
-                    <a href="javascript:void(0)" id="adminHeaderLogo" title="Command Stats" style="cursor: pointer; display: inline-block;">
-                        <img src="../logo with text.png" alt="Securo" style="height: 32px; max-height: 32px; object-fit: contain; display: block;">
+                    <a href="javascript:void(0)" id="adminHeaderLogo" title="Command Stats" class="adm-u2">
+                        <img src="../assets/images/logo with text.png" alt="Securo" class="adm-u3">
                     </a>
                     <!-- (2026-07-13) Enterprise Command Center header branding; was Sora serif -->
-                    <div style="border-left: 1px solid var(--border); padding-left: 14px;">
-                        <h1 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--ink); letter-spacing:-0.01em;">Command Center</h1>
-                        <p style="margin:1px 0 0; font-size:0.72rem; color:var(--muted); letter-spacing:0.01em;">Campus safety operations &amp; dispatch management</p>
+                    <div class="adm-u4">
+                        <h1 class="adm-u5">Command Center</h1>
+                        <p class="adm-u6">Campus safety operations &amp; dispatch management</p>
                     </div>
                 </div>
                 <div class="topbar-actions">
                     <!-- (2026-07-13) Command Center status & logout header; was static live chip -->
-                    <div id="topbarSosAlertBadge" class="capsule" style="background:#fef2f2; border:1px solid #fecaca; color:#b91c1c; font-weight:700; font-size:0.75rem; border-radius:4px; padding:3px 8px; display:none; align-items:center; gap:6px;">
-                        <span class="signal-dot" style="background:#dc2626; animation:pulse 1.2s infinite;"></span>
+                    <div id="topbarSosAlertBadge" class="capsule adm-u7">
+                        <span class="signal-dot adm-u8"></span>
                         <span id="topbarSosCountText">0 Critical SOS</span>
                     </div>
                     <div class="signal-chip">
                         <span class="signal-dot"></span>
                         <span>Terminal Live</span>
                     </div>
-                    <a href="about.html" class="ghost-btn" style="text-decoration:none;">
-                        <span class="material-symbols-outlined" style="font-size:18px;">info</span>
+                    <a href="../public/about.html" class="ghost-btn adm-u9">
+                        <span class="material-symbols-outlined adm-u10">info</span>
                         <span>About Us</span>
                     </a>
                     <!-- (2026-07-13) Soft red rounded logout button from images 3 & 4; was square grey -->
-                    <button class="action-btn" id="topbarDirectLogoutBtn" type="button" style="background:#fee2e2; color:#dc2626; border:1px solid #fecaca; height:36px; padding:0 14px; border-radius:12px; font-weight:700; font-size:0.82rem; display:inline-flex; align-items:center; gap:6px; cursor:pointer;" title="Sign out of command center">
-                        <span class="material-symbols-outlined" style="font-size:17px;">logout</span>
+                    <button class="action-btn adm-u11" id="topbarDirectLogoutBtn" type="button" title="Sign out of command center">
+                        <span class="material-symbols-outlined adm-u12">logout</span>
                         <span>Log Out</span>
                     </button>
                     <div class="profile-chip" id="adminProfileChip" aria-label="Admin menu">
                         <span id="adminInitials">AD</span>
                         <div class="profile-dropdown" id="adminProfileDropdown">
-                            <div style="padding: 10px 14px;">
-                                <div id="adminDropdownName" style="font-weight: 800; color: var(--ink);">Administrator</div>
-                                <div style="font-size: 0.68rem; color: var(--muted); font-weight: 700;">ADMIN COMMAND ACCOUNT</div>
+                            <div class="adm-u13">
+                                <div id="adminDropdownName" class="adm-u14">Administrator</div>
+                                <div class="adm-u15">ADMIN COMMAND ACCOUNT</div>
                             </div>
                             <div class="dropdown-divider"></div>
-                            <a href="about.html" class="dropdown-item">
+                            <a href="../public/about.html" class="dropdown-item">
                                 <span class="material-symbols-outlined">info</span>
                                 <span>About Securo</span>
                             </a>
-                            <a href="settings.html" class="dropdown-item">
+                            <a href="../public/settings.html" class="dropdown-item">
                                 <span class="material-symbols-outlined">settings</span>
                                 <span>Settings</span>
                             </a>
@@ -92,7 +140,7 @@
                             <button class="tab-btn" data-tab="sos">
                                 <span class="material-symbols-outlined">crisis_alert</span>
                                 <span>Live SOS Queue</span>
-                                <span id="sidebarSosCounter" class="capsule" style="margin-left:auto; font-size:0.68rem; padding:2px 7px; background:#fee2e2; color:#dc2626; font-weight:800; display:none;">0</span>
+                                <span id="sidebarSosCounter" class="capsule adm-u16">0</span>
                             </button>
                             <button class="tab-btn" data-tab="reports">
                                 <span class="material-symbols-outlined">assessment</span>
@@ -100,7 +148,7 @@
                             </button>
                         </div>
 
-                        <div class="sidebar-label" style="margin-top:16px;">Safety Desk</div>
+                        <div class="sidebar-label adm-u17">Safety Desk</div>
                         <div class="nav-stack">
                             <button class="tab-btn" data-tab="users">
                                 <span class="material-symbols-outlined">manage_accounts</span>
@@ -110,7 +158,7 @@
                             <button class="tab-btn" data-tab="vault">
                                 <span class="material-symbols-outlined">inventory_2</span>
                                 <span>Digital Vault</span>
-                                <span id="sidebarVaultCounter" class="capsule" style="margin-left:auto; font-size:0.68rem; padding:2px 7px; background:#f3e8ff; color:#7c3aed; font-weight:800; display:none;">0</span>
+                                <span id="sidebarVaultCounter" class="capsule adm-u18">0</span>
                             </button>
                             <button class="tab-btn" data-tab="gad">
                                 <span class="material-symbols-outlined">campaign</span>
@@ -119,13 +167,13 @@
                             <button class="tab-btn" data-tab="messages">
                                 <span class="material-symbols-outlined">chat</span>
                                 <span>Student Messaging</span>
-                                <span id="sidebarMsgCounter" class="capsule" style="margin-left:auto; font-size:0.68rem; padding:2px 7px; background:rgba(90,31,224,0.12); color:var(--primary); font-weight:800; display:none;">0</span>
+                                <span id="sidebarMsgCounter" class="capsule adm-u19">0</span>
                             </button>
                         </div>
 
-                        <div style="margin-top: auto; padding-top: 18px; border-top: 1px solid var(--line);">
-                            <button id="sidebarLogoutBtn" class="tab-btn" type="button" style="color: #dc2626; width: 100%;">
-                                <span class="material-symbols-outlined" style="color: #dc2626;">logout</span>
+                        <div class="adm-u20">
+                            <button id="sidebarLogoutBtn" class="tab-btn adm-u21" type="button">
+                                <span class="material-symbols-outlined adm-u22">logout</span>
                                 <span>Exit Command Center</span>
                             </button>
                         </div>
@@ -170,7 +218,7 @@
                                         <div class="role-chart-center">
                                             <div>
                                                 <strong id="roleChartTotal">--</strong>
-                                                <span style="font-size:0.78rem; color:var(--muted); font-weight:700;">accounts</span>
+                                                <span class="adm-u23">accounts</span>
                                             </div>
                                         </div>
                                     </div>
@@ -203,80 +251,7 @@
                             </div>
                         </div>
                         <!-- (2026-07-13) Inline cache hydration for stats; was delayed blank DOM -->
-                        <script>
-                        (function hydrateAdminStatsSync() {
-                            try {
-                                var summaryRaw = localStorage.getItem('securo_admin_summary') || sessionStorage.getItem('securo_admin_summary');
-                                var masterRaw = localStorage.getItem('securo_admin_master_cache') || sessionStorage.getItem('securo_admin_master_cache');
-                                var summary = null;
-                                var master = null;
-                                if (summaryRaw) { try { summary = JSON.parse(summaryRaw); } catch(e) {} }
-                                if (masterRaw) { try { master = JSON.parse(masterRaw); } catch(e) {} }
-                                if (!summary && master) {
-                                    var users = Array.isArray(master.users) ? master.users : [];
-                                    var rCounts = users.reduce(function(acc, u) {
-                                        var isStf = u && (u.role === 'staff' || String(u.name || '').toLowerCase().indexOf('staff') !== -1 || String(u.email || '').toLowerCase().indexOf('staff.') === 0);
-                                        var r = (u && (u.role === 'admin' || String(u.email || '').toLowerCase().indexOf('admin@') === 0)) ? 'admin' : (u && u.role === 'guardian') ? 'guardian' : isStf ? 'staff' : 'student';
-                                        acc[r] = (acc[r] || 0) + 1;
-                                        return acc;
-                                    }, { student: 0, guardian: 0, staff: 0, admin: 0 });
-                                    summary = {
-                                        totalUsers: users.length,
-                                        students: rCounts.student,
-                                        guardians: rCounts.guardian,
-                                        staff: rCounts.staff,
-                                        admins: rCounts.admin,
-                                        threads: Array.isArray(master.threads) ? master.threads.length : 0,
-                                        posts: Array.isArray(master.posts) ? master.posts.length : 0,
-                                        gadEngaged: 0,
-                                        savedAdminName: master.savedAdminName || 'Administrator'
-                                    };
-                                }
-                                if (summary) {
-                                    var uEl = document.getElementById('metricUsers');
-                                    var sEl = document.getElementById('metricStudents');
-                                    var gEl = document.getElementById('metricGuardians');
-                                    var tEl = document.getElementById('metricThreads');
-                                    var cTot = document.getElementById('roleChartTotal');
-                                    var rLg = document.getElementById('roleLegend');
-                                    var rCh = document.getElementById('roleChart');
-                                    var sBar = document.getElementById('statsBarList');
-                                    if (uEl && summary.totalUsers !== undefined) uEl.textContent = summary.totalUsers;
-                                    if (sEl && summary.students !== undefined) sEl.textContent = summary.students;
-                                    if (gEl && summary.guardians !== undefined) gEl.textContent = summary.guardians;
-                                    if (tEl && summary.threads !== undefined) tEl.textContent = summary.threads;
-                                    if (cTot && summary.totalUsers !== undefined) cTot.textContent = summary.totalUsers;
-                                    if (rCh && summary.totalUsers > 0) {
-                                        var sDeg = (summary.students / summary.totalUsers) * 360;
-                                        var gDeg = (summary.guardians / summary.totalUsers) * 360;
-                                        var stDeg = (summary.staff / summary.totalUsers) * 360;
-                                        rCh.style.background = 'conic-gradient(#8b5cf6 0deg ' + sDeg + 'deg, #fb7185 ' + sDeg + 'deg ' + (sDeg + gDeg) + 'deg, #60a5fa ' + (sDeg + gDeg) + 'deg ' + (sDeg + gDeg + stDeg) + 'deg, #cbd5e1 ' + (sDeg + gDeg + stDeg) + 'deg 360deg)';
-                                    }
-                                    if (rLg) {
-                                        rLg.innerHTML = '<div class="legend-item"><div class="legend-meta"><span class="legend-swatch" style="background:#8b5cf6;"></span><span>Students</span></div><strong style="font-variant-numeric: tabular-nums;">' + (summary.students || 0) + '</strong></div>' +
-                                            '<div class="legend-item"><div class="legend-meta"><span class="legend-swatch" style="background:#fb7185;"></span><span>Guardians</span></div><strong style="font-variant-numeric: tabular-nums;">' + (summary.guardians || 0) + '</strong></div>' +
-                                            '<div class="legend-item"><div class="legend-meta"><span class="legend-swatch" style="background:#60a5fa;"></span><span>Staff</span></div><strong style="font-variant-numeric: tabular-nums;">' + (summary.staff || 0) + '</strong></div>' +
-                                            '<div class="legend-item"><div class="legend-meta"><span class="legend-swatch" style="background:#cbd5e1;"></span><span>Admins</span></div><strong style="font-variant-numeric: tabular-nums;">' + (summary.admins || 0) + '</strong></div>';
-                                    }
-                                    if (sBar) {
-                                        var maxM = Math.max(summary.totalUsers || 0, summary.posts || 0, summary.threads || 0, summary.gadEngaged || 0, 1);
-                                        var rows = [
-                                            { label: 'Registered Users', value: summary.totalUsers || 0, g: 'linear-gradient(90deg, #8b5cf6, #7c3aed)' },
-                                            { label: 'Published GAD Posts', value: summary.posts || 0, g: 'linear-gradient(90deg, #60a5fa, #3b82f6)' },
-                                            { label: 'Support Conversations', value: summary.threads || 0, g: 'linear-gradient(90deg, #38bdf8, #0ea5e9)' },
-                                            { label: 'Engaged Users', value: summary.gadEngaged || 0, g: 'linear-gradient(90deg, #fb7185, #f43f5e)' }
-                                        ];
-                                        sBar.innerHTML = rows.map(function(r) {
-                                            return '<div class="bar-row">' +
-                                                '<div class="bar-top"><span style="font-weight:600; color:var(--ink);">' + r.label + '</span><strong style="font-variant-numeric: tabular-nums; color:var(--ink);">' + r.value + '</strong></div>' +
-                                                '<div class="bar-track" style="background:#f1f0f7; border-radius:999px; height:8px;"><div class="bar-fill" style="width:' + Math.max(6, Math.round((r.value / maxM) * 100)) + '%; background:' + r.g + '; border-radius:999px;"></div></div>' +
-                                            '</div>';
-                                        }).join('');
-                                    }
-                                }
-                            } catch(e) {}
-                        })();
-                        </script>
+                        
 
                         <div class="panel-card">
                             <div class="accounts-head">
@@ -287,60 +262,60 @@
                                 </div>
                                 <input type="search" id="statsUserSearch" class="glass-input search-input" placeholder="Search users, IDs, or email">
                             </div>
-                            <div class="table-list" id="statsUserList" style="margin-top:18px;"></div>
+                            <div class="table-list adm-u24" id="statsUserList"></div>
                         </div>
                     </section>
 
                     <!-- (2026-07-13) Add dedicated SOS Triggers tab and table; was stats map only -->
                     <section class="admin-section" id="sec-sos">
                         <!-- (2026-07-13) 70/30 split full height map & recent SOS sidebar; was 400px -->
-                        <div class="sos-dashboard-split" style="display:grid; grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); gap: 20px; align-items: stretch; margin-bottom: 24px;">
-                            <div class="panel-card chart-card" style="display:flex; flex-direction:column; height:calc(100vh - 200px); min-height:620px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                        <div class="sos-dashboard-split adm-u25">
+                            <div class="panel-card chart-card adm-u26">
+                                <div class="adm-u27">
                                     <div>
-                                        <div class="eyebrow" style="color:var(--red);">INCIDENT INTELLIGENCE</div>
-                                        <h2 class="chart-title" style="margin-top:2px;">Campus SOS Hotspots & Incident Map</h2>
+                                        <div class="eyebrow adm-u28">INCIDENT INTELLIGENCE</div>
+                                        <h2 class="chart-title adm-u29">Campus SOS Hotspots & Incident Map</h2>
                                         <p class="chart-copy">Real-time emergency signal visualization with campus geofence perimeter and facilities.</p>
                                     </div>
-                                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                                        <button class="action-btn" id="btnEditGeofence" type="button" style="padding:7px 14px; font-size:0.78rem; border-radius:12px; background:white; border:1px solid #e2e8f0; font-weight:700; display:inline-flex; align-items:center; gap:6px; cursor:pointer; color:#475569; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-                                            <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">edit_location_alt</span>
+                                    <div class="adm-u30">
+                                        <button class="action-btn adm-u31" id="btnEditGeofence" type="button">
+                                            <span class="material-symbols-outlined adm-u32">edit_location_alt</span>
                                             <span>Edit Geofence & Markers</span>
                                         </button>
-                                        <button class="action-btn" id="btnSaveGeofence" type="button" style="padding:7px 14px; font-size:0.78rem; border-radius:12px; background:#5a1fe0; color:white; font-weight:700; display:none; align-items:center; gap:6px; cursor:pointer; border:none; box-shadow:0 4px 12px rgba(90,31,224,0.25);">
-                                            <span class="material-symbols-outlined" style="font-size:16px;">cloud_sync</span>
+                                        <button class="action-btn adm-u33" id="btnSaveGeofence" type="button">
+                                            <span class="material-symbols-outlined adm-u34">cloud_sync</span>
                                             <span>Save & Sync Database</span>
                                         </button>
-                                        <button class="action-btn" id="btnResetGeofence" type="button" style="padding:7px 14px; font-size:0.78rem; border-radius:12px; background:#fee2e2; color:#b91c1c; font-weight:700; display:none; align-items:center; gap:6px; cursor:pointer; border:none;">
-                                            <span class="material-symbols-outlined" style="font-size:16px;">restart_alt</span>
+                                        <button class="action-btn adm-u35" id="btnResetGeofence" type="button">
+                                            <span class="material-symbols-outlined adm-u34">restart_alt</span>
                                             <span>Reset</span>
                                         </button>
-                                        <span class="capsule" style="background:rgba(209,31,52,0.1); color:var(--red); font-weight:800; font-size:0.78rem;">
-                                            <span class="material-symbols-outlined" style="font-size:18px;">crisis_alert</span>
+                                        <span class="capsule adm-u36">
+                                            <span class="material-symbols-outlined adm-u10">crisis_alert</span>
                                             <span id="adminSosCountBadge">0 SOS Triggers</span>
                                         </span>
                                     </div>
                                 </div>
-                                <div id="adminSosMap" style="width:100%; flex:1; min-height:480px; border-radius:18px; overflow:hidden; border:1px solid rgba(15,23,42,0.08); box-shadow:inset 0 2px 6px rgba(0,0,0,0.06); z-index:1;"></div>
+                                <div id="adminSosMap" class="adm-u37"></div>
                             </div>
 
-                            <div class="panel-card chart-card" style="display:flex; flex-direction:column; height:calc(100vh - 200px); min-height:620px;">
-                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; gap:8px;">
+                            <div class="panel-card chart-card adm-u26">
+                                <div class="adm-u38">
                                     <div>
-                                        <div class="eyebrow" style="color:var(--red);">ACTIVE SIGNALS</div>
-                                        <h2 class="chart-title" style="margin-top:2px;">Recent SOS Reporters</h2>
+                                        <div class="eyebrow adm-u28">ACTIVE SIGNALS</div>
+                                        <h2 class="chart-title adm-u29">Recent SOS Reporters</h2>
                                         <p class="chart-copy">Students & staff distress logs with report frequencies.</p>
                                     </div>
-                                    <span class="capsule" id="adminRecentReportersCount" style="background:#f1f5f9; color:#475569; font-weight:700; font-size:0.72rem; padding:3px 8px;">0 Users</span>
+                                    <span class="capsule adm-u39" id="adminRecentReportersCount">0 Users</span>
                                 </div>
-                                <div id="adminRecentSosReporters" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px;"></div>
+                                <div id="adminRecentSosReporters" class="adm-u40"></div>
                             </div>
                         </div>
 
                         <div class="panel-card">
                             <div class="accounts-head">
                                 <div>
-                                    <div class="eyebrow" style="color:var(--red);">INCIDENT LOGS</div>
+                                    <div class="eyebrow adm-u28">INCIDENT LOGS</div>
                                     <h2 class="chart-title">SOS Triggers & Emergency History</h2>
                                     <p class="chart-copy">Verified reporter identities, student numbers, incident coordinates, and map links.</p>
                                 </div>
@@ -348,14 +323,14 @@
                                     <input type="search" id="sosLogSearch" class="glass-input search-input" placeholder="Search reporter name, ID, or location">
                                 </div>
                             </div>
-                            <div class="users-table-head" style="margin-top:16px; grid-template-columns: minmax(0, 1.4fr) 1fr 1.3fr 0.8fr auto;">
+                            <div class="users-table-head adm-u41">
                                 <span>Reporter</span>
                                 <span>Role / ID</span>
                                 <span>Location & GPS</span>
                                 <span>Time Triggered</span>
-                                <span style="text-align:right;">Actions</span>
+                                <span class="adm-u42">Actions</span>
                             </div>
-                            <div class="table-list" id="sosLogsTable" style="margin-top:8px;"></div>
+                            <div class="table-list adm-u43" id="sosLogsTable"></div>
                         </div>
                     </section>
 
@@ -368,10 +343,10 @@
                                     <h2 class="chart-title">User Directory</h2>
                                     <p class="chart-copy">Review users first, then use the 3-dot action button to edit each account in a modal.</p>
                                 </div>
-                                <div class="section-actions" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; flex:1; justify-content:flex-end;">
-                                    <input type="search" id="managementUserSearch" class="glass-input search-input" placeholder="Search users (students, parents, staff)..." style="min-width:220px; flex:1;">
+                                <div class="section-actions adm-u44">
+                                    <input type="search" id="managementUserSearch" class="glass-input search-input adm-u45" placeholder="Search users (students, parents, staff)...">
                                     <!-- (2026-07-13) Add directory role filter chips for user and parent; was absent -->
-                                    <div class="user-role-filter-chips" style="display:inline-flex; gap:6px;">
+                                    <div class="user-role-filter-chips adm-u46">
                                         <!-- (2026-07-13) User and parent filter chips; was absent -->
                                         <button type="button" class="user-filter-btn active" data-user-filter="all">All</button>
                                         <button type="button" class="user-filter-btn" data-user-filter="student">Students</button>
@@ -379,7 +354,7 @@
                                         <button type="button" class="user-filter-btn" data-user-filter="staff">Staff</button>
                                     </div>
                                     <!-- (2026-07-13) Add bulk user import button; was single user create only -->
-                                    <button class="ghost-btn" id="bulkImportUsersBtn" type="button" style="border: 1px solid var(--line); background: white; border-radius: 14px; padding: 0 16px; font-weight: 700; height: 42px;">
+                                    <button class="ghost-btn adm-u47" id="bulkImportUsersBtn" type="button">
                                         <span class="material-symbols-outlined">upload_file</span>
                                         <span>Bulk Import</span>
                                     </button>
@@ -389,11 +364,11 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="users-table-head" style="margin-top:16px;">
+                            <div class="users-table-head adm-u17">
                                 <span>User</span>
                                 <span>Role</span>
                                 <span>Email / ID</span>
-                                <span style="text-align:right;">More</span>
+                                <span class="adm-u42">More</span>
                             </div>
                             <div class="users-table" id="managementUserList"></div>
                         </div>
@@ -429,7 +404,7 @@
                                 </div>
                                 <div class="composer-toolbar">
                                     <p class="helper-text">12-500 characters.</p>
-                                    <button class="ghost-btn" id="cancelGadEditBtn" type="button" style="display:none;">
+                                    <button class="ghost-btn adm-u48" id="cancelGadEditBtn" type="button">
                                         <span class="material-symbols-outlined">close</span>
                                         <span>Cancel Edit</span>
                                     </button>
@@ -456,7 +431,7 @@
                                     <input type="search" id="gadSearch" class="glass-input search-input" placeholder="Search GAD posts">
                                 </div>
                             </div>
-                            <div class="hero-grid" style="margin-bottom: 14px;">
+                            <div class="hero-grid adm-u49">
                                 <div class="metric-card">
                                     <div class="metric-label">Posts</div>
                                     <div class="metric-value" id="metricPosts">0</div>
@@ -482,21 +457,21 @@
                         <div class="panel-card chat-panel messages-shell">
                             <div class="messages-sidebar">
                                 <div class="messages-sidebar-head">
-                                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                                    <div class="adm-u50">
                                         <div>
-                                            <h3 style="font-family:'Sora',sans-serif; font-size:1.02rem; margin:0; display:flex; align-items:center; gap:8px;">
+                                            <h3 class="adm-u51">
                                                 <span>Inquiries & Chats</span>
                                                 <!-- (2026-07-13) Soft round count badge from image 3; was rectangular capsule -->
-                                                <span id="threadCountBadge" style="font-size:0.75rem; min-width:24px; height:24px; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; background:#ede9fe; color:var(--primary); font-weight:800; padding:0 6px;">0</span>
+                                                <span id="threadCountBadge" class="adm-u52">0</span>
                                             </h3>
-                                            <p class="thread-hint" style="margin:2px 0 0; font-size:0.73rem;">Direct safety & counseling channels</p>
+                                            <p class="thread-hint adm-u53">Direct safety & counseling channels</p>
                                         </div>
-                                        <button id="btnRefreshThreads" class="icon-btn" type="button" title="Refresh conversations" style="width:32px; height:32px;">
-                                            <span class="material-symbols-outlined" style="font-size:18px;">refresh</span>
+                                        <button id="btnRefreshThreads" class="icon-btn adm-u54" type="button" title="Refresh conversations">
+                                            <span class="material-symbols-outlined adm-u10">refresh</span>
                                         </button>
                                     </div>
                                     <div class="messages-search-box">
-                                        <span class="material-symbols-outlined" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:17px; color:var(--muted);">search</span>
+                                        <span class="material-symbols-outlined adm-u55">search</span>
                                         <input type="text" id="threadSearchInput" placeholder="Search by student or message...">
                                     </div>
                                     <div class="messages-filter-chips">
@@ -516,72 +491,72 @@
                                         <button id="btnMobileBackToThreads" type="button" class="mobile-chat-back-btn" title="Back to conversations">
                                             <span class="material-symbols-outlined">arrow_back</span>
                                         </button>
-                                        <div id="activeUserAvatar" class="thread-avatar" style="position:relative;">
+                                        <div id="activeUserAvatar" class="thread-avatar adm-u56">
                                             ?
-                                            <span id="activeUserBeacon" style="position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%; background:#10b981; border:2px solid #fff; display:none;"></span>
+                                            <span id="activeUserBeacon" class="adm-u57"></span>
                                         </div>
                                         <div class="messages-header-info">
                                             <div class="messages-header-title-row">
                                                 <span id="activeUserName" class="messages-header-name">Select a conversation</span>
-                                                <span id="activeUserRoleBadge" class="role-pill student" style="display:none; font-size:0.68rem; padding:2px 8px;">Student</span>
-                                                <span id="activeUserIdTag" style="font-size:0.75rem; color:var(--muted); font-weight:700; display:none;"></span>
+                                                <span id="activeUserRoleBadge" class="role-pill student adm-u58">Student</span>
+                                                <span id="activeUserIdTag" class="adm-u59"></span>
                                             </div>
                                             <div class="messages-header-meta">
-                                                <span id="activeUserStatus" class="messages-header-status" style="display:flex; align-items:center; gap:5px;">
-                                                    <span class="signal-dot" style="width:6px; height:6px; background:#10b981;"></span>
+                                                <span id="activeUserStatus" class="messages-header-status adm-u60">
+                                                    <span class="signal-dot adm-u61"></span>
                                                     <span>Dispatch Channel Ready</span>
                                                 </span>
-                                                <span id="activeUserEmailText" style="display:none; color:var(--muted);"></span>
+                                                <span id="activeUserEmailText" class="adm-u62"></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="messages-header-actions" id="chatHeaderActions" style="display:none;">
-                                        <button id="btnToggleStudentDossier" class="action-btn" type="button" title="View Student Dossier & Info" style="background:#f1f5f9; color:#334155; border:1px solid #cbd5e1; padding:7px 12px; border-radius:10px; font-size:0.78rem; font-weight:700; display:flex; align-items:center; gap:5px; cursor:pointer;">
-                                            <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">badge</span>
+                                    <div class="messages-header-actions adm-u48" id="chatHeaderActions">
+                                        <button id="btnToggleStudentDossier" class="action-btn adm-u63" type="button" title="View Student Dossier & Info">
+                                            <span class="material-symbols-outlined adm-u32">badge</span>
                                             <span>User Info</span>
                                         </button>
-                                        <button id="btnHeaderDeleteThread" class="action-btn" type="button" title="Delete this conversation" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecdd3; padding:7px 11px; border-radius:10px; font-size:0.78rem; font-weight:700; display:flex; align-items:center; gap:5px; cursor:pointer;">
-                                            <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
+                                        <button id="btnHeaderDeleteThread" class="action-btn adm-u64" type="button" title="Delete this conversation">
+                                            <span class="material-symbols-outlined adm-u34">delete</span>
                                             <span>Delete</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 <!-- Student Quick Dossier Drawer / Info Strip -->
-                                <div id="activeUserDossierPanel" style="display:none; background:#f8fafc; border-bottom:1px solid #e2e8f0; padding:12px 20px; font-size:0.8rem;">
-                                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:12px;">
+                                <div id="activeUserDossierPanel" class="adm-u65">
+                                    <div class="adm-u66">
                                         <div>
-                                            <span style="color:var(--muted); font-size:0.7rem; font-weight:700; text-transform:uppercase;">Student / Account ID</span>
-                                            <div id="dossierStudentId" style="font-weight:800; color:var(--ink); margin-top:2px;">-</div>
+                                            <span class="adm-u67">Student / Account ID</span>
+                                            <div id="dossierStudentId" class="adm-u68">-</div>
                                         </div>
                                         <div>
-                                            <span style="color:var(--muted); font-size:0.7rem; font-weight:700; text-transform:uppercase;">Email Address</span>
-                                            <div id="dossierEmail" style="font-weight:800; color:var(--ink); margin-top:2px; word-break:break-all;">-</div>
+                                            <span class="adm-u67">Email Address</span>
+                                            <div id="dossierEmail" class="adm-u69">-</div>
                                         </div>
                                         <div>
-                                            <span style="color:var(--muted); font-size:0.7rem; font-weight:700; text-transform:uppercase;">Emergency SOS Reports</span>
-                                            <div id="dossierSosCount" style="font-weight:800; color:#b91c1c; margin-top:2px;">0 logged</div>
+                                            <span class="adm-u67">Emergency SOS Reports</span>
+                                            <div id="dossierSosCount" class="adm-u70">0 logged</div>
                                         </div>
                                         <div>
-                                            <span style="color:var(--muted); font-size:0.7rem; font-weight:700; text-transform:uppercase;">Linked Guardian(s)</span>
-                                            <div id="dossierGuardianInfo" style="font-weight:800; color:var(--ink); margin-top:2px;">None linked</div>
+                                            <span class="adm-u67">Linked Guardian(s)</span>
+                                            <div id="dossierGuardianInfo" class="adm-u68">None linked</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div id="adminChatMessages" class="messages-body">
-                                    <div class="messages-empty" id="chatEmptyPlaceholder" style="padding:40px 20px;">
-                                        <div style="width:68px; height:68px; border-radius:20px; background:rgba(90,31,224,0.08); color:var(--primary); display:flex; align-items:center; justify-content:center; margin-bottom:12px;">
-                                            <span class="material-symbols-outlined" style="font-size:36px;">chat_bubble</span>
+                                    <div class="messages-empty adm-u71" id="chatEmptyPlaceholder">
+                                        <div class="adm-u72">
+                                            <span class="material-symbols-outlined adm-u73">chat_bubble</span>
                                         </div>
-                                        <h4 style="margin:0; font-family:'Sora',sans-serif; color:var(--ink); font-size:1.05rem;">Direct Dispatch Messaging</h4>
-                                        <p style="margin:4px 0 0; max-width:320px; font-size:0.82rem; color:var(--muted); line-height:1.4;">Select a student or guardian from the conversation directory to initiate secure safety communications.</p>
+                                        <h4 class="adm-u74">Direct Dispatch Messaging</h4>
+                                        <p class="adm-u75">Select a student or guardian from the conversation directory to initiate secure safety communications.</p>
                                     </div>
                                 </div>
 
                                 <!-- Quick Canned Dispatch Templates -->
-                                <div class="messages-canned-bar" id="cannedResponseBar" style="display:none;">
-                                    <span style="font-size:0.7rem; font-weight:800; color:var(--muted); text-transform:uppercase; margin-right:4px;">Quick Dispatch:</span>
+                                <div class="messages-canned-bar adm-u48" id="cannedResponseBar">
+                                    <span class="adm-u76">Quick Dispatch:</span>
                                     <button type="button" class="canned-chip" data-canned="Campus Security personnel have been dispatched to your reported coordinates. Please stay where you are.">🚨 Unit Dispatched</button>
                                     <button type="button" class="canned-chip" data-canned="Please share your current building, floor, or nearby landmark so responders can reach you immediately.">📍 Send Coordinates</button>
                                     <button type="button" class="canned-chip" data-canned="Please remain in a secure, well-lit location and lock the entrance if possible until officers arrive.">🛡️ Secure In Place</button>
@@ -590,8 +565,8 @@
                                 </div>
 
                                 <div class="messages-composer">
-                                    <input type="text" id="adminChatInput" class="glass-input" placeholder="Type a message or click a quick dispatch template... (Press Enter to send)" disabled style="border-radius:12px;">
-                                    <button id="adminSendBtn" class="primary-btn" disabled style="border-radius:12px; height:46px; min-width:50px;">
+                                    <input type="text" id="adminChatInput" class="glass-input adm-u77" placeholder="Type a message or click a quick dispatch template... (Press Enter to send)" disabled>
+                                    <button id="adminSendBtn" class="primary-btn adm-u78" disabled>
                                         <span class="material-symbols-outlined">send</span>
                                     </button>
                                 </div>
@@ -602,14 +577,14 @@
                     <!-- (2026-07-13) Soft rounded Digital Vault gallery section; was boxy grey -->
                     <section class="admin-section" id="sec-vault">
                         <div class="panel-card">
-                            <div class="card-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                            <div class="card-head adm-u79">
                                 <div>
-                                    <div class="capsule" style="background:#f3e8ff; color:#7c3aed; border:1px solid #d8b4fe; font-weight:800; font-size:0.68rem; padding:3px 10px; border-radius:999px; display:inline-block; margin-bottom:6px;">DIGITAL VAULT REPOSITORY</div>
-                                    <h2 style="margin:0; font-size:1.15rem; font-weight:700; color:var(--ink); letter-spacing:-0.02em;">Student Uploaded Evidence &amp; Media</h2>
-                                    <p style="margin:2px 0 0; font-size:0.78rem; color:var(--muted);">All photos, images, and evidence media stored in the digital vault by students</p>
+                                    <div class="capsule adm-u80">DIGITAL VAULT REPOSITORY</div>
+                                    <h2 class="adm-u81">Student Uploaded Evidence &amp; Media</h2>
+                                    <p class="adm-u82">All photos, images, and evidence media stored in the digital vault by students</p>
                                 </div>
-                                <div style="display:flex; align-items:center; gap:8px;">
-                                    <button class="ghost-btn" id="btnRefreshVault" type="button" title="Synchronize digital vault evidence" style="border-radius:12px;">
+                                <div class="adm-u83">
+                                    <button class="ghost-btn adm-u77" id="btnRefreshVault" type="button" title="Synchronize digital vault evidence">
                                         <span class="material-symbols-outlined">sync</span>
                                         <span>Sync Vault</span>
                                     </button>
@@ -617,26 +592,26 @@
                             </div>
 
                             <!-- Filter & Search Bar -->
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:14px; padding:10px 16px; background:#ffffff; border:1px solid var(--border); border-radius:16px; box-shadow:0 2px 10px rgba(90,31,224,0.02);">
-                                <div style="display:flex; align-items:center; gap:8px; flex:1; min-width:240px; position:relative;">
-                                    <span class="material-symbols-outlined" style="position:absolute; left:12px; color:var(--muted); font-size:18px;">search</span>
-                                    <input type="text" id="vaultSearchInput" class="glass-input" placeholder="Search by student name, ID, or location..." style="width:100%; padding:8px 14px 8px 38px; font-size:0.82rem; background:#ffffff; border:1px solid var(--border); border-radius:999px;">
+                            <div class="adm-u84">
+                                <div class="adm-u85">
+                                    <span class="material-symbols-outlined adm-u86">search</span>
+                                    <input type="text" id="vaultSearchInput" class="glass-input adm-u87" placeholder="Search by student name, ID, or location...">
                                 </div>
-                                <div style="display:flex; align-items:center; gap:6px;">
+                                <div class="adm-u88">
                                     <button class="filter-chip vault-filter-chip active" data-vault-filter="all" type="button">All Media</button>
                                     <button class="filter-chip vault-filter-chip" data-vault-filter="image" type="button">Images</button>
                                     <button class="filter-chip vault-filter-chip" data-vault-filter="video" type="button">Videos</button>
                                 </div>
-                                <div style="font-size:0.75rem; color:var(--muted); font-weight:600;">
-                                    Showing <strong id="vaultCountLabel" style="color:var(--ink);">0</strong> items
+                                <div class="adm-u89">
+                                    Showing <strong id="vaultCountLabel" class="adm-u90">0</strong> items
                                 </div>
                             </div>
 
                             <!-- Vault Evidence Grid -->
                             <div class="vault-evidence-grid" id="adminVaultGrid">
-                                <div class="messages-empty" style="grid-column: 1 / -1; padding:48px 16px; text-align:center;">
-                                    <span class="material-symbols-outlined" style="font-size:44px; opacity:0.3; color:var(--muted);">photo_library</span>
-                                    <p style="margin:8px 0 0; font-size:0.88rem; font-weight:600; color:var(--muted);">No student vault media uploaded yet.</p>
+                                <div class="messages-empty adm-u91">
+                                    <span class="material-symbols-outlined adm-u92">photo_library</span>
+                                    <p class="adm-u93">No student vault media uploaded yet.</p>
                                 </div>
                             </div>
                         </div>
@@ -644,38 +619,38 @@
 
                     <!-- (2026-07-13) Add Daily Reports & Excel generation; was basic audit view -->
                     <section class="admin-section" id="sec-reports">
-                        <div class="panel-card" style="margin-bottom: 20px;">
-                            <div class="card-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+                        <div class="panel-card adm-u94">
+                            <div class="card-head adm-u95">
                                 <div>
-                                    <div class="eyebrow" style="color:var(--primary); font-weight:800;">Command Center Audits & Compliance</div>
-                                    <h2 class="chart-title" style="margin:2px 0 4px; font-family:'Sora',sans-serif;">Daily Safety & Incident Reports</h2>
-                                    <p class="chart-copy" style="margin:0;">Generate official daily reports and downloadable Excel (.xlsx) workbooks from live Firebase records.</p>
+                                    <div class="eyebrow adm-u96">Command Center Audits & Compliance</div>
+                                    <h2 class="chart-title adm-u97">Daily Safety & Incident Reports</h2>
+                                    <p class="chart-copy adm-u98">Generate official daily reports and downloadable Excel (.xlsx) workbooks from live Firebase records.</p>
                                 </div>
-                                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                                    <button class="action-btn" id="btnDownloadExcelReport" type="button" style="background:#16a34a; color:white; border:none; padding:10px 18px; border-radius:12px; font-weight:800; font-size:0.84rem; cursor:pointer; display:inline-flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(22,163,74,0.25);">
-                                        <span class="material-symbols-outlined" style="font-size:20px;">table_view</span>
+                                <div class="adm-u99">
+                                    <button class="action-btn adm-u100" id="btnDownloadExcelReport" type="button">
+                                        <span class="material-symbols-outlined adm-u101">table_view</span>
                                         <span>Download Excel (.xlsx)</span>
                                     </button>
-                                    <button class="action-btn" id="btnDownloadCsvReport" type="button" style="background:#0f766e; color:white; border:none; padding:10px 16px; border-radius:12px; font-weight:700; font-size:0.84rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
-                                        <span class="material-symbols-outlined" style="font-size:18px;">download</span>
+                                    <button class="action-btn adm-u102" id="btnDownloadCsvReport" type="button">
+                                        <span class="material-symbols-outlined adm-u10">download</span>
                                         <span>Export CSV</span>
                                     </button>
-                                    <button class="action-btn" id="btnPrintDailyReport" type="button" style="background:white; color:var(--ink); border:1px solid #cbd5e1; padding:10px 16px; border-radius:12px; font-weight:700; font-size:0.84rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
-                                        <span class="material-symbols-outlined" style="font-size:18px;">print</span>
+                                    <button class="action-btn adm-u103" id="btnPrintDailyReport" type="button">
+                                        <span class="material-symbols-outlined adm-u10">print</span>
                                         <span>Print</span>
                                     </button>
                                 </div>
                             </div>
 
                             <!-- Date Filter, Search and Category Filter Toolbar -->
-                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-top:20px; background:#f8fafc; padding:16px; border-radius:16px; border:1px solid var(--line);">
+                            <div class="adm-u104">
                                 <div>
-                                    <label for="reportDatePicker" style="display:block; font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--muted); margin-bottom:6px;">Select Report Date</label>
-                                    <input type="date" id="reportDatePicker" class="glass-input" style="width:100%; padding:9px 12px; border-radius:10px; font-weight:700; background:white; font-size:0.86rem;">
+                                    <label for="reportDatePicker" class="adm-u105">Select Report Date</label>
+                                    <input type="date" id="reportDatePicker" class="glass-input adm-u106">
                                 </div>
                                 <div>
-                                    <label for="reportCategoryFilter" style="display:block; font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--muted); margin-bottom:6px;">Record Category</label>
-                                    <select id="reportCategoryFilter" class="glass-input" style="width:100%; padding:9px 12px; border-radius:10px; font-weight:600; background:white; font-size:0.86rem;">
+                                    <label for="reportCategoryFilter" class="adm-u105">Record Category</label>
+                                    <select id="reportCategoryFilter" class="glass-input adm-u107">
                                         <option value="all">All Records (Comprehensive Daily)</option>
                                         <!-- (2026-07-13) Add incident evidence records category; was absent -->
                                         <option value="incident">Evidence Vault Incidents</option>
@@ -684,51 +659,51 @@
                                         <option value="gad">GAD Safety Posts</option>
                                     </select>
                                 </div>
-                                <div style="grid-column: span 2;">
-                                    <label for="reportSearchInput" style="display:block; font-size:0.75rem; font-weight:800; text-transform:uppercase; color:var(--muted); margin-bottom:6px;">Search Daily Records</label>
-                                    <div style="position:relative;">
-                                        <span class="material-symbols-outlined" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--muted);">search</span>
-                                        <input type="text" id="reportSearchInput" class="glass-input" placeholder="Search by Student ID, Student Name, Location, or Status..." style="width:100%; padding:9px 12px 9px 38px; border-radius:10px; font-size:0.86rem; background:white;">
+                                <div class="adm-u108">
+                                    <label for="reportSearchInput" class="adm-u105">Search Daily Records</label>
+                                    <div class="adm-u56">
+                                        <span class="material-symbols-outlined adm-u109">search</span>
+                                        <input type="text" id="reportSearchInput" class="glass-input adm-u110" placeholder="Search by Student ID, Student Name, Location, or Status...">
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Daily Summary Metrics Cards -->
-                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:14px; margin-top:18px;">
-                                <div style="background:rgba(90,31,224,0.05); border:1px solid rgba(90,31,224,0.18); border-radius:14px; padding:14px 16px;">
-                                    <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--primary); letter-spacing:0.06em;">Total Daily Records</div>
-                                    <div id="metricDailyTotal" style="font-size:1.6rem; font-weight:800; color:var(--ink); margin-top:4px;">0</div>
+                            <div class="adm-u111">
+                                <div class="adm-u112">
+                                    <div class="adm-u113">Total Daily Records</div>
+                                    <div id="metricDailyTotal" class="adm-u114">0</div>
                                 </div>
-                                <div style="background:rgba(220,38,38,0.05); border:1px solid rgba(220,38,38,0.18); border-radius:14px; padding:14px 16px;">
-                                    <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:#b91c1c; letter-spacing:0.06em;">SOS Emergencies</div>
-                                    <div id="metricDailySos" style="font-size:1.6rem; font-weight:800; color:#b91c1c; margin-top:4px;">0</div>
+                                <div class="adm-u115">
+                                    <div class="adm-u116">SOS Emergencies</div>
+                                    <div id="metricDailySos" class="adm-u117">0</div>
                                 </div>
-                                <div style="background:rgba(15,118,110,0.05); border:1px solid rgba(15,118,110,0.18); border-radius:14px; padding:14px 16px;">
-                                    <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:#0f766e; letter-spacing:0.06em;">Attendance Logs</div>
-                                    <div id="metricDailyAttendance" style="font-size:1.6rem; font-weight:800; color:#0f766e; margin-top:4px;">0</div>
+                                <div class="adm-u118">
+                                    <div class="adm-u119">Attendance Logs</div>
+                                    <div id="metricDailyAttendance" class="adm-u120">0</div>
                                 </div>
-                                <div style="background:rgba(124,58,237,0.05); border:1px solid rgba(124,58,237,0.18); border-radius:14px; padding:14px 16px;">
-                                    <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:#6d28d9; letter-spacing:0.06em;">Active / Pending</div>
-                                    <div id="metricDailyActive" style="font-size:1.6rem; font-weight:800; color:#6d28d9; margin-top:4px;">0</div>
+                                <div class="adm-u121">
+                                    <div class="adm-u122">Active / Pending</div>
+                                    <div id="metricDailyActive" class="adm-u123">0</div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Daily Separated Record Dossier Panel -->
                         <div class="panel-card">
-                            <div class="card-head" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                            <div class="card-head adm-u79">
                                 <div>
-                                    <h3 id="dailyReportTitle" class="chart-title" style="font-family:'Sora',sans-serif; margin:0;">Daily Safety Dossier</h3>
-                                    <p id="dailyReportSubtitle" class="chart-copy" style="margin:2px 0 0;">Official breakdown for selected date.</p>
+                                    <h3 id="dailyReportTitle" class="chart-title adm-u124">Daily Safety Dossier</h3>
+                                    <p id="dailyReportSubtitle" class="chart-copy adm-u125">Official breakdown for selected date.</p>
                                 </div>
-                                <div style="display:flex; gap:8px;">
-                                    <button class="action-btn" id="btnRefreshDailyReport" type="button" style="padding:7px 12px; font-size:0.82rem; border-radius:10px; background:#f1f5f9; border:1px solid #cbd5e1; cursor:pointer; display:flex; align-items:center; gap:4px;">
-                                        <span class="material-symbols-outlined" style="font-size:16px;">refresh</span> Refresh
+                                <div class="adm-u126">
+                                    <button class="action-btn adm-u127" id="btnRefreshDailyReport" type="button">
+                                        <span class="material-symbols-outlined adm-u34">refresh</span> Refresh
                                     </button>
                                 </div>
                             </div>
-                            <div id="dailyReportTableContainer" style="overflow-x:auto; margin-top:16px; min-height:260px;">
-                                <div style="text-align:center; padding:40px; color:#94a3b8;">Loading records from Firebase...</div>
+                            <div id="dailyReportTableContainer" class="adm-u128">
+                                <div class="adm-u129">Loading records from Firebase...</div>
                             </div>
                         </div>
                     </section>
@@ -740,7 +715,7 @@
     <div class="modal-overlay" id="userEditorModal" aria-hidden="true">
         <div class="modal-card">
             <div class="modal-head">
-                <div class="editor-header" style="flex:1; margin:0;">
+                <div class="editor-header adm-u130">
                     <div>
                         <div class="eyebrow" id="userEditorBadge">Profile Editor</div>
                         <h2 class="chart-title" id="userEditorTitle">Select a user</h2>
@@ -779,10 +754,10 @@
                     </div>
                     <div class="field-block">
                         <label for="manageUserPassword">Password</label>
-                        <div style="position:relative; display:flex; align-items:center;">
+                        <div class="adm-u131">
                             <!-- (2026-07-13) Add autocomplete attribute to password; was missing -->
-                            <input id="manageUserPassword" class="glass-input" type="password" autocomplete="new-password" placeholder="Required for new sign-in accounts" style="width:100%; padding-right:42px;">
-                            <button type="button" class="btn" data-password-target="manageUserPassword" style="position:absolute; right:12px; background:none; border:none; color:var(--muted,#94a3b8); padding:0; cursor:pointer; display:flex; align-items:center;">
+                            <input id="manageUserPassword" class="glass-input adm-u132" type="password" autocomplete="new-password" placeholder="Required for new sign-in accounts">
+                            <button type="button" class="btn adm-u133" data-password-target="manageUserPassword">
                                 <span class="material-symbols-outlined">visibility</span>
                             </button>
                         </div>
@@ -797,15 +772,15 @@
                     Parent or guardian relationships will appear here once a saved profile is selected.
                 </div>
 
-                <div class="panel-card readable-card" style="padding:16px 18px; margin-top:16px;">
+                <div class="panel-card readable-card adm-u134">
                     <div class="eyebrow">Location</div>
-                    <h3 class="chart-title" id="userLocationTitle" style="font-size:1rem; margin-top:6px;">No recent location loaded</h3>
-                    <p class="chart-copy" id="userLocationCopy" style="margin-bottom:0;">Select a user to check the latest shared location or evidence area.</p>
+                    <h3 class="chart-title adm-u135" id="userLocationTitle">No recent location loaded</h3>
+                    <p class="chart-copy adm-u136" id="userLocationCopy">Select a user to check the latest shared location or evidence area.</p>
                 </div>
 
                 <div class="relation-list" id="managementRelationList"></div>
 
-                <div class="editor-actions" style="margin-top:18px;">
+                <div class="editor-actions adm-u24">
                     <div class="inline-fields">
                         <button class="ghost-btn" id="resetUserEditorBtn" type="button">
                             <span class="material-symbols-outlined">ink_eraser</span>
@@ -828,52 +803,52 @@
     </div>
 
     <!-- (2026-07-13) Add bulk user import modal; was single user editor only -->
-    <div class="modal-overlay" id="bulkImportModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center; padding:20px;">
-        <div class="modal-card" style="background:#fff; border-radius:24px; max-width:680px; width:100%; max-height:90vh; overflow-y:auto; padding:28px; box-shadow:var(--shadow);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+    <div class="modal-overlay adm-u137" id="bulkImportModal">
+        <div class="modal-card adm-u138">
+            <div class="adm-u139">
                 <div>
-                    <h3 style="margin:0; font-family:'Sora', sans-serif; font-size:1.25rem; font-weight:800; color:var(--ink);">Bulk User Import</h3>
-                    <p style="margin:4px 0 0; color:var(--muted); font-size:0.82rem;">Import students, guardians, or staff accounts from CSV or JSON</p>
+                    <h3 class="adm-u140">Bulk User Import</h3>
+                    <p class="adm-u141">Import students, guardians, or staff accounts from CSV or JSON</p>
                 </div>
-                <button type="button" id="closeBulkImportModalBtn" class="modal-close-btn" style="position:static;">
+                <button type="button" id="closeBulkImportModalBtn" class="modal-close-btn adm-u142">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
-            <div style="background:var(--bg); border:2px dashed var(--line); border-radius:18px; padding:26px; text-align:center; cursor:pointer;" id="bulkDropzone">
-                <span class="material-symbols-outlined" style="font-size:42px; color:var(--primary);">cloud_upload</span>
-                <div style="font-weight:700; font-size:0.95rem; margin-top:8px;">Click to select or drag & drop a .csv or .json file</div>
-                <div style="font-size:0.78rem; color:var(--muted); margin-top:4px;">Supported columns: name, email, role, studentId (optional)</div>
-                <input type="file" id="bulkFileInput" accept=".csv,.json" style="display:none;">
+            <div id="bulkDropzone" class="adm-u143">
+                <span class="material-symbols-outlined adm-u144">cloud_upload</span>
+                <div class="adm-u145">Click to select or drag & drop a .csv or .json file</div>
+                <div class="adm-u146">Supported columns: name, email, role, studentId (optional)</div>
+                <input type="file" id="bulkFileInput" accept=".csv,.json" class="adm-u48">
             </div>
-            <div style="display:flex; gap:10px; margin-top:14px;">
-                <button type="button" id="btnDownloadSampleCsv" class="ghost-btn" style="flex:1; border:1px solid var(--line); font-size:0.78rem; padding:8px 12px; border-radius:10px;">
-                    <span class="material-symbols-outlined" style="font-size:16px;">download</span> Download Sample CSV
+            <div class="adm-u147">
+                <button type="button" id="btnDownloadSampleCsv" class="ghost-btn adm-u148">
+                    <span class="material-symbols-outlined adm-u34">download</span> Download Sample CSV
                 </button>
-                <button type="button" id="btnDownloadSampleJson" class="ghost-btn" style="flex:1; border:1px solid var(--line); font-size:0.78rem; padding:8px 12px; border-radius:10px;">
-                    <span class="material-symbols-outlined" style="font-size:16px;">download</span> Download Sample JSON
+                <button type="button" id="btnDownloadSampleJson" class="ghost-btn adm-u148">
+                    <span class="material-symbols-outlined adm-u34">download</span> Download Sample JSON
                 </button>
             </div>
-            <div id="bulkPreviewContainer" style="display:none; margin-top:18px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <span style="font-weight:700; font-size:0.85rem;" id="bulkParsedSummary">0 users detected</span>
-                    <span class="signal-chip" id="bulkValidBadge" style="background:rgba(15,155,103,0.1); color:#0f9b67; font-weight:700; padding:4px 10px; border-radius:999px; font-size:0.75rem;">0 valid</span>
+            <div id="bulkPreviewContainer" class="adm-u149">
+                <div class="adm-u150">
+                    <span id="bulkParsedSummary" class="adm-u151">0 users detected</span>
+                    <span class="signal-chip adm-u152" id="bulkValidBadge">0 valid</span>
                 </div>
-                <div style="max-height:190px; overflow-y:auto; border:1px solid var(--line); border-radius:12px;">
-                    <table style="width:100%; border-collapse:collapse; font-size:0.78rem;" id="bulkPreviewTable">
-                        <thead style="background:var(--bg); text-align:left;">
+                <div class="adm-u153">
+                    <table id="bulkPreviewTable" class="adm-u154">
+                        <thead class="adm-u155">
                             <tr>
-                                <th style="padding:8px 10px;">Name</th>
-                                <th style="padding:8px 10px;">Email</th>
-                                <th style="padding:8px 10px;">Role</th>
-                                <th style="padding:8px 10px;">Student ID</th>
-                                <th style="padding:8px 10px;">Status</th>
+                                <th class="adm-u156">Name</th>
+                                <th class="adm-u156">Email</th>
+                                <th class="adm-u156">Role</th>
+                                <th class="adm-u156">Student ID</th>
+                                <th class="adm-u156">Status</th>
                             </tr>
                         </thead>
                         <tbody id="bulkPreviewTableBody"></tbody>
                     </table>
                 </div>
             </div>
-            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:22px;">
+            <div class="adm-u157">
                 <button type="button" id="cancelBulkImportBtn" class="ghost-btn">Cancel</button>
                 <button type="button" id="executeBulkImportBtn" class="primary-btn" disabled>
                     <span class="material-symbols-outlined">person_add</span>
@@ -884,102 +859,102 @@
     </div>
 
     <!-- (2026-07-13) Fullscreen Geofence & Campus Marker Editor Modal -->
-    <div class="modal-overlay" id="adminGeofenceModal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(15,23,42,0.8); backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:16px;">
-        <div class="geofence-modal-card" style="width:96vw; max-width:1440px; height:92vh; background:white; border-radius:24px; box-shadow:0 25px 60px rgba(0,0,0,0.3); display:flex; flex-direction:column; overflow:hidden; border:1px solid rgba(var(--glass-white),0.4);">
-            <div style="padding:16px 24px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:#fbfbfe;">
+    <div class="modal-overlay adm-u158" id="adminGeofenceModal">
+        <div class="geofence-modal-card adm-u159">
+            <div class="adm-u160">
                 <div>
-                    <div style="display:flex; align-items:center; gap:8px;">
-                        <span class="material-symbols-outlined" style="font-size:22px; color:var(--primary);">edit_location_alt</span>
-                        <h2 style="font-size:1.15rem; font-weight:800; margin:0; color:#181428;">Campus Geofence & Building Markers Live Editor</h2>
-                        <span style="font-size:0.75rem; font-weight:700; background:#f1ebff; color:var(--primary); padding:3px 8px; border-radius:8px;">Fullscreen View</span>
+                    <div class="adm-u83">
+                        <span class="material-symbols-outlined adm-u161">edit_location_alt</span>
+                        <h2 class="adm-u162">Campus Geofence & Building Markers Live Editor</h2>
+                        <span class="adm-u163">Fullscreen View</span>
                     </div>
-                    <p style="margin:3px 0 0; font-size:0.8rem; color:#64748b;">Drag numbered purple badges to adjust the geofence perimeter. Drag building markers to update facility locations.</p>
+                    <p class="adm-u164">Drag numbered purple badges to adjust the geofence perimeter. Drag building markers to update facility locations.</p>
                 </div>
-                <div style="display:flex; gap:10px; align-items:center;">
+                <div class="adm-u165">
                     <!-- (2026-07-13) Add facility marker button in modal; was save and reset only -->
-                    <button class="action-btn" id="btnAddMarkerModal" type="button" style="padding:8px 14px; font-size:0.82rem; border-radius:12px; background:#eff6ff; color:#1d4ed8; font-weight:700; border:1px solid #bfdbfe; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
-                        <span class="material-symbols-outlined" style="font-size:17px;">add_location_alt</span>
+                    <button class="action-btn adm-u166" id="btnAddMarkerModal" type="button">
+                        <span class="material-symbols-outlined adm-u12">add_location_alt</span>
                         <span id="btnAddMarkerLabel">Add Marker</span>
                     </button>
-                    <button class="action-btn" id="btnResetGeofenceModal" type="button" style="padding:8px 14px; font-size:0.82rem; border-radius:12px; background:#fee2e2; color:#b91c1c; font-weight:700; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
-                        <span class="material-symbols-outlined" style="font-size:17px;">restart_alt</span>
+                    <button class="action-btn adm-u167" id="btnResetGeofenceModal" type="button">
+                        <span class="material-symbols-outlined adm-u12">restart_alt</span>
                         <span>Reset Defaults</span>
                     </button>
-                    <button class="action-btn" id="btnSaveGeofenceModal" type="button" style="padding:8px 18px; font-size:0.82rem; border-radius:12px; background:#5a1fe0; color:white; font-weight:700; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 14px rgba(90,31,224,0.3);">
-                        <span class="material-symbols-outlined" style="font-size:17px;">cloud_sync</span>
+                    <button class="action-btn adm-u168" id="btnSaveGeofenceModal" type="button">
+                        <span class="material-symbols-outlined adm-u12">cloud_sync</span>
                         <span>Save & Sync Database</span>
                     </button>
-                    <button class="action-btn" id="btnCloseGeofenceModal" type="button" style="padding:8px 12px; font-size:0.82rem; border-radius:12px; background:#f1f5f9; color:#475569; font-weight:700; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:4px;">
-                        <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+                    <button class="action-btn adm-u169" id="btnCloseGeofenceModal" type="button">
+                        <span class="material-symbols-outlined adm-u10">close</span>
                         <span>Close</span>
                     </button>
                 </div>
             </div>
-            <div style="flex:1; position:relative; width:100%; height:100%; min-height:400px;">
-                <div id="adminGeofenceModalMap" style="position:absolute; inset:0; width:100%; height:100%;"></div>
+            <div class="adm-u170">
+                <div id="adminGeofenceModalMap" class="adm-u171"></div>
             </div>
-            <div style="padding:10px 24px; border-top:1px solid #e2e8f0; background: var(--bg); display:flex; justify-content:space-between; align-items:center; font-size:0.78rem; color:#64748b;">
+            <div class="adm-u172">
                 <span id="geofenceModalVertexCount">6 Boundary Vertices • 9 Campus Buildings</span>
-                <span style="display:flex; align-items:center; gap:6px;"><span style="width:8px; height:8px; border-radius:50%; background:#10b981;"></span> Real-time Firestore Sync Active</span>
+                <span class="adm-u88"><span class="adm-u173"></span> Real-time Firestore Sync Active</span>
             </div>
         </div>
     </div>
 
     <!-- (2026-07-13) Add Digital Vault evidence lightbox modal; was absent -->
     <div class="modal-overlay" id="vaultLightboxModal" aria-hidden="true">
-        <div class="modal-card" style="width:min(920px, 95vw); max-height:92vh; padding:0; overflow:hidden; display:flex; flex-direction:column; border-radius:10px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:12px 18px; border-bottom:1px solid var(--border); background:#ffffff;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span class="material-symbols-outlined" style="color:#7c3aed; font-size:20px;">lock</span>
+        <div class="modal-card adm-u174">
+            <div class="adm-u175">
+                <div class="adm-u176">
+                    <span class="material-symbols-outlined adm-u177">lock</span>
                     <div>
-                        <h3 id="vaultLightboxTitle" style="margin:0; font-size:0.92rem; font-weight:700; color:var(--ink);">Student Vault Evidence</h3>
-                        <p id="vaultLightboxSubtitle" style="margin:0; font-size:0.72rem; color:var(--muted);">Digital Vault Secure Repository</p>
+                        <h3 id="vaultLightboxTitle" class="adm-u178">Student Vault Evidence</h3>
+                        <p id="vaultLightboxSubtitle" class="adm-u179">Digital Vault Secure Repository</p>
                     </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px;">
+                <div class="adm-u83">
                     <!-- (2026-07-13) Add fullscreen toggle to lightbox; was close button only -->
-                    <button id="btnVaultFullscreen" type="button" class="ghost-btn" title="Toggle Fullscreen View" style="padding:4px 10px; font-size:0.75rem; border-radius:8px; display:inline-flex; align-items:center; gap:4px; font-weight:700; color:var(--ink);">
-                        <span class="material-symbols-outlined" style="font-size:16px;">fullscreen</span>
+                    <button id="btnVaultFullscreen" type="button" class="ghost-btn adm-u180" title="Toggle Fullscreen View">
+                        <span class="material-symbols-outlined adm-u34">fullscreen</span>
                         <span id="vaultFullscreenLabel">Fullscreen</span>
                     </button>
                     <button class="modal-close-btn" id="closeVaultLightboxBtn" type="button" aria-label="Close image lightbox">
-                        <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+                        <span class="material-symbols-outlined adm-u10">close</span>
                     </button>
                 </div>
             </div>
-            <div style="display:grid; grid-template-columns: minmax(0, 1.8fr) minmax(260px, 1fr); max-height:calc(92vh - 58px); overflow:hidden;">
-                <div id="vaultLightboxMediaBox" style="background:#0f172a; display:flex; align-items:center; justify-content:center; padding:16px; overflow:auto; min-height:360px;">
-                    <img id="vaultLightboxImage" src="" alt="Vault evidence" style="max-width:100%; max-height:75vh; object-fit:contain; border-radius:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5);">
+            <div class="adm-u181">
+                <div id="vaultLightboxMediaBox" class="adm-u182">
+                    <img id="vaultLightboxImage" src="" alt="Vault evidence" class="adm-u183">
                 </div>
-                <div style="padding:18px; background:#ffffff; overflow-y:auto; display:flex; flex-direction:column; gap:14px; border-left:1px solid var(--border);">
+                <div class="adm-u184">
                     <div>
-                        <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:0.06em; margin-bottom:4px;">Uploader Information</div>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <div class="thread-avatar student" id="vaultLightboxAvatar" style="width:34px; height:34px; font-size:0.8rem;">S</div>
-                            <div style="min-width:0;">
-                                <div id="vaultLightboxStudentName" style="font-weight:700; font-size:0.88rem; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Student Name</div>
-                                <div style="display:flex; align-items:center; gap:6px; margin-top:2px;">
-                                    <span class="role-pill student" style="font-size:0.56rem; padding:1px 5px;">STUDENT</span>
-                                    <span id="vaultLightboxStudentId" style="font-size:0.72rem; color:var(--muted); font-weight:600;">#1234567</span>
+                        <div class="adm-u185">Uploader Information</div>
+                        <div class="adm-u83">
+                            <div class="thread-avatar student adm-u186" id="vaultLightboxAvatar">S</div>
+                            <div class="adm-u187">
+                                <div id="vaultLightboxStudentName" class="adm-u188">Student Name</div>
+                                <div class="adm-u189">
+                                    <span class="role-pill student adm-u190">STUDENT</span>
+                                    <span id="vaultLightboxStudentId" class="adm-u191">#1234567</span>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div>
-                        <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:0.06em; margin-bottom:4px;">Recorded Timestamp</div>
-                        <div id="vaultLightboxTime" style="font-size:0.82rem; font-weight:600; color:var(--ink);">Nov 10, 2026 • 12:00 AM</div>
+                        <div class="adm-u185">Recorded Timestamp</div>
+                        <div id="vaultLightboxTime" class="adm-u192">Nov 10, 2026 • 12:00 AM</div>
                     </div>
                     <div>
-                        <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:0.06em; margin-bottom:4px;">Location Coordinates</div>
-                        <div id="vaultLightboxLocation" style="font-size:0.8rem; color:var(--ink);">Campus Area</div>
+                        <div class="adm-u185">Location Coordinates</div>
+                        <div id="vaultLightboxLocation" class="adm-u193">Campus Area</div>
                     </div>
                     <div>
-                        <div style="font-size:0.68rem; font-weight:700; text-transform:uppercase; color:var(--muted); letter-spacing:0.06em; margin-bottom:4px;">File Metadata</div>
-                        <div id="vaultLightboxFileType" style="font-size:0.8rem; color:var(--muted);">Format: Image</div>
+                        <div class="adm-u185">File Metadata</div>
+                        <div id="vaultLightboxFileType" class="adm-u194">Format: Image</div>
                     </div>
-                    <div style="margin-top:auto; padding-top:14px; border-top:1px solid var(--border); display:flex; gap:8px;">
-                        <a id="vaultLightboxDownloadBtn" href="" download="" class="action-btn" style="flex:1; text-align:center; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:6px; background:#7c3aed; color:#ffffff; border:none; height:36px; border-radius:6px; font-weight:600; font-size:0.82rem;">
-                            <span class="material-symbols-outlined" style="font-size:18px;">download</span>
+                    <div class="adm-u195">
+                        <a id="vaultLightboxDownloadBtn" href="" download="" class="action-btn adm-u196">
+                            <span class="material-symbols-outlined adm-u10">download</span>
                             <span>Download Media</span>
                         </a>
                     </div>
@@ -989,8 +964,136 @@
     </div>
 
     <script type="module" src="admin.js"></script>
+</div>
+<section id="adminAnalyticsSection" class="admin-view-section is-hidden">
+<div class="dashboard-container">
+        <div class="dashboard-header">
+            <div>
+                <h1 class="dashboard-title">Analytics Dashboard</h1>
+                <p class="adm-u197">Real-time campus safety insights</p>
+            </div>
+            <div class="date-range-selector">
+                <select id="dateRange">
+                    <option value="7">Last 7 days</option>
+                    <option value="30" selected>Last 30 days</option>
+                    <option value="90">Last 90 days</option>
+                    <option value="custom">Custom range</option>
+                </select>
+                <button class="btn-export" id="exportBtn">
+                    <span class="material-symbols-outlined">download</span>
+                    <span>Export</span>
+                </button>
+                <a href="../admin/admin.html" class="btn-export adm-u198">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    <span>Back</span>
+                </a>
+            </div>
+        </div>
+
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading analytics data...</p>
+        </div>
+
+        <div id="dashboardContent" class="adm-u199">
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <p class="stat-label">Total Users</p>
+                            <h2 class="stat-value" id="statTotalUsers">0</h2>
+                        </div>
+                        <div class="stat-icon primary">
+                            <span class="material-symbols-outlined">people</span>
+                        </div>
+                    </div>
+                    <div class="stat-change positive" id="statUsersChange">
+                        <span class="material-symbols-outlined">trending_up</span>
+                        <span>+0% from last period</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <p class="stat-label">Attendance</p>
+                            <h2 class="stat-value" id="statAttendance">0</h2>
+                        </div>
+                        <div class="stat-icon green">
+                            <span class="material-symbols-outlined">check_circle</span>
+                        </div>
+                    </div>
+                    <div class="stat-change" id="statAttendanceChange">
+                        <span>0 check-ins today</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <p class="stat-label">SOS Alerts</p>
+                            <h2 class="stat-value" id="statSOS">0</h2>
+                        </div>
+                        <div class="stat-icon red">
+                            <span class="material-symbols-outlined">emergency</span>
+                        </div>
+                    </div>
+                    <div class="stat-change" id="statSOSChange">
+                        <span>0 active alerts</span>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <div>
+                            <p class="stat-label">Guardian Links</p>
+                            <h2 class="stat-value" id="statGuardians">0</h2>
+                        </div>
+                        <div class="stat-icon cyan">
+                            <span class="material-symbols-outlined">family_restroom</span>
+                        </div>
+                    </div>
+                    <div class="stat-change" id="statGuardiansChange">
+                        <span>0 pending requests</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <div class="chart-card adm-u108">
+                    <h3 class="chart-title">Attendance Trends</h3>
+                    <div class="chart-container">
+                        <canvas id="attendanceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3 class="chart-title">User Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="userDistributionChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3 class="chart-title">SOS Incidents by Type</h3>
+                    <div class="chart-container">
+                        <canvas id="sosTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="chart-card">
+                <h3 class="chart-title">Recent Activity</h3>
+                <div class="activity-list" id="recentActivityList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script type="module" src="admin.js"></script>
 </body>
 </html>
-
-
-

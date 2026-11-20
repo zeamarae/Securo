@@ -352,17 +352,24 @@ export const checkAuth = (redirectIfUnauth = true) => {
                 window.location.protocol === 'capacitor:'
             );
             const isMobile = window.innerWidth <= 768 || window.screen.width <= 768 || (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            // (2026-07-13) Update auth redirects to modular folders; was flat root
+            const inSubdir = /\/(admin|staff|student|parent|public)\//.test(window.location.pathname);
+            const prefix = inSubdir ? '../' : '';
             if (!isApk && !isMobile) {
-                window.location.href = 'landing.html';
+                window.location.href = prefix + 'index.html';
                 return;
             }
             if (!window.location.pathname.includes('login.html')) {
-                window.location.href = 'login.html';
+                window.location.href = prefix + 'public/login.html';
             }
         // (2026-07-13) Set session token on auth redirect; was missing
         } else if (user && (window.location.pathname.includes('login.html') || window.location.pathname.includes('role-selection.html'))) {
             localStorage.setItem('securo_session_token', user.uid);
-            window.location.href = 'index.html';
+            const inSubdir = /\/(admin|staff|student|parent|public)\//.test(window.location.pathname);
+            const prefix = inSubdir ? '../' : '';
+            const role = (localStorage.getItem('securo_user_role') || localStorage.getItem('securo_preferred_role') || 'student').toLowerCase();
+            const target = role === 'staff' ? 'staff/staff.html' : (role === 'admin' ? 'admin/admin.html' : (role === 'guardian' || role === 'parent' ? 'parent/parent.html' : 'student/student.html'));
+            window.location.href = prefix + target;
         }
     });
 };

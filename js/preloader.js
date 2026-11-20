@@ -5,13 +5,16 @@
     function ensureOverlay() {
         let overlay = document.getElementById(OVERLAY_ID);
         if (!overlay && document.body) {
+            // (2026-07-13) Resolve preloader logo from assets/images; was root path
+            const inSubdir = /\/(admin|staff|student|parent|public)\//.test(window.location.pathname);
+            const logoSrc = (inSubdir ? '../' : '') + 'assets/images/logo with text.png';
             overlay = document.createElement('div');
             overlay.id = OVERLAY_ID;
             overlay.innerHTML = `
                 <div class="securo-preloader-bg"></div>
                 <div class="securo-preloader-content">
                     <div class="securo-preloader-logo-wrap">
-                        <img src="logo with text.png" alt="Securo" class="securo-preloader-logo">
+                        <img src="${logoSrc}" alt="Securo" class="securo-preloader-logo">
                         <div class="securo-preloader-shimmer"></div>
                     </div>
                     <div class="securo-preloader-indicator">
