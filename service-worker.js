@@ -46,7 +46,7 @@ const CORE_ASSETS = [
 // Install event - cache core assets
 self.addEventListener('install', (event) => {
     console.log('[SW] Installing service worker...');
-    
+
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
@@ -65,7 +65,7 @@ self.addEventListener('install', (event) => {
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
     console.log('[SW] Activating service worker...');
-    
+
     event.waitUntil(
         caches.keys()
             .then(cacheNames => {
@@ -156,7 +156,7 @@ self.addEventListener('fetch', (event) => {
 // Background sync for offline queue
 self.addEventListener('sync', (event) => {
     console.log('[SW] Background sync triggered:', event.tag);
-    
+
     if (event.tag === 'sync-offline-queue') {
         event.waitUntil(
             syncOfflineQueue()
@@ -168,7 +168,7 @@ self.addEventListener('sync', (event) => {
 async function syncOfflineQueue() {
     try {
         console.log('[SW] Syncing offline queue...');
-        
+
         // Notify all clients to process queue
         const clients = await self.clients.matchAll();
         clients.forEach(client => {
@@ -176,7 +176,7 @@ async function syncOfflineQueue() {
                 type: 'SYNC_OFFLINE_QUEUE'
             });
         });
-        
+
         console.log('[SW] Queue sync notification sent');
     } catch (error) {
         console.error('[SW] Queue sync failed:', error);
@@ -187,7 +187,7 @@ async function syncOfflineQueue() {
 // Push notification handling
 self.addEventListener('push', (event) => {
     console.log('[SW] Push notification received');
-    
+
     const data = event.data ? event.data.json() : {};
     const title = data.title || 'Securo Alert';
     // (2026-07-13) Point SW push icons to assets/images; was root logo
@@ -208,11 +208,11 @@ self.addEventListener('push', (event) => {
 // Notification click handling
 self.addEventListener('notificationclick', (event) => {
     console.log('[SW] Notification clicked:', event.notification.tag);
-    
+
     event.notification.close();
-    
+
     const urlToOpen = event.notification.data?.url || '/index.html';
-    
+
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true })
             .then(clientList => {
@@ -233,11 +233,11 @@ self.addEventListener('notificationclick', (event) => {
 // Message handling from clients
 self.addEventListener('message', (event) => {
     console.log('[SW] Message received:', event.data);
-    
+
     if (event.data?.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
-    
+
     if (event.data?.type === 'CACHE_URLS') {
         const urls = event.data.urls || [];
         event.waitUntil(

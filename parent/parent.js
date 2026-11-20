@@ -3,8 +3,8 @@ import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device }
 import { auth, db, firebaseConfig } from '../js/firebase-config.js';
 import { onAuthStateChanged, getAuth, signInWithEmailAndPassword, updatePassword, createUserWithEmailAndPassword, confirmPasswordReset } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { doc, onSnapshot, collection, query, where, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-// (2026-07-13) Import findStudentUid & guardian vault query; was missing
-import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, getGuardianSharedEmergencyPosts, findStudentUidByStudentId, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, sendChatMessage, subscribeToMessagesByThread, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword } from '../js/db.js';
+// (2026-07-13) Import findStudentUid, vault & presence helper; was partial
+import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, getGuardianSharedEmergencyPosts, findStudentUidByStudentId, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, sendChatMessage, subscribeToMessagesByThread, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword, startUserPresenceHeartbeat } from '../js/db.js';
 import { login, signUp, forgotPassword, getFriendlyAuthMessage } from '../js/auth.js';
 import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import '../js/install-sw.js';
@@ -2758,9 +2758,11 @@ window.switchParentMode = function(mode) {
         // --- Auth Hub ---
         onAuthStateChanged(auth, (user) => {
             const reqView = new URLSearchParams(window.location.search).get('view');
+            // (2026-07-13) Broadcast live guardian presence heartbeat; was partial
             if (user && reqView !== 'auth') {
                 window.switchParentMode('dashboard');
                 initDashboard(user);
+                startUserPresenceHeartbeat(user.uid);
                 setGuardianWatchingPresence(true);
                 if (guardianPresenceInterval) clearInterval(guardianPresenceInterval);
                 guardianPresenceInterval = setInterval(() => {

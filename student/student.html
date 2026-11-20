@@ -30,7 +30,7 @@
     <script src="../js/preloader.js"></script>
 
     <!-- (2026-07-13) Route roles and apply staff theme; was desktop only -->
-    
+
 
     <link rel="stylesheet" href="student.css">
 </head>
@@ -56,7 +56,7 @@
     </div>
 
     <!-- (2026-07-13) Auto-dismiss watchdog for preloader overlay; was unmonitored -->
-    
+
 
     <div class="device-shell mx-auto">
         <div class="screen">
@@ -68,14 +68,11 @@
                     <header class="topbar navbar navbar-expand border-0">
                         <div class="container-fluid px-0 content-frame">
                             <!-- (2026-07-13) Fix fallback logo link to student.html; was index.html -->
-                            <div class="topbar-left navbar-brand mb-0 stu-u1"
-                                id="topbarHomeBrand"
+                            <div class="topbar-left navbar-brand mb-0 stu-u1" id="topbarHomeBrand"
                                 onclick="if(window.setActiveView){window.setActiveView('map');}else{window.location.href='student.html';}"
-                               
                                 title="Go to Map Homepage">
-                                <img src="../assets/images/logo with text.png" alt="Securo" class="topbar-brand-logo stu-u2"
-                                   
-                                    draggable="false">
+                                <img src="../assets/images/logo with text.png" alt="Securo"
+                                    class="topbar-brand-logo stu-u2" draggable="false">
                                 <div aria-hidden="true" class="stu-u3">
                                     <div class="surface-icon" id="headerLeadingIcon"></div>
                                     <div class="topbar-title" id="headerTitle">Securo</div>
@@ -136,8 +133,7 @@
                                             <span class="material-symbols-outlined">info</span>
                                             <span>About Us</span>
                                         </a>
-                                        <a href="../admin/admin.html" class="dropdown-item stu-u7" id="adminLink"
-                                           >
+                                        <a href="../admin/admin.html" class="dropdown-item stu-u7" id="adminLink">
                                             <span class="material-symbols-outlined">admin_panel_settings</span>
                                             <span>Admin Panel</span>
                                         </a>
@@ -163,7 +159,8 @@
                             </div>
                         </div>
                         <!-- (2026-07-13) Show invite parent button in bar; was display none -->
-                        <button type="button" class="invite-parent-bar-btn" id="inviteParentBarBtn" title="Invite a parent or guardian">
+                        <button type="button" class="invite-parent-bar-btn" id="inviteParentBarBtn"
+                            title="Invite a parent or guardian">
                             <span class="material-symbols-outlined">person_add</span>
                             <span>Invite Parent</span>
                         </button>
@@ -226,16 +223,13 @@
                         <section class="page" id="page-vault" data-page="vault">
                             <!-- (2026-07-13) Remove eyebrow badge from vault header; was eyebrow tag -->
                             <div class="page-header stu-u13">
-                                <div class="icon-badge stu-u14"
-                                   >
+                                <div class="icon-badge stu-u14">
                                     <span class="material-symbols-outlined stu-u15">shield_lock</span>
                                 </div>
                                 <div class="stu-u16">
-                                    <h1 class="page-title stu-u17"
-                                       >
+                                    <h1 class="page-title stu-u17">
                                         Digital Vault</h1>
-                                    <p class="page-copy stu-u18"
-                                       >
+                                    <p class="page-copy stu-u18">
                                         Captured media is encrypted and securely timestamped on the verification-ready
                                         ledger.</p>
                                 </div>
@@ -243,22 +237,17 @@
 
                             <div class="section-stack stu-u19">
                                 <!-- Vault Summary Hero Card -->
-                                <div class="card summary-card stu-u20"
-                                   >
+                                <div class="card summary-card stu-u20">
                                     <div class="stu-u21">
                                         <div>
-                                            <div class="mini-label stu-u22"
-                                               >
+                                            <div class="mini-label stu-u22">
                                                 Total Secured Evidence</div>
-                                            <div class="section-title stu-u23" id="vaultTotalEvidence"
-                                               >
+                                            <div class="section-title stu-u23" id="vaultTotalEvidence">
                                                 0 Files</div>
                                         </div>
                                         <div class="stu-u24">
-                                            <div
-                                                class="stu-u25">
-                                                <span class="material-symbols-outlined stu-u26"
-                                                   >lock</span>
+                                            <div class="stu-u25">
+                                                <span class="material-symbols-outlined stu-u26">lock</span>
                                                 <span>AES-256 Active</span>
                                             </div>
                                         </div>
@@ -266,13 +255,11 @@
                                 </div>
 
                                 <!-- Vault Multi-Selection Action Toolbar -->
-                                <div class="vault-selection-toolbar stu-u27" id="vaultSelectionToolbar"
-                                   >
+                                <div class="vault-selection-toolbar stu-u27" id="vaultSelectionToolbar">
                                     <div class="vault-selection-copy">
-                                        <span class="vault-selection-title stu-u28" id="vaultSelectionCount"
-                                           >0 selected</span>
-                                        <span class="vault-selection-subtitle stu-u29"
-                                           >Tap items to select or
+                                        <span class="vault-selection-title stu-u28" id="vaultSelectionCount">0
+                                            selected</span>
+                                        <span class="vault-selection-subtitle stu-u29">Tap items to select or
                                             batch delete.</span>
                                     </div>
                                     <div class="vault-selection-actions stu-u30">
@@ -281,10 +268,8 @@
                                         <button class="vault-selection-btn" id="selectAllVaultBtn" type="button">Select
                                             All</button>
                                         <button class="vault-selection-btn danger stu-u31" id="deleteSelectedVaultBtn"
-                                            type="button"
-                                           >
-                                            <span class="material-symbols-outlined stu-u32"
-                                               >delete</span>
+                                            type="button">
+                                            <span class="material-symbols-outlined stu-u32">delete</span>
                                             <span>Delete</span>
                                         </button>
                                     </div>
@@ -292,18 +277,13 @@
 
                                 <!-- Media Grid -->
                                 <div class="vault-grid" id="vaultGrid">
-                                    <div class="vault-empty stu-u33"
-                                       >
-                                        <div class="icon-badge stu-u34"
-                                           >
-                                            <span class="material-symbols-outlined stu-u35"
-                                               >photo_library</span>
+                                    <div class="vault-empty stu-u33">
+                                        <div class="icon-badge stu-u34">
+                                            <span class="material-symbols-outlined stu-u35">photo_library</span>
                                         </div>
-                                        <strong
-                                            class="stu-u36">No
+                                        <strong class="stu-u36">No
                                             Media Stored Yet</strong>
-                                        <p
-                                            class="stu-u37">
+                                        <p class="stu-u37">
                                             Photos and video recordings captured during emergency SOS will automatically
                                             appear here securely.</p>
                                     </div>
@@ -315,55 +295,41 @@
                             <div class="sos-page-overlay" id="sosPageOverlay" aria-hidden="true"></div>
 
                             <!-- (2026-07-13) Clean, unified emergency command header; was cluttered double boxes -->
-                            <div class="sos-topline stu-u38" id="sosToplineHeader"
-                               >
+                            <div class="sos-topline stu-u38" id="sosToplineHeader">
                                 <div class="emergency-eyebrow-container" id="emergencyEyebrowContainer">
-                                    <div class="eyebrow emergency-eyebrow stu-u39"
-                                       >
-                                        <span class="material-symbols-outlined stu-u40"
-                                           >emergency</span>
+                                    <div class="eyebrow emergency-eyebrow stu-u39">
+                                        <span class="material-symbols-outlined stu-u40">emergency</span>
                                         PRIORITY EMERGENCY CHANNEL
                                     </div>
-                                    <h1 class="page-title rapid-sos-title stu-u41"
-                                       >
+                                    <h1 class="page-title rapid-sos-title stu-u41">
                                         Emergency SOS</h1>
                                 </div>
-                                <div class="recording-pill recording-status-indicator stu-u42" id="recordingStatusIndicator"
-                                   >
-                                    <span class="record-dot active-record-dot stu-u43"
-                                       ></span>
+                                <div class="recording-pill recording-status-indicator stu-u42"
+                                    id="recordingStatusIndicator">
+                                    <span class="record-dot active-record-dot stu-u43"></span>
                                     <span class="recording-text-label">Active</span>
                                 </div>
                             </div>
 
-                            <div class="section-stack stu-u44" id="sosSectionStack"
-                               >
+                            <div class="section-stack stu-u44" id="sosSectionStack">
                                 <!-- Hero Action Stage -->
-                                <div class="sos-hero-card stu-u45"
-                                   >
+                                <div class="sos-hero-card stu-u45">
                                     <div class="center-copy stu-u46">
-                                        <h2
-                                            class="stu-u47">
+                                        <h2 class="stu-u47">
                                             Trigger Emergency Alert</h2>
-                                        <p class="subcopy stu-u48"
-                                           >
+                                        <p class="subcopy stu-u48">
                                             Press and hold to broadcast instant priority alert with live GPS and camera
                                             uplink.</p>
                                     </div>
 
-                                    <div class="sos-stage stu-u49"
-                                       >
-                                        <div class="sos-ring stu-u50" id="sosRing"
-                                           >
+                                    <div class="sos-stage stu-u49">
+                                        <div class="sos-ring stu-u50" id="sosRing">
                                             <!-- (2026-07-13) Clockwise hold spinner progress arc; was plain ring -->
                                             <svg class="sos-progress-spinner stu-u51" id="sosProgressSpinner"
-                                                viewBox="0 0 204 204"
-                                               >
-                                                <circle cx="102" cy="102" r="92"
-                                                    class="stu-u52">
+                                                viewBox="0 0 204 204">
+                                                <circle cx="102" cy="102" r="92" class="stu-u52">
                                                 </circle>
-                                                <circle id="sosProgressArc" cx="102" cy="102" r="92"
-                                                    class="stu-u53">
+                                                <circle id="sosProgressArc" cx="102" cy="102" r="92" class="stu-u53">
                                                 </circle>
                                             </svg>
                                             <button class="sos-button" id="sosButton" type="button"
@@ -371,52 +337,38 @@
                                         </div>
                                     </div>
 
-                                    <div class="hold-caption stu-u54" id="sosCaption"
-                                       >
-                                        <span
-                                            class="stu-u55"></span>
+                                    <div class="hold-caption stu-u54" id="sosCaption">
+                                        <span class="stu-u55"></span>
                                         Hold for emergency response
                                     </div>
                                 </div>
 
                                 <!-- Telemetry Dispatch & Live Location Cards -->
                                 <div class="stu-u56">
-                                    <div class="card dispatch-card stu-u57"
-                                       >
-                                        <div
-                                            class="stu-u58">
-                                            <span class="material-symbols-outlined stu-u59"
-                                               >local_police</span>
-                                            <span class="success-state stu-u60" id="dispatchState"
-                                               >Standby</span>
+                                    <div class="card dispatch-card stu-u57">
+                                        <div class="stu-u58">
+                                            <span class="material-symbols-outlined stu-u59">local_police</span>
+                                            <span class="success-state stu-u60" id="dispatchState">Standby</span>
                                         </div>
                                         <div class="dispatch-title-container" id="dispatchTitleContainer">
-                                            <strong class="dispatch-title-strong stu-u61"
-                                               >Immediate
+                                            <strong class="dispatch-title-strong stu-u61">Immediate
                                                 Dispatch</strong>
-                                            <span
-                                                class="stu-u62">Campus
+                                            <span class="stu-u62">Campus
                                                 Security Link</span>
                                         </div>
                                     </div>
 
-                                    <div class="card location-card stu-u57"
-                                       >
-                                        <div
-                                            class="stu-u58">
-                                            <span class="material-symbols-outlined stu-u63"
-                                               >near_me</span>
-                                            <span
-                                                class="stu-u64">Live
+                                    <div class="card location-card stu-u57">
+                                        <div class="stu-u58">
+                                            <span class="material-symbols-outlined stu-u63">near_me</span>
+                                            <span class="stu-u64">Live
                                                 GPS</span>
                                         </div>
                                         <div>
                                             <!-- (2026-07-13) Dynamic nearest landmark title; was static text -->
-                                            <strong id="sosCurrentLocationTitle"
-                                                class="stu-u65">CTU
+                                            <strong id="sosCurrentLocationTitle" class="stu-u65">CTU
                                                 Daanbantayan</strong>
-                                            <span id="sosCurrentLocationSub"
-                                                class="stu-u66">Campus
+                                            <span id="sosCurrentLocationSub" class="stu-u66">Campus
                                                 bounds</span>
                                         </div>
                                     </div>
@@ -430,45 +382,33 @@
                         <!-- (2026-07-13) Upgrade GAD section to full GAD Portal with services and PM; was GAD bulletin -->
                         <section class="page" id="page-gad" data-page="gad">
                             <!-- Distinct Portal Theme Wrap -->
-                            <div
-                                class="stu-u68">
+                            <div class="stu-u68">
                                 <div class="page-header stu-u69">
-                                    <div class="icon-badge stu-u70"
-                                       >
-                                        <span class="material-symbols-outlined stu-u71"
-                                           >diversity_3</span>
+                                    <div class="icon-badge stu-u70">
+                                        <span class="material-symbols-outlined stu-u71">diversity_3</span>
                                     </div>
                                     <div class="stu-u16">
-                                        <h1 class="page-title stu-u72"
-                                           >
+                                        <h1 class="page-title stu-u72">
                                             GAD Portal</h1>
-                                        <p
-                                            class="stu-u73">
+                                        <p class="stu-u73">
                                             Equality, Inclusion & Safe Spaces</p>
                                     </div>
                                 </div>
 
                                 <!-- Hero Action -->
-                                <div class="card vault-card stu-u74"
-                                   >
-                                    <div
-                                        class="stu-u75">
+                                <div class="card vault-card stu-u74">
+                                    <div class="stu-u75">
                                         <div>
-                                            <strong
-                                                class="stu-u76">Confidential
+                                            <strong class="stu-u76">Confidential
                                                 GAD Desk</strong>
-                                            <span
-                                                class="stu-u77">Direct
+                                            <span class="stu-u77">Direct
                                                 assistance, guidance, and completely safe reporting.</span>
                                         </div>
-                                        <div
-                                            class="stu-u78">
-                                            <span class="material-symbols-outlined stu-u35"
-                                               >verified_user</span>
+                                        <div class="stu-u78">
+                                            <span class="material-symbols-outlined stu-u35">verified_user</span>
                                         </div>
                                     </div>
-                                    <button class="primary-btn stu-u79" id="openGadPmBtn" type="button"
-                                       >
+                                    <button class="primary-btn stu-u79" id="openGadPmBtn" type="button">
                                         <span class="material-symbols-outlined">shield_person</span>
                                         <span>Report / Message GAD</span>
                                     </button>
@@ -480,8 +420,8 @@
 
                                 <!-- GAD Sub-Navigation Tabs -->
                                 <div class="stu-u81">
-                                    <button class="history-filter-btn active stu-u82" id="gadTabAnnouncements" type="button"
-                                        onclick="switchGadTab('announcements')">Announcements</button>
+                                    <button class="history-filter-btn active stu-u82" id="gadTabAnnouncements"
+                                        type="button" onclick="switchGadTab('announcements')">Announcements</button>
                                     <button class="history-filter-btn stu-u82" id="gadTabMyMessages" type="button"
                                         onclick="switchGadTab('messages')">My Inquiries</button>
                                 </div>
@@ -490,8 +430,7 @@
                                 <div id="gadAnnouncementsPanel">
                                     <div id="gadPostsFeed">
                                         <div id="feedLoader" class="stu-u83">
-                                            <span class="spinner stu-u84"
-                                               ></span>
+                                            <span class="spinner stu-u84"></span>
                                             <p class="stu-u85">Loading announcements...
                                             </p>
                                         </div>
@@ -501,10 +440,8 @@
                                 <!-- Student Inquiries / Messages Panel -->
                                 <div id="gadMessagesPanel" class="stu-u86">
                                     <div id="gadInquiriesList">
-                                        <div
-                                            class="stu-u87">
-                                            <span class="material-symbols-outlined stu-u88"
-                                               >forum</span>
+                                        <div class="stu-u87">
+                                            <span class="material-symbols-outlined stu-u88">forum</span>
                                             No messages sent yet. Use "Report / Message GAD" above to start.
                                         </div>
                                     </div>
@@ -517,27 +454,21 @@
                             <div class="section-stack">
                                 <!-- (2026-07-13) Uniform Activity History header; was basic header -->
                                 <div class="page-header stu-u13">
-                                    <div class="icon-badge stu-u89"
-                                       >
-                                        <span class="material-symbols-outlined stu-u15"
-                                           >manage_history</span>
+                                    <div class="icon-badge stu-u89">
+                                        <span class="material-symbols-outlined stu-u15">manage_history</span>
                                     </div>
                                     <div class="stu-u16">
-                                        <div class="eyebrow stu-u90"
-                                           >
+                                        <div class="eyebrow stu-u90">
                                             YOUR TIMELINE</div>
-                                        <h1 class="page-title stu-u91"
-                                           >
+                                        <h1 class="page-title stu-u91">
                                             Activity History</h1>
-                                        <p class="page-copy stu-u18"
-                                           >
+                                        <p class="page-copy stu-u18">
                                             A log of your SOS alerts, attendance, and vault activity.</p>
                                     </div>
                                 </div>
 
                                 <!-- Filter chips -->
-                                <div
-                                    class="stu-u92">
+                                <div class="stu-u92">
                                     <button class="history-filter-btn active" data-filter="all"
                                         onclick="filterHistory('all')">All</button>
                                     <button class="history-filter-btn" data-filter="sos"
@@ -552,22 +483,19 @@
                                 <div class="card stu-u93">
                                     <div id="historyTimeline">
                                         <div class="stu-u94">
-                                            <span class="material-symbols-outlined stu-u95"
-                                               >hourglass_empty</span>
+                                            <span class="material-symbols-outlined stu-u95">hourglass_empty</span>
                                             Loading your activity...
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="card stu-u93">
-                                    <div
-                                        class="stu-u96">
+                                    <div class="stu-u96">
                                         <div>
                                             <div class="mini-label">NOTIFICATIONS</div>
                                             <div class="stu-u97">Notification History</div>
                                         </div>
-                                        <span class="material-symbols-outlined stu-u98"
-                                           >notifications</span>
+                                        <span class="material-symbols-outlined stu-u98">notifications</span>
                                     </div>
                                     <div id="historyNotifications" class="notif-history-list">
                                         <div class="notif-empty stu-u99">No notifications yet</div>
@@ -580,143 +508,108 @@
                             <div class="section-stack">
                                 <!-- (2026-07-13) Fix closed page-header and uniform Attendance card stack; was unclosed header tag -->
                                 <div class="page-header stu-u13">
-                                    <div class="icon-badge stu-u100"
-                                       >
-                                        <span class="material-symbols-outlined stu-u15"
-                                           >fact_check</span>
+                                    <div class="icon-badge stu-u100">
+                                        <span class="material-symbols-outlined stu-u15">fact_check</span>
                                     </div>
                                     <div class="stu-u16">
                                         <!-- (2026-07-13) Remove eyebrow from attendance header; was eyebrow tag -->
-                                        <h1 class="page-title stu-u17"
-                                           >
+                                        <h1 class="page-title stu-u17">
                                             Attendance</h1>
-                                        <p class="page-copy stu-u18"
-                                           >
+                                        <p class="page-copy stu-u18">
                                             Time in or out with automatic time and location logging.</p>
                                     </div>
                                 </div>
 
-                                <div class="card stu-u101"
-                                   >
-                                    <div
-                                        class="stu-u102">
+                                <div class="card stu-u101">
+                                    <div class="stu-u102">
                                         <div>
-                                            <div class="mini-label stu-u103"
-                                               >
+                                            <div class="mini-label stu-u103">
                                                 Presence Status</div>
-                                            <div
-                                                class="stu-u104">
+                                            <div class="stu-u104">
                                                 Campus Attendance</div>
                                         </div>
-                                        <div id="attendanceStatusPill"
-                                            class="stu-u105">
-                                            <span id="attendanceStatusDot"
-                                                class="stu-u106"></span>
+                                        <div id="attendanceStatusPill" class="stu-u105">
+                                            <span id="attendanceStatusDot" class="stu-u106"></span>
                                             <span id="currentStatusText">Timed Out</span>
                                         </div>
                                     </div>
 
                                     <div class="stu-u107">
-                                        <button id="timeInBtn" class="button-primary stu-u108"
-                                           >
-                                            <span class="material-symbols-outlined stu-u109"
-                                               >login</span>
+                                        <button id="timeInBtn" class="button-primary stu-u108">
+                                            <span class="material-symbols-outlined stu-u109">login</span>
                                             <span>TIME IN</span>
                                         </button>
-                                        <button id="timeOutBtn" class="button-primary stu-u110"
-                                           
-                                            disabled>
-                                            <span class="material-symbols-outlined stu-u109"
-                                               >logout</span>
+                                        <button id="timeOutBtn" class="button-primary stu-u110" disabled>
+                                            <span class="material-symbols-outlined stu-u109">logout</span>
                                             <span>TIME OUT</span>
                                         </button>
                                     </div>
 
-                                    <div
-                                        class="stu-u111">
-                                        <div
-                                            class="stu-u112">
-                                            <div class="mini-label stu-u113"
-                                               >
+                                    <div class="stu-u111">
+                                        <div class="stu-u112">
+                                            <div class="mini-label stu-u113">
                                                 Last Log Time</div>
-                                            <div id="attendanceLastTime"
-                                                class="stu-u114">
+                                            <div id="attendanceLastTime" class="stu-u114">
                                                 No records yet</div>
                                         </div>
-                                        <div
-                                            class="stu-u115">
-                                            <div class="mini-label stu-u113"
-                                               >
+                                        <div class="stu-u115">
+                                            <div class="mini-label stu-u113">
                                                 Last Location</div>
                                             <!-- (2026-07-13) Wrap long location text; was nowrap overflowing card -->
-                                            <div id="attendanceLastLocation"
-                                                class="stu-u116">
+                                            <div id="attendanceLastLocation" class="stu-u116">
                                                 No records yet</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div class="stu-u56">
-                                    <div class="card stu-u117"
-                                       >
-                                        <div id="statAttendanceRate"
-                                            class="stu-u118">
+                                    <div class="card stu-u117">
+                                        <div id="statAttendanceRate" class="stu-u118">
                                             0%</div>
-                                        <div
-                                            class="stu-u119">
+                                        <div class="stu-u119">
                                             Overall Rate</div>
                                     </div>
-                                    <div class="card stu-u120"
-                                       >
-                                        <div id="statDaysPresent"
-                                            class="stu-u121">
+                                    <div class="card stu-u120">
+                                        <div id="statDaysPresent" class="stu-u121">
                                             0</div>
-                                        <div
-                                            class="stu-u119">
+                                        <div class="stu-u119">
                                             Days Present</div>
                                     </div>
                                 </div>
 
-                                <div class="card stu-u122"
-                                   >
+                                <div class="card stu-u122">
                                     <div class="row-between stu-u123">
                                         <div>
-                                            <div
-                                                class="stu-u124">
+                                            <div class="stu-u124">
                                                 Attendance History</div>
                                             <span class="stu-u125">Timestamped presence
                                                 log</span>
                                         </div>
                                         <!-- (2026-07-13) Add export buttons for history tab; was icon only -->
                                         <div class="stu-u126">
-                                            <button id="btnExportStudentAttendanceCsv" type="button" class="btn btn-sm stu-u127" title="Export CSV">CSV</button>
-                                            <button id="btnExportStudentAttendanceJson" type="button" class="btn btn-sm stu-u127" title="Export JSON">JSON</button>
-                                            <span class="material-symbols-outlined stu-u128"
-                                               >history</span>
+                                            <button id="btnExportStudentAttendanceCsv" type="button"
+                                                class="btn btn-sm stu-u127" title="Export CSV">CSV</button>
+                                            <button id="btnExportStudentAttendanceJson" type="button"
+                                                class="btn btn-sm stu-u127" title="Export JSON">JSON</button>
+                                            <span class="material-symbols-outlined stu-u128">history</span>
                                         </div>
                                     </div>
                                     <div id="attendanceHistoryList">
-                                        <div
-                                            class="stu-u129">
+                                        <div class="stu-u129">
                                             No attendance records found.</div>
                                     </div>
                                 </div>
 
-                                <div class="card stu-u130"
-                                   >
+                                <div class="card stu-u130">
                                     <div class="stu-u131">
-                                        <div
-                                            class="stu-u132">
+                                        <div class="stu-u132">
                                             Academic Standing</div>
-                                        <div id="academicStandingText"
-                                            class="stu-u133">
+                                        <div id="academicStandingText" class="stu-u133">
                                             Initializing...</div>
-                                        <p id="academicStandingCopy"
-                                            class="stu-u134">Please record
+                                        <p id="academicStandingCopy" class="stu-u134">Please record
                                             your first attendance to see your standing.</p>
                                     </div>
-                                    <span class="material-symbols-outlined stu-u135"
-                                       >military_tech</span>
+                                    <span class="material-symbols-outlined stu-u135">military_tech</span>
                                 </div>
                             </div>
                         </section>
@@ -779,10 +672,10 @@
                         <!-- Instagram style: modes removed, replaced with dynamic interaction -->
                         <div class="camera-preview-shell">
                             <!-- (2026-07-13) Dark poster on camera preview; prev: bare video tag -->
-                            <video id="cameraPreview" autoplay playsinline muted poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect width='1' height='1' fill='%23080b18'/%3E%3C/svg%3E"></video>
+                            <video id="cameraPreview" autoplay playsinline muted
+                                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3Crect width='1' height='1' fill='%23080b18'/%3E%3C/svg%3E"></video>
                             <div class="camera-overlay-grid" aria-hidden="true"></div>
-                            <div class="camera-status-pill stu-u136" id="recordingStatus"
-                               >
+                            <div class="camera-status-pill stu-u136" id="recordingStatus">
                                 <span class="camera-status-dot pulse" aria-hidden="true"></span>
                                 <span id="recordingTimer">00:00</span>
                             </div>
@@ -836,8 +729,7 @@
                     </div>
 
                     <canvas id="captureCanvas" hidden></canvas>
-                    <input class="gallery-input stu-u3" id="galleryInput" type="file" accept="image/*,video/*"
-                       >
+                    <input class="gallery-input stu-u3" id="galleryInput" type="file" accept="image/*,video/*">
                 </section>
         </div>
         </section>
@@ -855,11 +747,12 @@
             <h3 class="status-title stu-u139">Invite Parent or Guardian</h3>
             <p class="status-msg stu-u140">
                 Share your unique link with your parents so they can monitor your safety and live SOS alerts.
-            <!-- (2026-07-13) Add guardian email input; prev: invite link box only -->
+                <!-- (2026-07-13) Add guardian email input; prev: invite link box only -->
             <div class="guardian-invite-email-wrap stu-u141">
                 <label for="guardianInviteEmailInput" class="stu-u142">Guardian's Email Address</label>
                 <div class="stu-u143">
-                    <input type="email" id="guardianInviteEmailInput" placeholder="e.g. parent@gmail.com" class="stu-u144">
+                    <input type="email" id="guardianInviteEmailInput" placeholder="e.g. parent@gmail.com"
+                        class="stu-u144">
                     <button type="button" class="invite-btn-primary stu-u145" id="sendGuardianInviteEmailBtn">
                         <span class="material-symbols-outlined stu-u146">send</span>
                         <span>Send</span>
@@ -1002,8 +895,7 @@
             <p class="status-msg">Are you sure you want to permanently delete this media from your vault? This action
                 cannot be undone.</p>
             <div class="attendance-modal-actions">
-                <button id="confirmDeleteBtn" class="status-btn stu-u153"
-                   >Delete Permanently</button>
+                <button id="confirmDeleteBtn" class="status-btn stu-u153">Delete Permanently</button>
                 <button id="cancelDeleteBtn" class="status-btn secondary">Cancel</button>
             </div>
         </div>
@@ -1017,8 +909,7 @@
             <p class="status-msg">Are you sure you want to log out of your Securo account? You will need to sign in
                 again to access your safety tools.</p>
             <div class="attendance-modal-actions">
-                <button id="confirmLogoutBtn" class="status-btn stu-u154"
-                   >Yes, Log Out</button>
+                <button id="confirmLogoutBtn" class="status-btn stu-u154">Yes, Log Out</button>
                 <button id="cancelLogoutBtn" class="status-btn secondary">Stay Signed In</button>
             </div>
         </div>
@@ -1057,7 +948,7 @@
     </div>
     // (2026-07-13) Add GAD Direct & Anonymous Messaging modal; was toastNotify and body close
     <!-- (2026-07-13) Fullscreen GAD chat layout matching guardian; was dialog modal -->
-    
+
     <div class="status-modal" id="gadPmModal">
         <div class="gad-chat-card" id="gadChatCard">
             <!-- (2026-07-13) Clean GAD header without anon divider; was anon subbar -->
@@ -1081,8 +972,10 @@
             <input type="checkbox" id="gadAnonToggle" checked aria-hidden="true" class="stu-u3">
             <div class="gad-chat-thread" id="gadChatThread">
                 <div class="gad-them-row bubble-single">
-                    <div class="gad-them-avatar"><span class="material-symbols-outlined stu-u164">support_agent</span></div>
-                    <div class="gad-bubble them bubble-single">Hi! This is the GAD Desk. Tell us what is on your mind — your message is confidential.</div>
+                    <div class="gad-them-avatar"><span class="material-symbols-outlined stu-u164">support_agent</span>
+                    </div>
+                    <div class="gad-bubble them bubble-single">Hi! This is the GAD Desk. Tell us what is on your mind —
+                        your message is confidential.</div>
                 </div>
             </div>
             <div class="gad-chat-composer">
@@ -1160,8 +1053,7 @@
                         <form id="fsOnboardingForm">
                             <div class="fs-form-row-grid stu-u166">
                                 <div class="form-group stu-u167">
-                                    <label class="form-label stu-u168"
-                                       >First
+                                    <label class="form-label stu-u168">First
                                         Name</label>
                                     <div class="fs-input-field-wrap">
                                         <span class="material-symbols-outlined input-icon">person</span>
@@ -1170,8 +1062,7 @@
                                     </div>
                                 </div>
                                 <div class="form-group stu-u167">
-                                    <label class="form-label stu-u168"
-                                       >Last
+                                    <label class="form-label stu-u168">Last
                                         Name</label>
                                     <div class="fs-input-field-wrap">
                                         <span class="material-symbols-outlined input-icon">badge</span>
@@ -1185,12 +1076,10 @@
                             <div class="fs-form-row-grid stu-u169" id="fsCourseSectionRow">
                                 <!-- Course Dropdown -->
                                 <div class="form-group stu-u167">
-                                    <label class="form-label stu-u168"
-                                       >Course</label>
+                                    <label class="form-label stu-u168">Course</label>
                                     <div class="fs-input-field-wrap stu-u170">
                                         <span class="material-symbols-outlined input-icon">school</span>
-                                        <select id="fsCourse" required
-                                            class="stu-u171">
+                                        <select id="fsCourse" required class="stu-u171">
                                             <option value="" disabled selected>Select course</option>
                                             <option value="BSIT">Bachelor of Science in Information Technology (BSIT)
                                             </option>
@@ -1211,38 +1100,30 @@
                                             <option value="BTLEd-HE">Bachelor in Technology Livelihood Education - Major
                                                 in Home Economics (BTLEd-HE)</option>
                                         </select>
-                                        <span class="material-symbols-outlined stu-u172"
-                                           >arrow_drop_down</span>
+                                        <span class="material-symbols-outlined stu-u172">arrow_drop_down</span>
                                     </div>
                                 </div>
 
                                 <!-- Year · Section -->
                                 <div class="form-group stu-u167">
-                                    <label class="form-label stu-u168"
-                                       >Year
+                                    <label class="form-label stu-u168">Year
                                         · Section</label>
-                                    <div class="fs-input-field-wrap stu-u173"
-                                       >
-                                        <span class="material-symbols-outlined input-icon stu-u174"
-                                           >calendar_today</span>
-                                        <input type="text" id="fsYearLevel" placeholder="4" maxlength="1"
-                                            inputmode="numeric" required autocomplete="off"
-                                            class="stu-u175">
+                                    <div class="fs-input-field-wrap stu-u173">
                                         <span
-                                            class="stu-u176">-</span>
+                                            class="material-symbols-outlined input-icon stu-u174">calendar_today</span>
+                                        <input type="text" id="fsYearLevel" placeholder="4" maxlength="1"
+                                            inputmode="numeric" required autocomplete="off" class="stu-u175">
+                                        <span class="stu-u176">-</span>
                                         <input type="text" id="fsSection" placeholder="A" maxlength="4" required
-                                            autocomplete="off"
-                                            class="stu-u177">
+                                            autocomplete="off" class="stu-u177">
                                     </div>
                                 </div>
                             </div>
 
-                            <div id="fsOnboardingError" class="error-msg stu-u178"
-                               >
+                            <div id="fsOnboardingError" class="error-msg stu-u178">
                             </div>
 
-                            <button type="submit" class="btn-action stu-u179" id="fsSubmitOnboardingBtn"
-                               >
+                            <button type="submit" class="btn-action stu-u179" id="fsSubmitOnboardingBtn">
                                 <span id="fsSubmitText">Save & Continue</span>
                                 <span class="material-symbols-outlined" id="fsSubmitIcon">arrow_forward</span>
                             </button>
@@ -1251,68 +1132,55 @@
 
                     <!-- Slide 2: Parent / Guardian Link -->
                     <div class="fs-slide-card" id="fsSlideStep2">
-                        <div
-                            class="stu-u180">
+                        <div class="stu-u180">
 
                             <!-- Badge Icon -->
-                            <div
-                                class="stu-u181">
+                            <div class="stu-u181">
                                 <span class="material-symbols-outlined stu-u182">family_restroom</span>
                             </div>
 
-                            <h2
-                                class="stu-u183">
+                            <h2 class="stu-u183">
                                 Link Your Account With Your Parents</h2>
-                            <p
-                                class="stu-u184">
+                            <p class="stu-u184">
                                 Copy this link to link your account with your parents. Give this link to them to
                                 register.
                             </p>
 
                             <!-- Link Container -->
-                            <div
-                                class="stu-u185">
-                                <div
-                                    class="stu-u186">
-                                    <span
-                                        class="stu-u187">Parent
+                            <div class="stu-u185">
+                                <div class="stu-u186">
+                                    <span class="stu-u187">Parent
                                         Registration Link</span>
-                                    <span class="material-symbols-outlined stu-u188"
-                                       >link</span>
+                                    <span class="material-symbols-outlined stu-u188">link</span>
                                 </div>
-                                <div id="fsGuardianInviteLink"
-                                    class="stu-u189">
+                                <div id="fsGuardianInviteLink" class="stu-u189">
                                     <!-- (2026-07-13) Dynamic link placeholder; prev: zea domain -->
-                                    Generating link...</div>
+                                    Generating link...
+                                </div>
                             </div>
 
                             <!-- Action buttons -->
                             <div class="stu-u190">
                                 <!-- (2026-07-13) Shorter copy button label; prev: long prompt label -->
-                                <button type="button" class="btn-action stu-u191" id="fsCopyGuardianLinkBtn"
-                                   >
+                                <button type="button" class="btn-action stu-u191" id="fsCopyGuardianLinkBtn">
                                     <span class="material-symbols-outlined">content_copy</span>
                                     <span id="fsCopyLinkText">Copy Link</span>
                                 </button>
 
-                                <button type="button" class="btn-action stu-u192" id="fsShareGuardianLinkBtn"
-                                   >
+                                <button type="button" class="btn-action stu-u192" id="fsShareGuardianLinkBtn">
                                     <span class="material-symbols-outlined">share</span>
                                     <span>Share Link</span>
                                 </button>
 
-                                <button type="button" id="fsProceedToAppBtn"
-                                    class="stu-u193">
+                                <button type="button" id="fsProceedToAppBtn" class="stu-u193">
                                     <span>Proceed to App</span>
                                     <span class="material-symbols-outlined">arrow_forward</span>
                                 </button>
                             </div>
 
                             <!-- Swipe hint -->
-                            <div id="fsSwipeHintBox"
-                                class="stu-u194">
-                                <span class="material-symbols-outlined stu-u195" id="fsSwipeHintIcon"
-                                   >lock</span>
+                            <div id="fsSwipeHintBox" class="stu-u194">
+                                <span class="material-symbols-outlined stu-u195" id="fsSwipeHintIcon">lock</span>
                                 <span id="fsSwipeHintText">Copy link above to unlock app</span>
                             </div>
                         </div>
@@ -1326,7 +1194,7 @@
         <span class="material-symbols-outlined" id="toastIcon">check_circle</span>
         <span id="toastMsg">Success</span>
     </div>
-    
+
 </body>
 
 </html>

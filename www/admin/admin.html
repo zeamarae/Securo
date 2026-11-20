@@ -963,8 +963,8 @@
         </div>
     </div>
 
-    <script type="module" src="admin.js"></script>
 </div>
+<!-- (2026-07-13) Remove early duplicate admin.js tag; was before analytics -->
 <section id="adminAnalyticsSection" class="admin-view-section is-hidden">
 <div class="dashboard-container">
         <div class="dashboard-header">
@@ -983,7 +983,8 @@
                     <span class="material-symbols-outlined">download</span>
                     <span>Export</span>
                 </button>
-                <a href="../admin/admin.html" class="btn-export adm-u198">
+                <!-- (2026-07-13) Bind analytics back button to SPA dashboard; was link -->
+                <a href="#dashboard" id="analyticsBackToDashboardBtn" class="btn-export adm-u198">
                     <span class="material-symbols-outlined">arrow_back</span>
                     <span>Back</span>
                 </a>

@@ -99,15 +99,15 @@ export function setupConnectivityListeners() {
         isOnline = true;
         Logger.info('Network', 'Back online');
         UI.showToast('Back online - syncing data...', 'success');
-        
+
         // Try to sync offline queue
         await requestBackgroundSync();
-        
+
         updateOfflineQueueIndicator('syncing');
         try {
             const { processOfflineQueue } = await import('./db.js');
             const result = await processOfflineQueue();
-            
+
             if (result.processed > 0) {
                 UI.showToast(`Synced ${result.processed} offline operations`, 'success');
             }
@@ -153,7 +153,7 @@ export async function updateOfflineQueueIndicator(state = null) {
     try {
         const { getOfflineQueueSize } = await import('./db.js');
         queueSize = getOfflineQueueSize();
-    } catch (e) {}
+    } catch (e) { }
 
     const online = navigator.onLine;
     if (!online) {
@@ -211,11 +211,11 @@ export function setupServiceWorkerListeners() {
                     Logger.error('ServiceWorker', 'Queue processing failed', error);
                 }
                 break;
-                
+
             case 'CACHE_UPDATED':
                 Logger.info('ServiceWorker', 'Cache updated', data);
                 break;
-                
+
             default:
                 Logger.info('ServiceWorker', 'Message received', { type, data });
         }
@@ -287,29 +287,29 @@ export function showLocalNotification(title, options = {}) {
 export async function initializeOfflineSupport() {
     try {
         Logger.info('OfflineSupport', 'Initializing...');
-        
+
         // Register service worker
         await registerServiceWorker();
-        
+
         // Setup listeners
         setupConnectivityListeners();
         setupServiceWorkerListeners();
-        
+
         // Request notification permission (optional)
         const notifGranted = await requestNotificationPermission();
         if (notifGranted) {
             Logger.info('OfflineSupport', 'Notifications enabled');
         }
-        
+
         // Check for pending offline operations
         const { getOfflineQueueSize } = await import('./db.js');
         const queueSize = getOfflineQueueSize();
-        
+
         if (queueSize > 0 && isOnline) {
             Logger.info('OfflineSupport', 'Found queued operations', { count: queueSize });
             await requestBackgroundSync();
         }
-        
+
         updateOfflineQueueIndicator();
         Logger.info('OfflineSupport', 'Initialization complete');
         return true;

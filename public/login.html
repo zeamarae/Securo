@@ -84,13 +84,12 @@
                 </div>
             </div>
 
-            <!-- Student Email (Signup Only) -->
+            <!-- (2026-07-13) Make recovery email optional on signup; was required -->
             <div class="form-group signup-only">
-                <label class="form-label">Email Address</label>
+                <label class="form-label">Email Address (Optional)</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">mail</span>
-                    <!-- (2026-07-13) Add student email field for recovery; was absent -->
-                    <input type="email" id="studentEmailSignup" placeholder="Enter your email for password reset" autocomplete="email">
+                    <input type="email" id="studentEmailSignup" placeholder="Optional email for OTP recovery" autocomplete="email">
                 </div>
             </div>
 
@@ -324,7 +323,7 @@
         </div>
     </div>
 
-    <!-- (2026-07-13) Student email password reset modal; was guardian verify -->
+    <!-- (2026-07-13) 3-step student/parent OTP reset modal; was link only -->
     <div id="studentResetModal" class="onboarding-modal-backdrop">
         <div class="onboarding-modal-card pub-login-u35">
             <div class="pub-login-u36">
@@ -334,7 +333,7 @@
                     </div>
                     <div>
                         <h3 class="pub-login-u40">Reset Password</h3>
-                        <p class="pub-login-u41">Direct Email Password Recovery</p>
+                        <p class="pub-login-u41">OTP Verification Recovery</p>
                     </div>
                 </div>
                 <button type="button" id="closeStudentResetModalBtn" class="pub-login-u42">
@@ -342,10 +341,10 @@
                 </button>
             </div>
 
-            <!-- Form View: Enter Student ID -->
+            <!-- Step 1: Enter Student ID to dispatch OTP -->
             <div id="studentResetFormView">
                 <p class="pub-login-u44">
-                    Enter your 7-Digit Student ID number. We will send a secure password reset link to the email linked to your account upon registration.
+                    Enter your 7-Digit Student ID. We will send a 6-digit OTP to your registered email, or to your linked parent's email if no student email is set.
                 </p>
 
                 <div class="input-group pub-login-u45">
@@ -359,31 +358,76 @@
                 <div id="studentResetError" class="error-msg pub-login-u12"></div>
 
                 <button type="button" id="studentResetSendBtn" class="btn-action pub-login-u21">
-                    <span>Send Password Reset Link</span>
+                    <span>Send OTP Code</span>
                     <span class="material-symbols-outlined">send</span>
                 </button>
 
                 <button type="button" id="studentRequestAdminResetBtn" class="pub-login-u47">
                     <span class="material-symbols-outlined pub-login-u48">contact_support</span>
-                    <span>Can't access your email? Request Admin Reset</span>
+                    <span>Can't access email? Request Admin Reset</span>
                 </button>
             </div>
 
-            <!-- Success View: Link Dispatched -->
-            <div id="studentResetSuccessView" class="pub-login-u49">
+            <!-- Step 2: Enter 6-digit OTP received via email -->
+            <div id="studentResetOtpView" class="pub-login-u49">
                 <div class="pub-login-u50">
                     <span class="material-symbols-outlined pub-login-u51">mark_email_read</span>
                 </div>
-                <h4 class="pub-login-u52">Reset Link Dispatched!</h4>
-                <p class="pub-login-u53">
-                    A password reset email has been sent to:
+                <h4 class="pub-login-u52">Enter Verification OTP</h4>
+                <p id="studentResetRecipientHint" class="pub-login-u53">
+                    A 6-digit OTP has been sent to:
                 </p>
                 <div id="studentResetTargetEmail" class="pub-login-u54"></div>
-                <p class="pub-login-u55">
-                    Please check your inbox (and Spam/Junk folder). Click the link inside to set your new password, then return here to log in.
+
+                <div class="input-group pub-login-u45">
+                    <label class="pub-login-u46">6-Digit OTP Code</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined">pin</span>
+                        <input type="text" id="studentResetOtpInput" placeholder="Enter 6-digit code" maxlength="6" pattern="\d*" inputmode="numeric" autocomplete="one-time-code">
+                    </div>
+                </div>
+
+                <div id="studentResetOtpError" class="error-msg pub-login-u12"></div>
+
+                <button type="button" id="studentResetVerifyOtpBtn" class="btn-action pub-login-u21">
+                    <span>Verify OTP Code</span>
+                    <span class="material-symbols-outlined">verified</span>
+                </button>
+
+                <button type="button" id="studentResetResendOtpBtn" class="pub-login-u47">
+                    <span class="material-symbols-outlined pub-login-u48">refresh</span>
+                    <span>Resend OTP Code</span>
+                </button>
+            </div>
+
+            <!-- Step 3: Set New Password & Auto-Login -->
+            <div id="studentResetNewPwdView" class="pub-login-u49">
+                <h4 class="pub-login-u52">Set New Password</h4>
+                <p class="pub-login-u53">
+                    OTP verified. Enter and confirm your new password below.
                 </p>
-                <button type="button" id="studentResetDoneBtn" class="btn-action">
-                    <span>Back to Sign In</span>
+
+                <div class="input-group pub-login-u45">
+                    <label class="pub-login-u46">New Password</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined">lock</span>
+                        <input type="password" id="studentResetNewPwdInput" placeholder="Minimum 8 characters" autocomplete="new-password">
+                    </div>
+                </div>
+
+                <div class="input-group pub-login-u45">
+                    <label class="pub-login-u46">Confirm New Password</label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined">lock_check</span>
+                        <input type="password" id="studentResetConfirmPwdInput" placeholder="Confirm your new password" autocomplete="new-password">
+                    </div>
+                </div>
+
+                <div id="studentResetNewPwdError" class="error-msg pub-login-u12"></div>
+
+                <button type="button" id="studentResetSavePwdBtn" class="btn-action pub-login-u21">
+                    <span>Update Password & Sign In</span>
+                    <span class="material-symbols-outlined">login</span>
                 </button>
             </div>
         </div>

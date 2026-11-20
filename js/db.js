@@ -7,14 +7,14 @@
 import { db, auth } from './firebase-config.js';
 // (2026-07-13) Import auth & deletion functions; was db only
 import { deleteUser, reauthenticateWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { 
-    collection, 
-    addDoc, 
-    getDocs, 
-    query, 
-    where, 
-    doc, 
-    setDoc, 
+import {
+    collection,
+    addDoc,
+    getDocs,
+    query,
+    where,
+    doc,
+    setDoc,
     getDoc,
     updateDoc,
     deleteDoc,
@@ -22,7 +22,7 @@ import {
     limit,
     onSnapshot,
     or,
-    serverTimestamp 
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { Logger } from './utils.js';
 
@@ -58,7 +58,7 @@ export const readLocalEmergencyPosts = () => {
                             }
                         });
                     }
-                } catch (_) {}
+                } catch (_) { }
             }
         }
         return result;
@@ -138,7 +138,7 @@ export const readLocalGuardianLinks = () => {
 export const writeLocalGuardianLinks = (links) => {
     try {
         localStorage.setItem(LOCAL_GUARDIAN_LINKS_KEY, JSON.stringify(links || []));
-    } catch (_) {}
+    } catch (_) { }
 };
 
 export const upsertLocalGuardianLink = (link) => {
@@ -284,7 +284,7 @@ export const saveUserProfile = async (userId, profileData) => {
             console.warn("Guardian link sync skipped after saveUserProfile:", error);
         });
         // (2026-07-13) Sync guardian link names on profile save; was student only
-        await syncGuardianLinksForGuardian(userId, profileData).catch(() => {});
+        await syncGuardianLinksForGuardian(userId, profileData).catch(() => { });
     } catch (error) {
         if (error?.code === "permission-denied" || /insufficient permissions/i.test(error?.message || "")) {
             upsertLocalUser(userId, profileData);
@@ -405,7 +405,7 @@ export const attachPhotoToActiveSOS = async (userId, photoItem) => {
                     hasPhoto: true,
                     lastPhoto: photoItem.src,
                     lastPhotoAt: serverTimestamp()
-                }).catch(() => {});
+                }).catch(() => { });
             }
             return true;
         }
@@ -473,7 +473,7 @@ export const getUserEmergencyPosts = async (userId, userName = null) => {
         let remotePosts = [];
         if (userId) {
             const q = query(
-                collection(db, "emergency_posts"), 
+                collection(db, "emergency_posts"),
                 where("userId", "==", userId)
             );
             const querySnapshot = await getDocs(q).catch(() => ({ docs: [] }));
@@ -563,7 +563,7 @@ export const getGuardianSharedEmergencyPosts = async (studentUid, studentId = nu
                             docs.push({ id: d.id, ...d.data() });
                         }
                     });
-                } catch (_) {}
+                } catch (_) { }
                 _guardianSharedPostsCache = docs;
                 _guardianSharedPostsCacheTs = Date.now();
                 return docs;
@@ -667,8 +667,8 @@ export const toggleEmergencyPostAccess = async (postId, isVisible) => {
         return true;
     } catch (error) {
         if (error?.code === "permission-denied" || /insufficient permissions/i.test(error?.message || "")) {
-             console.warn("Firestore access update denied; change remains local.");
-             return true;
+            console.warn("Firestore access update denied; change remains local.");
+            return true;
         }
         console.warn("Error toggling emergency post access:", error);
         throw error;
@@ -762,11 +762,21 @@ export const getEmergencyPostById = async (postId) => {
  * Check if a Student ID is already registered
  * @param {string} studentId 
  */
-export const isStudentIdTaken = async (studentId) => {
+// (2026-07-13) Support excludeUid in studentId check; was matching all docs
+export const isStudentIdTaken = async (studentId, excludeUid = null) => {
+    const raw = String(studentId || "").trim();
+    if (!raw) return false;
     try {
-        const q = query(collection(db, "users"), where("studentId", "==", studentId));
-        const querySnapshot = await getDocs(q);
-        return !querySnapshot.empty;
+        const q1 = query(collection(db, "users"), where("studentId", "==", raw));
+        const snap1 = await getDocs(q1);
+        if (snap1.docs.some((d) => !excludeUid || d.id !== excludeUid)) return true;
+        const num = Number(raw);
+        if (!Number.isNaN(num)) {
+            const q2 = query(collection(db, "users"), where("studentId", "==", num));
+            const snap2 = await getDocs(q2);
+            if (snap2.docs.some((d) => !excludeUid || d.id !== excludeUid)) return true;
+        }
+        return false;
     } catch (error) {
         console.warn("Error checking student ID:", error);
         return false;
@@ -784,14 +794,26 @@ export const getEmailByStudentId = async (studentId) => {
         if (raw) {
             const dir = JSON.parse(raw);
             const found = Object.values(dir).find(u => String(u.studentId || '') === String(studentId));
-            if (found?.email) return found.email;
+            // (2026-07-13) Prefer authEmail over recovery email; was email only
+            if (found?.authEmail || found?.email) return found.authEmail || found.email;
         }
-    } catch (_) {}
+    } catch (_) { }
     try {
         const q = query(collection(db, "users"), where("studentId", "==", String(studentId)));
         const querySnapshot = await getDocs(q);
         if (!querySnapshot.empty) {
-            return querySnapshot.docs[0].data().email;
+            const d = querySnapshot.docs[0].data();
+            return d.authEmail || d.email || null;
+        }
+        // (2026-07-13) Query numeric studentId too; was string only
+        const num = Number(String(studentId || '').trim());
+        if (!Number.isNaN(num)) {
+            const q2 = query(collection(db, "users"), where("studentId", "==", num));
+            const snap2 = await getDocs(q2);
+            if (!snap2.empty) {
+                const d = snap2.docs[0].data();
+                return d.authEmail || d.email || null;
+            }
         }
         return null;
     } catch (error) {
@@ -817,7 +839,7 @@ export const updateUserProfile = async (uid, data) => {
             console.warn("Guardian link sync skipped after updateUserProfile:", error);
         });
         // (2026-07-13) Sync guardian link names on profile update; was student only
-        await syncGuardianLinksForGuardian(uid, data).catch(() => {});
+        await syncGuardianLinksForGuardian(uid, data).catch(() => { });
         return true;
     } catch (error) {
         if (isPermissionDeniedError(error)) {
@@ -847,8 +869,38 @@ export const getCampusMarkers = async () => {
  * Save a GAD announcement post
  * @param {object} postData 
  */
-// (2026-07-13) Broadcast GAD post to students & parents; was post only
+// (2026-07-13) Non-blocking GAD publish with local fallback; was failing
+const LOCAL_GAD_POSTS_KEY = "securo_gad_posts_local";
+
+const readLocalGADPosts = () => {
+    try {
+        const raw = localStorage.getItem(LOCAL_GAD_POSTS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+        return [];
+    }
+};
+
+const writeLocalGADPosts = (posts) => {
+    try {
+        localStorage.setItem(LOCAL_GAD_POSTS_KEY, JSON.stringify((posts || []).slice(0, 60)));
+        const ch = new BroadcastChannel('securo_gad_channel');
+        ch.postMessage({ type: 'gad_updated', at: Date.now() });
+        ch.close();
+    } catch (_) { }
+};
+
 export const saveGADPost = async (postData) => {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const localId = `local_gad_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const baseEntry = {
+        ...postData,
+        likes: 0,
+        likedBy: [],
+        createdAt: { seconds: nowSec }
+    };
+
     try {
         const docRef = await addDoc(collection(db, "gad_posts"), {
             ...postData,
@@ -857,33 +909,40 @@ export const saveGADPost = async (postData) => {
             createdAt: serverTimestamp()
         });
 
-        // Broadcast notification to students and guardians
-        try {
-            const allUsers = await getAllUsers().catch(() => []);
-            const targetUsers = allUsers.filter((u) => u.uid && (u.role === 'student' || u.role === 'guardian'));
-            const snippet = String(postData.content || "New GAD announcement published").slice(0, 100);
-            await Promise.all(targetUsers.map((u) =>
-                sendAccountNotification({
-                    userId: u.uid,
-                    type: "gad_bulletin",
-                    title: "GAD Announcement: " + (postData.author || "GAD Office"),
-                    message: snippet + (snippet.length >= 100 ? "..." : ""),
-                    sourceUserId: "gad_office",
-                    sourceName: postData.author || "GAD Office",
-                    metadata: {
-                        postId: docRef.id,
-                        timestamp: new Date().toISOString()
-                    }
-                }).catch(() => null)
-            ));
-        } catch (e) {
-            console.warn("GAD notification broadcast skipped:", e);
-        }
+        const local = readLocalGADPosts().filter(p => p.id !== docRef.id);
+        local.unshift({ id: docRef.id, ...baseEntry });
+        writeLocalGADPosts(local);
+
+        // Broadcast notification asynchronously without blocking publish
+        (async () => {
+            try {
+                const allUsers = await getAllUsers().catch(() => []);
+                const targetUsers = allUsers.filter((u) => (u.uid || u.id) && (u.role === 'student' || u.role === 'guardian' || u.role === 'staff'));
+                const snippet = String(postData.content || "New GAD announcement published").slice(0, 100);
+                await Promise.all(targetUsers.map((u) =>
+                    sendAccountNotification({
+                        userId: u.uid || u.id,
+                        type: "gad_bulletin",
+                        title: "GAD Announcement: " + (postData.author || "GAD Office"),
+                        message: snippet + (snippet.length >= 100 ? "..." : ""),
+                        sourceUserId: "gad_office",
+                        sourceName: postData.author || "GAD Office",
+                        metadata: {
+                            postId: docRef.id,
+                            timestamp: new Date().toISOString()
+                        }
+                    }).catch(() => null)
+                ));
+            } catch (_) { }
+        })();
 
         return true;
     } catch (error) {
-        console.warn("Error saving GAD post:", error);
-        throw error;
+        console.warn("Firestore GAD post save fallback to local:", error);
+        const local = readLocalGADPosts();
+        local.unshift({ id: localId, ...baseEntry, isLocalFallback: true });
+        writeLocalGADPosts(local);
+        return true;
     }
 };
 
@@ -891,14 +950,19 @@ export const saveGADPost = async (postData) => {
  * Fetch latest GAD posts
  */
 export const getGADPosts = async () => {
+    const localPosts = readLocalGADPosts();
     try {
         const q = query(collection(db, "gad_posts"));
         const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-            .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+        const remote = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const merged = [...remote];
+        localPosts.forEach((lp) => {
+            if (!merged.some((rp) => rp.id === lp.id)) merged.push(lp);
+        });
+        return merged.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     } catch (error) {
-        console.warn("Error getting GAD posts:", error);
-        return [];
+        console.warn("Error getting GAD posts, using local fallback:", error);
+        return localPosts.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
     }
 };
 
@@ -915,16 +979,16 @@ export const toggleLikeGADPost = async (postId, userId) => {
             const data = postSnap.data();
             const likedBy = data.likedBy || [];
             const isLiked = likedBy.includes(userId);
-            
-            const newLikedBy = isLiked 
+
+            const newLikedBy = isLiked
                 ? likedBy.filter(id => id !== userId)
                 : [...likedBy, userId];
-            
+
             await setDoc(postRef, {
                 likedBy: newLikedBy,
                 likes: newLikedBy.length
             }, { merge: true });
-            
+
             return { likes: newLikedBy.length, isLiked: !isLiked };
         }
     } catch (error) {
@@ -938,12 +1002,16 @@ export const toggleLikeGADPost = async (postId, userId) => {
  * @param {string} postId 
  */
 export const deleteGADPost = async (postId) => {
+    const local = readLocalGADPosts();
+    const filtered = local.filter(p => String(p.id) !== String(postId));
+    if (filtered.length !== local.length) writeLocalGADPosts(filtered);
+    if (String(postId).startsWith("local_gad_")) return true;
     try {
         await deleteDoc(doc(db, "gad_posts", postId));
         return true;
     } catch (error) {
-        console.warn("Error deleting post:", error);
-        throw error;
+        console.warn("Error deleting post from Firestore:", error);
+        return true;
     }
 };
 
@@ -953,6 +1021,13 @@ export const deleteGADPost = async (postId) => {
  * @param {object} updatedData 
  */
 export const updateGADPost = async (postId, updatedData) => {
+    const local = readLocalGADPosts();
+    const idx = local.findIndex(p => String(p.id) === String(postId));
+    if (idx >= 0) {
+        local[idx] = { ...local[idx], ...updatedData, updatedAt: { seconds: Math.floor(Date.now() / 1000) } };
+        writeLocalGADPosts(local);
+    }
+    if (String(postId).startsWith("local_gad_")) return true;
     try {
         const postRef = doc(db, "gad_posts", postId);
         await updateDoc(postRef, {
@@ -961,8 +1036,8 @@ export const updateGADPost = async (postId, updatedData) => {
         });
         return true;
     } catch (error) {
-        console.warn("Error updating post:", error);
-        throw error;
+        console.warn("Error updating post in Firestore:", error);
+        return true;
     }
 };
 
@@ -1052,14 +1127,14 @@ export const getStudentBootstrapProfile = async (userId) => {
 export const getLatestAttendance = async (userId) => {
     try {
         const q = query(
-            collection(db, "attendance"), 
+            collection(db, "attendance"),
             where("userId", "==", userId)
         );
         const querySnapshot = await getDocs(q);
         const logs = querySnapshot.docs.map(doc => doc.data())
             .filter((item) => item.type === "in" || item.type === "out")
             .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-        
+
         return logs.length > 0 ? logs[0] : null;
     } catch (error) {
         console.warn("Error getting latest attendance:", error);
@@ -1186,32 +1261,102 @@ export const getAllUsers = async () => {
         .filter((user) => !user?.isDeleted && !user?.deletedAt);
 };
 
-// (2026-09-09) accept adminUid; two where-queries so Firestore rules pass
+// (2026-07-13) Reliable multi-channel chat sync & fallback; was brittle
+const LOCAL_CHAT_MESSAGES_KEY = "securo_chat_messages_local";
+
+const getMsgSec = (m) => {
+    if (!m) return 0;
+    if (m.timestamp?.seconds) return m.timestamp.seconds;
+    if (typeof m.timestamp?.toMillis === "function") return m.timestamp.toMillis() / 1000;
+    if (m.localTime) return Number(m.localTime) / 1000;
+    if (m.createdAt?.seconds) return m.createdAt.seconds;
+    if (m.createdAt) {
+        const parsed = new Date(m.createdAt).getTime();
+        if (!Number.isNaN(parsed)) return parsed / 1000;
+    }
+    return Date.now() / 1000;
+};
+
+const readLocalChatMessages = () => {
+    try {
+        const raw = localStorage.getItem(LOCAL_CHAT_MESSAGES_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+        return [];
+    }
+};
+
+const writeLocalChatMessage = (msg) => {
+    try {
+        const list = readLocalChatMessages();
+        const filtered = list.filter(m => m.id !== msg.id);
+        filtered.push(msg);
+        localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(filtered.slice(-300)));
+        const ch = new BroadcastChannel('securo_chat_channel');
+        ch.postMessage({ type: 'chat_message', msg });
+        ch.close();
+    } catch (_) { }
+};
+
+const mergeChatMessagesList = (remoteList, localList) => {
+    const map = new Map();
+    const put = (m) => {
+        if (!m) return;
+        const key = m.id || `${m.threadId}_${m.senderId}_${m.text || m.message}_${Math.floor(getMsgSec(m))}`;
+        if (!map.has(key)) map.set(key, m);
+    };
+    (remoteList || []).forEach(put);
+    (localList || []).forEach((lm) => {
+        const dup = (remoteList || []).some(rm =>
+            rm.id === lm.id ||
+            (rm.threadId === lm.threadId && rm.senderId === lm.senderId && (rm.text || rm.message) === (lm.text || lm.message) && Math.abs(getMsgSec(rm) - getMsgSec(lm)) < 15)
+        );
+        if (!dup) put(lm);
+    });
+    return Array.from(map.values()).sort((a, b) => getMsgSec(a) - getMsgSec(b));
+};
+
+const buildThreadsFromMessages = (allMessages) => {
+    const threadsMap = new Map();
+    (allMessages || []).forEach((msg) => {
+        if (!msg || !msg.threadId) return;
+        const existing = threadsMap.get(msg.threadId);
+        if (!existing || getMsgSec(msg) >= getMsgSec(existing)) {
+            threadsMap.set(msg.threadId, msg);
+        }
+    });
+    return Array.from(threadsMap.values()).sort((a, b) => getMsgSec(b) - getMsgSec(a));
+};
+
 export const getAllChatThreadsOnce = async (adminUid = "system_admin_securo") => {
     const ADMIN_CONST = "system_admin_securo";
+    const localMsgs = readLocalChatMessages();
     try {
-        const [sentSnap, recvSnap] = await Promise.all([
-            // messages the admin sent (senderId == real UID)
-            getDocs(query(collection(db, "messages"), where("senderId", "==", adminUid))),
-            // messages sent TO the admin (receiverId == hardcoded constant)
-            getDocs(query(collection(db, "messages"), where("receiverId", "==", ADMIN_CONST)))
-        ]);
-        const allDocs = [...sentSnap.docs, ...recvSnap.docs];
-        const threadsMap = new Map();
-        allDocs.forEach((entry) => {
-            const payload = { id: entry.id, ...entry.data() };
-            if (!payload.threadId) return;
-            const existing = threadsMap.get(payload.threadId);
-            const t = payload.timestamp?.seconds || 0;
-            if (!existing || t > (existing.timestamp?.seconds || 0)) {
-                threadsMap.set(payload.threadId, payload);
-            }
+        const queries = [
+            getDocs(query(collection(db, "messages"), where("receiverId", "==", ADMIN_CONST))).catch(() => ({ docs: [] })),
+            getDocs(query(collection(db, "messages"), where("recipientUid", "==", ADMIN_CONST))).catch(() => ({ docs: [] })),
+            getDocs(query(collection(db, "messages"), where("senderId", "==", ADMIN_CONST))).catch(() => ({ docs: [] }))
+        ];
+        if (adminUid && adminUid !== ADMIN_CONST) {
+            queries.push(getDocs(query(collection(db, "messages"), where("senderId", "==", adminUid))).catch(() => ({ docs: [] })));
+            queries.push(getDocs(query(collection(db, "messages"), where("receiverId", "==", adminUid))).catch(() => ({ docs: [] })));
+        }
+        const snaps = await Promise.all(queries);
+        const remoteMsgs = [];
+        const seen = new Set();
+        snaps.forEach((snap) => {
+            (snap?.docs || []).forEach((entry) => {
+                if (!seen.has(entry.id)) {
+                    seen.add(entry.id);
+                    remoteMsgs.push({ id: entry.id, ...entry.data() });
+                }
+            });
         });
-        return Array.from(threadsMap.values())
-            .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        return buildThreadsFromMessages(mergeChatMessagesList(remoteMsgs, localMsgs));
     } catch (error) {
         console.warn("Error getting chat threads once:", error);
-        return [];
+        return buildThreadsFromMessages(localMsgs);
     }
 };
 
@@ -1230,17 +1375,7 @@ export const getAllGuardianLinksAdmin = async () => {
  */
 export const subscribeToMessages = (userId1, userId2, callback) => {
     const threadId = [userId1, userId2].sort().join("_");
-    
-    const q = query(
-        collection(db, "messages"),
-        where("threadId", "==", threadId)
-    );
-
-    return onSnapshot(q, (snapshot) => {
-        const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-            .sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
-        callback(messages);
-    }, () => callback([]));
+    return subscribeToMessagesByThread(threadId, callback);
 };
 
 /**
@@ -1249,48 +1384,83 @@ export const subscribeToMessages = (userId1, userId2, callback) => {
  * @param {function} callback
  */
 export const subscribeToMessagesByThread = (threadId, callback) => {
+    let remoteMessages = [];
+    const emit = () => {
+        const localForThread = readLocalChatMessages().filter(m => m.threadId === threadId);
+        callback(mergeChatMessagesList(remoteMessages, localForThread));
+    };
+    emit();
+
     const q = query(
         collection(db, "messages"),
         where("threadId", "==", threadId)
     );
+    const unsubFs = onSnapshot(q, (snapshot) => {
+        remoteMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        emit();
+    }, () => emit());
 
-    return onSnapshot(q, (snapshot) => {
-        const messages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
-            .sort((a, b) => (a.timestamp?.seconds || 0) - (b.timestamp?.seconds || 0));
-        callback(messages);
-    }, () => callback([]));
+    let ch = null;
+    try {
+        ch = new BroadcastChannel('securo_chat_channel');
+        ch.onmessage = (e) => {
+            if (!e.data?.msg || e.data.msg.threadId === threadId) emit();
+        };
+    } catch (_) { }
+    const onStorage = (e) => {
+        if (e.key === LOCAL_CHAT_MESSAGES_KEY) emit();
+    };
+    if (typeof window !== 'undefined') window.addEventListener('storage', onStorage);
+
+    return () => {
+        unsubFs();
+        if (ch) ch.close();
+        if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage);
+    };
 };
 
 /**
  * Messaging: Send a message with threadId
  */
-// (2026-07-13) Persist senderUid, recipientUid, read/seen status; was unread only
+// (2026-07-13) Persist chat locally + Firestore with fallback; was Firestore only
 export const sendChatMessage = async (senderId, receiverId, text, senderName, options = {}) => {
     const threadId = options.threadId || [senderId, receiverId].sort().join("_");
     const senderRole = options.senderRole || (senderId === "system_admin_securo" ? "admin" : "student");
     const recipientRole = options.recipientRole || (receiverId === "system_admin_securo" ? "admin" : "student");
+    const nowMs = Date.now();
+    const localId = `local_msg_${nowMs}_${Math.random().toString(36).slice(2, 7)}`;
+    const basePayload = {
+        threadId,
+        senderId,
+        receiverId,
+        senderUid: senderId,
+        recipientUid: receiverId,
+        text,
+        message: text,
+        senderName: senderName || "User",
+        senderRole,
+        recipientRole,
+        supportMode: options.supportMode || "",
+        isAnonymous: !!options.isAnonymous,
+        senderLabel: options.senderLabel || "",
+        ownerId: options.ownerId || "",
+        anonymousSessionId: options.anonymousSessionId || "",
+        read: false,
+        seen: false,
+        seenAt: null,
+        status: "delivered"
+    };
+
     try {
-        await addDoc(collection(db, "messages"), {
-            threadId,
-            senderId,
-            receiverId,
-            senderUid: senderId,
-            recipientUid: receiverId,
-            text,
-            message: text,
-            senderName: senderName || "User",
-            senderRole,
-            recipientRole,
-            supportMode: options.supportMode || "",
-            isAnonymous: !!options.isAnonymous,
-            senderLabel: options.senderLabel || "",
-            ownerId: options.ownerId || "",
-            anonymousSessionId: options.anonymousSessionId || "",
-            timestamp: serverTimestamp(),
-            read: false,
-            seen: false,
-            seenAt: null,
-            status: "delivered"
+        const docRef = await addDoc(collection(db, "messages"), {
+            ...basePayload,
+            timestamp: serverTimestamp()
+        });
+        writeLocalChatMessage({
+            id: docRef.id,
+            ...basePayload,
+            localTime: nowMs,
+            timestamp: { seconds: Math.floor(nowMs / 1000) }
         });
 
         // (2026-07-13) Mark previous incoming messages as replied; was unflagged
@@ -1304,14 +1474,14 @@ export const sendChatMessage = async (senderId, receiverId, text, senderName, op
                             status: "replied",
                             repliedAt: serverTimestamp(),
                             repliedBy: senderName || "Admin"
-                        }).catch(() => {});
+                        }).catch(() => { });
                     }
                 });
-            }).catch(() => {});
-        } catch (_) {}
+            }).catch(() => { });
+        } catch (_) { }
 
         const targetUid = receiverId === "system_admin_securo" ? "admin" : receiverId;
-        const noteTitle = senderRole === "admin" ? "New message from Admin" : `Message from ${senderName || "Student"}`;
+        const noteTitle = senderRole === "admin" ? "New message from Admin" : `Message from ${senderName || "User"}`;
         sendAccountNotification({
             userId: targetUid,
             recipientUid: targetUid,
@@ -1326,8 +1496,15 @@ export const sendChatMessage = async (senderId, receiverId, text, senderName, op
 
         return true;
     } catch (error) {
-        console.warn("Error sending chat message:", error);
-        throw error;
+        console.warn("Firestore chat send fallback to local sync:", error);
+        writeLocalChatMessage({
+            id: localId,
+            ...basePayload,
+            localTime: nowMs,
+            timestamp: { seconds: Math.floor(nowMs / 1000) },
+            isLocalFallback: true
+        });
+        return true;
     }
 };
 
@@ -1347,7 +1524,7 @@ export const markThreadMessagesSeen = async (threadId, viewerRole = "admin") => 
                     seen: true,
                     seenAt: serverTimestamp(),
                     status: "seen"
-                }).catch(() => {}));
+                }).catch(() => { }));
             }
         });
         await Promise.all(updates);
@@ -1360,36 +1537,64 @@ export const markThreadMessagesSeen = async (threadId, viewerRole = "admin") => 
 /**
  * Messaging: Get all chat threads (for Admin)
  */
-// (2026-09-09) accept adminUid; two where-queries so Firestore rules pass
+// (2026-07-13) Realtime multi-query & local-synced admin threads; was 2 queries
 export const getAllChatThreads = (adminUid = "system_admin_securo", callback) => {
     const ADMIN_CONST = "system_admin_securo";
-    const merge = (snap1, snap2) => {
-        const allDocs = [...snap1.docs, ...snap2.docs];
-        const threadsMap = new Map();
-        allDocs.forEach(entry => {
-            const msg = { id: entry.id, ...entry.data() };
-            if (!msg.threadId) return;
-            const existing = threadsMap.get(msg.threadId);
-            if (!existing || (msg.timestamp?.seconds || 0) > (existing.timestamp?.seconds || 0)) {
-                threadsMap.set(msg.threadId, msg);
-            }
+    const buckets = new Map();
+
+    const emit = () => {
+        const remoteMsgs = [];
+        const seen = new Set();
+        buckets.forEach((docs) => {
+            (docs || []).forEach((entry) => {
+                if (!seen.has(entry.id)) {
+                    seen.add(entry.id);
+                    remoteMsgs.push({ id: entry.id, ...entry.data() });
+                }
+            });
         });
-        return Array.from(threadsMap.values())
-            .sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
+        const merged = mergeChatMessagesList(remoteMsgs, readLocalChatMessages());
+        callback(buildThreadsFromMessages(merged));
     };
 
-    let snap1 = null, snap2 = null;
-    const tryCallback = () => { if (snap1 && snap2) callback(merge(snap1, snap2)); };
+    emit();
 
-    // messages the admin sent (senderId == real UID)
-    const qSent = query(collection(db, "messages"), where("senderId", "==", adminUid));
-    // messages sent TO the admin (receiverId == hardcoded constant stored by users)
-    const qRecv = query(collection(db, "messages"), where("receiverId", "==", ADMIN_CONST));
+    const unsubs = [];
+    const watch = (key, q) => {
+        const u = onSnapshot(q, (s) => {
+            buckets.set(key, s.docs);
+            emit();
+        }, (err) => {
+            console.warn(`getAllChatThreads(${key}) error:`, err);
+            buckets.set(key, []);
+            emit();
+        });
+        unsubs.push(u);
+    };
 
-    const unsub1 = onSnapshot(qSent,  s => { snap1 = s; tryCallback(); }, err => { console.warn("getAllChatThreads(sent) error:", err); snap1 = { docs: [] }; tryCallback(); });
-    const unsub2 = onSnapshot(qRecv,  s => { snap2 = s; tryCallback(); }, err => { console.warn("getAllChatThreads(recv) error:", err); snap2 = { docs: [] }; tryCallback(); });
+    watch("recvConst", query(collection(db, "messages"), where("receiverId", "==", ADMIN_CONST)));
+    watch("recvUidConst", query(collection(db, "messages"), where("recipientUid", "==", ADMIN_CONST)));
+    watch("sentConst", query(collection(db, "messages"), where("senderId", "==", ADMIN_CONST)));
+    if (adminUid && adminUid !== ADMIN_CONST) {
+        watch("sentAdmin", query(collection(db, "messages"), where("senderId", "==", adminUid)));
+        watch("recvAdmin", query(collection(db, "messages"), where("receiverId", "==", adminUid)));
+    }
 
-    return () => { unsub1(); unsub2(); };
+    let ch = null;
+    try {
+        ch = new BroadcastChannel('securo_chat_channel');
+        ch.onmessage = () => emit();
+    } catch (_) { }
+    const onStorage = (e) => {
+        if (e.key === LOCAL_CHAT_MESSAGES_KEY) emit();
+    };
+    if (typeof window !== 'undefined') window.addEventListener('storage', onStorage);
+
+    return () => {
+        unsubs.forEach(u => { try { u(); } catch (_) { } });
+        if (ch) ch.close();
+        if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage);
+    };
 };
 
 /**
@@ -1432,7 +1637,7 @@ export const deleteUserRecord = async (userId) => {
             deletedAt: new Date().toISOString()
         }, { merge: true });
 
-        await deleteDoc(doc(db, "student_locations", userId)).catch(() => {});
+        await deleteDoc(doc(db, "student_locations", userId)).catch(() => { });
 
         const guardianLinkSnapshots = await Promise.all([
             getDocs(query(collection(db, "guardian_links"), where("guardianId", "==", userId))).catch(() => null),
@@ -1446,7 +1651,7 @@ export const deleteUserRecord = async (userId) => {
         guardianLinkSnapshots.forEach((snapshot) => {
             snapshot?.docs?.forEach((entry) => guardianLinkIds.add(entry.id));
         });
-        await Promise.all(Array.from(guardianLinkIds).map((id) => deleteDoc(doc(db, "guardian_links", id)).catch(() => {})));
+        await Promise.all(Array.from(guardianLinkIds).map((id) => deleteDoc(doc(db, "guardian_links", id)).catch(() => { })));
 
         const messagesSnapshot = await getDocs(collection(db, "messages")).catch(() => null);
         const messageIds = (messagesSnapshot?.docs || [])
@@ -1455,7 +1660,7 @@ export const deleteUserRecord = async (userId) => {
                 return String(data.senderId) === String(userId) || String(data.receiverId) === String(userId);
             })
             .map((entry) => entry.id);
-        await Promise.all(messageIds.map((id) => deleteDoc(doc(db, "messages", id)).catch(() => {})));
+        await Promise.all(messageIds.map((id) => deleteDoc(doc(db, "messages", id)).catch(() => { })));
 
         return true;
     } catch (error) {
@@ -1495,7 +1700,7 @@ export const deleteCurrentUserAccount = async (password = "") => {
     try {
         localStorage.clear();
         sessionStorage.clear();
-    } catch (e) {}
+    } catch (e) { }
 
     return true;
 };
@@ -1772,7 +1977,7 @@ export const createGuardianLinkRequest = async (linkData) => {
             const ch = new BroadcastChannel('securo_users_channel');
             ch.postMessage({ type: 'guardian_link_created', linkId, payload: enrichedLinkData });
             ch.close();
-        } catch (e) {}
+        } catch (e) { }
 
         return linkId;
     } catch (error) {
@@ -1885,7 +2090,7 @@ export const createGuardianLinkFromStudent = async (requestData) => {
             const ch = new BroadcastChannel('securo_users_channel');
             ch.postMessage({ type: 'guardian_link_created', linkId, payload: linkPayload });
             ch.close();
-        } catch (e) {}
+        } catch (e) { }
 
         return { linkId, guardian: guardianRecord };
     } catch (error) {
@@ -1973,7 +2178,7 @@ export const respondToGuardianLink = async (linkId, response, studentUid, studen
                     linkRef = snap.ref;
                     linkData = snap.data();
                 }
-            } catch (_) {}
+            } catch (_) { }
         }
 
         const localLinks = readLocalGuardianLinks();
@@ -2020,7 +2225,7 @@ export const respondToGuardianLink = async (linkId, response, studentUid, studen
                 const ch = new BroadcastChannel('securo_users_channel');
                 ch.postMessage({ type: 'guardian_link_responded', linkId, response });
                 ch.close();
-            } catch (_) {}
+            } catch (_) { }
             return true;
         }
 
@@ -2064,7 +2269,7 @@ export const respondToGuardianLink = async (linkId, response, studentUid, studen
                 guardianId: linkData.guardianId,
                 studentId: linkData.studentId,
                 currentLinkId: linkRef?.id || linkId
-            }).catch(() => {});
+            }).catch(() => { });
         }
 
         const resolvedStudentProfile = response === "accepted"
@@ -2130,7 +2335,7 @@ export const respondToGuardianLink = async (linkId, response, studentUid, studen
                 const matchStudent = (suid && (dat.studentUid === suid || dat.studentId === suid)) ||
                     (sid && String(dat.studentId || "").trim() === String(sid).trim());
                 if (matchStudent) {
-                    await updateDoc(d.ref, { status: "rejected", respondedAt: serverTimestamp() }).catch(() => {});
+                    await updateDoc(d.ref, { status: "rejected", respondedAt: serverTimestamp() }).catch(() => { });
                     removeLocalGuardianLink(d.id);
                 }
             }
@@ -2140,7 +2345,7 @@ export const respondToGuardianLink = async (linkId, response, studentUid, studen
             const ch = new BroadcastChannel('securo_users_channel');
             ch.postMessage({ type: 'guardian_link_responded', linkId: linkRef?.id || linkId, response, studentUid, guardianUid });
             ch.close();
-        } catch (e) {}
+        } catch (e) { }
 
         // (2026-07-13) Save accept/decline history for both ends; was one-sided
         const targetGuardianUid = linkData?.guardianUid || linkData?.guardianId || cached?.guardianUid || cached?.guardianId || (auth.currentUser && auth.currentUser.uid ? auth.currentUser.uid : "");
@@ -2152,7 +2357,7 @@ export const respondToGuardianLink = async (linkId, response, studentUid, studen
                 try {
                     const sRec = await findStudentUidByStudentId(sid);
                     if (sRec?.uid) targetStudentUid = sRec.uid;
-                } catch (_) {}
+                } catch (_) { }
             }
         }
         const studentName = studentProfileData?.name || linkData?.studentName || cached?.studentName || "Student";
@@ -2165,9 +2370,9 @@ export const respondToGuardianLink = async (linkId, response, studentUid, studen
             try {
                 const notifSnap = await getDocs(query(collection(db, "notifications"), where("requestId", "==", reqId)));
                 notifSnap.docs.forEach(d => {
-                    updateDoc(d.ref, { resolvedStatus: response, isRead: true, read: true }).catch(() => {});
+                    updateDoc(d.ref, { resolvedStatus: response, isRead: true, read: true }).catch(() => { });
                 });
-            } catch (_) {}
+            } catch (_) { }
         }
 
         if (targetGuardianUid || targetGuardianEmail) {
@@ -2468,7 +2673,7 @@ export const getLinksForStudent = async (studentId, studentUid) => {
 export const subscribeToStudentLinks = (studentUid, callback, studentId = null) => {
     if (!studentUid && !studentId) {
         callback([]);
-        return () => {};
+        return () => { };
     }
 
     let guardianUnsubs = new Map();
@@ -2482,7 +2687,7 @@ export const subscribeToStudentLinks = (studentUid, callback, studentId = null) 
         const enriched = latestLinks.map((link) => {
             const gid = link.guardianId || link.guardianUid;
             const email = (link.guardianEmail || "").toLowerCase().trim();
-            const localProfile = localUsers.find(u => 
+            const localProfile = localUsers.find(u =>
                 (gid && String(u.id || u.uid || '') === String(gid)) ||
                 (email && (String(u.email || '').toLowerCase().trim() === email || String(u.personalEmail || '').toLowerCase().trim() === email))
             );
@@ -2533,7 +2738,7 @@ export const subscribeToStudentLinks = (studentUid, callback, studentId = null) 
             }
             notify();
         };
-    } catch (e) {}
+    } catch (e) { }
 
     const handleStorage = (e) => {
         if (!e.key || e.key === LOCAL_USERS_KEY || e.key === 'securo_unlinked_links') notify();
@@ -2556,7 +2761,7 @@ export const subscribeToStudentLinks = (studentUid, callback, studentId = null) 
             // (2026-07-13) Match unlinked links strictly by exact link ID; was pair match
             const isUnlinked = unlinked.some((u) => u.linkId && u.linkId === link.id);
             if (isUnlinked) {
-                deleteDoc(doc(db, "guardian_links", link.id)).catch(() => {});
+                deleteDoc(doc(db, "guardian_links", link.id)).catch(() => { });
                 return false;
             }
             return true;
@@ -2605,13 +2810,13 @@ export const subscribeToStudentLinks = (studentUid, callback, studentId = null) 
                                     updateDoc(doc(db, "guardian_links", l.id), {
                                         guardianName: data.name,
                                         lastSyncedAt: serverTimestamp()
-                                    }).catch(() => {});
+                                    }).catch(() => { });
                                 }
                             });
                         }
                     }
                     notify();
-                }, () => {});
+                }, () => { });
                 guardianUnsubs.set(gid, unsub);
             }
         });
@@ -2634,15 +2839,15 @@ export const subscribeToStudentLinks = (studentUid, callback, studentId = null) 
                                         updateDoc(doc(db, "guardian_links", l.id), {
                                             guardianName: data.name,
                                             lastSyncedAt: serverTimestamp()
-                                        }).catch(() => {});
+                                        }).catch(() => { });
                                     }
                                 });
                             }
                         }
                         notify();
-                    }, () => {});
+                    }, () => { });
                     guardianUnsubs.set(emailKey, unsub);
-                } catch (e) {}
+                } catch (e) { }
             }
         });
 
@@ -2724,7 +2929,7 @@ export const removeGuardianLink = async (linkId, meta = {}) => {
                     toDeleteIds.add(d.id);
                 }
             });
-        } catch (e) {}
+        } catch (e) { }
     }
 
     toDeleteIds.forEach(id => removeLocalGuardianLink(id));
@@ -2736,14 +2941,14 @@ export const removeGuardianLink = async (linkId, meta = {}) => {
             return true;
         });
         writeLocalGuardianLinks(remaining);
-    } catch (_) {}
+    } catch (_) { }
 
     if (toDeleteIds.size > 0) {
         const deleteOps = Array.from(toDeleteIds).map(async (id) => {
             try {
                 await deleteDoc(doc(db, "guardian_links", id));
             } catch (err) {
-                await updateDoc(doc(db, "guardian_links", id), { status: "removed" }).catch(() => {});
+                await updateDoc(doc(db, "guardian_links", id), { status: "removed" }).catch(() => { });
             }
         });
         await Promise.all(deleteOps);
@@ -2762,13 +2967,13 @@ export const removeGuardianLink = async (linkId, meta = {}) => {
             time: Date.now()
         });
         localStorage.setItem(unlinkedKey, JSON.stringify(existing.slice(-20)));
-    } catch (e) {}
+    } catch (e) { }
 
     try {
         const ch = new BroadcastChannel('securo_users_channel');
         ch.postMessage({ type: 'guardian_link_removed', linkId, meta });
         ch.close();
-    } catch (e) {}
+    } catch (e) { }
 
     return success;
 };
@@ -2807,14 +3012,14 @@ export const updateGuardianLinkStudentId = async (linkId, newStudentId) => {
                 requestId: linkId,
                 studentId: newStudentId,
                 priority: "high"
-            }).catch(() => {});
+            }).catch(() => { });
         }
 
         try {
             const ch = new BroadcastChannel('securo_users_channel');
             ch.postMessage({ type: 'guardian_link_created', linkId, payload: { ...existingData, ...updatePayload } });
             ch.close();
-        } catch (_) {}
+        } catch (_) { }
 
         return true;
     } catch (error) {
@@ -2948,7 +3153,7 @@ export const findStudentUidByStudentId = async (studentId) => {
             const u = snap1.docs[0];
             return { uid: u.id, ...u.data() };
         }
-    } catch (e) {}
+    } catch (e) { }
 
     if (!isNaN(numId)) {
         try {
@@ -2958,7 +3163,7 @@ export const findStudentUidByStudentId = async (studentId) => {
                 const u = snap2.docs[0];
                 return { uid: u.id, ...u.data() };
             }
-        } catch (e) {}
+        } catch (e) { }
     }
 
     // (2026-07-13) Fallback lookup student UID from existing links; was users only
@@ -2969,7 +3174,7 @@ export const findStudentUidByStudentId = async (studentId) => {
         if (match) {
             return { uid: match.studentUid, name: match.studentName || "Student", studentId: rawId };
         }
-    } catch (_) {}
+    } catch (_) { }
 
     try {
         const allUsers = await getAllUsers();
@@ -2977,7 +3182,7 @@ export const findStudentUidByStudentId = async (studentId) => {
         if (found) {
             return { uid: found.uid || found.id, ...found };
         }
-    } catch (e) {}
+    } catch (e) { }
 
     try {
         const local = readLocalUsers();
@@ -2985,7 +3190,7 @@ export const findStudentUidByStudentId = async (studentId) => {
         if (found) {
             return { uid: found.uid || found.id, ...found };
         }
-    } catch (e) {}
+    } catch (e) { }
 
     return null;
 };
@@ -3004,7 +3209,7 @@ export const findUserByEmail = async (email) => {
                 const u = snap1.docs[0];
                 return { uid: u.id, ...u.data() };
             }
-        } catch (e) {}
+        } catch (e) { }
 
         if (rawEmail !== normalized) {
             try {
@@ -3014,7 +3219,7 @@ export const findUserByEmail = async (email) => {
                     const u = snap2.docs[0];
                     return { uid: u.id, ...u.data() };
                 }
-            } catch (e) {}
+            } catch (e) { }
         }
 
         try {
@@ -3024,7 +3229,7 @@ export const findUserByEmail = async (email) => {
                 const u = snap3.docs[0];
                 return { uid: u.id, ...u.data() };
             }
-        } catch (e) {}
+        } catch (e) { }
 
         const allUsers = await getAllUsers();
         const matched = allUsers.find((u) => {
@@ -3115,7 +3320,7 @@ export const markAccountNotificationRead = async (notificationId, extraUpdates =
 
 // (2026-07-13) Subscribe notifs by userId, recipientUid & email; was 2 queries
 export const subscribeToAccountNotifications = (userId, callback, userEmail = "") => {
-    if (!userId && !userEmail) return () => {};
+    if (!userId && !userEmail) return () => { };
 
     try {
         const mergeNotifications = (...snaps) => {
@@ -3153,7 +3358,7 @@ export const subscribeToAccountNotifications = (userId, callback, userEmail = ""
     } catch (e) {
         console.warn("Notification subscription fallback:", e);
         callback([]);
-        return () => {};
+        return () => { };
     }
 };
 
@@ -3168,7 +3373,7 @@ export const notifyGuardiansOfGeofenceEvent = async (studentUid, studentName, ty
         const title = `Campus Geofence: ${studentName || 'Your Child'} ${isEntry ? 'Entered' : 'Departed'}`;
         const message = `${studentName || 'Your child'} has ${actionText} at ${location.address || 'Campus Grounds'}.`;
 
-        const dispatches = acceptedLinks.map(link => 
+        const dispatches = acceptedLinks.map(link =>
             sendAccountNotification({
                 userId: link.guardianId,
                 type: isEntry ? 'campus_entry' : 'campus_exit',
@@ -3288,7 +3493,7 @@ export const notifyGuardiansSOS = async (studentUid, studentName, location = {},
 
 // (2026-07-13) Query all student SOS logs; was active only
 export const subscribeToStudentSOS = (studentUid, callback) => {
-    if (!studentUid) return () => {};
+    if (!studentUid) return () => { };
     try {
         const q = query(collection(db, "sos_logs"), where("userId", "==", studentUid));
         return onSnapshot(q, (snap) => {
@@ -3304,7 +3509,7 @@ export const subscribeToStudentSOS = (studentUid, callback) => {
             callback([]);
         });
     } catch (e) {
-        return () => {};
+        return () => { };
     }
 };
 
@@ -3316,7 +3521,7 @@ const readLocalGADMessages = () => {
         const raw = localStorage.getItem(LOCAL_GAD_MESSAGES_KEY);
         const parsed = raw ? JSON.parse(raw) : [];
         return Array.isArray(parsed) ? parsed : [];
-// (2026-07-13) Fix catch block syntax in readLocalGADMessages; was catch without param
+        // (2026-07-13) Fix catch block syntax in readLocalGADMessages; was catch without param
     } catch (e) {
         return [];
     }
@@ -3384,7 +3589,7 @@ export const sendGADMessage = async (messageData) => {
                 isAnonymous: isAnon,
                 senderLabel: isAnon ? "Anonymous Student" : (messageData.studentName || "Student"),
                 ownerId: messageData.studentUid
-            }).catch(() => {});
+            }).catch(() => { });
         }
 
         return { id: docRef.id, ...payload };
@@ -3415,10 +3620,10 @@ export const subscribeToGADMessages = (studentUid, callback) => {
                 return bT - aT;
             });
             callback(merged);
-// (2026-07-13) Fix catch block in subscribeToGADMessages; was catch without param
+            // (2026-07-13) Fix catch block in subscribeToGADMessages; was catch without param
         }, () => callback(local));
     } catch (e) {
-        return () => {};
+        return () => { };
     }
 };
 
@@ -3441,9 +3646,9 @@ export const replyToGADMessage = async (messageId, replyText, adminName = "GAD D
                 supportMode: "gad_support",
                 senderRole: "admin",
                 recipientRole: "student"
-            }).catch(() => {});
+            }).catch(() => { });
         }
-    } catch (_) {}
+    } catch (_) { }
 
     try {
         await updateDoc(doc(db, "gad_messages", messageId), {
@@ -3482,12 +3687,12 @@ export const saveCampusMapConfig = async (config) => {
             localStorage.setItem("securo_campus_buildings", JSON.stringify(cleanBuildings));
         }
         if (campusMapBroadcast) {
-            try { campusMapBroadcast.postMessage({ geofence: cleanGeofence, buildings: cleanBuildings }); } catch (e) {}
+            try { campusMapBroadcast.postMessage({ geofence: cleanGeofence, buildings: cleanBuildings }); } catch (e) { }
         }
         try {
             window.dispatchEvent(new CustomEvent("securo_campus_map_updated", { detail: { geofence: cleanGeofence, buildings: cleanBuildings } }));
             window.dispatchEvent(new Event("storage"));
-        } catch (e) {}
+        } catch (e) { }
 
         const firestoreGeofence = cleanGeofence.map(pt => ({ lat: Number(pt[0]), lng: Number(pt[1]) }));
         const firestoreBuildings = cleanBuildings.map(b => ({
@@ -3514,7 +3719,7 @@ export const saveCampusMapConfig = async (config) => {
                 setDoc(doc(db, "campus_config", "map"), payload, { merge: true })
             ]),
             new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2500))
-        ]).catch(() => {});
+        ]).catch(() => { });
     } catch (e) {
         console.warn("Firestore campus map save fallback to local:", e);
     }
@@ -3529,7 +3734,7 @@ export const subscribeToCampusMapConfig = (callback) => {
             if (g) geofence = JSON.parse(g);
             const b = localStorage.getItem("securo_campus_buildings");
             if (b) buildings = JSON.parse(b);
-        } catch (e) {}
+        } catch (e) { }
         return { geofence, buildings };
     };
 
@@ -3553,14 +3758,14 @@ export const subscribeToCampusMapConfig = (callback) => {
         window.addEventListener("securo_campus_map_updated", (e) => {
             if (e.detail) callback(e.detail);
         });
-    } catch (e) {}
+    } catch (e) { }
 
     const handleSnap = (snap) => {
         if (snap && snap.exists()) {
             const data = snap.data();
             let geofence = null;
             if (data.geofenceJson) {
-                try { geofence = JSON.parse(data.geofenceJson); } catch (e) {}
+                try { geofence = JSON.parse(data.geofenceJson); } catch (e) { }
             }
             if (!geofence && Array.isArray(data.geofence)) {
                 geofence = data.geofence.map(pt => [Number(pt.lat ?? pt[0]), Number(pt.lng ?? pt[1])]);
@@ -3571,7 +3776,7 @@ export const subscribeToCampusMapConfig = (callback) => {
 
             let buildings = null;
             if (data.buildingsJson) {
-                try { buildings = JSON.parse(data.buildingsJson); } catch (e) {}
+                try { buildings = JSON.parse(data.buildingsJson); } catch (e) { }
             }
             if (!buildings && Array.isArray(data.buildings)) {
                 buildings = data.buildings.map(b => ({
@@ -3589,20 +3794,20 @@ export const subscribeToCampusMapConfig = (callback) => {
             callback(cleanConfig);
             try {
                 window.dispatchEvent(new CustomEvent("securo_campus_map_updated", { detail: cleanConfig }));
-            } catch (e) {}
+            } catch (e) { }
         }
     };
 
     try {
-        onSnapshot(doc(db, "system_settings", "campus_map"), handleSnap, () => {});
-    } catch (e) {}
+        onSnapshot(doc(db, "system_settings", "campus_map"), handleSnap, () => { });
+    } catch (e) { }
     try {
-        onSnapshot(doc(db, "campus_config", "map"), handleSnap, () => {});
-    } catch (e) {}
+        onSnapshot(doc(db, "campus_config", "map"), handleSnap, () => { });
+    } catch (e) { }
     try {
         return onSnapshot(doc(db, "emergency_posts", "campus_map_config"), handleSnap, () => callback(getLocal()));
     } catch (e) {
-        return () => {};
+        return () => { };
     }
 };
 
@@ -3621,7 +3826,7 @@ export const fetchLatestCampusMapConfig = async () => {
                 const data = snap.data();
                 let geofence = null;
                 if (data.geofenceJson) {
-                    try { geofence = JSON.parse(data.geofenceJson); } catch (e) {}
+                    try { geofence = JSON.parse(data.geofenceJson); } catch (e) { }
                 }
                 if (!geofence && Array.isArray(data.geofence)) {
                     geofence = data.geofence.map(pt => [Number(pt.lat ?? pt[0]), Number(pt.lng ?? pt[1])]);
@@ -3632,7 +3837,7 @@ export const fetchLatestCampusMapConfig = async () => {
 
                 let buildings = null;
                 if (data.buildingsJson) {
-                    try { buildings = JSON.parse(data.buildingsJson); } catch (e) {}
+                    try { buildings = JSON.parse(data.buildingsJson); } catch (e) { }
                 }
                 if (!buildings && Array.isArray(data.buildings)) {
                     buildings = data.buildings.map(b => ({
@@ -3650,7 +3855,7 @@ export const fetchLatestCampusMapConfig = async () => {
                     return { geofence, buildings };
                 }
             }
-        } catch (e) {}
+        } catch (e) { }
     }
 
     try {
@@ -3660,7 +3865,7 @@ export const fetchLatestCampusMapConfig = async () => {
             geofence: g ? JSON.parse(g) : null,
             buildings: b ? JSON.parse(b) : null
         };
-    } catch (e) {}
+    } catch (e) { }
     return {};
 };
 
@@ -3888,11 +4093,11 @@ export const markAllNotificationsAsRead = async (userId) => {
             where("read", "==", false)
         );
         const querySnapshot = await getDocs(q);
-        
-        const updates = querySnapshot.docs.map(doc => 
+
+        const updates = querySnapshot.docs.map(doc =>
             updateDoc(doc.ref, { read: true, readAt: serverTimestamp() })
         );
-        
+
         await Promise.all(updates);
         Logger.info("Notifications", "All notifications marked as read", { userId });
         return true;
@@ -3974,7 +4179,7 @@ export const getAttendanceStats = async (startDate, endDate) => {
         records.forEach(record => {
             const date = new Date(record.timestamp?.seconds * 1000).toLocaleDateString();
             stats.byDate[date] = (stats.byDate[date] || 0) + 1;
-            
+
             stats.byUser[record.userId] = (stats.byUser[record.userId] || 0) + 1;
         });
 
@@ -4048,19 +4253,26 @@ export const getUserActivitySummary = async (userId) => {
 // (2026-07-13) Support guardian passwords in store/lookup; was admin-only
 export const saveAdminUserPassword = async (userId, email, password) => {
     const normEmail = String(email || '').trim().toLowerCase();
+    // (2026-07-13) Track previous password for live auth sync; was overwritten
+    try {
+        const prev = normEmail ? (localStorage.getItem('securo_admin_pwd_' + normEmail) || localStorage.getItem('securo_guardian_pwd_' + normEmail)) : null;
+        if (prev && prev !== password && normEmail) {
+            localStorage.setItem('securo_prev_pwd_' + normEmail, prev);
+        }
+    } catch (_) {}
     try {
         if (userId) {
             await setDoc(doc(db, "users", userId), {
                 password,
                 passwordUpdatedAt: serverTimestamp()
-            }, { merge: true }).catch(() => {});
+            }, { merge: true }).catch(() => { });
         }
         if (normEmail) {
             await setDoc(doc(db, "user_passwords", normEmail), {
                 email: normEmail,
                 password,
                 updatedAt: serverTimestamp()
-            }, { merge: true }).catch(() => {});
+            }, { merge: true }).catch(() => { });
             localStorage.setItem('securo_admin_pwd_' + normEmail, password);
             localStorage.setItem('securo_guardian_pwd_' + normEmail, password);
         }
@@ -4085,6 +4297,141 @@ export const getAdminUserPassword = async (email) => {
         const users = readLocalUsers();
         const found = users.find(u => String(u.email || '').toLowerCase() === normEmail);
         if (found?.password) return found.password;
-    } catch (_) {}
+    } catch (_) { }
     return localStorage.getItem('securo_admin_pwd_' + normEmail) || localStorage.getItem('securo_guardian_pwd_' + normEmail) || null;
+};
+
+// (2026-07-13) Realtime user presence heartbeat & watcher; was static
+const PRESENCE_STORAGE_KEY = 'securo_user_presence_map';
+let _activePresenceStopFn = null;
+
+function writeLocalPresenceEntry(userId, isOnline) {
+    if (!userId) return;
+    const entry = { isOnline: Boolean(isOnline), lastActiveMs: Date.now() };
+    try {
+        const raw = localStorage.getItem(PRESENCE_STORAGE_KEY);
+        const map = raw ? JSON.parse(raw) : {};
+        map[String(userId)] = entry;
+        localStorage.setItem(PRESENCE_STORAGE_KEY, JSON.stringify(map));
+    } catch (_) { }
+    try {
+        const ch = new BroadcastChannel('securo_presence_channel');
+        ch.postMessage({ userId: String(userId), ...entry });
+        ch.close();
+    } catch (_) { }
+}
+
+export const readLocalPresenceMap = () => {
+    try {
+        const raw = localStorage.getItem(PRESENCE_STORAGE_KEY);
+        const parsed = raw ? JSON.parse(raw) : {};
+        return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (_) {
+        return {};
+    }
+};
+
+export const updateUserPresence = async (userId, isOnline = true) => {
+    if (!userId) return;
+    writeLocalPresenceEntry(userId, isOnline);
+    try {
+        await setDoc(doc(db, "users", String(userId)), {
+            isOnline: Boolean(isOnline),
+            lastActiveMs: Date.now(),
+            lastActiveAt: serverTimestamp()
+        }, { merge: true });
+    } catch (_) { }
+};
+
+export const startUserPresenceHeartbeat = (userId) => {
+    if (!userId) return () => { };
+    if (typeof _activePresenceStopFn === 'function') {
+        _activePresenceStopFn();
+    }
+    const uid = String(userId);
+    const beat = () => {
+        const visible = typeof document === 'undefined' ? true : document.visibilityState === 'visible';
+        updateUserPresence(uid, visible);
+    };
+    beat();
+    const timer = setInterval(() => {
+        if (typeof document === 'undefined' || document.visibilityState === 'visible') {
+            updateUserPresence(uid, true);
+        }
+    }, 25000);
+    const onVis = () => beat();
+    const onOffline = () => updateUserPresence(uid, false);
+    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVis);
+    if (typeof window !== 'undefined') {
+        window.addEventListener('pagehide', onOffline);
+        window.addEventListener('beforeunload', onOffline);
+    }
+    const stop = () => {
+        clearInterval(timer);
+        if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVis);
+        if (typeof window !== 'undefined') {
+            window.removeEventListener('pagehide', onOffline);
+            window.removeEventListener('beforeunload', onOffline);
+        }
+        updateUserPresence(uid, false);
+        if (_activePresenceStopFn === stop) _activePresenceStopFn = null;
+    };
+    _activePresenceStopFn = stop;
+    return stop;
+};
+
+export const subscribeToAllUsersPresence = (callback) => {
+    const presenceMap = { ...readLocalPresenceMap() };
+    const emit = () => {
+        try { callback({ ...presenceMap }); } catch (_) { }
+    };
+    emit();
+
+    let unsubFirestore = null;
+    try {
+        unsubFirestore = onSnapshot(collection(db, "users"), (snap) => {
+            snap.docs.forEach((d) => {
+                const data = d.data() || {};
+                const tsMs = data.lastActiveAt?.toMillis
+                    ? data.lastActiveAt.toMillis()
+                    : (data.lastActiveAt?.seconds ? data.lastActiveAt.seconds * 1000 : Number(data.lastActiveMs || 0));
+                const localEntry = presenceMap[d.id];
+                if (!localEntry || tsMs >= (localEntry.lastActiveMs || 0)) {
+                    presenceMap[d.id] = {
+                        isOnline: data.isOnline === true || data.isWatching === true,
+                        lastActiveMs: tsMs || 0
+                    };
+                }
+            });
+            emit();
+        }, () => { });
+    } catch (_) { }
+
+    let channel = null;
+    try {
+        channel = new BroadcastChannel('securo_presence_channel');
+        channel.onmessage = (e) => {
+            if (e.data?.userId) {
+                presenceMap[String(e.data.userId)] = {
+                    isOnline: Boolean(e.data.isOnline),
+                    lastActiveMs: Number(e.data.lastActiveMs || Date.now())
+                };
+                emit();
+            }
+        };
+    } catch (_) { }
+
+    const onStorage = (e) => {
+        if (e.key === PRESENCE_STORAGE_KEY) {
+            Object.assign(presenceMap, readLocalPresenceMap());
+            emit();
+        }
+    };
+    if (typeof window !== 'undefined') window.addEventListener('storage', onStorage);
+
+    return () => {
+        if (unsubFirestore) unsubFirestore();
+        if (channel) channel.close();
+        if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage);
+    };
 };

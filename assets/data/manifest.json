@@ -22,7 +22,11 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["education", "safety", "utilities"],
+  "categories": [
+    "education",
+    "safety",
+    "utilities"
+  ],
   "screenshots": [],
   "shortcuts": [
     {

@@ -5,10 +5,10 @@
  */
 
 import { auth } from './firebase-config.js';
-import { 
-    signInWithEmailAndPassword, 
-    createUserWithEmailAndPassword, 
-    signOut, 
+import {
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
     onAuthStateChanged,
     GoogleAuthProvider,
     signInWithPopup,
@@ -65,11 +65,18 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
             : "Too many attempts. Please try again in a few minutes.";
     }
 
-    if (code.includes("auth/invalid-credential") || code.includes("auth/user-not-found")) {
+    // (2026-07-13) Distinguish invalid-credential from missing account; was merged
+    if (code.includes("auth/invalid-credential")) {
         if (role === "guardian") {
             return "Incorrect guardian email or password. You can reset your password with OTP below.";
         }
-        return mode === "login" 
+        return `Incorrect ${role} ID or password. Please check your credentials or register first.`;
+    }
+    if (code.includes("auth/user-not-found")) {
+        if (role === "guardian") {
+            return "Incorrect guardian email or password. You can reset your password with OTP below.";
+        }
+        return mode === "login"
             ? `No account found with this ${role} ID. Please register first or check your ID.`
             : `Incorrect ${role} ID or password.`;
     }
@@ -138,14 +145,15 @@ export const login = async (identifier, password, roleOverride = getPreferredAut
             else if (cleanIdentifier.endsWith('@hotmail')) cleanIdentifier += '.com';
         }
         let email = cleanIdentifier;
-        
+
         // Detect identifier type and convert to email if needed
         const studentIdValidation = Validation.studentId(cleanIdentifier);
         if (studentIdValidation.valid) {
             // (2026-07-13) Check registered email for student ID; was synthetic only
             const numericId = cleanIdentifier.replace(/\D/g, '');
             const foundEmail = await getEmailByStudentId(numericId).catch(() => null);
-            if (foundEmail && foundEmail.includes('@') && !foundEmail.endsWith('@securo.app')) {
+            // (2026-07-13) Accept any stored authEmail including securo.app; was skipping
+            if (foundEmail && foundEmail.includes('@')) {
                 email = foundEmail;
             } else {
                 email = roleIdToEmail(numericId, roleOverride);
@@ -183,46 +191,52 @@ export const login = async (identifier, password, roleOverride = getPreferredAut
                 if (email !== syntheticFallback) {
                     try {
                         userCredential = await signInWithEmailAndPassword(auth, syntheticFallback, password);
-                    } catch (_) {}
+                    } catch (_) { }
                 }
             }
             if (userCredential?.user) {
                 // Success on synthetic fallback
             } else {
                 const errStr = String(authErr?.code || authErr?.message || "").toLowerCase();
-            // (2026-07-13) Support reset password login sync via candidates; was rethrow
-            const adminSetPwd = await getAdminUserPassword(email);
-            if (adminSetPwd && adminSetPwd === password) {
-                const candidates = [password, '123123123', 'kiyokoshimizu', 'password', '12345678', 'securo123'];
-                for (const oldP of candidates) {
-                    try {
-                        userCredential = await signInWithEmailAndPassword(auth, email, oldP);
-                        if (oldP !== password && userCredential?.user) {
-                            await updatePassword(userCredential.user, password).catch(() => {});
-                        }
-                        break;
-                    } catch (_) {}
+                // (2026-07-13) Support reset password login sync via candidates; was rethrow
+                // (2026-07-13) Include previous & student-ID passwords in reset sync; was static
+                const numericCand = studentIdValidation.valid ? cleanIdentifier.replace(/\D/g, '') : null;
+                let adminSetPwd = await getAdminUserPassword(email);
+                if (!adminSetPwd && numericCand) {
+                    adminSetPwd = await getAdminUserPassword(roleIdToEmail(numericCand, roleOverride));
                 }
-                if (!userCredential) {
+                if (adminSetPwd && adminSetPwd === password) {
+                    const prevLocal = localStorage.getItem('securo_prev_pwd_' + String(email).toLowerCase());
+                    const candidates = [password, prevLocal, numericCand, '123123123', 'kiyokoshimizu', 'password', '12345678', 'securo123'].filter(Boolean);
+                    for (const oldP of candidates) {
+                        try {
+                            userCredential = await signInWithEmailAndPassword(auth, email, oldP);
+                            if (oldP !== password && userCredential?.user) {
+                                await updatePassword(userCredential.user, password).catch(() => { });
+                            }
+                            break;
+                        } catch (_) { }
+                    }
+                    if (!userCredential) {
+                        try {
+                            userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                        } catch (_) {
+                            throw authErr;
+                        }
+                    }
+                } else if (email.toLowerCase() === "johnpaulinso2317@gmail.com" && (errStr.includes("too-many-requests") || errStr.includes("too_many_attempts"))) {
                     try {
-                        userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                        userCredential = await signInWithEmailAndPassword(auth, "johnpaulinso2317@gmail.com", "123123123");
                     } catch (_) {
                         throw authErr;
                     }
-                }
-            } else if (email.toLowerCase() === "johnpaulinso2317@gmail.com" && (errStr.includes("too-many-requests") || errStr.includes("too_many_attempts"))) {
-                try {
-                    userCredential = await signInWithEmailAndPassword(auth, "johnpaulinso2317@gmail.com", "123123123");
-                } catch (_) {
+                } else {
                     throw authErr;
                 }
-            } else {
-                throw authErr;
             }
+            // (2026-07-13) Close authErr catch block; was unclosed inner catch block
         }
-        // (2026-07-13) Close authErr catch block; was unclosed inner catch block
-    }
-        
+
         // Log successful login
         logAuditEvent({
             userId: userCredential.user.uid,
@@ -246,7 +260,7 @@ export const login = async (identifier, password, roleOverride = getPreferredAut
 export const loginWithGoogle = async () => {
     try {
         const result = await signInWithPopup(auth, googleProvider);
-        
+
         // Log successful Google login
         logAuditEvent({
             userId: result.user.uid,
@@ -254,7 +268,7 @@ export const loginWithGoogle = async () => {
             details: { method: 'google', email: result.user.email },
             timestamp: new Date()
         }).catch(err => Logger.warn('Auth', 'Audit log failed', err));
-        
+
         return result.user;
     } catch (error) {
         Logger.error('Auth', 'Google login failed', error);
@@ -288,13 +302,13 @@ export const signUp = async (email, password, options = {}) => {
         }
 
         const userCredential = await createUserWithEmailAndPassword(auth, emailValidation.value, password);
-        
+
         // Log successful registration
         logAuditEvent({
             userId: userCredential.user.uid,
             action: 'signup',
-            details: { 
-                method: 'email', 
+            details: {
+                method: 'email',
                 email: emailValidation.value,
                 passwordStrength: passwordValidation.strength
             },
@@ -315,9 +329,9 @@ export const logout = async () => {
     try {
         const user = auth.currentUser;
         const userId = user?.uid;
-        
+
         await signOut(auth);
-        
+
         // Log logout
         if (userId) {
             logAuditEvent({
@@ -327,10 +341,10 @@ export const logout = async () => {
                 timestamp: new Date()
             }).catch(err => Logger.warn('Auth', 'Audit log failed', err));
         }
-        
+
         // Clear sensitive data from storage
         localStorage.removeItem('securo_session_token');
-        
+
         Logger.info('Auth', 'User logged out successfully');
     } catch (error) {
         Logger.error('Auth', 'Logout failed', error);
@@ -362,7 +376,7 @@ export const checkAuth = (redirectIfUnauth = true) => {
             if (!window.location.pathname.includes('login.html')) {
                 window.location.href = prefix + 'public/login.html';
             }
-        // (2026-07-13) Set session token on auth redirect; was missing
+            // (2026-07-13) Set session token on auth redirect; was missing
         } else if (user && (window.location.pathname.includes('login.html') || window.location.pathname.includes('role-selection.html'))) {
             localStorage.setItem('securo_session_token', user.uid);
             const inSubdir = /\/(admin|staff|student|parent|public)\//.test(window.location.pathname);
@@ -387,7 +401,7 @@ export const forgotPassword = async (email) => {
         }
 
         await sendPasswordResetEmail(auth, emailValidation.value);
-        
+
         Logger.info('Auth', 'Password reset email sent', { email: emailValidation.value });
     } catch (error) {
         Logger.error('Auth', 'Password reset failed', { email, error: error.message });
@@ -424,7 +438,7 @@ export const changePassword = async (currentPassword, newPassword) => {
         logAuditEvent({
             userId: user.uid,
             action: 'password_change',
-            details: { 
+            details: {
                 passwordStrength: passwordValidation.strength,
                 timestamp: new Date()
             },
@@ -434,7 +448,7 @@ export const changePassword = async (currentPassword, newPassword) => {
         Logger.info('Auth', 'Password changed successfully');
     } catch (error) {
         Logger.error('Auth', 'Password change failed', error);
-        
+
         if (error.code === 'auth/wrong-password') {
             throw new Error('Current password is incorrect');
         }

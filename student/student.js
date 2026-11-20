@@ -3,7 +3,8 @@ import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device }
 import { renderEmergencyContactWidget } from '../js/emergency-contacts.js';
 import { checkAuth, logout } from '../js/auth.js';
 import { auth } from '../js/firebase-config.js';
-import { getUserProfile, saveUserProfile, saveUserDirectoryMarker, getGADPosts, toggleLikeGADPost, logAttendance, getAttendanceHistory, logSOS, getUserSOSLogs, saveEmergencyPost, getUserEmergencyPosts, deleteEmergencyPost, updateEmergencyPostAttachments, getEmergencyPostById, toggleEmergencyPostAccess, toggleEmergencyPostGuardianAccess, sendChatMessage, subscribeToMessages, subscribeToMessagesByThread, subscribeToGuardianRequests, getLinksForStudent, createGuardianLinkFromStudent, respondToGuardianLink, removeGuardianLink, updateStudentLiveLocation, syncGuardianLinksForStudent, setStudentLocationSharingStatus, subscribeToAccountNotifications, markAccountNotificationRead, sendAccountNotification, subscribeToStudentLinks, sendGADMessage, subscribeToGADMessages, subscribeToCampusMapConfig, notifyGuardiansOfGeofenceEvent, attachPhotoToActiveSOS, fetchLatestCampusMapConfig } from '../js/db.js';
+// (2026-07-13) Import startUserPresenceHeartbeat; was missing
+import { getUserProfile, saveUserProfile, saveUserDirectoryMarker, getGADPosts, toggleLikeGADPost, logAttendance, getAttendanceHistory, logSOS, getUserSOSLogs, saveEmergencyPost, getUserEmergencyPosts, deleteEmergencyPost, updateEmergencyPostAttachments, getEmergencyPostById, toggleEmergencyPostAccess, toggleEmergencyPostGuardianAccess, sendChatMessage, subscribeToMessages, subscribeToMessagesByThread, subscribeToGuardianRequests, getLinksForStudent, createGuardianLinkFromStudent, respondToGuardianLink, removeGuardianLink, updateStudentLiveLocation, syncGuardianLinksForStudent, setStudentLocationSharingStatus, subscribeToAccountNotifications, markAccountNotificationRead, sendAccountNotification, subscribeToStudentLinks, sendGADMessage, subscribeToGADMessages, subscribeToCampusMapConfig, notifyGuardiansOfGeofenceEvent, attachPhotoToActiveSOS, fetchLatestCampusMapConfig, startUserPresenceHeartbeat } from '../js/db.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import '../js/install-sw.js';
 
@@ -3389,9 +3390,10 @@ setTimeout(() => {
                 return;
             }
 
-            // (2026-07-13) Sync session token on auth state change; was unsynced
+            // (2026-07-13) Broadcast live student presence heartbeat; was missing
             localStorage.setItem('securo_session_token', user.uid);
             sessionStorage.removeItem('securo_login_pending');
+            startUserPresenceHeartbeat(user.uid);
 
             // (2026-07-13) Role-based auth routing and onboarding gate; was hardcoded
             appState.user.uid = user.uid;

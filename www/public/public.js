@@ -34,7 +34,8 @@ const PAGE_CONTROLLERS = {
                 !!window.cordova;
             if (isNativeApk) {
                 const isLoggedIn = Boolean(localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated') === '1');
-                window.location.replace(isLoggedIn ? 'index.html' : 'public/role-selection.html');
+                // (2026-07-13) Route native logged-in user to role dashboard; was index
+                window.location.replace(isLoggedIn ? getRoleDashboardUrl() : 'public/role-selection.html');
             }
         })();
 
@@ -706,17 +707,28 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
             setMode('signup');
         }
 
-        // (2026-07-13) Send reset email directly by student ID; was guardian verify
+        // (2026-07-13) 3-step OTP reset to student or linked parent email; was link
         const studentResetModal = document.getElementById('studentResetModal');
         const studentResetIdInput = document.getElementById('studentResetIdInput');
         const studentResetError = document.getElementById('studentResetError');
         const studentResetSendBtn = document.getElementById('studentResetSendBtn');
         const studentRequestAdminResetBtn = document.getElementById('studentRequestAdminResetBtn');
         const studentResetFormView = document.getElementById('studentResetFormView');
-        const studentResetSuccessView = document.getElementById('studentResetSuccessView');
+        const studentResetOtpView = document.getElementById('studentResetOtpView');
+        const studentResetNewPwdView = document.getElementById('studentResetNewPwdView');
         const studentResetTargetEmail = document.getElementById('studentResetTargetEmail');
-        const studentResetDoneBtn = document.getElementById('studentResetDoneBtn');
+        const studentResetRecipientHint = document.getElementById('studentResetRecipientHint');
+        const studentResetOtpInput = document.getElementById('studentResetOtpInput');
+        const studentResetOtpError = document.getElementById('studentResetOtpError');
+        const studentResetVerifyOtpBtn = document.getElementById('studentResetVerifyOtpBtn');
+        const studentResetResendOtpBtn = document.getElementById('studentResetResendOtpBtn');
+        const studentResetNewPwdInput = document.getElementById('studentResetNewPwdInput');
+        const studentResetConfirmPwdInput = document.getElementById('studentResetConfirmPwdInput');
+        const studentResetNewPwdError = document.getElementById('studentResetNewPwdError');
+        const studentResetSavePwdBtn = document.getElementById('studentResetSavePwdBtn');
         const closeStudentResetModalBtn = document.getElementById('closeStudentResetModalBtn');
+
+        let pendingStudentReset = null;
 
         function maskStudentEmail(email) {
             if (!email || !email.includes('@')) return email;
@@ -726,15 +738,31 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
             return `${name[0]}${stars}${name[name.length - 1]}@${domain}`;
         }
 
+        function isRealEmail(em) {
+            const v = String(em || '').trim().toLowerCase();
+            return Boolean(v && v.includes('@') && v.includes('.') && !v.endsWith('@securo.app'));
+        }
+
+        const showResetStep = (step) => {
+            if (studentResetFormView) studentResetFormView.style.display = step === 1 ? 'block' : 'none';
+            if (studentResetOtpView) studentResetOtpView.style.display = step === 2 ? 'block' : 'none';
+            if (studentResetNewPwdView) studentResetNewPwdView.style.display = step === 3 ? 'block' : 'none';
+        };
+
         const openStudentResetModal = () => {
             if (!studentResetModal) return;
+            pendingStudentReset = null;
             const currentId = identifierInput.value.trim().replace(/\D/g, '');
-            studentResetIdInput.value = currentId;
-            studentResetError.textContent = '';
-            studentResetFormView.style.display = 'block';
-            studentResetSuccessView.style.display = 'none';
+            if (studentResetIdInput) studentResetIdInput.value = currentId;
+            if (studentResetError) studentResetError.textContent = '';
+            if (studentResetOtpError) studentResetOtpError.textContent = '';
+            if (studentResetNewPwdError) studentResetNewPwdError.textContent = '';
+            if (studentResetOtpInput) studentResetOtpInput.value = '';
+            if (studentResetNewPwdInput) studentResetNewPwdInput.value = '';
+            if (studentResetConfirmPwdInput) studentResetConfirmPwdInput.value = '';
+            showResetStep(1);
             studentResetModal.classList.add('active');
-            setTimeout(() => studentResetIdInput.focus(), 150);
+            setTimeout(() => studentResetIdInput?.focus(), 150);
         };
 
         const closeStudentResetModal = () => {
@@ -742,43 +770,206 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
         };
 
         closeStudentResetModalBtn?.addEventListener('click', closeStudentResetModal);
-        studentResetDoneBtn?.addEventListener('click', () => {
-            closeStudentResetModal();
-            identifierInput.focus();
-        });
 
         document.getElementById('forgotPassword').addEventListener('click', (e) => {
             e.preventDefault();
             openStudentResetModal();
         });
 
-        studentResetSendBtn?.addEventListener('click', async () => {
-            studentResetError.textContent = '';
-            const sid = studentResetIdInput.value.trim().replace(/\D/g, '');
+        async function dispatchStudentOtp(sid, triggerBtn) {
+            if (studentResetError) studentResetError.textContent = '';
+            if (studentResetOtpError) studentResetOtpError.textContent = '';
             if (!/^\d{7}$/.test(sid)) {
-                studentResetError.textContent = 'Please enter a valid 7-digit Student ID.';
+                if (studentResetError) studentResetError.textContent = 'Please enter a valid 7-digit Student ID.';
                 return;
             }
 
-            setButtonBusy(studentResetSendBtn, true);
+            setButtonBusy(triggerBtn, true);
             try {
-                let targetEmail = await getEmailByStudentId(sid).catch(() => null);
-                if (!targetEmail || !targetEmail.includes('@') || targetEmail.endsWith('@securo.app')) {
-                    studentResetError.textContent = `No linked email address found for Student #${sid}. Please request an admin reset below.`;
+                const studentRec = await findStudentUidByStudentId(sid).catch(() => null);
+                const directEmail = await getEmailByStudentId(sid).catch(() => null);
+
+                if (!studentRec && !directEmail) {
+                    if (studentResetError) studentResetError.textContent = `No registered student account found for ID #${sid}.`;
                     return;
                 }
 
-                await forgotPassword(targetEmail);
-                studentResetTargetEmail.textContent = maskStudentEmail(targetEmail);
-                studentResetFormView.style.display = 'none';
-                studentResetSuccessView.style.display = 'block';
-                showToast('Reset Link Sent', 'Password reset instructions have been emailed.', 'success');
+                const studentUid = studentRec?.uid || studentRec?.id || '';
+                const studentName = studentRec?.name || `Student #${sid}`;
+                const studentAuthEmail = studentRec?.authEmail || (studentRec?.email && studentRec.email.includes('@') ? studentRec.email : (directEmail || roleIdToEmail(sid, 'student')));
+
+                // 1) Prefer student's registered real email
+                let recipientEmail = isRealEmail(studentRec?.email) ? studentRec.email.trim() : (isRealEmail(directEmail) ? directEmail.trim() : '');
+                let isParentRecipient = false;
+                let linkedParentUid = '';
+
+                // 2) Fallback to linked parent's email if student has no real email
+                if (!recipientEmail) {
+                    const links = await getLinksForStudent(studentUid, sid).catch(() => []);
+                    const orderedLinks = [
+                        ...(links || []).filter(l => l.status === 'accepted'),
+                        ...(links || []).filter(l => l.status !== 'accepted')
+                    ];
+                    for (const link of orderedLinks) {
+                        const gUid = link.guardianId || link.guardianUid || '';
+                        if (isRealEmail(link.guardianEmail)) {
+                            recipientEmail = link.guardianEmail.trim();
+                            isParentRecipient = true;
+                            linkedParentUid = gUid;
+                            break;
+                        }
+                        if (gUid) {
+                            const gProf = await getUserProfile(gUid).catch(() => null);
+                            if (isRealEmail(gProf?.email)) {
+                                recipientEmail = gProf.email.trim();
+                                isParentRecipient = true;
+                                linkedParentUid = gUid;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!recipientEmail) {
+                    if (studentResetError) {
+                        studentResetError.textContent = `No registered email or linked parent email found for Student #${sid}. Please request an admin reset below.`;
+                    }
+                    return;
+                }
+
+                const otpCode = String(Math.floor(100000 + Math.random() * 900000));
+                pendingStudentReset = {
+                    code: otpCode,
+                    expiresAt: Date.now() + 10 * 60 * 1000,
+                    sid,
+                    studentUid,
+                    studentName,
+                    studentAuthEmail,
+                    recipientEmail,
+                    isParentRecipient,
+                    linkedParentUid
+                };
+
+                const subject = isParentRecipient
+                    ? `Securo Alert: Your Child (${studentName} - #${sid}) Is Changing Their Password`
+                    : 'Securo Student Password Reset Verification Code (OTP)';
+                const bodyMsg = isParentRecipient
+                    ? `Hello Parent/Guardian,\n\nThis email notifies you that your child ${studentName} (Student ID: ${sid}) is changing their Securo account password.\n\nVerification OTP Code: ${otpCode}\n\nThis code expires in 10 minutes. Share this code only if you authorized your child's password change.`
+                    : `Hello ${studentName},\n\nYour Securo password reset verification OTP code is: ${otpCode}\n\nThis code expires in 10 minutes.`;
+
+                // Dispatch OTP email via FormSubmit AJAX with bounded timeout
+                try {
+                    const ctrl = new AbortController();
+                    const tId = setTimeout(() => ctrl.abort(), 8000);
+                    await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(recipientEmail)}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                        body: JSON.stringify({ _subject: subject, _captcha: 'false', message: bodyMsg }),
+                        signal: ctrl.signal
+                    }).catch(() => null);
+                    clearTimeout(tId);
+                } catch (_) {}
+
+                // Notify linked parent inside Guardian Dashboard as well when parent receives OTP
+                if (isParentRecipient && linkedParentUid) {
+                    sendAccountNotification({
+                        userId: linkedParentUid,
+                        recipientUid: linkedParentUid,
+                        type: 'child_password_reset_otp',
+                        title: 'Child Password Change Alert',
+                        message: `Your child ${studentName} (#${sid}) is changing their password. OTP Code: ${otpCode}`,
+                        relatedId: sid,
+                        sourceUserId: studentUid || sid,
+                        sourceName: studentName,
+                        priority: 'high'
+                    }).catch(() => {});
+                }
+
+                if (studentResetTargetEmail) studentResetTargetEmail.textContent = maskStudentEmail(recipientEmail);
+                if (studentResetRecipientHint) {
+                    studentResetRecipientHint.textContent = isParentRecipient
+                        ? 'No student email on file. An OTP and password-change alert have been sent to your linked parent email:'
+                        : 'A 6-digit OTP verification code has been sent to your registered email:';
+                }
+                showResetStep(2);
+                showToast('OTP Sent', isParentRecipient ? 'OTP and alert sent to your linked parent email.' : 'OTP code sent to your registered email.', 'success');
+                setTimeout(() => studentResetOtpInput?.focus(), 120);
             } catch (err) {
-                console.warn('Student password reset failed:', err);
-                const friendly = getFriendlyAuthMessage(err, 'login', 'student');
-                studentResetError.textContent = friendly || 'Failed to dispatch reset link. Please check your ID or try again.';
+                console.warn('Student OTP dispatch failed:', err);
+                if (studentResetError) studentResetError.textContent = err?.message || 'Could not send OTP. Please try again.';
             } finally {
-                setButtonBusy(studentResetSendBtn, false);
+                setButtonBusy(triggerBtn, false);
+            }
+        }
+
+        studentResetSendBtn?.addEventListener('click', () => {
+            const sid = studentResetIdInput.value.trim().replace(/\D/g, '');
+            dispatchStudentOtp(sid, studentResetSendBtn);
+        });
+
+        studentResetResendOtpBtn?.addEventListener('click', () => {
+            if (!pendingStudentReset?.sid) return;
+            dispatchStudentOtp(pendingStudentReset.sid, studentResetResendOtpBtn);
+        });
+
+        studentResetVerifyOtpBtn?.addEventListener('click', () => {
+            if (studentResetOtpError) studentResetOtpError.textContent = '';
+            const entered = (studentResetOtpInput?.value || '').trim().replace(/\D/g, '');
+            if (!pendingStudentReset) {
+                if (studentResetOtpError) studentResetOtpError.textContent = 'Session expired. Please request a new OTP.';
+                return;
+            }
+            if (Date.now() > pendingStudentReset.expiresAt) {
+                if (studentResetOtpError) studentResetOtpError.textContent = 'OTP code has expired. Please click Resend OTP.';
+                return;
+            }
+            if (entered.length !== 6 || entered !== pendingStudentReset.code) {
+                if (studentResetOtpError) studentResetOtpError.textContent = 'Invalid OTP code. Please check the email and try again.';
+                return;
+            }
+            showResetStep(3);
+            setTimeout(() => studentResetNewPwdInput?.focus(), 120);
+        });
+
+        studentResetSavePwdBtn?.addEventListener('click', async () => {
+            if (studentResetNewPwdError) studentResetNewPwdError.textContent = '';
+            const newPwd = studentResetNewPwdInput?.value || '';
+            const confirmPwd = studentResetConfirmPwdInput?.value || '';
+            if (newPwd.length < 8) {
+                if (studentResetNewPwdError) studentResetNewPwdError.textContent = 'Password must be at least 8 characters.';
+                return;
+            }
+            if (newPwd !== confirmPwd) {
+                if (studentResetNewPwdError) studentResetNewPwdError.textContent = 'New password and confirm password do not match.';
+                return;
+            }
+            if (!pendingStudentReset) {
+                if (studentResetNewPwdError) studentResetNewPwdError.textContent = 'Reset session expired. Please start again.';
+                return;
+            }
+
+            setButtonBusy(studentResetSavePwdBtn, true);
+            try {
+                const { sid, studentUid, studentAuthEmail, recipientEmail, isParentRecipient } = pendingStudentReset;
+                await saveAdminUserPassword(studentUid, studentAuthEmail, newPwd);
+                if (!isParentRecipient && recipientEmail && recipientEmail.toLowerCase() !== studentAuthEmail.toLowerCase()) {
+                    await saveAdminUserPassword(studentUid, recipientEmail, newPwd);
+                }
+
+                const loggedIn = await login(sid, newPwd, 'student');
+                if (loggedIn?.uid) {
+                    localStorage.setItem('securo_session_token', loggedIn.uid);
+                    localStorage.setItem('securo_user_role', 'student');
+                    sessionStorage.setItem('securo_authenticated', '1');
+                }
+                closeStudentResetModal();
+                showToast('Password Updated', 'Signing you in with your new password...', 'success');
+                setTimeout(() => { window.location.href = getRoleDashboardUrl('student'); }, 500);
+            } catch (err) {
+                console.warn('Student password update failed:', err);
+                if (studentResetNewPwdError) studentResetNewPwdError.textContent = err?.message || 'Could not update password. Please try again.';
+            } finally {
+                setButtonBusy(studentResetSavePwdBtn, false);
             }
         });
 
@@ -800,8 +991,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                     sourceUserId: sid,
                     sourceName: `Student #${sid}`,
                     priority: 'high'
-                }).catch(() => {});
-
+                });
                 showToast('Request Dispatched', `Campus Command Desk notified for Student #${sid}.`, 'success');
                 closeStudentResetModal();
             } catch (e) {
@@ -992,7 +1182,10 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
             try {
                 const uid = onboardingUserContext?.uid || auth.currentUser?.uid;
                 const studentId = onboardingUserContext?.studentId || '';
-                const email = onboardingUserContext?.email || auth.currentUser?.email || '';
+                // (2026-07-13) Keep recovery email separate from authEmail; was overwriting
+                const rawEmail = onboardingUserContext?.email ?? '';
+                const email = rawEmail && !rawEmail.endsWith('@securo.app') ? rawEmail : '';
+                const authEmail = auth.currentUser?.email || roleIdToEmail(studentId, preferredRole);
                 const role = onboardingUserContext?.role || preferredRole;
 
                 const profilePayload = {
@@ -1005,6 +1198,8 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                     photoURL: onboardingPhotoData || '',
                     avatar: onboardingPhotoData || '',
                     email,
+                    recoveryEmail: email,
+                    authEmail,
                     role,
                     onboardingCompleted: true,
                     updatedAt: new Date().toISOString()
@@ -1154,10 +1349,12 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
 
                     if (!profile || !profile.name || profile.name === 'Student' || !profile.firstName || !profile.section || !profile.onboardingCompleted) {
                         setButtonBusy(submitBtn, false);
+                        // (2026-07-13) Preserve recovery email on onboarding; was auth email
+                        const recoveryEmail = (profile?.email && !profile.email.endsWith('@securo.app')) ? profile.email : (profile?.recoveryEmail || '');
                         openOnboardingModal({
                             uid: loggedInUser.uid,
                             studentId: profile?.studentId || identifier,
-                            email: loggedInUser.email,
+                            email: recoveryEmail,
                             role: preferredRole
                         });
                         return;
@@ -1167,7 +1364,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                     const activeRole = profile?.role || preferredRole;
                     try { localStorage.setItem('securo_user_role', activeRole); } catch (_) {}
                     sessionStorage.setItem('securo_authenticated', '1');
-                    const isNativeApk = Boolean(window.Capacitor?.isNativePlatform?.() || window.Capacitor?.platform !== 'web');
+                    const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
                     const camOk = localStorage.getItem('securo_camera_granted') === 'true';
                     const locOk = localStorage.getItem('securo_location_granted') === 'true';
                     window.location.href = (isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl();
@@ -1180,8 +1377,9 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                         throw new Error(`Please enter a valid 7-digit ${roleLabel} ID number.`);
                     }
                     // (2026-07-13) Validate student recovery email; was ID & password only
-                    if (!studentEmail || !Validation.email(studentEmail).valid) {
-                        throw new Error("Please enter a valid email address for account recovery.");
+                    // (2026-07-13) Allow optional recovery email on student signup; was mandatory
+                    if (studentEmail && !Validation.email(studentEmail).valid) {
+                        throw new Error("Please enter a valid email address or leave it blank.");
                     }
                     if (password.length < 8) {
                         throw new Error("Password must be at least 8 characters.");
@@ -1190,17 +1388,11 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                         throw new Error("Passwords do not match.");
                     }
 
-                    // Check if ID is already registered
-                    let idTaken = false;
-                    try {
-                        const raw = localStorage.getItem('securo_user_directory');
-                        if (raw) {
-                            const parsed = JSON.parse(raw);
-                            idTaken = Object.values(parsed).some(u => String(u.studentId || '') === String(studentId));
-                        }
-                    } catch (_) {}
+                    // (2026-07-13) Check Firestore DB for duplicate ID only; was stale cache first
+                    let idTaken = await isStudentIdTaken(studentId).catch(() => false);
                     if (!idTaken) {
-                        idTaken = await isStudentIdTaken(studentId).catch(() => false);
+                        const existingRec = await findStudentUidByStudentId(studentId).catch(() => null);
+                        if (existingRec?.uid) idTaken = true;
                     }
                     if (idTaken) {
                         throw new Error(`That ${roleLabel} ID is already registered. Please sign in.`);
@@ -1285,8 +1477,9 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                     if (!/^\d{7}$/.test(studentId)) {
                         throw new Error(`Please enter a valid 7-digit ${roleLabel} ID number.`);
                     }
-                    if (!studentEmail || !Validation.email(studentEmail).valid) {
-                        throw new Error("Please enter a valid email address for account recovery.");
+                    // (2026-07-13) Allow optional recovery email on student signup; was mandatory
+                    if (studentEmail && !Validation.email(studentEmail).valid) {
+                        throw new Error("Please enter a valid email address or leave it blank.");
                     }
                     if (password.length < 8) {
                         throw new Error("Password must be at least 8 characters.");
@@ -1295,23 +1488,26 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                         throw new Error("Passwords do not match.");
                     }
 
-                    let idTaken = false;
+                    // (2026-07-13) Use ID-based authEmail so Gmail never collides; was studentEmail
+                    const authEmail = roleIdToEmail(studentId, preferredRole);
+                    let user;
                     try {
-                        const raw = localStorage.getItem('securo_user_directory');
-                        if (raw) {
-                            const parsed = JSON.parse(raw);
-                            idTaken = Object.values(parsed).some(u => String(u.studentId || '') === String(studentId));
+                        user = await signUp(authEmail, password);
+                    } catch (signupErr) {
+                        const code = String(signupErr?.code || '');
+                        if (code === 'auth/email-already-in-use') {
+                            throw new Error(`That ${roleLabel} ID is already registered. Please sign in.`);
                         }
-                    } catch (_) {}
-                    if (!idTaken) {
-                        idTaken = await isStudentIdTaken(studentId).catch(() => false);
+                        throw signupErr;
                     }
-                    if (idTaken) {
+                    // (2026-07-13) Verify ID uniqueness while signed in; was blocked by rules
+                    const duplicateInDb = await isStudentIdTaken(studentId, user.uid).catch(() => false);
+                    if (duplicateInDb) {
+                        try { await user.delete(); } catch (_) {}
+                        try { await logout(); } catch (_) {}
                         throw new Error(`That ${roleLabel} ID is already registered. Please sign in.`);
                     }
-
-                    // (2026-07-13) Register account with recovery email; was synthetic email
-                    const user = await signUp(studentEmail, password);
+                    const finalAuthEmail = user?.email || authEmail;
                     if (user?.uid) {
                         localStorage.setItem('securo_session_token', user.uid);
                         sessionStorage.setItem('securo_login_pending', '1');
@@ -1319,28 +1515,32 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                     try {
                         await saveUserProfile(user.uid, {
                             studentId,
-                            email: studentEmail,
+                            email: studentEmail || "",
+                            recoveryEmail: studentEmail || "",
+                            authEmail: finalAuthEmail,
                             role: preferredRole,
                             createdAt: new Date().toISOString()
                         });
                     } catch (_) {}
                     try {
+                        await saveAdminUserPassword(user.uid, finalAuthEmail, password);
+                    } catch (_) {}
+                    try {
                         const raw = localStorage.getItem('securo_user_directory');
                         const dir = raw ? JSON.parse(raw) : {};
-                        dir[user.uid] = { ...(dir[user.uid] || {}), uid: user.uid, studentId, email: studentEmail, role: preferredRole, updatedAt: new Date().toISOString() };
+                        dir[user.uid] = { ...(dir[user.uid] || {}), uid: user.uid, studentId, email: studentEmail || "", recoveryEmail: studentEmail || "", authEmail: finalAuthEmail, role: preferredRole, updatedAt: new Date().toISOString() };
                         localStorage.setItem('securo_user_directory', JSON.stringify(dir));
                     } catch (_) {}
 
                     if (termsModalEl) termsModalEl.classList.remove('active');
                     sessionStorage.setItem('securo_just_registered', '1');
-                    // (2026-07-13) Cache user role upon login; was not setting role key
-                    const activeRole = profile?.role || preferredRole;
+                    const activeRole = preferredRole || 'student';
                     try { localStorage.setItem('securo_user_role', activeRole); } catch (_) {}
                     sessionStorage.setItem('securo_authenticated', '1');
-                    const isNativeApk = Boolean(window.Capacitor?.isNativePlatform?.() || window.Capacitor?.platform !== 'web');
+                    const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
                     const camOk = localStorage.getItem('securo_camera_granted') === 'true';
                     const locOk = localStorage.getItem('securo_location_granted') === 'true';
-                    window.location.href = (isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl();
+                    window.location.href = (isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl(activeRole);
                 } catch (error) {
                     const friendlyMessage = getFriendlyAuthMessage(error, "signup", roleLabel);
                     errorMsg.textContent = friendlyMessage;
