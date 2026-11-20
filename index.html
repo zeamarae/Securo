@@ -25,13 +25,18 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <!-- (2026-07-13) Dramatic intro preloader styles and GSAP; was no preloader -->
-    <link rel="stylesheet" href="preloader.css">
+    <link rel="stylesheet" href="css/preloader.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="preloader.js"></script>
+    <script src="js/preloader.js"></script>
 
-    <!-- (2026-07-13) Route web to landing and app to role-selection; was desktop only -->
+    <!-- (2026-07-13) Route roles and apply staff theme; was desktop only -->
     <script>
         (() => {
+            try {
+                if (localStorage.getItem('securo_user_role') === 'staff') {
+                    document.documentElement.classList.add('role-staff');
+                }
+            } catch (_) {}
             const pathname = window.location.pathname;
             const isRootUrl = (pathname === '/' || pathname === '/index.html' || pathname.endsWith('/index.html') || !pathname) &&
                               !window.location.search &&
@@ -83,6 +88,81 @@
             --radius-sm: 14px;
             --phone-width: 400px;
             --nav-height: 76px;
+        }
+
+        /* (2026-07-13) Blue staff UI and nav theme; was purple student theme */
+        html.role-staff,
+        body.role-staff {
+            --primary: #2563eb;
+            --primary-strong: #1d4ed8;
+            --primary-soft: #eff6ff;
+            --primary-wash: rgba(37, 99, 235, 0.14);
+            --bg: #f0f7ff;
+            --bg-strong: #dbeafe;
+            --line: rgba(37, 99, 235, 0.15);
+            --shadow: 0 35px 80px rgba(30, 58, 138, 0.18);
+            --shadow-soft: 0 18px 36px rgba(30, 58, 138, 0.12);
+            --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 18px 48px rgba(37, 99, 235, 0.16);
+        }
+        html.role-staff #studentParentBar,
+        body.role-staff #studentParentBar,
+        html.role-staff #noParentsChip,
+        body.role-staff #noParentsChip,
+        html.role-staff #inviteParentBarBtn,
+        body.role-staff #inviteParentBarBtn,
+        html.role-staff #inviteParentModal,
+        body.role-staff #inviteParentModal {
+            display: none !important;
+        }
+        html.role-staff .profile-chip,
+        body.role-staff .profile-chip {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+        }
+        html.role-staff .bottom-nav,
+        body.role-staff .bottom-nav {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(255, 255, 255, 0.88)), rgba(239, 246, 255, 0.6) !important;
+            border-top: 1px solid rgba(37, 99, 235, 0.12) !important;
+        }
+        html.role-staff .nav-item.active,
+        body.role-staff .nav-item.active {
+            color: #2563eb !important;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(219, 234, 254, 0.85)), rgba(37, 99, 235, 0.12) !important;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18) !important;
+        }
+        html.role-staff .nav-item.active .material-symbols-outlined,
+        body.role-staff .nav-item.active .material-symbols-outlined,
+        html.role-staff .nav-item.active span,
+        body.role-staff .nav-item.active span {
+            color: #2563eb !important;
+        }
+        html.role-staff .nav-item:hover,
+        body.role-staff .nav-item:hover,
+        html.role-staff .nav-item:focus-visible,
+        body.role-staff .nav-item:focus-visible {
+            color: #2563eb !important;
+            background: rgba(37, 99, 235, 0.08) !important;
+        }
+        html.role-staff .brand-badge,
+        body.role-staff .brand-badge {
+            background: #eff6ff !important;
+            color: #2563eb !important;
+        }
+        html.role-staff .btn-primary,
+        body.role-staff .btn-primary,
+        html.role-staff .status-btn:not(.secondary),
+        body.role-staff .status-btn:not(.secondary),
+        html.role-staff .camera-chip-btn.primary,
+        body.role-staff .camera-chip-btn.primary {
+            background: #2563eb !important;
+            border-color: #2563eb !important;
+        }
+        html.role-staff .pill-badge.active,
+        body.role-staff .pill-badge.active,
+        html.role-staff .filter-chip.active,
+        body.role-staff .filter-chip.active {
+            background: #2563eb !important;
+            color: #ffffff !important;
         }
 
         /* Profile Dropdown (Date: 2026-05-01) */
@@ -5422,7 +5502,8 @@
                 p.style.setProperty('display', 'none', 'important');
                 if (p.parentNode) p.parentNode.removeChild(p);
             }
-        }, 1600);
+            document.body.removeAttribute('data-preloader-active');
+        }, 1200);
     </script>
 
     <div class="device-shell mx-auto">
@@ -5529,7 +5610,8 @@
                                 <span>No parents watching over you yet</span>
                             </div>
                         </div>
-                        <button type="button" class="invite-parent-bar-btn" id="inviteParentBarBtn" title="Invite a parent or guardian" style="display: none;">
+                        <!-- (2026-07-13) Show invite parent button in bar; was display none -->
+                        <button type="button" class="invite-parent-bar-btn" id="inviteParentBarBtn" title="Invite a parent or guardian">
                             <span class="material-symbols-outlined">person_add</span>
                             <span>Invite Parent</span>
                         </button>
@@ -6213,12 +6295,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module">
         // Core utilities and offline support
-        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './utils.js';
+        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './js/utils.js';
         import './install-sw.js'; // Initialize service worker for offline support
-        import { renderEmergencyContactWidget } from './emergency-contacts.js'; // Emergency quick-dial
+        import { renderEmergencyContactWidget } from './js/emergency-contacts.js'; // Emergency quick-dial
 
-        import { checkAuth, logout } from './auth.js';
-        import { auth } from './firebase-config.js';
+        import { checkAuth, logout } from './js/auth.js';
+        import { auth } from './js/firebase-config.js';
         import {
             getUserProfile,
             saveUserProfile,
@@ -6261,7 +6343,7 @@
             notifyGuardiansOfGeofenceEvent,
             attachPhotoToActiveSOS,
             fetchLatestCampusMapConfig
-        } from './db.js';
+        } from './js/db.js';
 
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -6737,7 +6819,8 @@
             }
         }
 
-        // (2026-08-17) Async init: awaits Firestore fetch before drawing polygon; was defaulting then patching
+        let _isInitializingMap = false;
+        // (2026-07-13) Guard map init race & clean container; was unhandled re-init
         async function initInteractiveMap() {
             if (map) {
                 // (2026-08-17) Re-fetch from Firestore on every tab open; was localStorage only
@@ -6746,6 +6829,9 @@
                 requestAnimationFrame(() => { if (map) map.invalidateSize(); });
                 return;
             }
+            if (_isInitializingMap) return;
+            _isInitializingMap = true;
+            try {
 
             // Fetch exact admin geofence + buildings BEFORE drawing anything
             const firestoreConfig = await fetchLatestCampusMapConfig();
@@ -6780,6 +6866,19 @@
             } else {
                 currentStudentBuildings = getActiveCampusBuildings();
                 CAMPUS_BUILDINGS = currentStudentBuildings;
+            }
+
+            if (map) {
+                syncMapGeofenceAndMarkers(firestoreConfig || {});
+                requestAnimationFrame(() => { if (map) map.invalidateSize(); });
+                return;
+            }
+
+            // (2026-07-13) Use targetMapEl for container; was duplicate mapContainer
+            const targetMapEl = document.getElementById('map');
+            if (!targetMapEl) return;
+            if (targetMapEl._leaflet_id) {
+                targetMapEl._leaflet_id = null;
             }
 
             // Same L.map options as adminSosMap
@@ -6934,6 +7033,9 @@
             }
 
             setupCampusSearch();
+            } finally {
+                _isInitializingMap = false;
+            }
         }
 
         // (2026-07-13) Use live marker position for search focus; was stale building.coords
@@ -7260,6 +7362,22 @@
             vaultSelectionMode: false
         };
 
+        // (2026-07-13) Show parent bar for students on map; was invalid activeView check
+        function applyRoleTheme(role) {
+            const isStaff = role === 'staff';
+            document.documentElement.classList.toggle('role-staff', isStaff);
+            document.body.classList.toggle('role-staff', isStaff);
+            const parentBar = document.getElementById('studentParentBar');
+            if (parentBar) {
+                const currentView = appState.currentPage || 'map';
+                parentBar.style.display = isStaff ? 'none' : (currentView === 'map' ? 'flex' : 'none');
+            }
+        }
+        try {
+            const savedRole = localStorage.getItem('securo_user_role');
+            if (savedRole === 'staff') applyRoleTheme('staff');
+        } catch (_) {}
+
 
         // [REMOVED] loginView, loginForm, studentIdInput, passwordInput, loginMessage, togglePassword, biometricLogin (Date: 2026-05-01)
         const appView = document.getElementById("appView");
@@ -7477,6 +7595,31 @@
             });
         }
 
+        // (2026-07-13) Client-side image compression under 1MB limit; was uncompressed
+        function compressImageFile(file, maxDimension = 960, quality = 0.66) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+                img.onload = () => {
+                    URL.revokeObjectURL(url);
+                    let w = img.naturalWidth || img.width;
+                    let h = img.naturalHeight || img.height;
+                    const scale = Math.min(1, maxDimension / Math.max(w, h));
+                    const canvas = document.createElement("canvas");
+                    canvas.width = Math.round(w * scale);
+                    canvas.height = Math.round(h * scale);
+                    const ctx = canvas.getContext("2d");
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL("image/jpeg", quality));
+                };
+                img.onerror = (e) => {
+                    URL.revokeObjectURL(url);
+                    reject(e);
+                };
+                img.src = url;
+            });
+        }
+
         async function captureCanvasToJpegDataUrl(canvas, quality = 0.76, maxDimension = 1280) {
             const width = canvas.width;
             const height = canvas.height;
@@ -7648,21 +7791,83 @@
             renderVaultItems(currentVaultItems);
         }
 
-        async function loadVaultItems() {
-            if (!appState.user.uid) return;
-            const posts = await getUserEmergencyPosts(appState.user.uid);
-            currentVaultItems = posts.flatMap((post) => (post.attachments || []).map((attachment, index) => ({
-                ...attachment,
-                createdAt: post.createdAt,
-                postId: post.id,
-                attachmentIndex: index,
-                totalInPost: (post.attachments || []).length,
-                location: post.location,
-                gadVisible: post.gadVisible !== false,
-                guardianVisible: post.guardianVisible !== false
-            })));
-            renderVaultItems(currentVaultItems);
+        // (2026-07-13) Vault persistent cache & auto-load; was memory-only loading
+        function getVaultCacheKey(uid) {
+            const userId = uid || appState?.user?.uid || localStorage.getItem('securo_session_token') || 'last_student';
+            return 'securo_vault_cache_' + userId;
         }
+
+        function saveVaultCache(items) {
+            try {
+                const key = getVaultCacheKey();
+                if (!key) return;
+                const toCache = (items || []).slice(0, 40);
+                localStorage.setItem(key, JSON.stringify(toCache));
+            } catch (err) {
+                console.warn("Vault cache store failed:", err);
+            }
+        }
+
+        // (2026-07-13) Fix vault item uniqueness; was truncating base64 JPEG header
+        function deduplicateVaultItems(items) {
+            const seen = new Set();
+            return (items || []).filter(item => {
+                const uniqueKey = item?.id || (item?.postId !== undefined ? `${item.postId}_${item.attachmentIndex ?? 0}` : null) || (item?.url ? String(item.url) : null) || (item?.src && item.src.length > 500 ? `${item.src.slice(0, 30)}_${item.src.slice(-60)}` : item?.src);
+                if (!uniqueKey || seen.has(uniqueKey)) return false;
+                seen.add(uniqueKey);
+                return true;
+            });
+        }
+
+        function loadVaultFromCache(uid) {
+            try {
+                const key = getVaultCacheKey(uid);
+                const raw = localStorage.getItem(key);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        currentVaultItems = deduplicateVaultItems(parsed);
+                        renderVaultItems(currentVaultItems);
+                        return true;
+                    }
+                }
+            } catch (err) {
+                console.warn("Vault cache load failed:", err);
+            }
+            return false;
+        }
+
+        async function loadVaultItems() {
+            const uid = appState.user.uid || localStorage.getItem('securo_session_token');
+            if (!uid) {
+                loadVaultFromCache();
+                return;
+            }
+            if (!currentVaultItems || !currentVaultItems.length) {
+                loadVaultFromCache(uid);
+            }
+            try {
+                const posts = await getUserEmergencyPosts(uid);
+                const rawItems = posts.flatMap((post) => (post.attachments || []).map((attachment, index) => ({
+                    ...attachment,
+                    createdAt: post.createdAt,
+                    postId: post.id,
+                    attachmentIndex: index,
+                    totalInPost: (post.attachments || []).length,
+                    location: post.location,
+                    gadVisible: post.gadVisible !== false,
+                    guardianVisible: post.guardianVisible !== false
+                })));
+                currentVaultItems = deduplicateVaultItems(rawItems);
+                saveVaultCache(currentVaultItems);
+                renderVaultItems(currentVaultItems);
+            } catch (err) {
+                console.warn("Vault load from network failed:", err);
+                if (!currentVaultItems.length) loadVaultFromCache(uid);
+            }
+        }
+
+        loadVaultFromCache();
 
         async function deleteSelectedVaultItems() {
             if (!selectedVaultKeys.size) return;
@@ -8505,15 +8710,17 @@
                 button.classList.toggle("active", button.dataset.nav === pageName);
             });
 
-            // (2026-07-13) Show parent watcher bar on map view only; was hidden
+            // (2026-07-13) Show parent bar for students only; was showing for staff
             const studentParentBar = document.getElementById("studentParentBar");
             if (studentParentBar) {
-                studentParentBar.style.display = pageName === "map" ? "flex" : "none";
+                const isStaff = appState.user?.role === 'staff' || document.body.classList.contains('role-staff') || document.documentElement.classList.contains('role-staff');
+                studentParentBar.style.display = (!isStaff && pageName === "map") ? "flex" : "none";
             }
 
             updateGlobalSosFabVisibility(pageName);
 
-            if (pageName === "vault" && appState.user.uid) {
+            // (2026-07-13) Load vault items or cache on tab open; was uid check only
+            if (pageName === "vault") {
                 loadVaultItems().catch((error) => console.warn("Vault load failed:", error));
             }
 
@@ -9335,6 +9542,13 @@
                 } catch (e) { }
             }
 
+            // (2026-07-13) Apply staff theme before view switch; was unstyled
+            const earlyIsStaff = cachedProfile?.role === 'staff' || user.email?.startsWith('staff.');
+            if (earlyIsStaff) {
+                applyRoleTheme('staff');
+                try { localStorage.setItem('securo_user_role', 'staff'); } catch (_) {}
+            }
+
             if (cachedProfile?.role === 'guardian' || user.email?.startsWith('guardian.')) {
                 window.location.replace("guardian-dashboard.html");
                 return;
@@ -9384,7 +9598,10 @@
 
             // --- Step 2: Load profile & data in the background ---
             try {
-                let profile = await getUserProfile(user.uid);
+                // (2026-07-13) Fast profile load with timeout fallback; was blocking await
+                const profilePromise = getUserProfile(user.uid).catch(() => null);
+                let profile = await Promise.race([profilePromise, new Promise(r => setTimeout(() => r(cachedProfile || null), 2000))]);
+                if (!profile) profile = cachedProfile || { onboardingCompleted: true };
                 if (profile?.role === 'guardian' && user.email !== ADMIN_EMAIL) {
                     window.location.replace("guardian-dashboard.html");
                     return;
@@ -9417,7 +9634,10 @@
                 const derivedRole = user.email?.startsWith('staff.') ? 'staff' : 'student';
                 appState.user.studentId = profile?.studentId || derivedId;
                 appState.user.name = profile?.name || user.displayName || (isStaff ? "Staff Member" : "Student");
+                // (2026-07-13) Persist staff role & apply theme; was unpersisted
                 appState.user.role = profile?.role || derivedRole;
+                try { localStorage.setItem('securo_user_role', appState.user.role); } catch (_) {}
+                applyRoleTheme(appState.user.role);
                 appState.user.section = profile?.section || (isStaff ? "Staff" : "");
                 appState.user.photoURL = profile?.photoURL || profile?.avatar || "";
                 appState.user.initials = profile?.initials || appState.user.name.split(" ").map(n => n[0]).join("").toUpperCase();
@@ -9498,8 +9718,8 @@
                 if (guardianLinkReminderUnsub) guardianLinkReminderUnsub();
                 notificationUnsub = subscribeToAccountNotifications(user.uid, renderAccountNotifications);
 
-                // (2026-07-13) Subscribe guardian requests by studentId and UID; was ID gate
-                if (profile?.role === 'student' || !profile?.role) {
+                // (2026-07-13) Subscribe guardian requests for students only; was all
+                if (appState.user.role === 'student') {
                     guardianRequestUnsub = subscribeToGuardianRequests(appState.user.studentId, (requests) => {
                         appState.pendingGuardianRequests = Array.isArray(requests) ? requests : [];
                         // (2026-07-13) Persist student pending requests offline; was memory only
@@ -9569,14 +9789,22 @@
             }
         });
 
-        // (2026-07-13) Add long-press to unlink parent watcher; was static
+        // (2026-07-13) Keep invite button & parent bar visible; was hidden on load
         function renderGuardianWatchers(links) {
+            const isStaff = appState.user?.role === 'staff' || document.body.classList.contains('role-staff') || document.documentElement.classList.contains('role-staff');
+            const parentBar = document.getElementById("studentParentBar");
+            if (isStaff) {
+                if (parentBar) parentBar.style.display = "none";
+                return;
+            }
+            if (parentBar && (appState.currentPage === 'map' || !appState.currentPage)) {
+                parentBar.style.display = "flex";
+            }
             const container = document.getElementById("studentParentChips");
             if (!container) return;
             const accepted = (links || []).filter(l => l.status === "accepted");
-            // (2026-07-13) Hide invite btn when parent linked; prev: always shown
             const inviteBarBtnEl = document.getElementById("inviteParentBarBtn");
-            if (inviteBarBtnEl) inviteBarBtnEl.style.display = accepted.length ? "none" : "";
+            if (inviteBarBtnEl) inviteBarBtnEl.style.display = "inline-flex";
             if (!accepted.length) {
                 container.innerHTML = `
                     <div class="parent-selector-chip" id="noParentsChip" style="background: rgba(255, 255, 255, 0.85); border: 1px dashed rgba(90, 31, 224, 0.25); color: #64748b; font-weight: 500; cursor: pointer;" title="Tap to invite parents">
@@ -10681,26 +10909,28 @@
             }, 3000);
         }
 
+        // (2026-07-13) Auto-post capture with session fallback & sync; was bare post
         async function autoPostCapture(item) {
-            if (!appState.user.uid) return;
+            const uid = appState.user.uid || localStorage.getItem('securo_session_token');
+            if (!uid) return;
 
             try {
                 // Determine location
                 const location = appState.lastLocation || { lat: 0, lng: 0, address: "Unknown location" };
 
                 await saveEmergencyPost({
-                    userId: appState.user.uid,
-                    userName: appState.user.name,
-                    studentId: appState.user.studentId,
+                    userId: uid,
+                    userName: appState.user.name || "Student",
+                    studentId: appState.user.studentId || "",
                     attachments: [item],
                     location
                 });
-                // (2026-07-13) Link captured photo to active SOS; was saveEmergencyPost only
                 if (item?.kind === "image") {
-                    attachPhotoToActiveSOS(appState.user.uid, item).catch(() => {});
+                    attachPhotoToActiveSOS(uid, item).catch(() => {});
                 }
 
-                showToast("Evidence captured & saved.", "success");
+                showToast("Evidence secured in digital vault.", "success");
+                loadVaultItems().catch(() => {});
             } catch (err) {
                 console.warn("Auto-post failed:", err);
                 showToast("Saved locally (Offline).", "info");
@@ -10766,8 +10996,12 @@
             } catch (_) {}
         }
 
+        let isCaptureBusy = false;
+
         async function handleCaptureStart(e) {
+            if (isCaptureBusy) return;
             if (e) {
+                try { e.preventDefault(); } catch (_) {}
                 captureTouchPointerId = e.pointerId ?? null;
                 captureTouchStartY = e.clientY ?? 0;
             }
@@ -10778,10 +11012,13 @@
             holdTimer = setTimeout(async () => {
                 isHolding = true;
                 await startVideoRecording();
-            }, 280);
+            }, 300);
         }
 
         async function handleCaptureEnd(e) {
+            if (e) {
+                try { e.preventDefault(); e.stopPropagation(); } catch (_) {}
+            }
             if (holdTimer) {
                 clearTimeout(holdTimer);
                 holdTimer = null;
@@ -10791,60 +11028,79 @@
             const wasRecording = isRecording || isStartingRecording;
 
             resetCameraZoom();
+            isHolding = false;
+            captureTouchPointerId = null;
 
             if (!wasHolding && !wasRecording) {
-                await takePhotoAndPost();
+                if (isCaptureBusy) return;
+                isCaptureBusy = true;
+                try {
+                    await takePhotoAndPost();
+                } finally {
+                    setTimeout(() => { isCaptureBusy = false; }, 900);
+                }
             } else {
                 await stopVideoRecording();
             }
-
-            isHolding = false;
-            captureTouchPointerId = null;
         }
 
-        // (2026-07-13) Native Capacitor Camera capture with fallback; was canvas only
+        // (2026-07-13) Capture single photo and immediately open vault; was multi-burst
         async function takePhotoAndPost() {
+            let item = null;
             if (window.Capacitor?.isNativePlatform?.() && window.Capacitor?.Plugins?.Camera) {
                 try {
                     const photo = await window.Capacitor.Plugins.Camera.getPhoto({
-                        quality: 80,
+                        quality: 75,
                         allowEditing: false,
                         resultType: 'dataUrl',
                         source: 'CAMERA'
                     });
                     if (photo?.dataUrl) {
-                        const nativeItem = {
+                        item = {
                             kind: "image",
                             src: photo.dataUrl,
                             mimeType: "image/jpeg",
                             label: "Emergency camera capture"
                         };
-                        await autoPostCapture(nativeItem);
-                        return;
                     }
                 } catch (nativeErr) {
                     console.warn("Capacitor camera capture cancelled or failed, falling back:", nativeErr);
                 }
             }
 
-            if (!cameraPreview.videoWidth) return;
-            captureCanvas.width = cameraPreview.videoWidth;
-            captureCanvas.height = cameraPreview.videoHeight;
-            const ctx = captureCanvas.getContext("2d");
-            ctx.drawImage(cameraPreview, 0, 0);
-            const compressed = await compressImage(captureCanvas);
+            if (!item) {
+                if (!cameraPreview || !cameraPreview.videoWidth) return;
+                // (2026-07-13) Scale capture down to 960px & 0.66 quality; was 1280px / 0.72
+                const maxDim = 960;
+                let w = cameraPreview.videoWidth;
+                let h = cameraPreview.videoHeight;
+                if (w > maxDim || h > maxDim) {
+                    if (w > h) {
+                        h = Math.round((h * maxDim) / w);
+                        w = maxDim;
+                    } else {
+                        w = Math.round((w * maxDim) / h);
+                        h = maxDim;
+                    }
+                }
+                captureCanvas.width = w;
+                captureCanvas.height = h;
+                const ctx = captureCanvas.getContext("2d");
+                ctx.drawImage(cameraPreview, 0, 0, w, h);
+                const compressed = captureCanvas.toDataURL("image/jpeg", 0.66);
 
-            const item = {
-                kind: "image",
-                src: compressed,
-                mimeType: "image/jpeg",
-                label: "Rapid photo capture"
-            };
+                item = {
+                    kind: "image",
+                    src: compressed,
+                    mimeType: "image/jpeg",
+                    label: "Rapid photo capture"
+                };
 
-            // Visual feedback
-            cameraPreview.style.filter = "brightness(2) contrast(1.2)";
-            setTimeout(() => { cameraPreview.style.filter = ""; }, 100);
+                cameraPreview.style.filter = "brightness(2) contrast(1.2)";
+                setTimeout(() => { if (cameraPreview) cameraPreview.style.filter = ""; }, 100);
+            }
 
+            // (2026-07-13) Retain active camera on capture; was auto-switch to vault
             await autoPostCapture(item);
         }
 
@@ -10922,6 +11178,8 @@
             stopRecordingTicker();
         }
 
+        // (2026-07-13) Single pointer release handler; was duplicate window/lostcapture
+        captureAction.addEventListener("click", (e) => e.preventDefault());
         captureAction.addEventListener("pointerdown", (e) => {
             captureTouchPointerId = e.pointerId;
             captureTouchStartY = e.clientY;
@@ -10940,14 +11198,8 @@
             applyCameraZoom(progress);
         }, { passive: true });
 
-        ["pointerup", "pointercancel", "lostpointercapture"].forEach(ev => {
-            captureAction.addEventListener(ev, handleCaptureEnd);
-            window.addEventListener(ev, (e) => {
-                if (captureTouchPointerId !== null && (e.pointerId === captureTouchPointerId || ev === "pointercancel")) {
-                    handleCaptureEnd(e);
-                }
-            });
-        });
+        captureAction.addEventListener("pointerup", handleCaptureEnd);
+        captureAction.addEventListener("pointercancel", handleCaptureEnd);
 
         switchCameraBtn.addEventListener("click", async () => {
             facingMode = facingMode === "environment" ? "user" : "environment";
@@ -10981,11 +11233,17 @@
                     };
                     video.src = URL.createObjectURL(file);
                 } else {
-                    const dataUrl = await fileToDataUrl(file);
+                    // (2026-07-13) Compress gallery image to avoid 400 Bad Request; was raw file
+                    let dataUrl;
+                    try {
+                        dataUrl = await compressImageFile(file, 960, 0.66);
+                    } catch (_) {
+                        dataUrl = await fileToDataUrl(file);
+                    }
                     await autoPostCapture({
                         kind: "image",
                         src: dataUrl,
-                        mimeType: file.type,
+                        mimeType: "image/jpeg",
                         label: file.name
                     });
                 }

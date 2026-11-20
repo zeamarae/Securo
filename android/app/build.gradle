@@ -4,7 +4,8 @@ android {
     namespace = "com.securo.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.securo.app"
+        // (2026-07-13) Align applicationId with google-services.json; was com.securo.app
+        applicationId "com.securo.com"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // (2026-07-13) Bump APK versionCode to 2; was versionCode 1

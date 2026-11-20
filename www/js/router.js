@@ -25,7 +25,9 @@
         if (window.location.hash && window.location.hash.startsWith('#/')) {
             return window.location.hash.slice(2);
         }
-        // (2026-07-13) Default route to landing; was role-selection
+        const path = window.location.pathname;
+        const file = path.split('/').pop().replace('.html', '');
+        // (2026-07-13) Derive route from pathname fallback; was missing file ref
         return file || 'landing';
     }
 

@@ -389,10 +389,10 @@
     </div>
 
     <script type="module">
-        import { auth } from './firebase-config.js';
-        import { getEmergencyPostById, getUserProfile } from './db.js';
+        import { auth } from './js/firebase-config.js';
+        import { getEmergencyPostById, getUserProfile } from './js/db.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { Logger } from './utils.js';
+        import { Logger } from './js/utils.js';
 
         const ADMIN_STUDENT_ID = '12312312';
         const toastStack = document.getElementById('toastStack');

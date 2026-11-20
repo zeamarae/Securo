@@ -12,9 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="logo.png">
     <!-- (2026-07-13) Add dramatic intro preloader; was no preloader -->
-    <link rel="stylesheet" href="preloader.css">
+    <link rel="stylesheet" href="css/preloader.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="preloader.js"></script>
+    <script src="js/preloader.js"></script>
     <style>
         :root {
             --bg: #fff4f6;
@@ -719,10 +719,10 @@
 
     <script type="module">
         // (2026-07-13) Import Firebase secondary auth helpers; was basic auth
-        import { login, signUp, forgotPassword, getFriendlyAuthMessage } from './auth.js';
+        import { login, signUp, forgotPassword, getFriendlyAuthMessage } from './js/auth.js';
         // (2026-07-13) Import getAdminUserPassword; was not imported
-        import { saveUserProfile, saveAdminUserPassword, findUserByEmail, getAdminUserPassword } from './db.js';
-        import { firebaseConfig, auth } from './firebase-config.js';
+        import { saveUserProfile, saveAdminUserPassword, findUserByEmail, getAdminUserPassword } from './js/db.js';
+        import { firebaseConfig, auth } from './js/firebase-config.js';
         import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, updatePassword, createUserWithEmailAndPassword, confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 

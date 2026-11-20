@@ -15,10 +15,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
-    <!-- (2026-07-13) Add dramatic intro preloader; was no preloader -->
-    <link rel="stylesheet" href="preloader.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="preloader.js"></script>
+    <!-- (2026-07-13) Remove splash preloader blocking admin dashboard; was intro splash -->
     <style>
         /* (2026-07-13) Soft lilac card design tokens as in image 3 & 4; was grey boxy tokens */
         :root {
@@ -534,9 +531,11 @@
             padding: 22px;
         }
 
+        /* (2026-07-13) Align chart cards to start; was default stretch */
         .chart-card {
             display: grid;
             gap: 16px;
+            align-content: start;
         }
 
         .chart-title {
@@ -998,9 +997,11 @@
             max-width: 320px;
         }
 
+        /* (2026-07-13) Align table lists to start; was default stretch */
         .table-list {
             display: grid;
             gap: 8px;
+            align-content: start;
         }
 
         .table-row {
@@ -1056,14 +1057,17 @@
             grid-template-columns: minmax(220px, 1.5fr) 130px minmax(220px, 1.8fr) 56px;
         }
 
-        /* (2026-07-13) Soft lilac styling for Digital Vault cards; was rigid grey */
+        /* (2026-07-13) Allow full vertical scrolling in admin vault; was height 100% */
         #sec-vault {
             width: 100%;
-            height: 100%;
+            height: auto;
+            min-height: 100%;
         }
         #sec-vault .panel-card {
             width: 100%;
             min-height: calc(100vh - 130px);
+            height: auto;
+            overflow: visible;
             display: flex;
             flex-direction: column;
             box-sizing: border-box;
@@ -1073,16 +1077,54 @@
             border: 1px solid var(--border);
             box-shadow: var(--shadow-soft);
         }
+        /* (2026-07-13) Vault grid scrollable & person cards; was max-height overflow */
         .vault-evidence-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 18px;
             margin-top: 18px;
-            flex: 1;
-            overflow-y: auto;
-            max-height: calc(100vh - 250px);
-            padding-right: 4px;
-            padding-bottom: 24px;
+            padding-bottom: 40px;
+        }
+        .vault-persons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+            padding-bottom: 40px;
+        }
+        .vault-person-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 4px 16px rgba(90, 31, 224, 0.04);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .vault-person-card:hover {
+            transform: translateY(-3px);
+            border-color: #7c3aed;
+            box-shadow: 0 12px 28px rgba(124, 58, 237, 0.12);
+        }
+        /* (2026-07-13) Fullscreen lightbox modal styles; was static modal card */
+        #vaultLightboxModal.lightbox-fullscreen .modal-card {
+            width: 100vw !important;
+            max-width: 100vw !important;
+            height: 100vh !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+        }
+        #vaultLightboxModal.lightbox-fullscreen #vaultLightboxMediaBox {
+            max-height: calc(100vh - 65px) !important;
+            height: calc(100vh - 65px) !important;
+        }
+        #vaultLightboxModal.lightbox-fullscreen img,
+        #vaultLightboxModal.lightbox-fullscreen video {
+            max-height: calc(100vh - 80px) !important;
         }
         .vault-evidence-card {
             background: #ffffff;
@@ -2616,22 +2658,23 @@
                         <div class="stats-grid">
                             <div class="metric-card">
                                 <div class="metric-label">Total Users</div>
-                                <div class="metric-value" id="metricUsers">0</div>
+                                <!-- (2026-07-13) Placeholder dash during initial load; was static 0 -->
+                                <div class="metric-value" id="metricUsers">--</div>
                                 <div class="metric-sub">Visible accounts</div>
                             </div>
                             <div class="metric-card">
                                 <div class="metric-label">Students</div>
-                                <div class="metric-value" id="metricStudents">0</div>
+                                <div class="metric-value" id="metricStudents">--</div>
                                 <div class="metric-sub">Student profiles</div>
                             </div>
                             <div class="metric-card">
                                 <div class="metric-label">Guardians</div>
-                                <div class="metric-value" id="metricGuardians">0</div>
+                                <div class="metric-value" id="metricGuardians">--</div>
                                 <div class="metric-sub">Guardian profiles</div>
                             </div>
                             <div class="metric-card">
                                 <div class="metric-label">Conversations</div>
-                                <div class="metric-value" id="metricThreads">0</div>
+                                <div class="metric-value" id="metricThreads">--</div>
                                 <div class="metric-sub">Support threads</div>
                             </div>
                         </div>
@@ -2647,7 +2690,7 @@
                                     <div class="role-chart" id="roleChart">
                                         <div class="role-chart-center">
                                             <div>
-                                                <strong id="roleChartTotal">0</strong>
+                                                <strong id="roleChartTotal">--</strong>
                                                 <span style="font-size:0.78rem; color:var(--muted); font-weight:700;">accounts</span>
                                             </div>
                                         </div>
@@ -2680,6 +2723,81 @@
                                 <div class="table-list" id="adminNotificationHistory"></div>
                             </div>
                         </div>
+                        <!-- (2026-07-13) Inline cache hydration for stats; was delayed blank DOM -->
+                        <script>
+                        (function hydrateAdminStatsSync() {
+                            try {
+                                var summaryRaw = localStorage.getItem('securo_admin_summary') || sessionStorage.getItem('securo_admin_summary');
+                                var masterRaw = localStorage.getItem('securo_admin_master_cache') || sessionStorage.getItem('securo_admin_master_cache');
+                                var summary = null;
+                                var master = null;
+                                if (summaryRaw) { try { summary = JSON.parse(summaryRaw); } catch(e) {} }
+                                if (masterRaw) { try { master = JSON.parse(masterRaw); } catch(e) {} }
+                                if (!summary && master) {
+                                    var users = Array.isArray(master.users) ? master.users : [];
+                                    var rCounts = users.reduce(function(acc, u) {
+                                        var isStf = u && (u.role === 'staff' || String(u.name || '').toLowerCase().indexOf('staff') !== -1 || String(u.email || '').toLowerCase().indexOf('staff.') === 0);
+                                        var r = (u && (u.role === 'admin' || String(u.email || '').toLowerCase().indexOf('admin@') === 0)) ? 'admin' : (u && u.role === 'guardian') ? 'guardian' : isStf ? 'staff' : 'student';
+                                        acc[r] = (acc[r] || 0) + 1;
+                                        return acc;
+                                    }, { student: 0, guardian: 0, staff: 0, admin: 0 });
+                                    summary = {
+                                        totalUsers: users.length,
+                                        students: rCounts.student,
+                                        guardians: rCounts.guardian,
+                                        staff: rCounts.staff,
+                                        admins: rCounts.admin,
+                                        threads: Array.isArray(master.threads) ? master.threads.length : 0,
+                                        posts: Array.isArray(master.posts) ? master.posts.length : 0,
+                                        gadEngaged: 0,
+                                        savedAdminName: master.savedAdminName || 'Administrator'
+                                    };
+                                }
+                                if (summary) {
+                                    var uEl = document.getElementById('metricUsers');
+                                    var sEl = document.getElementById('metricStudents');
+                                    var gEl = document.getElementById('metricGuardians');
+                                    var tEl = document.getElementById('metricThreads');
+                                    var cTot = document.getElementById('roleChartTotal');
+                                    var rLg = document.getElementById('roleLegend');
+                                    var rCh = document.getElementById('roleChart');
+                                    var sBar = document.getElementById('statsBarList');
+                                    if (uEl && summary.totalUsers !== undefined) uEl.textContent = summary.totalUsers;
+                                    if (sEl && summary.students !== undefined) sEl.textContent = summary.students;
+                                    if (gEl && summary.guardians !== undefined) gEl.textContent = summary.guardians;
+                                    if (tEl && summary.threads !== undefined) tEl.textContent = summary.threads;
+                                    if (cTot && summary.totalUsers !== undefined) cTot.textContent = summary.totalUsers;
+                                    if (rCh && summary.totalUsers > 0) {
+                                        var sDeg = (summary.students / summary.totalUsers) * 360;
+                                        var gDeg = (summary.guardians / summary.totalUsers) * 360;
+                                        var stDeg = (summary.staff / summary.totalUsers) * 360;
+                                        rCh.style.background = 'conic-gradient(#8b5cf6 0deg ' + sDeg + 'deg, #fb7185 ' + sDeg + 'deg ' + (sDeg + gDeg) + 'deg, #60a5fa ' + (sDeg + gDeg) + 'deg ' + (sDeg + gDeg + stDeg) + 'deg, #cbd5e1 ' + (sDeg + gDeg + stDeg) + 'deg 360deg)';
+                                    }
+                                    if (rLg) {
+                                        rLg.innerHTML = '<div class="legend-item"><div class="legend-meta"><span class="legend-swatch" style="background:#8b5cf6;"></span><span>Students</span></div><strong style="font-variant-numeric: tabular-nums;">' + (summary.students || 0) + '</strong></div>' +
+                                            '<div class="legend-item"><div class="legend-meta"><span class="legend-swatch" style="background:#fb7185;"></span><span>Guardians</span></div><strong style="font-variant-numeric: tabular-nums;">' + (summary.guardians || 0) + '</strong></div>' +
+                                            '<div class="legend-item"><div class="legend-meta"><span class="legend-swatch" style="background:#60a5fa;"></span><span>Staff</span></div><strong style="font-variant-numeric: tabular-nums;">' + (summary.staff || 0) + '</strong></div>' +
+                                            '<div class="legend-item"><div class="legend-meta"><span class="legend-swatch" style="background:#cbd5e1;"></span><span>Admins</span></div><strong style="font-variant-numeric: tabular-nums;">' + (summary.admins || 0) + '</strong></div>';
+                                    }
+                                    if (sBar) {
+                                        var maxM = Math.max(summary.totalUsers || 0, summary.posts || 0, summary.threads || 0, summary.gadEngaged || 0, 1);
+                                        var rows = [
+                                            { label: 'Registered Users', value: summary.totalUsers || 0, g: 'linear-gradient(90deg, #8b5cf6, #7c3aed)' },
+                                            { label: 'Published GAD Posts', value: summary.posts || 0, g: 'linear-gradient(90deg, #60a5fa, #3b82f6)' },
+                                            { label: 'Support Conversations', value: summary.threads || 0, g: 'linear-gradient(90deg, #38bdf8, #0ea5e9)' },
+                                            { label: 'Engaged Users', value: summary.gadEngaged || 0, g: 'linear-gradient(90deg, #fb7185, #f43f5e)' }
+                                        ];
+                                        sBar.innerHTML = rows.map(function(r) {
+                                            return '<div class="bar-row">' +
+                                                '<div class="bar-top"><span style="font-weight:600; color:var(--ink);">' + r.label + '</span><strong style="font-variant-numeric: tabular-nums; color:var(--ink);">' + r.value + '</strong></div>' +
+                                                '<div class="bar-track" style="background:#f1f0f7; border-radius:999px; height:8px;"><div class="bar-fill" style="width:' + Math.max(6, Math.round((r.value / maxM) * 100)) + '%; background:' + r.g + '; border-radius:999px;"></div></div>' +
+                                            '</div>';
+                                        }).join('');
+                                    }
+                                }
+                            } catch(e) {}
+                        })();
+                        </script>
 
                         <div class="panel-card">
                             <div class="accounts-head">
@@ -2696,33 +2814,48 @@
 
                     <!-- (2026-07-13) Add dedicated SOS Triggers tab and table; was stats map only -->
                     <section class="admin-section" id="sec-sos">
-                        <div class="panel-card chart-card" style="margin-bottom: 20px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
-                                <div>
-                                    <div class="eyebrow" style="color:var(--red);">INCIDENT INTELLIGENCE</div>
-                                    <h2 class="chart-title" style="margin-top:2px;">Campus SOS Hotspots & Incident Map</h2>
-                                    <p class="chart-copy">Real-time emergency signal visualization with campus geofence perimeter and facilities.</p>
+                        <!-- (2026-07-13) 70/30 split full height map & recent SOS sidebar; was 400px -->
+                        <div class="sos-dashboard-split" style="display:grid; grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); gap: 20px; align-items: stretch; margin-bottom: 24px;">
+                            <div class="panel-card chart-card" style="display:flex; flex-direction:column; height:calc(100vh - 200px); min-height:620px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+                                    <div>
+                                        <div class="eyebrow" style="color:var(--red);">INCIDENT INTELLIGENCE</div>
+                                        <h2 class="chart-title" style="margin-top:2px;">Campus SOS Hotspots & Incident Map</h2>
+                                        <p class="chart-copy">Real-time emergency signal visualization with campus geofence perimeter and facilities.</p>
+                                    </div>
+                                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                                        <button class="action-btn" id="btnEditGeofence" type="button" style="padding:7px 14px; font-size:0.78rem; border-radius:12px; background:white; border:1px solid #e2e8f0; font-weight:700; display:inline-flex; align-items:center; gap:6px; cursor:pointer; color:#475569; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                                            <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">edit_location_alt</span>
+                                            <span>Edit Geofence & Markers</span>
+                                        </button>
+                                        <button class="action-btn" id="btnSaveGeofence" type="button" style="padding:7px 14px; font-size:0.78rem; border-radius:12px; background:#5a1fe0; color:white; font-weight:700; display:none; align-items:center; gap:6px; cursor:pointer; border:none; box-shadow:0 4px 12px rgba(90,31,224,0.25);">
+                                            <span class="material-symbols-outlined" style="font-size:16px;">cloud_sync</span>
+                                            <span>Save & Sync Database</span>
+                                        </button>
+                                        <button class="action-btn" id="btnResetGeofence" type="button" style="padding:7px 14px; font-size:0.78rem; border-radius:12px; background:#fee2e2; color:#b91c1c; font-weight:700; display:none; align-items:center; gap:6px; cursor:pointer; border:none;">
+                                            <span class="material-symbols-outlined" style="font-size:16px;">restart_alt</span>
+                                            <span>Reset</span>
+                                        </button>
+                                        <span class="capsule" style="background:rgba(209,31,52,0.1); color:var(--red); font-weight:800; font-size:0.78rem;">
+                                            <span class="material-symbols-outlined" style="font-size:18px;">crisis_alert</span>
+                                            <span id="adminSosCountBadge">0 SOS Triggers</span>
+                                        </span>
+                                    </div>
                                 </div>
-                                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                                    <button class="action-btn" id="btnEditGeofence" type="button" style="padding:7px 14px; font-size:0.78rem; border-radius:12px; background:white; border:1px solid #e2e8f0; font-weight:700; display:inline-flex; align-items:center; gap:6px; cursor:pointer; color:#475569; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
-                                        <span class="material-symbols-outlined" style="font-size:16px; color:var(--primary);">edit_location_alt</span>
-                                        <span>Edit Geofence & Markers</span>
-                                    </button>
-                                    <button class="action-btn" id="btnSaveGeofence" type="button" style="padding:7px 14px; font-size:0.78rem; border-radius:12px; background:#5a1fe0; color:white; font-weight:700; display:none; align-items:center; gap:6px; cursor:pointer; border:none; box-shadow:0 4px 12px rgba(90,31,224,0.25);">
-                                        <span class="material-symbols-outlined" style="font-size:16px;">cloud_sync</span>
-                                        <span>Save & Sync Database</span>
-                                    </button>
-                                    <button class="action-btn" id="btnResetGeofence" type="button" style="padding:7px 14px; font-size:0.78rem; border-radius:12px; background:#fee2e2; color:#b91c1c; font-weight:700; display:none; align-items:center; gap:6px; cursor:pointer; border:none;">
-                                        <span class="material-symbols-outlined" style="font-size:16px;">restart_alt</span>
-                                        <span>Reset</span>
-                                    </button>
-                                    <span class="capsule" style="background:rgba(209,31,52,0.1); color:var(--red); font-weight:800; font-size:0.78rem;">
-                                        <span class="material-symbols-outlined" style="font-size:18px;">crisis_alert</span>
-                                        <span id="adminSosCountBadge">0 SOS Triggers</span>
-                                    </span>
-                                </div>
+                                <div id="adminSosMap" style="width:100%; flex:1; min-height:480px; border-radius:18px; overflow:hidden; border:1px solid rgba(15,23,42,0.08); box-shadow:inset 0 2px 6px rgba(0,0,0,0.06); z-index:1;"></div>
                             </div>
-                            <div id="adminSosMap" style="width:100%; height:400px; border-radius:18px; overflow:hidden; border:1px solid rgba(15,23,42,0.08); box-shadow:inset 0 2px 6px rgba(0,0,0,0.06); z-index:1;"></div>
+
+                            <div class="panel-card chart-card" style="display:flex; flex-direction:column; height:calc(100vh - 200px); min-height:620px;">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; gap:8px;">
+                                    <div>
+                                        <div class="eyebrow" style="color:var(--red);">ACTIVE SIGNALS</div>
+                                        <h2 class="chart-title" style="margin-top:2px;">Recent SOS Reporters</h2>
+                                        <p class="chart-copy">Students & staff distress logs with report frequencies.</p>
+                                    </div>
+                                    <span class="capsule" id="adminRecentReportersCount" style="background:#f1f5f9; color:#475569; font-weight:700; font-size:0.72rem; padding:3px 8px;">0 Users</span>
+                                </div>
+                                <div id="adminRecentSosReporters" style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px;"></div>
+                            </div>
                         </div>
 
                         <div class="panel-card">
@@ -3141,73 +3274,76 @@
                 </button>
             </div>
 
-            <div class="editor-grid">
-                <div class="field-block full">
-                    <label for="manageUserId">Record ID</label>
-                    <input id="manageUserId" class="glass-input" type="text" readonly>
+            <!-- (2026-07-13) Wrap editor in form to satisfy DOM password field requirement -->
+            <form id="userEditorForm" onsubmit="event.preventDefault();">
+                <div class="editor-grid">
+                    <div class="field-block full">
+                        <label for="manageUserId">Record ID</label>
+                        <input id="manageUserId" class="glass-input" type="text" readonly>
+                    </div>
+                    <div class="field-block">
+                        <label for="manageUserName">Full Name</label>
+                        <input id="manageUserName" class="glass-input" type="text" placeholder="Enter full name">
+                    </div>
+                    <div class="field-block">
+                        <label for="manageUserRole">Role</label>
+                        <select id="manageUserRole" class="glass-input">
+                            <option value="student">Student</option>
+                            <option value="guardian">Guardian</option>
+                            <option value="staff">Staff</option>
+                        </select>
+                    </div>
+                    <div class="field-block" id="manageUserEmailBlock">
+                        <label for="manageUserEmail" id="manageUserEmailLabel">Email</label>
+                        <input id="manageUserEmail" class="glass-input" type="email" placeholder="user@example.com">
+                    </div>
+                    <div class="field-block">
+                        <label for="manageUserPassword">Password</label>
+                        <div style="position:relative; display:flex; align-items:center;">
+                            <!-- (2026-07-13) Add autocomplete attribute to password; was missing -->
+                            <input id="manageUserPassword" class="glass-input" type="password" autocomplete="new-password" placeholder="Required for new sign-in accounts" style="width:100%; padding-right:42px;">
+                            <button type="button" class="btn" data-password-target="manageUserPassword" style="position:absolute; right:12px; background:none; border:none; color:var(--muted,#94a3b8); padding:0; cursor:pointer; display:flex; align-items:center;">
+                                <span class="material-symbols-outlined">visibility</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="field-block" id="manageUserStudentIdBlock">
+                        <label for="manageUserStudentId" id="manageUserStudentIdLabel">Student ID</label>
+                        <input id="manageUserStudentId" class="glass-input" type="text" placeholder="7-digit student ID">
+                    </div>
                 </div>
-                <div class="field-block">
-                    <label for="manageUserName">Full Name</label>
-                    <input id="manageUserName" class="glass-input" type="text" placeholder="Enter full name">
+
+                <div class="editor-note" id="userEditorMeta">
+                    Parent or guardian relationships will appear here once a saved profile is selected.
                 </div>
-                <div class="field-block">
-                    <label for="manageUserRole">Role</label>
-                    <select id="manageUserRole" class="glass-input">
-                        <option value="student">Student</option>
-                        <option value="guardian">Guardian</option>
-                        <option value="staff">Staff</option>
-                    </select>
+
+                <div class="panel-card readable-card" style="padding:16px 18px; margin-top:16px;">
+                    <div class="eyebrow">Location</div>
+                    <h3 class="chart-title" id="userLocationTitle" style="font-size:1rem; margin-top:6px;">No recent location loaded</h3>
+                    <p class="chart-copy" id="userLocationCopy" style="margin-bottom:0;">Select a user to check the latest shared location or evidence area.</p>
                 </div>
-                <div class="field-block" id="manageUserEmailBlock">
-                    <label for="manageUserEmail" id="manageUserEmailLabel">Email</label>
-                    <input id="manageUserEmail" class="glass-input" type="email" placeholder="user@example.com">
-                </div>
-                <div class="field-block">
-                    <label for="manageUserPassword">Password</label>
-                    <div style="position:relative; display:flex; align-items:center;">
-                        <!-- (2026-07-13) Add password eye toggle; was password input without toggle -->
-                        <input id="manageUserPassword" class="glass-input" type="password" placeholder="Required for new sign-in accounts" style="width:100%; padding-right:42px;">
-                        <button type="button" class="btn" data-password-target="manageUserPassword" style="position:absolute; right:12px; background:none; border:none; color:var(--muted,#94a3b8); padding:0; cursor:pointer; display:flex; align-items:center;">
-                            <span class="material-symbols-outlined">visibility</span>
+
+                <div class="relation-list" id="managementRelationList"></div>
+
+                <div class="editor-actions" style="margin-top:18px;">
+                    <div class="inline-fields">
+                        <button class="ghost-btn" id="resetUserEditorBtn" type="button">
+                            <span class="material-symbols-outlined">ink_eraser</span>
+                            <span>Reset</span>
+                        </button>
+                    </div>
+                    <div class="inline-fields">
+                        <button class="danger-btn" id="deleteManagedUserBtn" type="button">
+                            <span class="material-symbols-outlined">delete</span>
+                            <span>Delete</span>
+                        </button>
+                        <button class="primary-btn" id="saveManagedUserBtn" type="button">
+                            <span class="material-symbols-outlined">save</span>
+                            <span>Save User</span>
                         </button>
                     </div>
                 </div>
-                <div class="field-block" id="manageUserStudentIdBlock">
-                    <label for="manageUserStudentId" id="manageUserStudentIdLabel">Student ID</label>
-                    <input id="manageUserStudentId" class="glass-input" type="text" placeholder="7-digit student ID">
-                </div>
-            </div>
-
-            <div class="editor-note" id="userEditorMeta">
-                Parent or guardian relationships will appear here once a saved profile is selected.
-            </div>
-
-            <div class="panel-card readable-card" style="padding:16px 18px; margin-top:16px;">
-                <div class="eyebrow">Location</div>
-                <h3 class="chart-title" id="userLocationTitle" style="font-size:1rem; margin-top:6px;">No recent location loaded</h3>
-                <p class="chart-copy" id="userLocationCopy" style="margin-bottom:0;">Select a user to check the latest shared location or evidence area.</p>
-            </div>
-
-            <div class="relation-list" id="managementRelationList"></div>
-
-            <div class="editor-actions" style="margin-top:18px;">
-                <div class="inline-fields">
-                    <button class="ghost-btn" id="resetUserEditorBtn" type="button">
-                        <span class="material-symbols-outlined">ink_eraser</span>
-                        <span>Reset</span>
-                    </button>
-                </div>
-                <div class="inline-fields">
-                    <button class="danger-btn" id="deleteManagedUserBtn" type="button">
-                        <span class="material-symbols-outlined">delete</span>
-                        <span>Delete</span>
-                    </button>
-                    <button class="primary-btn" id="saveManagedUserBtn" type="button">
-                        <span class="material-symbols-outlined">save</span>
-                        <span>Save User</span>
-                    </button>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 
@@ -3320,9 +3456,16 @@
                         <p id="vaultLightboxSubtitle" style="margin:0; font-size:0.72rem; color:var(--muted);">Digital Vault Secure Repository</p>
                     </div>
                 </div>
-                <button class="modal-close-btn" id="closeVaultLightboxBtn" type="button" aria-label="Close image lightbox">
-                    <span class="material-symbols-outlined" style="font-size:18px;">close</span>
-                </button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <!-- (2026-07-13) Add fullscreen toggle to lightbox; was close button only -->
+                    <button id="btnVaultFullscreen" type="button" class="ghost-btn" title="Toggle Fullscreen View" style="padding:4px 10px; font-size:0.75rem; border-radius:8px; display:inline-flex; align-items:center; gap:4px; font-weight:700; color:var(--ink);">
+                        <span class="material-symbols-outlined" style="font-size:16px;">fullscreen</span>
+                        <span id="vaultFullscreenLabel">Fullscreen</span>
+                    </button>
+                    <button class="modal-close-btn" id="closeVaultLightboxBtn" type="button" aria-label="Close image lightbox">
+                        <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+                    </button>
+                </div>
             </div>
             <div style="display:grid; grid-template-columns: minmax(0, 1.8fr) minmax(260px, 1fr); max-height:calc(92vh - 58px); overflow:hidden;">
                 <div id="vaultLightboxMediaBox" style="background:#0f172a; display:flex; align-items:center; justify-content:center; padding:16px; overflow:auto; min-height:360px;">
@@ -3367,11 +3510,11 @@
 
     <script type="module">
         // Core utilities and offline support
-        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './utils.js';
+        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './js/utils.js';
         import './install-sw.js'; // Initialize service worker for offline support
         
-        import { auth, app, firebaseConfig } from './firebase-config.js';
-        import { logout, roleIdToEmail } from './auth.js';
+        import { auth, app, firebaseConfig } from './js/firebase-config.js';
+        import { logout, roleIdToEmail } from './js/auth.js';
         import { 
             getGADPosts, 
             saveGADPost, 
@@ -3415,7 +3558,7 @@
             syncGuardianLinksForGuardian,
             // (2026-07-13) Import markThreadMessagesSeen for read receipts; was absent
             markThreadMessagesSeen
-        } from './db.js';
+        } from './js/db.js';
         import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         // (2026-07-13) Import auth credentials & password updater; was absent
         import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -3512,6 +3655,16 @@
         let cachedEmergencyPosts = [];
         // (2026-07-13) Add cached attendance state; was fetched on-demand
         let cachedAttendance = [];
+        // (2026-07-13) Hoist map instance variables to top; was uninitialized TDZ crash
+        let adminSosLeafletMap = null;
+        let adminSosMarkersLayer = null;
+        let adminGeofencePolygonLayer = null;
+        let adminGeofenceVertexMarkers = [];
+        let adminBuildingMarkers = [];
+        let adminModalLeafletMap = null;
+        let modalGeofencePolygonLayer = null;
+        let modalGeofenceVertexMarkers = [];
+        let modalBuildingMarkers = [];
         let cachedAdminNotifications = [];
         let currentAdminName = "Administrator";
         let selectedManagedUserId = null;
@@ -3556,11 +3709,11 @@
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
 
-        // (2026-07-13) Support admin emails via isAdminEmail helper; was single email
+        // (2026-07-13) Staff identification by role, name, and email; was strict role
         const getRoleKey = (user = {}) => {
             if (user?.role === 'admin' || isAdminEmail(user?.email)) return 'admin';
             if (user?.role === 'guardian') return 'guardian';
-            if (user?.role === 'staff') return 'staff';
+            if (user?.role === 'staff' || String(user?.name || '').toLowerCase().includes('staff') || String(user?.email || '').toLowerCase().startsWith('staff.')) return 'staff';
             return 'student';
         };
 
@@ -3601,23 +3754,129 @@
             return getThreadLastActivityMs(thread) > seenAt;
         }
 
+        // (2026-07-13) Aggregate chat messages and SOS in admin notifs; was Firestore only
         function renderAdminNotifications(notifications = []) {
-            cachedAdminNotifications = Array.isArray(notifications) ? notifications : [];
+            if (Array.isArray(notifications) && notifications.length) {
+                cachedAdminNotifications = notifications;
+            }
             if (!adminNotificationHistory) return;
-            if (!cachedAdminNotifications.length) {
+
+            const notifItems = [];
+
+            // 1. Account / Firestore notifications
+            (cachedAdminNotifications || []).forEach((item, idx) => {
+                const date = item.createdAt?.toDate?.() || (item.createdAt ? new Date(item.createdAt) : new Date());
+                notifItems.push({
+                    id: item.id || `notif_${idx}`,
+                    type: 'system',
+                    icon: 'notifications',
+                    color: '#3b82f6',
+                    bg: '#eff6ff',
+                    title: item.title || 'System Notification',
+                    message: item.message || 'Notification recorded.',
+                    time: date,
+                    rawTime: date.getTime() || 0,
+                    unread: false,
+                    onClick: null
+                });
+            });
+
+            // 2. Incoming messages / thread notifications from students
+            (cachedThreads || []).forEach((thread) => {
+                const otherUid = getOtherUserIdFromThread(thread);
+                const userObj = cachedUsers.find(u => String(u.id) === String(otherUid) || String(u.uid) === String(otherUid) || (u.studentId && String(u.studentId) === String(otherUid)));
+                const name = userObj?.name || thread.senderName || thread.userName || 'Student';
+                const idTag = userObj?.studentId ? ` #${userObj.studentId}` : '';
+                const time = thread.timestamp?.toDate?.() || (thread.localTime ? new Date(thread.localTime) : (thread.createdAt ? new Date(thread.createdAt) : new Date()));
+                const unread = isThreadUnread(thread);
+                notifItems.push({
+                    id: `msg_${thread.threadId}`,
+                    type: 'message',
+                    icon: 'chat',
+                    color: '#7c3aed',
+                    bg: '#f3e8ff',
+                    title: `Message: ${name}${idTag}`,
+                    message: thread.lastMessage || 'Sent a support dispatch inquiry.',
+                    time,
+                    rawTime: time.getTime() || 0,
+                    unread,
+                    onClick: `window.openAdminThreadFromNotif('${escapeHtml(thread.threadId)}', '${escapeHtml(otherUid)}', '${escapeHtml(name)}')`
+                });
+            });
+
+            // 3. Emergency SOS notifications
+            (cachedSosLogs || []).forEach((log) => {
+                const rep = getReporterInfo(log);
+                const time = log.timestamp?.toDate?.() || (log.timestamp ? new Date(log.timestamp) : new Date());
+                const loc = log.location || {};
+                const locLabel = (loc.address && !/^\d+\.\d+/.test(loc.address)) ? loc.address : (loc.lat ? `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}` : 'Campus Area');
+                notifItems.push({
+                    id: `sos_notif_${log.id}`,
+                    type: 'sos',
+                    icon: 'crisis_alert',
+                    color: '#dc2626',
+                    bg: '#fee2e2',
+                    title: `🚨 Emergency SOS: ${rep.name}`,
+                    message: `Active emergency trigger at ${locLabel} (${rep.studentId ? 'ID #' + rep.studentId : rep.role}).`,
+                    time,
+                    rawTime: time.getTime() || 0,
+                    unread: true,
+                    onClick: `setTab('sos')`
+                });
+            });
+
+            // 4. Digital vault evidence uploads
+            (cachedEmergencyPosts || []).forEach((post) => {
+                const time = post.createdAt?.toDate?.() || (post.timestamp?.toDate ? post.timestamp.toDate() : (post.createdAt ? new Date(post.createdAt) : new Date()));
+                const sName = post.studentName || post.author || post.userName || 'Student';
+                const count = Array.isArray(post.attachments) ? post.attachments.length : 1;
+                notifItems.push({
+                    id: `vault_notif_${post.id}`,
+                    type: 'vault',
+                    icon: 'photo_library',
+                    color: '#059669',
+                    bg: '#ecfdf5',
+                    title: `📷 Vault Evidence: ${sName}`,
+                    message: `${count} file${count === 1 ? '' : 's'} secured in Digital Vault with timestamp verification.`,
+                    time,
+                    rawTime: time.getTime() || 0,
+                    unread: false,
+                    onClick: `setTab('vault')`
+                });
+            });
+
+            // Sort newest first
+            notifItems.sort((a, b) => b.rawTime - a.rawTime);
+            const displayItems = notifItems.slice(0, 16);
+
+            if (!displayItems.length) {
                 adminNotificationHistory.innerHTML = '<div class="empty-state">No admin notifications yet.</div>';
                 return;
             }
-            adminNotificationHistory.innerHTML = cachedAdminNotifications.map((item) => `
-                <div class="table-row" style="grid-template-columns: minmax(0, 1fr) auto;">
-                    <div>
-                        <div class="row-title">${escapeHtml(item.title || 'Notification')}</div>
-                        <div class="row-sub">${escapeHtml(item.message || '')}</div>
+
+            adminNotificationHistory.innerHTML = displayItems.map((item) => `
+                <div class="table-row" style="grid-template-columns: auto minmax(0, 1fr) auto; align-items:center; cursor:${item.onClick ? 'pointer' : 'default'}; gap:12px;" ${item.onClick ? `onclick="${item.onClick}"` : ''}>
+                    <div style="width:34px; height:34px; border-radius:10px; background:${item.bg}; color:${item.color}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">${item.icon}</span>
                     </div>
-                    <div class="row-sub" style="font-weight:700;">${escapeHtml(formatAdminTime(item.createdAt))}</div>
+                    <div style="min-width:0;">
+                        <div class="row-title" style="display:flex; align-items:center; gap:6px;">
+                            <span style="font-weight:700; color:var(--ink);">${escapeHtml(item.title)}</span>
+                            ${item.unread ? '<span style="width:7px; height:7px; border-radius:50%; background:#7c3aed; flex-shrink:0;" title="Unread"></span>' : ''}
+                        </div>
+                        <div class="row-sub" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.message)}</div>
+                    </div>
+                    <div class="row-sub" style="font-weight:700; white-space:nowrap; font-size:0.75rem;">${escapeHtml(formatAdminTime(item.time))}</div>
                 </div>
             `).join('');
         }
+
+        window.openAdminThreadFromNotif = function(threadId, otherUserId, otherUserName) {
+            setTab('messages');
+            if (typeof window.openAdminThread === 'function') {
+                window.openAdminThread(threadId, otherUserId, otherUserName);
+            }
+        };
 
         function renderReporterStats() {
             if (!reporterStatsList) return;
@@ -4033,11 +4292,15 @@
             window.setTimeout(() => toast.remove(), 3200);
         };
 
-// (2026-07-13) Invalidate map size on sos and stats tab switch; was stats only
+        // (2026-07-13) Render SOS map on SOS tab switch; was stats only invalidate
         const setTab = (tab) => {
             tabBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === tab));
             sections.forEach((section) => section.classList.toggle('active', section.id === `sec-${tab}`));
-            if (tab === 'stats' || tab === 'sos') {
+            if (tab === 'sos') {
+                if (typeof renderAdminSosMap === 'function') renderAdminSosMap();
+                if (typeof renderRecentSosReporters === 'function') renderRecentSosReporters();
+                if (adminSosLeafletMap) setTimeout(() => adminSosLeafletMap.invalidateSize(), 120);
+            } else if (tab === 'stats') {
                 if (adminSosLeafletMap) setTimeout(() => adminSosLeafletMap.invalidateSize(), 120);
             }
             // (2026-07-13) Daily report load on reports tab; was geofence simulator check
@@ -4121,6 +4384,37 @@
         // (2026-07-13) Add Daily Reports & Excel (.xlsx) export; was basic preview
         let cachedDailyReportRecords = [];
 
+        // (2026-07-13) Safe date parsing & coordinates with named places; was invalid date
+        function parseSafeDate(val) {
+            if (!val) return new Date();
+            if (typeof val.toDate === 'function') return val.toDate();
+            if (typeof val.seconds === 'number') return new Date(val.seconds * 1000);
+            if (typeof val._seconds === 'number') return new Date(val._seconds * 1000);
+            const d = new Date(val);
+            return isNaN(d.getTime()) ? new Date() : d;
+        }
+
+        function extractCoords(loc) {
+            if (!loc) return { lat: null, lng: null };
+            let lat = null, lng = null;
+            if (typeof loc.lat === 'number' && typeof loc.lng === 'number') {
+                lat = loc.lat;
+                lng = loc.lng;
+            } else if (loc.lat && loc.lng) {
+                lat = parseFloat(loc.lat);
+                lng = parseFloat(loc.lng);
+            } else if (typeof loc === 'string' && loc.includes(',')) {
+                const parts = loc.split(',').map(s => parseFloat(s.trim()));
+                if (!isNaN(parts[0]) && !isNaN(parts[1])) {
+                    lat = parts[0];
+                    lng = parts[1];
+                }
+            }
+            if (isNaN(lat)) lat = null;
+            if (isNaN(lng)) lng = null;
+            return { lat, lng };
+        }
+
         function getLocalDateString(dateObj) {
             if (!dateObj || !(dateObj instanceof Date) || isNaN(dateObj.getTime())) return '';
             const y = dateObj.getFullYear();
@@ -4152,21 +4446,33 @@
 
             // 1. SOS Emergency Logs
             (cachedSosLogs || []).forEach(log => {
-                const dateObj = log.timestamp?.toDate ? log.timestamp.toDate() : (log.timestamp ? new Date(log.timestamp) : new Date());
-                const dateStr = getLocalDateString(dateObj);
+                const dateObj = parseSafeDate(log.timestamp);
+                const dateStr = getLocalDateString(dateObj) || getLocalDateString(new Date());
                 const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-                const user = (cachedUsers || []).find(u => String(u.id) === String(log.userId || log.studentUid)) || {};
+                const user = (cachedUsers || []).find(u => String(u.id) === String(log.userId || log.studentUid) || (log.studentId && String(u.studentId) === String(log.studentId))) || {};
                 const reportNo = `SEC-${dateStr.replace(/-/g, '')}-${String(counter++).padStart(4, '0')}`;
                 
                 let locationStr = 'Campus Grounds';
+                const coords = extractCoords(log.location || { lat: log.latitude, lng: log.longitude });
                 if (log.location?.address) locationStr = log.location.address;
-                else if (log.location?.lat && log.location?.lng) locationStr = `${Number(log.location.lat).toFixed(5)}, ${Number(log.location.lng).toFixed(5)}`;
+                else if (coords.lat !== null && coords.lng !== null) locationStr = `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`;
+                else if (typeof log.location === 'string') locationStr = log.location;
+
+                // (2026-07-13) Set role on SOS records; was omitting role property
+                const sName = log.userName || user.name || 'Student';
+                const sEmail = log.userEmail || user.email || '';
+                const isStaff = log.role === 'staff' || user.role === 'staff' || String(sName).toLowerCase().includes('staff') || String(sEmail).toLowerCase().startsWith('staff.');
+                const role = isStaff ? 'staff' : (log.role || user.role || 'student');
 
                 records.push({
                     reportNo,
                     studentId: log.studentId || user.studentId || log.userId || 'N/A',
-                    studentName: log.userName || user.name || 'Student',
+                    studentName: sName,
+                    role,
+                    email: sEmail,
                     location: locationStr,
+                    lat: coords.lat,
+                    lng: coords.lng,
                     status: (log.status || 'ACTIVE').toUpperCase(),
                     date: dateStr,
                     time: timeStr,
@@ -4178,23 +4484,38 @@
 
             // 2. Attendance Logs
             (cachedAttendance || []).forEach(att => {
-                const dateObj = att.timestamp?.toDate ? att.timestamp.toDate() : (att.timestamp ? new Date(att.timestamp) : new Date());
-                const dateStr = getLocalDateString(dateObj);
+                const dateObj = parseSafeDate(att.timestamp);
+                const dateStr = getLocalDateString(dateObj) || getLocalDateString(new Date());
                 const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-                const user = (cachedUsers || []).find(u => String(u.id) === String(att.userId || att.studentUid)) || {};
+                const user = (cachedUsers || []).find(u => String(u.id) === String(att.userId || att.studentUid) || (att.studentId && String(u.studentId) === String(att.studentId))) || {};
                 const reportNo = `SEC-${dateStr.replace(/-/g, '')}-${String(counter++).padStart(4, '0')}`;
                 
                 let locationStr = att.location?.address || 'Campus Perimeter';
-                if (!att.location?.address && att.location?.lat) locationStr = `${Number(att.location.lat).toFixed(5)}, ${Number(att.location.lng).toFixed(5)}`;
+                const coords = extractCoords(att.location || { lat: att.latitude, lng: att.longitude });
+                if (coords.lat !== null && coords.lng !== null && !att.location?.address) {
+                    locationStr = `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`;
+                } else if (typeof att.location === 'string') {
+                    locationStr = att.location;
+                }
 
                 const eventType = String(att.type || '').toLowerCase();
                 const typeLabel = eventType === 'in' ? 'Attendance Check-in (Entry)' : (eventType === 'out' ? 'Attendance Check-out (Exit)' : 'Attendance Log');
 
+                // (2026-07-13) Set role on attendance records; was omitting role property
+                const aName = att.studentName || user.name || 'Student';
+                const aEmail = att.email || user.email || '';
+                const isStaff = att.role === 'staff' || user.role === 'staff' || String(aName).toLowerCase().includes('staff') || String(aEmail).toLowerCase().startsWith('staff.');
+                const role = isStaff ? 'staff' : (att.role || user.role || 'student');
+
                 records.push({
                     reportNo,
                     studentId: att.studentId || user.studentId || att.userId || 'N/A',
-                    studentName: att.studentName || user.name || 'Student',
+                    studentName: aName,
+                    role,
+                    email: aEmail,
                     location: locationStr,
+                    lat: coords.lat,
+                    lng: coords.lng,
                     status: 'VERIFIED',
                     date: dateStr,
                     time: timeStr,
@@ -4206,21 +4527,25 @@
 
             // 3. Incident Vault Reports
             (cachedEmergencyPosts || []).forEach(post => {
-                const dateObj = post.createdAt?.toDate ? post.createdAt.toDate() : (post.timestamp?.toDate ? post.timestamp.toDate() : (post.createdAt || post.timestamp ? new Date(post.createdAt || post.timestamp) : new Date()));
-                const dateStr = getLocalDateString(dateObj);
+                const dateObj = parseSafeDate(post.createdAt || post.timestamp);
+                const dateStr = getLocalDateString(dateObj) || getLocalDateString(new Date());
                 const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
                 const user = (cachedUsers || []).find(u => String(u.id) === String(post.userId || post.studentUid)) || {};
                 const reportNo = `SEC-${dateStr.replace(/-/g, '')}-${String(counter++).padStart(4, '0')}`;
 
                 let locationStr = 'Campus Grounds';
+                const coords = extractCoords(post.location || { lat: post.latitude, lng: post.longitude });
                 if (post.location?.address) locationStr = post.location.address;
-                else if (post.location?.lat && post.location?.lng) locationStr = `${Number(post.location.lat).toFixed(5)}, ${Number(post.location.lng).toFixed(5)}`;
+                else if (coords.lat !== null && coords.lng !== null) locationStr = `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`;
+                else if (typeof post.location === 'string') locationStr = post.location;
 
                 records.push({
                     reportNo,
                     studentId: post.studentId || user.studentId || post.userId || 'N/A',
                     studentName: post.studentName || post.author || user.name || 'Student',
                     location: locationStr,
+                    lat: coords.lat,
+                    lng: coords.lng,
                     status: (post.status || 'VERIFIED').toUpperCase(),
                     date: dateStr,
                     time: timeStr,
@@ -4264,8 +4589,10 @@
             const allRecords = await fetchAllSafetyRecords();
             cachedDailyReportRecords = allRecords;
 
+            // (2026-07-13) Initialize datePicker with first valid record date; was index 0
             if (datePicker && !datePicker.value) {
-                datePicker.value = (allRecords.length > 0) ? allRecords[0].date : getLocalDateString(new Date());
+                const firstValid = (allRecords || []).find(r => r.date && r.date !== '');
+                datePicker.value = firstValid ? firstValid.date : getLocalDateString(new Date());
             }
             let selectedDate = datePicker?.value || '';
 
@@ -4312,7 +4639,16 @@
 
             const subTitle = document.getElementById('dailyReportSubtitle');
             if (subTitle) {
-                const datePretty = new Date(selectedDate + 'T00:00:00').toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                let datePretty = selectedDate || 'Today';
+                if (selectedDate && selectedDate.includes('-')) {
+                    const parts = selectedDate.split('-');
+                    if (parts.length === 3) {
+                        const dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+                        if (!isNaN(dObj.getTime())) {
+                            datePretty = dObj.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                        }
+                    }
+                }
                 subTitle.textContent = `Official records for ${datePretty} — ${totalCount} records indexed.`;
             }
 
@@ -4329,10 +4665,15 @@
                 return;
             }
 
-            // (2026-07-13) Role pills & soft styling for safety report rows; was unbadged
+            // (2026-07-13) Display location with coordinates below; was raw string only
             const rowsHtml = filtered.map(row => {
-                const isStaff = String(row.studentId).includes('STAFF') || String(row.studentName).includes('GAD') || row.category === 'gad';
-                const isGuardian = row.role === 'guardian' || String(row.studentName).toLowerCase().includes('parent');
+                const isStaff = row.role === 'staff' ||
+                                String(row.studentName || '').toLowerCase().includes('staff') ||
+                                String(row.studentId || '').toUpperCase().includes('STAFF') ||
+                                String(row.email || '').toLowerCase().startsWith('staff.') ||
+                                String(row.studentName || '').includes('GAD') ||
+                                row.category === 'gad';
+                const isGuardian = !isStaff && (row.role === 'guardian' || String(row.studentName || '').toLowerCase().includes('parent') || String(row.studentName || '').toLowerCase().includes('guardian'));
                 const roleKey = isStaff ? 'staff' : (isGuardian ? 'guardian' : 'student');
                 const roleLabel = isStaff ? 'STAFF' : (isGuardian ? 'GUARDIAN' : 'STUDENT');
 
@@ -4345,14 +4686,26 @@
                     statusBadge = `<span class="status-pill" style="font-size:0.7rem; padding:3px 10px; border-radius:999px; background:#eff6ff; color:#2563eb; border:1px solid #bfdbfe; font-weight:700;">${escapeHtml(row.status)}</span>`;
                 }
 
+                const locSpanId = `daily-loc-${row.reportNo.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+                let coordText = '';
+                // (2026-07-13) Show city name above coordinates; was raw coordinates
+                let displayLoc = row.location;
+                if (row.lat !== null && row.lng !== null) {
+                    coordText = `${row.lat.toFixed(5)}, ${row.lng.toFixed(5)}`;
+                    if (/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(String(row.location).trim()) || row.location === 'Campus Grounds') {
+                        const geoKey = `${row.lat.toFixed(4)},${row.lng.toFixed(4)}`;
+                        displayLoc = securoGeoCache.get(geoKey) || getQuickRegionalLocation(row.lat, row.lng);
+                        setTimeout(() => resolveCoordinateLocation(row.lat, row.lng, locSpanId), 20);
+                    }
+                } else {
+                    coordText = '11.26659, 124.00872';
+                }
+
                 return `
                     <tr style="border-bottom:1px solid rgba(90,31,224,0.06); transition:background 0.15s;" onmouseover="this.style.background='#faf9fe'" onmouseout="this.style.background='transparent'">
                         <td style="padding:13px 16px; font-weight:800; font-family:monospace; color:#7c3aed; font-size:0.82rem;">${escapeHtml(row.reportNo)}</td>
                         <td style="padding:13px 16px;">
-                            ${isStaff 
-                                ? `<span class="role-pill staff" style="font-size:0.62rem; padding:2px 8px;">STAFF / OFFICE</span>`
-                                : `<span style="font-weight:700; color:${roleKey === 'student' ? '#7c3aed' : '#dc2626'}; font-family:monospace; font-size:0.84rem;">${escapeHtml(row.studentId)}</span>`
-                            }
+                            <span style="font-weight:700; color:${isStaff ? '#2563eb' : (roleKey === 'student' ? '#7c3aed' : '#dc2626')}; font-family:monospace; font-size:0.84rem;">${escapeHtml(row.studentId)}</span>
                         </td>
                         <td style="padding:13px 16px;">
                             <div style="display:inline-flex; align-items:center; gap:8px;">
@@ -4360,13 +4713,17 @@
                                 <span class="role-pill ${roleKey}" style="font-size:0.58rem; padding:1px 6px;">${roleLabel}</span>
                             </div>
                         </td>
-                        <td style="padding:13px 16px; color:#475569; font-size:0.82rem; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(row.location)}">${escapeHtml(row.location)}</td>
+                        <td style="padding:13px 16px; font-size:0.82rem; max-width:240px;">
+                            <div style="font-weight:700; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" id="${locSpanId}" title="${escapeHtml(displayLoc)}">${escapeHtml(displayLoc)}</div>
+                            <div style="font-size:0.73rem; color:#64748b; font-family:monospace; margin-top:2px;">${coordText}</div>
+                        </td>
                         <td style="padding:13px 16px;">${statusBadge}</td>
                         <td style="padding:13px 16px; color:#475569; font-size:0.82rem; white-space:nowrap;">${escapeHtml(row.date)}</td>
                         <td style="padding:13px 16px; color:#475569; font-size:0.82rem; white-space:nowrap;">${escapeHtml(row.time)}</td>
                         <td style="padding:13px 16px; font-weight:700; color:var(--ink); font-size:0.82rem;">${escapeHtml(row.reportType)}</td>
                     </tr>
                 `;
+            // (2026-07-13) Clean table row markup; was duplicate dangling HTML block
             }).join('');
 
             container.innerHTML = `
@@ -4801,9 +5158,8 @@
                     unsubscribeAdminNotifications();
                     unsubscribeAdminNotifications = null;
                 }
-                // 2. Clear sensitive cache and storage
+                // (2026-07-13) Retain offline master cache on logout; was clearing cache
                 try {
-                    localStorage.removeItem(SECURO_CACHE_KEY);
                     localStorage.removeItem('securo_session_token');
                     sessionStorage.clear();
                 } catch (e) {}
@@ -4831,42 +5187,177 @@
             adminProfileDropdown?.classList.remove('active');
         });
 
-        // (2026-07-13) Add local caching for all data on reload; was network only
+        // (2026-07-13) Non-destructive cache save and load guard; was wiping empty arrays
         const SECURO_CACHE_KEY = 'securo_admin_master_cache';
+        let _cacheLoadedOnce = false;
 
+        // (2026-07-13) Fast summary & full state cache sync; was missing notifs & stats
         function saveToLocalCache() {
             try {
-                const payload = {
-                    posts: cachedPosts,
-                    users: cachedUsers,
-                    threads: cachedThreads,
-                    guardianLinks: cachedGuardianLinks,
-                    sosLogs: cachedSosLogs,
-                    emergencyPosts: cachedEmergencyPosts,
-                    attendanceLogs: cachedAttendance,
-                    savedAdminName: currentAdminName,
+                let existing = {};
+                try {
+                    const rawExisting = sessionStorage.getItem(SECURO_CACHE_KEY) || localStorage.getItem(SECURO_CACHE_KEY);
+                    if (rawExisting) existing = JSON.parse(rawExisting) || {};
+                } catch(e) {}
+
+                let safeUsers = (Array.isArray(cachedUsers) && cachedUsers.length) ? cachedUsers : (Array.isArray(existing.users) && existing.users.length ? existing.users : []);
+                const safePosts = (Array.isArray(cachedPosts) && cachedPosts.length) ? cachedPosts : (Array.isArray(existing.posts) && existing.posts.length ? existing.posts : []);
+                const safeThreads = (Array.isArray(cachedThreads) && cachedThreads.length) ? cachedThreads : (Array.isArray(existing.threads) && existing.threads.length ? existing.threads : []);
+                const safeLinks = (Array.isArray(cachedGuardianLinks) && cachedGuardianLinks.length) ? cachedGuardianLinks : (Array.isArray(existing.guardianLinks) && existing.guardianLinks.length ? existing.guardianLinks : []);
+                const safeSos = (Array.isArray(cachedSosLogs) && cachedSosLogs.length) ? cachedSosLogs : (Array.isArray(existing.sosLogs) && existing.sosLogs.length ? existing.sosLogs : []);
+                const safeEmerg = (Array.isArray(cachedEmergencyPosts) && cachedEmergencyPosts.length) ? cachedEmergencyPosts : (Array.isArray(existing.emergencyPosts) && existing.emergencyPosts.length ? existing.emergencyPosts : []);
+                const safeAtt = (Array.isArray(cachedAttendance) && cachedAttendance.length) ? cachedAttendance : (Array.isArray(existing.attendanceLogs) && existing.attendanceLogs.length ? existing.attendanceLogs : []);
+                const safeNotifs = (Array.isArray(cachedAdminNotifications) && cachedAdminNotifications.length) ? cachedAdminNotifications : (Array.isArray(existing.notifications) && existing.notifications.length ? existing.notifications : []);
+
+                if (!safeUsers.length && (safeSos.length || safeAtt.length || safeEmerg.length || safeLinks.length)) {
+                    const list = [];
+                    const seen = new Set();
+                    const add = (id, name, email, role, studentId) => {
+                        const cleanId = String(id || studentId || email || '').trim();
+                        if (!cleanId || seen.has(cleanId)) return;
+                        seen.add(cleanId);
+                        list.push({
+                            id: cleanId,
+                            userId: String(id || ''),
+                            studentId: String(studentId || '').replace(/\D/g, '').slice(0, 7),
+                            name: name || (studentId ? `Student ${studentId}` : 'User'),
+                            email: email || '',
+                            role: role || 'student'
+                        });
+                    };
+                    safeSos.forEach(l => {
+                        const rep = (typeof getReporterInfo === 'function') ? getReporterInfo(l) : {};
+                        add(l.userId || l.studentUid, rep.name || l.studentName, rep.email || l.userEmail, rep.role || l.role, rep.studentId || l.studentId);
+                    });
+                    safeAtt.forEach(a => add(a.userId, a.studentName || a.name, a.userEmail || a.email, a.role, a.studentId));
+                    safeEmerg.forEach(p => add(p.userId, p.studentName || p.author || p.userName, p.email, p.role || 'student', p.studentId));
+                    safeLinks.forEach(g => {
+                        if (g.guardianId || g.guardianEmail) add(g.guardianId, g.guardianName, g.guardianEmail, 'guardian', '');
+                        if (g.studentUid || g.studentId) add(g.studentUid, g.studentName, g.studentEmail, 'student', g.studentId);
+                    });
+                    if (list.length) safeUsers = list;
+                }
+
+                const roleCounts = getRoleCounts(safeUsers);
+                const totalUsers = safeUsers.length;
+                const gadEngaged = new Set(
+                    safePosts.flatMap((post) => Array.isArray(post.likedBy) ? post.likedBy : [])
+                ).size;
+
+                const summary = {
+                    totalUsers,
+                    students: roleCounts.student,
+                    guardians: roleCounts.guardian,
+                    staff: roleCounts.staff,
+                    admins: roleCounts.admin,
+                    threads: safeThreads.length,
+                    posts: safePosts.length,
+                    gadEngaged,
+                    savedAdminName: currentAdminName || existing.savedAdminName || 'Administrator',
                     time: Date.now()
                 };
-                localStorage.setItem(SECURO_CACHE_KEY, JSON.stringify(payload));
+
+                try {
+                    const sumSerialized = JSON.stringify(summary);
+                    localStorage.setItem('securo_admin_summary', sumSerialized);
+                    sessionStorage.setItem('securo_admin_summary', sumSerialized);
+                } catch(e) {}
+
+                const slimEmerg = safeEmerg.slice(0, 50).map(p => {
+                    const c = { ...p };
+                    if (c.photo && c.photo.length > 300) delete c.photo;
+                    if (c.photoURL && c.photoURL.length > 300) delete c.photoURL;
+                    if (c.image && c.image.length > 300) delete c.image;
+                    if (Array.isArray(c.attachments)) {
+                        c.attachments = c.attachments.map(a => {
+                            const att = { ...a };
+                            if (att.url && att.url.length > 300) att.url = '';
+                            if (att.thumb && att.thumb.length > 300) att.thumb = '';
+                            return att;
+                        });
+                    }
+                    return c;
+                });
+
+                const slimAtt = safeAtt.slice(0, 100).map(a => {
+                    const c = { ...a };
+                    if (c.photo && c.photo.length > 300) delete c.photo;
+                    if (c.selfie && c.selfie.length > 300) delete c.selfie;
+                    return c;
+                });
+
+                const payload = {
+                    posts: safePosts.slice(0, 50),
+                    users: safeUsers,
+                    threads: safeThreads.slice(0, 50),
+                    guardianLinks: safeLinks,
+                    sosLogs: safeSos.slice(0, 50),
+                    emergencyPosts: slimEmerg,
+                    attendanceLogs: slimAtt,
+                    notifications: safeNotifs.slice(0, 50),
+                    summary,
+                    savedAdminName: currentAdminName || existing.savedAdminName || 'Administrator',
+                    time: Date.now()
+                };
+
+                const serialized = JSON.stringify(payload);
+                try { localStorage.setItem(SECURO_CACHE_KEY, serialized); } catch(e) {}
+                try { sessionStorage.setItem(SECURO_CACHE_KEY, serialized); } catch(e) {}
+                if (safeUsers.length) {
+                    try {
+                        const usersSerialized = JSON.stringify(safeUsers);
+                        localStorage.setItem("securo_users_local", usersSerialized);
+                        sessionStorage.setItem("securo_users_local", usersSerialized);
+                    } catch(e) {}
+                }
             } catch (err) {
                 console.warn("Could not save to local cache:", err);
             }
         }
 
-        // (2026-07-13) Load cache and directory fallback; was unpopulated cache
-        function loadFromLocalCache() {
+        // (2026-07-13) Extract users from SOS and attendance logs; was SOS-only fallback
+        function extractUsersFromLogs(logs = []) {
+            if (!Array.isArray(logs) || !logs.length) return [];
+            const seen = new Set();
+            const list = [];
+            logs.forEach(l => {
+                const sid = String(l.studentId || l.profile?.studentId || '').trim();
+                const uid = String(l.userId || l.studentUid || l.id || '').trim();
+                const key = sid || uid || (l.userEmail || l.email || '').toLowerCase();
+                if (!key || seen.has(key)) return;
+                seen.add(key);
+                const name = l.studentName || l.userName || l.reporterName || l.profile?.name || (sid ? `Student ${sid}` : 'Student');
+                const email = l.userEmail || l.email || l.profile?.email || '';
+                const role = l.role || (l.profile?.role) || 'student';
+                const isStaff = role === 'staff' || String(name).toLowerCase().includes('staff') || String(email).toLowerCase().startsWith('staff.');
+                list.push({
+                    id: uid || sid,
+                    userId: uid || sid,
+                    studentId: sid,
+                    name,
+                    email,
+                    role: isStaff ? 'staff' : role
+                });
+            });
+            return list;
+        }
+
+        // (2026-07-13) Hydrate notifications & vault in local cache; was omitted
+        function loadFromLocalCache(force = false) {
             try {
-                const raw = localStorage.getItem(SECURO_CACHE_KEY);
+                let raw = null;
+                try { raw = sessionStorage.getItem(SECURO_CACHE_KEY) || localStorage.getItem(SECURO_CACHE_KEY); } catch(e) {}
                 if (raw) {
                     const data = JSON.parse(raw);
                     if (data) {
                         if (Array.isArray(data.posts) && data.posts.length) cachedPosts = data.posts;
                         if (Array.isArray(data.users) && data.users.length) cachedUsers = data.users;
                         if (Array.isArray(data.threads) && data.threads.length) cachedThreads = data.threads;
-                        if (Array.isArray(data.guardianLinks)) cachedGuardianLinks = data.guardianLinks;
-                        if (Array.isArray(data.sosLogs)) cachedSosLogs = data.sosLogs;
-                        if (Array.isArray(data.emergencyPosts)) cachedEmergencyPosts = data.emergencyPosts;
-                        if (Array.isArray(data.attendanceLogs)) cachedAttendance = data.attendanceLogs;
+                        if (Array.isArray(data.guardianLinks) && data.guardianLinks.length) cachedGuardianLinks = data.guardianLinks;
+                        if (Array.isArray(data.sosLogs) && data.sosLogs.length) cachedSosLogs = data.sosLogs;
+                        if (Array.isArray(data.emergencyPosts) && data.emergencyPosts.length) cachedEmergencyPosts = data.emergencyPosts;
+                        if (Array.isArray(data.attendanceLogs) && data.attendanceLogs.length) cachedAttendance = data.attendanceLogs;
+                        if (Array.isArray(data.notifications) && data.notifications.length) cachedAdminNotifications = data.notifications;
                         if (data.savedAdminName && adminDropdownName) {
                             adminDropdownName.textContent = data.savedAdminName;
                             if (adminInitials) {
@@ -4883,7 +5374,16 @@
                 }
                 if (!cachedUsers.length) {
                     try {
-                        const dirRaw = localStorage.getItem("securo_user_directory");
+                        const localUsersRaw = sessionStorage.getItem("securo_users_local") || localStorage.getItem("securo_users_local");
+                        if (localUsersRaw) {
+                            const parsedLocal = JSON.parse(localUsersRaw);
+                            if (Array.isArray(parsedLocal) && parsedLocal.length) cachedUsers = parsedLocal;
+                        }
+                    } catch (e) {}
+                }
+                if (!cachedUsers.length) {
+                    try {
+                        const dirRaw = sessionStorage.getItem("securo_user_directory") || localStorage.getItem("securo_user_directory");
                         if (dirRaw) {
                             const dir = JSON.parse(dirRaw);
                             const dirUsers = Object.entries(dir).map(([uid, u]) => ({
@@ -4898,12 +5398,44 @@
                         }
                     } catch (e) {}
                 }
+                if (!cachedUsers.length) {
+                    const fallbackList = [];
+                    const seen = new Set();
+                    const add = (id, name, email, role, studentId) => {
+                        const cleanId = String(id || studentId || email || '').trim();
+                        if (!cleanId || seen.has(cleanId)) return;
+                        seen.add(cleanId);
+                        fallbackList.push({
+                            id: cleanId,
+                            userId: String(id || ''),
+                            studentId: String(studentId || '').replace(/\D/g, '').slice(0, 7),
+                            name: name || (studentId ? `Student ${studentId}` : 'User'),
+                            email: email || '',
+                            role: role || 'student'
+                        });
+                    };
+                    (cachedSosLogs || []).forEach(l => {
+                        const rep = (typeof getReporterInfo === 'function') ? getReporterInfo(l) : {};
+                        add(l.userId || l.studentUid, rep.name || l.studentName, rep.email || l.userEmail, rep.role || l.role, rep.studentId || l.studentId);
+                    });
+                    (cachedAttendance || []).forEach(a => add(a.userId, a.studentName || a.name, a.userEmail || a.email, a.role, a.studentId));
+                    (cachedEmergencyPosts || []).forEach(p => add(p.userId, p.studentName || p.author || p.userName, p.email, p.role || 'student', p.studentId));
+                    (cachedGuardianLinks || []).forEach(g => {
+                        if (g.guardianId || g.guardianEmail) add(g.guardianId, g.guardianName, g.guardianEmail, 'guardian', '');
+                        if (g.studentUid || g.studentId) add(g.studentUid, g.studentName, g.studentEmail, 'student', g.studentId);
+                    });
+                    if (fallbackList.length) cachedUsers = fallbackList;
+                }
                 applyFilters();
+                renderReporterStats();
+                renderAdminNotifications();
+                if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
                 if (typeof renderDailyReport === 'function') renderDailyReport();
                 if (typeof renderAdminSosQueue === 'function') renderAdminSosQueue(cachedSosLogs);
                 if (typeof setUserEditorState === 'function' && cachedUsers.length && !selectedManagedUserId) {
                     setUserEditorState(cachedUsers[0]);
                 }
+                _cacheLoadedOnce = true;
                 return true;
             } catch (err) {
                 console.warn("Could not load from local cache:", err);
@@ -4911,10 +5443,14 @@
             }
         }
 
-        // (2026-07-13) Auto-save on refresh and instant cache load; was uncalled
+        // (2026-07-13) Hydrate cache on boot; delay remote fetch until user is auth
         window.addEventListener('beforeunload', saveToLocalCache);
         loadFromLocalCache();
+        if (auth.currentUser) {
+            loadAllData().catch(() => {});
+        }
 
+        // (2026-07-13) Fast admin auth and progressive data streaming; was blocking
         onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 showToast("Access denied", "Please sign in to the terminal first.", "error");
@@ -4925,42 +5461,48 @@
             }
             // (2026-09-09) store real UID for Firestore-rules-aware queries
             currentAdminUid = user.uid;
-            // (2026-09-30) Reinit chat with real UID if messages tab was pre-loaded with fallback UID
             stopAdminRealtimeThreads();
             if (document.querySelector('.tab-btn[data-tab="messages"]')?.classList.contains('active')) {
                 initAdminChat();
             }
-            try {
-                const profilePromise = getUserProfile(user.uid).catch(() => null);
-                const profile = await Promise.race([profilePromise, new Promise(r => setTimeout(() => r(null), 3000))]);
-                const isSpecialAdmin = profile?.role === 'admin';
-                currentAdminName = profile?.name || user.displayName || 'Administrator';
+
+            const isKnownAdmin = isAdminEmail(user.email);
+            if (isKnownAdmin) {
+                currentAdminName = user.displayName || 'Administrator';
                 if (adminDropdownName) adminDropdownName.textContent = currentAdminName;
-                if (adminInitials) {
-                    adminInitials.textContent = currentAdminName
-                        .split(/\s+/)
-                        .filter(Boolean)
-                        .slice(0, 2)
-                        .map((part) => part[0])
-                        .join('')
-                        .toUpperCase() || 'AD';
+                if (adminInitials) adminInitials.textContent = 'AD';
+                // (2026-07-13) Force fresh cache reload on admin auth; was stale skip
+                loadFromLocalCache(true);
+                loadAllData().catch(() => {});
+            }
+
+            try {
+                getUserProfile(user.uid).then((profile) => {
+                    if (profile?.name) {
+                        currentAdminName = profile.name;
+                        if (adminDropdownName) adminDropdownName.textContent = currentAdminName;
+                        if (adminInitials) adminInitials.textContent = getInitials(currentAdminName);
+                    }
+                    if (!isAdminEmail(user.email) && profile?.role !== 'admin') {
+                        showToast("Access denied", "Only authorized administrator accounts can open the command center.", "error");
+                        window.setTimeout(() => { window.location.href = 'index.html'; }, 900);
+                    }
+                }).catch(() => {});
+
+                if (!isKnownAdmin) {
+                    const profile = await getUserProfile(user.uid).catch(() => null);
+                    if (profile?.role !== 'admin') {
+                        showToast("Access denied", "Only authorized administrator accounts can open the command center.", "error");
+                        window.setTimeout(() => { window.location.href = 'index.html'; }, 900);
+                        return;
+                    }
+                    currentAdminName = profile.name || user.displayName || 'Administrator';
+                    if (adminDropdownName) adminDropdownName.textContent = currentAdminName;
+                    // (2026-07-13) Force fresh cache reload on admin auth; was stale skip
+                    loadFromLocalCache(true);
+                    loadAllData().catch(() => {});
                 }
 
-                // (2026-07-13) Validate admin accounts via isAdminEmail; was single email check
-                if (!isAdminEmail(user.email) && !isSpecialAdmin) {
-                    showToast("Access denied", "Only authorized administrator accounts can open the command center.", "error");
-                    window.setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 900);
-                    return;
-                }
-                // (2026-07-13) Instant cache render and 2.5s network timeout; was 6s wait
-                loadFromLocalCache();
-                loadAllData().then(() => {
-                    showToast("Admin ready", `Command center synced successfully. Welcome ${currentAdminName}.`, "success");
-                }).catch(err => {
-                    console.warn("Background sync error:", err);
-                });
                 if (unsubscribeAdminNotifications) unsubscribeAdminNotifications();
                 unsubscribeAdminNotifications = subscribeToAccountNotifications(user.uid, renderAdminNotifications);
             } catch (error) {
@@ -4968,77 +5510,161 @@
             }
         });
 
-        // (2026-07-13) Progressive streaming fetch with live caching; was blocking
-        async function loadAllData() {
-            const timeoutFetch = (promise, ms = 12000, fallback = []) => 
-                Promise.race([promise, new Promise(resolve => setTimeout(() => resolve(fallback), ms))]);
+        // (2026-07-13) Batch data loading UI updates; was thrashing DOM on each promise
+        let _adminUIRefreshTimer = null;
+        function scheduleAdminUIRefresh(delay = 100) {
+            if (_adminUIRefreshTimer) clearTimeout(_adminUIRefreshTimer);
+            _adminUIRefreshTimer = setTimeout(() => {
+                applyFilters();
+                renderReporterStats();
+                renderAdminNotifications();
+                if (typeof renderDailyReport === 'function') renderDailyReport();
+                if (typeof renderAdminSosQueue === 'function') renderAdminSosQueue(cachedSosLogs);
+                if (document.getElementById('sec-sos')?.classList.contains('active')) {
+                    if (typeof renderAdminSosMap === 'function') renderAdminSosMap();
+                }
+            }, delay);
+        }
 
-            const pPosts = timeoutFetch(getGADPosts()).then(posts => {
-                if (Array.isArray(posts) && posts.length) {
-                    cachedPosts = posts.sort((a, b) => {
-                        const dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.timestamp || 0).getTime();
-                        const dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.timestamp || 0).getTime();
-                        return dateB - dateA;
+        // (2026-07-13) Fast queueable loadAllData with bounded query timeout; was slow
+        let _isLoadingAllData = false;
+        let _pendingLoadAllData = false;
+        async function loadAllData(force = false) {
+            if (_isLoadingAllData) {
+                _pendingLoadAllData = true;
+                return;
+            }
+            _isLoadingAllData = true;
+            _pendingLoadAllData = false;
+            try {
+                // (2026-07-13) Set 20s network race for admin load; was 2200ms dropping data
+                const fastRace = (prom, ms = 20000) => Promise.race([
+                    prom,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
+                ]).catch(err => {
+                    console.warn("Fast query fallback:", err);
+                    return null;
+                });
+
+                const pPosts = fastRace(getGADPosts()).then(posts => {
+                    if (Array.isArray(posts) && posts.length) {
+                        cachedPosts = posts.sort((a, b) => {
+                            const dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.timestamp || 0).getTime();
+                            const dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.timestamp || 0).getTime();
+                            return dateB - dateA;
+                        });
+                        scheduleAdminUIRefresh(20);
+                        saveToLocalCache();
+                    }
+                });
+
+                const pSos = fastRace(getAllSOSLogs()).then(sos => {
+                    if (Array.isArray(sos) && sos.length) {
+                        cachedSosLogs = sos;
+                        if (!cachedUsers.length) {
+                            cachedUsers = extractUsersFromLogs(sos);
+                        }
+                        scheduleAdminUIRefresh(20);
+                        saveToLocalCache();
+                    }
+                });
+
+                const pUsers = fastRace(getAllUsers()).then(users => {
+                    let userList = Array.isArray(users) ? users : [];
+                    if (!userList.length && cachedSosLogs.length) {
+                        userList = extractUsersFromLogs(cachedSosLogs);
+                    }
+                    if (userList.length) {
+                        cachedUsers = userList;
+                        scheduleAdminUIRefresh(20);
+                        saveToLocalCache();
+                    }
+                });
+
+                const pThreads = fastRace(getAllChatThreadsOnce(currentAdminUid)).then(threads => {
+                    if (Array.isArray(threads) && threads.length) {
+                        cachedThreads = threads;
+                        if (typeof renderThreads === 'function') renderThreads(cachedThreads);
+                        scheduleAdminUIRefresh(20);
+                        saveToLocalCache();
+                    }
+                });
+
+                const pLinks = fastRace(getAllGuardianLinksAdmin()).then(links => {
+                    if (Array.isArray(links) && links.length) {
+                        cachedGuardianLinks = links;
+                        saveToLocalCache();
+                    }
+                });
+
+                const pEmerg = fastRace(getAllEmergencyPosts()).then(ep => {
+                    if (Array.isArray(ep) && ep.length) {
+                        cachedEmergencyPosts = ep;
+                        if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
+                        scheduleAdminUIRefresh(20);
+                        saveToLocalCache();
+                    }
+                });
+
+                const pAtt = fastRace(getAllAttendance()).then(att => {
+                    if (Array.isArray(att) && att.length) {
+                        cachedAttendance = att;
+                        if (!cachedUsers.length) {
+                            cachedUsers = extractUsersFromLogs(att);
+                        }
+                        if (typeof renderDailyReport === 'function') renderDailyReport();
+                        saveToLocalCache();
+                    }
+                });
+
+                await Promise.allSettled([pPosts, pSos, pUsers, pThreads, pLinks, pEmerg, pAtt]);
+                // (2026-07-13) Multi-source user extraction after settle; was SOS-only fallback
+                if (!cachedUsers.length) {
+                    const fallbackList = [];
+                    const seen = new Set();
+                    const add = (id, name, email, role, studentId) => {
+                        const cleanId = String(id || studentId || email || '').trim();
+                        if (!cleanId || seen.has(cleanId)) return;
+                        seen.add(cleanId);
+                        fallbackList.push({
+                            id: cleanId,
+                            userId: String(id || ''),
+                            studentId: String(studentId || '').replace(/\D/g, '').slice(0, 7),
+                            name: name || (studentId ? `Student ${studentId}` : 'User'),
+                            email: email || '',
+                            role: role || 'student'
+                        });
+                    };
+                    (cachedSosLogs || []).forEach(l => {
+                        const rep = (typeof getReporterInfo === 'function') ? getReporterInfo(l) : {};
+                        add(l.userId || l.studentUid, rep.name || l.studentName, rep.email || l.userEmail, rep.role || l.role, rep.studentId || l.studentId);
                     });
-                    applyFilters();
-                    saveToLocalCache();
+                    (cachedAttendance || []).forEach(a => add(a.userId, a.studentName || a.name, a.userEmail || a.email, a.role, a.studentId));
+                    (cachedEmergencyPosts || []).forEach(p => add(p.userId, p.studentName || p.author || p.userName, p.email, p.role || 'student', p.studentId));
+                    (cachedGuardianLinks || []).forEach(g => {
+                        if (g.guardianId || g.guardianEmail) add(g.guardianId, g.guardianName, g.guardianEmail, 'guardian', '');
+                        if (g.studentUid || g.studentId) add(g.studentUid, g.studentName, g.studentEmail, 'student', g.studentId);
+                    });
+                    if (fallbackList.length) cachedUsers = fallbackList;
                 }
-            }).catch(e => console.warn("Posts sync error:", e));
-
-            const pUsers = timeoutFetch(getAllUsers()).then(users => {
-                if (Array.isArray(users) && users.length) {
-                    cachedUsers = users;
-                    applyFilters();
-                    saveToLocalCache();
+                saveToLocalCache();
+                if (_adminUIRefreshTimer) clearTimeout(_adminUIRefreshTimer);
+                applyFilters();
+                renderReporterStats();
+                renderAdminNotifications();
+                if (typeof renderDailyReport === 'function') renderDailyReport();
+                if (typeof renderAdminSosQueue === 'function') renderAdminSosQueue(cachedSosLogs);
+                if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
+                if (document.getElementById('sec-sos')?.classList.contains('active')) {
+                    if (typeof renderAdminSosMap === 'function') renderAdminSosMap();
                 }
-            }).catch(e => console.warn("Users sync error:", e));
-
-            const pThreads = timeoutFetch(getAllChatThreadsOnce(currentAdminUid)).then(threads => {
-                if (Array.isArray(threads) && threads.length) {
-                    cachedThreads = threads;
-                    renderStatistics(cachedUsers);
-                    if (typeof renderThreads === 'function') renderThreads(cachedThreads);
-                    saveToLocalCache();
+            } finally {
+                _isLoadingAllData = false;
+                if (_pendingLoadAllData) {
+                    _pendingLoadAllData = false;
+                    setTimeout(() => { loadAllData(true).catch(() => {}); }, 60);
                 }
-            }).catch(e => console.warn("Threads sync error:", e));
-
-            const pLinks = timeoutFetch(getAllGuardianLinksAdmin()).then(links => {
-                if (Array.isArray(links) && links.length) {
-                    cachedGuardianLinks = links;
-                    saveToLocalCache();
-                }
-            }).catch(e => console.warn("Links sync error:", e));
-
-            const pSos = timeoutFetch(getAllSOSLogs()).then(sos => {
-                if (Array.isArray(sos) && sos.length) {
-                    cachedSosLogs = sos;
-                    if (typeof renderAdminSosQueue === 'function') renderAdminSosQueue(cachedSosLogs);
-                    saveToLocalCache();
-                }
-            }).catch(e => console.warn("SOS sync error:", e));
-
-            const pEmerg = timeoutFetch(getAllEmergencyPosts()).then(ep => {
-                if (Array.isArray(ep) && ep.length) {
-                    cachedEmergencyPosts = ep;
-                    saveToLocalCache();
-                }
-            }).catch(e => console.warn("Emerg sync error:", e));
-
-            const pAtt = timeoutFetch(getAllAttendance()).then(att => {
-                if (Array.isArray(att) && att.length) {
-                    cachedAttendance = att;
-                    if (typeof renderDailyReport === 'function') renderDailyReport();
-                    saveToLocalCache();
-                }
-            }).catch(e => console.warn("Attendance sync error:", e));
-
-            await Promise.allSettled([pPosts, pUsers, pThreads, pLinks, pSos, pEmerg, pAtt]);
-            saveToLocalCache();
-            applyFilters();
-            if (typeof renderDailyReport === 'function') renderDailyReport();
-            if (typeof renderAdminSosQueue === 'function') renderAdminSosQueue(cachedSosLogs);
-            // (2026-07-13) Synchronize Digital Vault items on data load; was absent
-            if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
+            }
             // (2026-07-13) Subscribe to real-time GAD counseling messages; was uncalled
             if (!window._gadMessagesUnsub) {
                 window._gadMessagesUnsub = subscribeToGADMessages(null, (messages) => {
@@ -5116,16 +5742,19 @@
             `).join('');
         }
 
-        // (2026-07-13) Support admin emails in role counter; was single email string
+        // (2026-07-13) Role counts recognize staff by role and name; was explicit role
         function getRoleCounts(users) {
             return (Array.isArray(users) ? users : []).reduce((acc, user) => {
-                const role = (user?.role === 'admin' || isAdminEmail(user?.email)) ? 'admin' : user?.role === 'guardian' ? 'guardian' : user?.role === 'staff' ? 'staff' : 'student';
+                const isStaff = user?.role === 'staff' || String(user?.name || '').toLowerCase().includes('staff') || String(user?.email || '').toLowerCase().startsWith('staff.');
+                const role = (user?.role === 'admin' || isAdminEmail(user?.email)) ? 'admin' : user?.role === 'guardian' ? 'guardian' : isStaff ? 'staff' : 'student';
                 acc[role] += 1;
                 return acc;
             }, { student: 0, guardian: 0, staff: 0, admin: 0 });
         }
 
+        // (2026-07-13) Render stats always from users or cache; was return early
         function renderStatistics(users) {
+            users = (Array.isArray(users) && users.length) ? users : (cachedUsers || []);
             const roleCounts = getRoleCounts(users);
             const totalUsers = users.length;
             const gadEngaged = new Set(
@@ -5194,20 +5823,9 @@
                     </div>
                 `).join('');
             }
-// (2026-07-13) Add interactive Admin SOS Map & Hotspots renderer; was reporter stats only
             renderReporterStats();
-            renderAdminSosMap();
         }
 
-        let adminSosLeafletMap = null;
-        let adminSosMarkersLayer = null;
-        let adminGeofencePolygonLayer = null;
-        let adminGeofenceVertexMarkers = [];
-        let adminBuildingMarkers = [];
-        let adminModalLeafletMap = null;
-        let modalGeofencePolygonLayer = null;
-        let modalGeofenceVertexMarkers = [];
-        let modalBuildingMarkers = [];
         // (2026-07-13) Set campus center coordinates for admin map editor; was missing definition
         const ADMIN_CAMPUS_CENTER = [11.26659, 124.00872];
         // (2026-07-13) Complete facility descriptions lookup dictionary; was missing desc
@@ -5661,7 +6279,9 @@
                 }
             }
 
-            const role = user?.role || log?.role || 'student';
+            // (2026-07-13) Recognize staff role from name & email; was defaulting student
+            const isStaff = user?.role === 'staff' || log?.role === 'staff' || String(name).toLowerCase().includes('staff') || rawEmail.startsWith('staff.') || String(user?.email || '').toLowerCase().startsWith('staff.');
+            const role = isStaff ? 'staff' : (user?.role || log?.role || 'student');
             const email = user?.email || rawEmail || 'No email saved';
             const studentId = user?.studentId || rawStudentId || (role === 'staff' ? 'Staff' : 'N/A');
 
@@ -5678,9 +6298,191 @@
             }
         };
 
+        // (2026-07-13) Resolve location name for coordinates in SOS; was raw coords
+        const securoGeoCache = new Map();
+        try {
+            const rawG = localStorage.getItem('securo_geo_cache');
+            if (rawG) Object.entries(JSON.parse(rawG)).forEach(([k, v]) => securoGeoCache.set(k, v));
+        } catch (_) {}
+
+        function saveSecuroGeoCache() {
+            try {
+                const o = {};
+                securoGeoCache.forEach((v, k) => { o[k] = v; });
+                localStorage.setItem('securo_geo_cache', JSON.stringify(o));
+            } catch (_) {}
+        }
+
+        // (2026-07-13) Instant regional geocoding for Northern Cebu; was static label
+        function getQuickRegionalLocation(lat, lng) {
+            if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) return 'Campus Grounds';
+            for (const b of (currentAdminBuildings || DEFAULT_CAMPUS_BUILDINGS)) {
+                const [bLat, bLng] = b.coords || [];
+                if (typeof bLat === 'number' && typeof bLng === 'number' && Math.hypot(lat - bLat, lng - bLng) < 0.0035) {
+                    return `CTU Daanbantayan (${b.name})`;
+                }
+            }
+            if (lat >= 11.00 && lat <= 11.15 && lng >= 123.90 && lng <= 124.10) return "Bogo City, Cebu";
+            if (lat > 11.15 && lat <= 11.24 && lng >= 123.90 && lng <= 124.05) return "Medellin, Cebu";
+            if (lat > 11.24 && lat <= 11.35) return "Daanbantayan, Cebu";
+            return "Northern Cebu";
+        }
+
+        async function resolveCoordinateLocation(lat, lng, elementId) {
+            if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) return 'Campus Grounds';
+            const key = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+            if (securoGeoCache.has(key)) {
+                const cached = securoGeoCache.get(key);
+                if (elementId) {
+                    const el = document.getElementById(elementId);
+                    if (el) el.textContent = cached;
+                }
+                return cached;
+            }
+
+            // Check campus facilities first
+            for (const b of (currentAdminBuildings || DEFAULT_CAMPUS_BUILDINGS)) {
+                const [bLat, bLng] = b.coords || [];
+                if (typeof bLat === 'number' && typeof bLng === 'number') {
+                    if (Math.hypot(lat - bLat, lng - bLng) < 0.0035) {
+                        const facilityLoc = `CTU Daanbantayan (${b.name})`;
+                        securoGeoCache.set(key, facilityLoc);
+                        saveSecuroGeoCache();
+                        if (elementId) {
+                            const el = document.getElementById(elementId);
+                            if (el) el.textContent = facilityLoc;
+                        }
+                        return facilityLoc;
+                    }
+                }
+            }
+
+            // BigDataCloud Reverse Geocoding
+            try {
+                const ctrl = new AbortController();
+                const tid = setTimeout(() => ctrl.abort(), 2800);
+                const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`;
+                const res = await fetch(url, { signal: ctrl.signal });
+                clearTimeout(tid);
+                if (res.ok) {
+                    const data = await res.json();
+                    const barangay = (data.localityInfo?.informative || []).find(i => /barangay|brgy/i.test(i.name) || i.description?.toLowerCase().includes("barangay"))?.name || "";
+                    const city = data.city || data.localityInfo?.administrative?.find(a => a.adminLevel === 6 || a.adminLevel === 7)?.name || data.locality || "";
+                    const province = data.principalSubdivision || "Cebu";
+
+                    let place = "";
+                    if (barangay && city) place = `${barangay}, ${city}`;
+                    else if (city) place = `${city}, ${province}`;
+                    else if (barangay) place = `${barangay}, ${province}`;
+                    else if (data.locality) place = `${data.locality}, ${province}`;
+
+                    if (place) {
+                        securoGeoCache.set(key, place);
+                        saveSecuroGeoCache();
+                        if (elementId) {
+                            const el = document.getElementById(elementId);
+                            if (el) el.textContent = place;
+                        }
+                        return place;
+                    }
+                }
+            } catch (_) {}
+
+            // Regional coordinates lookup for Northern Cebu
+            let fallback = "Daanbantayan, Northern Cebu";
+            if (lat >= 11.15 && lat <= 11.23 && lng >= 123.90 && lng <= 124.02) {
+                fallback = "Medellin, Northern Cebu";
+            } else if (lat >= 11.00 && lat <= 11.15 && lng >= 123.95 && lng <= 124.05) {
+                fallback = "Bogo City, Northern Cebu";
+            } else if (lat >= 11.23 && lat <= 11.35) {
+                fallback = "Daanbantayan Campus Perimeter";
+            }
+            securoGeoCache.set(key, fallback);
+            saveSecuroGeoCache();
+            if (elementId) {
+                const el = document.getElementById(elementId);
+                if (el) el.textContent = fallback;
+            }
+            return fallback;
+        }
+
+        // (2026-07-13) Render recent SOS reporters sidebar with counts; was absent
+        function renderRecentSosReporters() {
+            const container = document.getElementById('adminRecentSosReporters');
+            const countEl = document.getElementById('adminRecentReportersCount');
+            if (!container) return;
+
+            const logs = cachedSosLogs || [];
+            if (!logs.length) {
+                renderEmpty(container, 'person_off', 'No active SOS reporters.');
+                if (countEl) countEl.textContent = '0 Users';
+                return;
+            }
+
+            const map = new Map();
+            logs.forEach(log => {
+                const rep = getReporterInfo(log);
+                const key = rep.studentId || rep.userId || rep.email || rep.name;
+                if (!map.has(key)) {
+                    map.set(key, {
+                        name: rep.name || 'Student',
+                        role: rep.role || 'student',
+                        studentId: rep.studentId || '',
+                        email: rep.email || '',
+                        count: 0,
+                        latestLog: log,
+                        latestTime: log.timestamp?.toDate ? log.timestamp.toDate() : (log.timestamp ? new Date(log.timestamp) : new Date())
+                    });
+                }
+                const entry = map.get(key);
+                entry.count += 1;
+                const logTime = log.timestamp?.toDate ? log.timestamp.toDate() : (log.timestamp ? new Date(log.timestamp) : new Date());
+                if (logTime > entry.latestTime) {
+                    entry.latestTime = logTime;
+                    entry.latestLog = log;
+                }
+            });
+
+            const reporters = Array.from(map.values()).sort((a, b) => b.latestTime - a.latestTime);
+            if (countEl) countEl.textContent = `${reporters.length} User${reporters.length === 1 ? '' : 's'}`;
+
+            container.innerHTML = reporters.map((r) => {
+                const loc = r.latestLog?.location || {};
+                const hasCoords = typeof loc.lat === 'number' && typeof loc.lng === 'number';
+                const timeStr = r.latestTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+                const roleClass = r.role === 'guardian' ? 'guardian' : r.role === 'staff' ? 'staff' : (r.role === 'admin' ? 'admin' : 'student');
+                const roleLabel = r.role === 'guardian' ? 'Guardian' : r.role === 'staff' ? 'Staff' : (r.role === 'admin' ? 'Admin' : 'Student');
+
+                return `
+                    <div class="reporter-sos-card" style="padding:10px 12px; border-radius:14px; background:#faf9fe; border:1px solid rgba(90,31,224,0.08); display:flex; flex-direction:column; gap:6px; cursor:${hasCoords ? 'pointer' : 'default'}; transition:all 0.15s ease;" ${hasCoords ? `onclick="focusSosLocation(${loc.lat}, ${loc.lng}, '${escapeHtml(r.name)}')" title="Click to view on map"` : ''} onmouseover="this.style.background='#f3effd'; this.style.borderColor='#7c3aed';" onmouseout="this.style.background='#faf9fe'; this.style.borderColor='rgba(90,31,224,0.08)';">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div class="management-avatar ${roleClass}" style="width:28px; height:28px; font-size:0.75rem;">${escapeHtml(getInitials(r.name))}</div>
+                                <div>
+                                    <strong style="font-size:0.84rem; color:var(--ink);">${escapeHtml(r.name)}</strong>
+                                    <div style="font-size:0.7rem; color:var(--muted);">${escapeHtml(r.studentId ? `ID: ${r.studentId}` : r.email)}</div>
+                                </div>
+                            </div>
+                            <span class="capsule" style="background:#fee2e2; color:#b91c1c; font-weight:800; font-size:0.72rem; padding:2px 8px; border-radius:999px;">
+                                ${r.count} ${r.count === 1 ? 'Report' : 'Reports'}
+                            </span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.72rem; color:#64748b; padding-top:4px; border-top:1px dashed rgba(0,0,0,0.06);">
+                            <span style="display:flex; align-items:center; gap:3px;">
+                                <span class="material-symbols-outlined" style="font-size:14px; color:#d11f34;">crisis_alert</span>
+                                Latest: ${escapeHtml(timeStr)}
+                            </span>
+                            ${hasCoords ? `<span style="font-family:monospace; color:#7c3aed; font-weight:600;">View Map &rarr;</span>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         function renderSosTable(logs) {
             const tableEl = document.getElementById('sosLogsTable');
             if (!tableEl) return;
+            renderRecentSosReporters();
 
             if (!logs || !logs.length) {
                 renderEmpty(tableEl, 'crisis_alert', 'No SOS emergency alerts logged yet.');
@@ -5692,7 +6494,18 @@
                 const loc = log.location || {};
                 const hasCoords = typeof loc.lat === 'number' && typeof loc.lng === 'number';
                 const coordsStr = hasCoords ? `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}` : 'GPS unavailable';
-                const addressStr = loc.address || coordsStr;
+                
+                const rawAddress = loc.address;
+                const isNumericAddress = !rawAddress || /^\d+\.\d+/.test(rawAddress) || rawAddress.includes('GPS') || rawAddress === coordsStr;
+                const geoKey = hasCoords ? `${loc.lat.toFixed(4)},${loc.lng.toFixed(4)}` : '';
+                // (2026-07-13) Instant regional geocoding in SOS table; was Resolving text
+                const initialLocationName = !isNumericAddress ? rawAddress : (securoGeoCache.get(geoKey) || getQuickRegionalLocation(loc.lat, loc.lng));
+
+                const spanId = `sos-loc-name-${log.id || Math.random().toString(36).slice(2, 7)}`;
+                if (hasCoords && isNumericAddress) {
+                    setTimeout(() => resolveCoordinateLocation(loc.lat, loc.lng, spanId), 15);
+                }
+
                 const dateStr = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : (log.timestamp || 'Recently');
                 const roleClass = rep.role === 'guardian' ? 'guardian' : rep.role === 'staff' ? 'staff' : (rep.role === 'admin' ? 'admin' : 'student');
                 const roleLabel = rep.role === 'guardian' ? 'Guardian' : rep.role === 'staff' ? 'Staff' : (rep.role === 'admin' ? 'Admin' : 'Student');
@@ -5712,11 +6525,11 @@
                             <div class="row-sub" style="margin-top:4px;">ID: ${escapeHtml(rep.studentId)}</div>
                         </div>
                         <div>
-                            <div class="row-title" style="font-size:0.84rem; display:flex; align-items:center; gap:4px;">
+                            <div class="row-title" style="font-size:0.84rem; display:flex; align-items:center; gap:4px; font-weight:700; color:var(--ink);">
                                 <span class="material-symbols-outlined" style="font-size:16px; color:#d11f34;">location_on</span>
-                                <span>${escapeHtml(addressStr)}</span>
+                                <span id="${spanId}">${escapeHtml(initialLocationName)}</span>
                             </div>
-                            <div class="row-sub">${escapeHtml(coordsStr)}</div>
+                            <div class="row-sub" style="font-family:monospace; font-size:0.75rem; color:var(--muted);">${escapeHtml(coordsStr)}</div>
                         </div>
                         <div>
                             <div class="row-title" style="font-size:0.84rem;">${escapeHtml(dateStr)}</div>
@@ -5735,9 +6548,12 @@
             }).join('');
         }
 
+        // (2026-07-13) Guard SOS map render when tab inactive; was rendering hidden
         function renderAdminSosMap() {
             const mapEl = document.getElementById('adminSosMap');
             if (!mapEl || typeof L === 'undefined') return;
+            const secSos = document.getElementById('sec-sos');
+            if (secSos && !secSos.classList.contains('active')) return;
 
             setupGeofenceEditorControls();
 
@@ -5864,7 +6680,9 @@
             }
 
             statsUserList.innerHTML = users.map((user) => {
-                const role = (user?.role === 'admin' || isAdminEmail(user?.email)) ? 'Admin' : user?.role === 'guardian' ? 'Guardian' : user?.role === 'staff' ? 'Staff' : 'Student';
+                // (2026-07-13) Recognize staff by role and name pattern; was explicit role
+                const isStaff = user?.role === 'staff' || String(user?.name || '').toLowerCase().includes('staff') || String(user?.email || '').toLowerCase().startsWith('staff.');
+                const role = (user?.role === 'admin' || isAdminEmail(user?.email)) ? 'Admin' : user?.role === 'guardian' ? 'Guardian' : isStaff ? 'Staff' : 'Student';
                 return `
                     <div class="table-row" style="grid-template-columns: minmax(0, 1.2fr) 1fr 1.3fr auto;">
                         <div>
@@ -5924,8 +6742,8 @@
             input.addEventListener('input', debouncedApplyFilters);
         });
 
-        // (2026-07-13) Execute local cache load after state setup; was in auth header
-        loadFromLocalCache();
+        // (2026-07-13) Re-evaluate cache after filter listeners setup; was no-op
+        loadFromLocalCache(true);
 
         if (statsUserList) {
             statsUserList.addEventListener('click', (event) => {
@@ -6949,9 +7767,10 @@
             }
         });
 
-        // (2026-07-13) Digital Vault evidence gallery state and renderers; was absent
+        // (2026-07-13) Person-first Digital Vault gallery & fullscreen viewer; was flat grid
         let currentVaultFilter = 'all';
         let currentVaultSearch = '';
+        let selectedVaultPersonId = null;
 
         function getAllVaultItems() {
             const items = [];
@@ -7022,6 +7841,11 @@
             return items;
         }
 
+        window.selectVaultPerson = function(personId) {
+            selectedVaultPersonId = personId;
+            window.renderAdminVaultGallery();
+        };
+
         window.renderAdminVaultGallery = function() {
             const grid = document.getElementById('adminVaultGrid');
             const countLabel = document.getElementById('vaultCountLabel');
@@ -7038,8 +7862,121 @@
                 }
             }
 
+            // Group by student / uploader
+            const personMap = new Map();
+            allItems.forEach(item => {
+                const key = String(item.userId || item.studentId || item.studentName || 'unknown');
+                if (!personMap.has(key)) {
+                    personMap.set(key, {
+                        key,
+                        userId: item.userId,
+                        studentId: item.studentId,
+                        studentName: item.studentName,
+                        userPhoto: item.userPhoto,
+                        latestTime: item.time,
+                        items: []
+                    });
+                }
+                const p = personMap.get(key);
+                p.items.push(item);
+                if (item.time > p.latestTime) p.latestTime = item.time;
+            });
+            const personList = Array.from(personMap.values()).sort((a, b) => b.latestTime.getTime() - a.latestTime.getTime());
+
             const query = (currentVaultSearch || '').trim().toLowerCase();
+
+            // 1. Person Selection View (default when no specific person selected)
+            if (!selectedVaultPersonId) {
+                const filteredPersons = personList.filter(p => {
+                    if (!query) return true;
+                    return p.studentName.toLowerCase().includes(query) || String(p.studentId).toLowerCase().includes(query);
+                });
+
+                if (countLabel) countLabel.textContent = `${filteredPersons.length} Student Profiles`;
+
+                if (filteredPersons.length === 0) {
+                    grid.innerHTML = `
+                        <div class="messages-empty" style="grid-column: 1 / -1; padding:48px 16px; text-align:center;">
+                            <span class="material-symbols-outlined" style="font-size:44px; opacity:0.3; color:var(--muted);">groups</span>
+                            <p style="margin:8px 0 0; font-size:0.88rem; font-weight:600; color:var(--muted);">${personList.length === 0 ? 'No student vault uploads registered yet.' : 'No students match current search.'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = `
+                    <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:4px; padding:12px 16px; background:#f5f3ff; border:1px solid #ddd6fe; border-radius:14px;">
+                        <div>
+                            <div style="font-size:0.92rem; font-weight:800; color:var(--ink);">Choose Student to View Specific Vault</div>
+                            <div style="font-size:0.75rem; color:var(--muted); font-weight:600;">Select an account below to view all timestamped evidence photos and recordings.</div>
+                        </div>
+                        <button type="button" class="ghost-btn" onclick="window.selectVaultPerson('__all__')" style="background:white; border-radius:10px; padding:6px 14px; font-size:0.78rem; font-weight:700; color:#7c3aed; border:1px solid #ddd6fe;">
+                            <span class="material-symbols-outlined" style="font-size:16px;">photo_library</span>
+                            <span>View All Files (${allItems.length})</span>
+                        </button>
+                    </div>
+                    <div class="vault-persons-grid" style="grid-column: 1 / -1;">
+                        ${filteredPersons.map(p => {
+                            const initials = p.studentName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'S';
+                            const latestDateStr = p.latestTime.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + p.latestTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+
+                            return `
+                                <div class="vault-person-card" onclick="window.selectVaultPerson('${escapeHtml(p.key)}')">
+                                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                        <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+                                            <div class="thread-avatar student" style="width:42px; height:42px; font-size:0.95rem; font-weight:800; flex-shrink:0;">
+                                                ${p.userPhoto ? `<img src="${escapeHtml(p.userPhoto)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : initials}
+                                            </div>
+                                            <div style="min-width:0;">
+                                                <h4 style="margin:0; font-size:0.95rem; font-weight:800; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(p.studentName)}</h4>
+                                                <div style="font-size:0.75rem; color:var(--muted); font-weight:600; margin-top:2px;">
+                                                    ${p.studentId ? 'ID #' + escapeHtml(p.studentId) : 'Student Profile'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <span class="mini-chip" style="background:#f3e8ff; color:#7c3aed; border:1px solid #d8b4fe; font-weight:700; white-space:nowrap;">
+                                            ${p.items.length} ${p.items.length === 1 ? 'File' : 'Files'}
+                                        </span>
+                                    </div>
+                                    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin:4px 0;">
+                                        ${p.items.slice(0, 4).map(it => `
+                                            <div style="aspect-ratio:1/1; background:#181528; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                                                ${it.kind === 'image'
+                                                    ? `<img src="${escapeHtml(it.thumb || it.url)}" style="width:100%; height:100%; object-fit:cover;" onerror="this.onerror=null; this.src='logo with text.png';">`
+                                                    : `<span class="material-symbols-outlined" style="font-size:18px; color:#94a3b8;">videocam</span>`
+                                                }
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border); padding-top:10px; margin-top:2px;">
+                                        <div style="font-size:0.72rem; color:var(--muted); display:flex; align-items:center; gap:4px;">
+                                            <span class="material-symbols-outlined" style="font-size:15px;">schedule</span>
+                                            <span>${latestDateStr}</span>
+                                        </div>
+                                        <div style="display:inline-flex; align-items:center; gap:4px; font-size:0.75rem; font-weight:700; color:#7c3aed;">
+                                            <span>Open Vault</span>
+                                            <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                return;
+            }
+
+            // 2. Specific Person Vault View
+            const isAll = selectedVaultPersonId === '__all__';
+            const activePersonObj = personList.find(p => p.key === selectedVaultPersonId);
+            const activePersonName = isAll ? 'All Registered Students' : (activePersonObj?.studentName || 'Selected Student');
+            const activePersonIdTag = activePersonObj?.studentId ? `#${activePersonObj.studentId}` : '';
+
             const filtered = allItems.filter(item => {
+                if (!isAll) {
+                    const matchUser = String(item.userId) === selectedVaultPersonId || String(item.studentId) === selectedVaultPersonId || String(item.studentName) === selectedVaultPersonId;
+                    if (!matchUser) return false;
+                }
                 if (currentVaultFilter !== 'all' && item.kind !== currentVaultFilter) return false;
                 if (query) {
                     const matchName = item.studentName.toLowerCase().includes(query);
@@ -7051,19 +7988,45 @@
                 return true;
             });
 
-            if (countLabel) countLabel.textContent = String(filtered.length);
+            if (countLabel) countLabel.textContent = `${filtered.length} files`;
+
+            const topBarHtml = `
+                <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px; padding:12px 18px; background:#f5f3ff; border:1px solid #ddd6fe; border-radius:16px;">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <button type="button" class="ghost-btn" onclick="window.selectVaultPerson(null)" style="background:white; border-radius:10px; padding:6px 12px; font-size:0.78rem; font-weight:700; color:#7c3aed; border:1px solid #ddd6fe; display:inline-flex; align-items:center; gap:4px; box-shadow:0 2px 6px rgba(0,0,0,0.03);">
+                            <span class="material-symbols-outlined" style="font-size:16px;">arrow_back</span>
+                            <span>Choose Person</span>
+                        </button>
+                        <div>
+                            <div style="font-size:0.98rem; font-weight:800; color:var(--ink);">${escapeHtml(activePersonName)} ${escapeHtml(activePersonIdTag)}</div>
+                            <div style="font-size:0.75rem; color:var(--muted); font-weight:600;">Showing ${filtered.length} secured evidence items</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <label style="font-size:0.75rem; font-weight:700; color:var(--muted);">Switch Person:</label>
+                        <select onchange="window.selectVaultPerson(this.value)" style="padding:6px 12px; font-size:0.8rem; border-radius:8px; border:1px solid var(--border); background:white; font-weight:700; color:var(--ink); outline:none;">
+                            <option value="__all__" ${isAll ? 'selected' : ''}>All Students (${allItems.length} files)</option>
+                            ${personList.map(p => `
+                                <option value="${escapeHtml(p.key)}" ${p.key === selectedVaultPersonId ? 'selected' : ''}>
+                                    ${escapeHtml(p.studentName)} (${p.items.length} files)
+                                </option>
+                            `).join('')}
+                        </select>
+                    </div>
+                </div>
+            `;
 
             if (filtered.length === 0) {
-                grid.innerHTML = `
+                grid.innerHTML = topBarHtml + `
                     <div class="messages-empty" style="grid-column: 1 / -1; padding:48px 16px; text-align:center;">
                         <span class="material-symbols-outlined" style="font-size:44px; opacity:0.3; color:var(--muted);">photo_library</span>
-                        <p style="margin:8px 0 0; font-size:0.88rem; font-weight:600; color:var(--muted);">${allItems.length === 0 ? 'No student vault media uploaded yet.' : 'No images or media match current filter.'}</p>
+                        <p style="margin:8px 0 0; font-size:0.88rem; font-weight:600; color:var(--muted);">No media found for this student under current filter.</p>
                     </div>
                 `;
                 return;
             }
 
-            grid.innerHTML = filtered.map(item => {
+            grid.innerHTML = topBarHtml + filtered.map(item => {
                 const initials = item.studentName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'S';
                 const timeStr = item.time.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + item.time.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
                 const isImage = item.kind === 'image';
@@ -7143,7 +8106,7 @@
                 }
             } else {
                 if (mediaBox) {
-                    mediaBox.innerHTML = `<img id="vaultLightboxImage" src="${escapeHtml(item.url)}" alt="Vault evidence" style="max-width:100%; max-height:75vh; object-fit:contain; border-radius:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5);">`;
+                    mediaBox.innerHTML = `<img id="vaultLightboxImage" src="${escapeHtml(item.url)}" alt="Vault evidence" style="max-width:100%; max-height:75vh; object-fit:contain; border-radius:4px; box-shadow:0 4px 20px rgba(0,0,0,0.5); cursor:zoom-in;">`;
                 }
             }
 
@@ -7167,6 +8130,24 @@
                 dlBtn.download = item.name || 'vault_evidence.jpg';
             }
 
+            // Wire Fullscreen toggle
+            const btnFullscreen = document.getElementById('btnVaultFullscreen');
+            const fsLabel = document.getElementById('vaultFullscreenLabel');
+            if (btnFullscreen) {
+                btnFullscreen.onclick = (e) => {
+                    e.stopPropagation();
+                    const isFs = modal.classList.toggle('lightbox-fullscreen');
+                    if (fsLabel) fsLabel.textContent = isFs ? 'Exit Fullscreen' : 'Fullscreen';
+                    const icon = btnFullscreen.querySelector('.material-symbols-outlined');
+                    if (icon) icon.textContent = isFs ? 'fullscreen_exit' : 'fullscreen';
+                    if (isFs && !document.fullscreenElement && modal.requestFullscreen) {
+                        modal.requestFullscreen().catch(() => {});
+                    } else if (!isFs && document.fullscreenElement && document.exitFullscreen) {
+                        document.exitFullscreen().catch(() => {});
+                    }
+                };
+            }
+
             if (modal) {
                 modal.classList.add('active');
                 modal.setAttribute('aria-hidden', 'false');
@@ -7177,7 +8158,18 @@
             const modal = document.getElementById('vaultLightboxModal');
             if (modal) {
                 modal.classList.remove('active');
+                modal.classList.remove('lightbox-fullscreen');
                 modal.setAttribute('aria-hidden', 'true');
+                if (document.fullscreenElement && document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                }
+                const btnFullscreen = document.getElementById('btnVaultFullscreen');
+                const fsLabel = document.getElementById('vaultFullscreenLabel');
+                if (fsLabel) fsLabel.textContent = 'Fullscreen';
+                if (btnFullscreen) {
+                    const icon = btnFullscreen.querySelector('.material-symbols-outlined');
+                    if (icon) icon.textContent = 'fullscreen';
+                }
                 const mediaBox = document.getElementById('vaultLightboxMediaBox');
                 if (mediaBox) mediaBox.innerHTML = '';
             }

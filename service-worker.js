@@ -20,11 +20,13 @@ const CORE_ASSETS = [
     '/profile.html',
     '/settings.html',
     '/permissions-onboarding.html',
-    '/auth.js',
-    '/db.js',
-    '/router.js',
-    '/utils.js',
-    '/firebase-config.js',
+    // (2026-07-13) Update core asset paths to js/ and css/; was root files
+    '/js/auth.js',
+    '/js/db.js',
+    '/js/router.js',
+    '/js/utils.js',
+    '/js/firebase-config.js',
+    '/css/preloader.css',
     '/logo.png',
     '/manifest.json'
 ];

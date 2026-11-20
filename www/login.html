@@ -14,11 +14,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="logo.png">
-    <script src="router.js"></script>
+    <script src="js/router.js"></script>
     <!-- (2026-07-13) Dramatic intro preloader styles and GSAP; was no preloader -->
-    <link rel="stylesheet" href="preloader.css">
+    <link rel="stylesheet" href="css/preloader.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="preloader.js"></script>
+    <script src="js/preloader.js"></script>
 
     <style>
         /* Design System Tokens */
@@ -1128,11 +1128,11 @@
 
     <!-- Firebase Scripts -->
     <script type="module">
-        import { auth } from './firebase-config.js';
-        import { login, signUp, checkAuth, forgotPassword, roleIdToEmail, getPreferredAuthRole, getFriendlyAuthMessage } from './auth.js';
+        import { auth } from './js/firebase-config.js';
+        import { login, signUp, checkAuth, forgotPassword, roleIdToEmail, getPreferredAuthRole, getFriendlyAuthMessage } from './js/auth.js';
         // (2026-07-13) Import student password reset helpers from db; was basic
-        import { saveUserProfile, saveUserDirectoryMarker, getUserProfile, isStudentIdTaken, getEmailByStudentId, saveAdminUserPassword, findStudentUidByStudentId, getLinksForStudent, sendAccountNotification } from './db.js';
-        import { Validation, UI, Logger, Permissions } from './utils.js';
+        import { saveUserProfile, saveUserDirectoryMarker, getUserProfile, isStudentIdTaken, getEmailByStudentId, saveAdminUserPassword, findStudentUidByStudentId, getLinksForStudent, sendAccountNotification } from './js/db.js';
+        import { Validation, UI, Logger, Permissions } from './js/utils.js';
         import './install-sw.js'; // Initialize offline support
 
         // (2026-07-13) Keep session active on entry; was auto signOut on role select
@@ -1790,7 +1790,10 @@
                         profile = await getUserProfile(loggedInUser.uid);
                     } catch (_) {
                         // Profile fetch failed — proceed to dashboard anyway
-                        sessionStorage.setItem('securo_authenticated', '1');
+                        // (2026-07-13) Cache user role upon login; was not setting role key
+                    const activeRole = profile?.role || preferredRole;
+                    try { localStorage.setItem('securo_user_role', activeRole); } catch (_) {}
+                    sessionStorage.setItem('securo_authenticated', '1');
                         window.location.href = 'index.html';
                         return;
                     }
@@ -1806,6 +1809,9 @@
                         return;
                     }
 
+                    // (2026-07-13) Cache user role upon login; was not setting role key
+                    const activeRole = profile?.role || preferredRole;
+                    try { localStorage.setItem('securo_user_role', activeRole); } catch (_) {}
                     sessionStorage.setItem('securo_authenticated', '1');
                     const isNativeApk = Boolean(window.Capacitor?.isNativePlatform?.() || window.Capacitor?.platform !== 'web');
                     const camOk = localStorage.getItem('securo_camera_granted') === 'true';
@@ -1973,6 +1979,9 @@
 
                     if (termsModalEl) termsModalEl.classList.remove('active');
                     sessionStorage.setItem('securo_just_registered', '1');
+                    // (2026-07-13) Cache user role upon login; was not setting role key
+                    const activeRole = profile?.role || preferredRole;
+                    try { localStorage.setItem('securo_user_role', activeRole); } catch (_) {}
                     sessionStorage.setItem('securo_authenticated', '1');
                     const isNativeApk = Boolean(window.Capacitor?.isNativePlatform?.() || window.Capacitor?.platform !== 'web');
                     const camOk = localStorage.getItem('securo_camera_granted') === 'true';

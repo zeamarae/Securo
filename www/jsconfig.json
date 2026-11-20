@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "target": "ES2022"
+  },
+  "exclude": [
+    "node_modules",
+    "www",
+    "android"
+  ]
+}

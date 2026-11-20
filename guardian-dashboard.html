@@ -21,9 +21,9 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- (2026-07-13) Add dramatic intro preloader; was no preloader -->
-    <link rel="stylesheet" href="preloader.css">
+    <link rel="stylesheet" href="css/preloader.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="preloader.js"></script>
+    <script src="js/preloader.js"></script>
 
     <style>
         :root {
@@ -1951,11 +1951,11 @@
 
     <script type="module">
         // Core utilities and offline support
-        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './utils.js';
+        import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from './js/utils.js';
         import './install-sw.js'; // Initialize service worker for offline support
         
         // (2026-07-13) Add Firestore & findUserByEmail imports; was auth only
-        import { auth, db } from './firebase-config.js';
+        import { auth, db } from './js/firebase-config.js';
         import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { doc, onSnapshot, collection, query, where, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import {
@@ -1986,7 +1986,7 @@
             deleteCurrentUserAccount,
             findUserByEmail,
             syncGuardianLinksForGuardian
-        } from './db.js';
+        } from './js/db.js';
 
         let map, studentMarker, polyline;
         let activeLink = null;

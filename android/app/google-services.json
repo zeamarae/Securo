@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "595397427101",
+    "project_id": "securo-a3c9c",
+    "storage_bucket": "securo-a3c9c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:595397427101:android:eec4514717d51ca443f974",
+        "android_client_info": {
+          "package_name": "com.securo.com"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "595397427101-dhschk4460o3pvsjdl567e79j4uh33tk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBR48ARC_JV7N6kRhtjaxbFeyameaRHLwQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "595397427101-dhschk4460o3pvsjdl567e79j4uh33tk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

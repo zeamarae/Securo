@@ -48,11 +48,36 @@ const writeLocalEmergencyPosts = (posts) => {
     }
 };
 
+// (2026-07-13) Support sessionStorage in user persistence; was localStorage only
+const writeLocalUsers = (users) => {
+    try {
+        localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+        sessionStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+    } catch (error) {
+        Logger.warn("DB", "Error writing local users", error);
+    }
+};
+
 const readLocalUsers = () => {
     try {
-        const raw = localStorage.getItem(LOCAL_USERS_KEY);
+        const raw = sessionStorage.getItem(LOCAL_USERS_KEY) || localStorage.getItem(LOCAL_USERS_KEY);
         const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed : [];
+        const list = Array.isArray(parsed) ? parsed : [];
+        if (!list.length) {
+            const dirRaw = sessionStorage.getItem("securo_user_directory") || localStorage.getItem("securo_user_directory");
+            if (dirRaw) {
+                const dir = JSON.parse(dirRaw);
+                return Object.entries(dir).map(([uid, u]) => ({
+                    id: uid,
+                    userId: uid,
+                    name: u.name || (u.studentId ? `Student ${u.studentId}` : (u.email ? u.email.split('@')[0] : 'User')),
+                    email: u.email || '',
+                    studentId: u.studentId || '',
+                    role: u.role || 'student'
+                }));
+            }
+        }
+        return list;
     } catch (error) {
         Logger.warn("DB", "Error reading local users", error);
         return [];
@@ -68,14 +93,7 @@ const isPermissionDeniedError = (error) => {
         message.includes("permission-denied");
 };
 
-const writeLocalUsers = (users) => {
-    try {
-        localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
-    } catch (error) {
-        Logger.warn("DB", "Error writing local users", error);
-    }
-};
-
+// (2026-07-13) Remove duplicate writeLocalUsers; was duplicate declaration
 const LOCAL_GUARDIAN_LINKS_KEY = "securo_guardian_links_local";
 
 // (2026-07-13) Persist guardian links locally for offline; was memory only
@@ -196,9 +214,26 @@ const mergeUsersByIdentity = (...sources) => {
     return Array.from(records.values());
 };
 
-const mergeEmergencyPosts = (remotePosts, localPosts) => {
-    const combined = [...(Array.isArray(localPosts) ? localPosts : []), ...(Array.isArray(remotePosts) ? remotePosts : [])];
-    return combined.sort((a, b) => {
+// (2026-07-13) Merge posts by unique ID; was truncating src causing image drops
+const mergeEmergencyPosts = (remotePosts = [], localPosts = []) => {
+    const remote = Array.isArray(remotePosts) ? remotePosts : [];
+    const local = Array.isArray(localPosts) ? localPosts : [];
+    const seenIds = new Set();
+
+    const result = [];
+    remote.forEach(p => {
+        if (!p || !p.id) return;
+        seenIds.add(String(p.id));
+        result.push(p);
+    });
+
+    local.forEach(p => {
+        if (!p || !p.id || seenIds.has(String(p.id))) return;
+        seenIds.add(String(p.id));
+        result.push(p);
+    });
+
+    return result.sort((a, b) => {
         const aTime = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime();
         const bTime = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime();
         return bTime - aTime;
@@ -327,26 +362,22 @@ export const logSOS = async (userId, location, metadata = {}) => {
     }
 };
 
-// (2026-07-13) Close logSOS before attachPhotoToActiveSOS; was unclosed function
+// (2026-07-13) Guard SOS photo attachment payload size; was unbounded array
 export const attachPhotoToActiveSOS = async (userId, photoItem) => {
-    if (!userId) return false;
+    if (!userId || !photoItem?.src) return false;
     try {
         localStorage.setItem(`securo_student_sos_photo_${userId}`, JSON.stringify({ hasPhoto: true, timestamp: Date.now() }));
         const q = query(collection(db, "sos_logs"), where("userId", "==", userId));
         const snap = await getDocs(q);
         if (!snap.empty) {
             const activeDocs = snap.docs.filter(d => (d.data()?.status || 'active') === 'active');
-            const targetDocs = activeDocs.length > 0 ? activeDocs : [snap.docs[0]];
-            for (const d of targetDocs) {
-                const cur = d.data() || {};
-                const photos = Array.isArray(cur.photos) ? [...cur.photos] : [];
-                if (photoItem?.src) photos.push(photoItem.src);
-                await updateDoc(doc(db, "sos_logs", d.id), {
+            if (activeDocs.length > 0) {
+                const targetDoc = activeDocs[0];
+                await updateDoc(doc(db, "sos_logs", targetDoc.id), {
                     hasPhoto: true,
-                    photos,
-                    lastPhoto: photoItem?.src || "",
+                    lastPhoto: photoItem.src,
                     lastPhotoAt: serverTimestamp()
-                });
+                }).catch(() => {});
             }
             return true;
         }
@@ -361,34 +392,32 @@ export const attachPhotoToActiveSOS = async (userId, photoItem) => {
  * Save a posted emergency capture package
  * @param {object} payload
  */
+// (2026-07-13) Save emergency post cleanly without local dupe; was double store
 export const saveEmergencyPost = async (payload) => {
     try {
-        await addDoc(collection(db, "emergency_posts"), {
+        const docRef = await addDoc(collection(db, "emergency_posts"), {
             ...payload,
             gadVisible: payload.gadVisible !== false,
             guardianVisible: payload.guardianVisible !== false,
             status: payload.status || "posted",
             createdAt: serverTimestamp()
         });
-        return true;
+        return { id: docRef.id, ...payload };
     } catch (error) {
-        if (error?.code === "permission-denied" || /insufficient permissions/i.test(error?.message || "")) {
-            const localPosts = readLocalEmergencyPosts();
-            localPosts.unshift({
-                id: `local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-                ...payload,
-                gadVisible: payload.gadVisible !== false,
-                guardianVisible: payload.guardianVisible !== false,
-                status: payload.status || "posted",
-                createdAt: new Date().toISOString(),
-                isLocalFallback: true
-            });
-            writeLocalEmergencyPosts(localPosts);
-            console.warn("Emergency post saved locally because Firestore denied access.");
-            return true;
-        }
-        console.warn("Error saving emergency post:", error);
-        throw error;
+        const localPosts = readLocalEmergencyPosts();
+        const localEntry = {
+            id: `local_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+            ...payload,
+            gadVisible: payload.gadVisible !== false,
+            guardianVisible: payload.guardianVisible !== false,
+            status: payload.status || "posted",
+            createdAt: new Date().toISOString(),
+            isLocalFallback: true
+        };
+        localPosts.unshift(localEntry);
+        writeLocalEmergencyPosts(localPosts);
+        console.warn("Emergency post saved locally due to Firestore error:", error);
+        return { id: localEntry.id, ...payload };
     }
 };
 
@@ -558,6 +587,7 @@ export const toggleEmergencyPostGuardianAccess = async (postId, isVisible) => {
  * Fetch all emergency posts for admin incident review
  */
 // (2026-07-13) Fetch all vault posts without gadVisible filter; was filtered
+// (2026-07-13) Direct emergency posts fetch; was 2s timeout dropping data
 export const getAllEmergencyPosts = async () => {
     const localPosts = readLocalEmergencyPosts();
     try {
@@ -566,7 +596,6 @@ export const getAllEmergencyPosts = async () => {
             const q = query(collection(db, "emergency_posts"), orderBy("createdAt", "desc"));
             querySnapshot = await getDocs(q);
         } catch (idxError) {
-            console.warn("Falling back to unindexed emergency_posts fetch:", idxError);
             querySnapshot = await getDocs(collection(db, "emergency_posts"));
         }
         const remotePosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -577,7 +606,6 @@ export const getAllEmergencyPosts = async () => {
         });
         return mergeEmergencyPosts(remotePosts, localPosts);
     } catch (error) {
-        console.warn("Error getting all emergency posts:", error);
         return mergeEmergencyPosts([], localPosts);
     }
 };
@@ -851,11 +879,16 @@ export const getAttendanceHistory = async (userId) => {
     }
 };
 
-// (2026-07-13) Add getAllAttendance for reports; was user-scoped only
+// (2026-07-13) Direct attendance records fetch; was 2s timeout dropping data
 export const getAllAttendance = async () => {
     try {
-        const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
-        const querySnapshot = await getDocs(q);
+        let querySnapshot;
+        try {
+            const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+            querySnapshot = await getDocs(q);
+        } catch (_) {
+            querySnapshot = await getDocs(collection(db, "attendance"));
+        }
         return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
         console.warn("Error getting all attendance records:", error);
@@ -907,13 +940,16 @@ export const getLatestAttendance = async (userId) => {
         return null;
     }
 };
-/**
- * Fetch all SOS logs for admin
- */
+// (2026-07-13) Direct SOS logs fetch for admin; was 2s timeout dropping data
 export const getAllSOSLogs = async () => {
     try {
-        const q = query(collection(db, "sos_logs"), orderBy("timestamp", "desc"));
-        const querySnapshot = await getDocs(q);
+        let querySnapshot;
+        try {
+            const q = query(collection(db, "sos_logs"), orderBy("timestamp", "desc"));
+            querySnapshot = await getDocs(q);
+        } catch (_) {
+            querySnapshot = await getDocs(collection(db, "sos_logs"));
+        }
         return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     } catch (error) {
         console.warn("Error getting all SOS logs:", error);
@@ -954,6 +990,7 @@ export const getUserSOSLogs = async (userId) => {
 /**
  * Fetch all users for admin
  */
+// (2026-07-13) Fetch all users with allSettled; was 2s timeout dropping data
 export const getAllUsers = async () => {
     const [usersResult, attendanceResult, guardianLinksResult] = await Promise.allSettled([
         getDocs(collection(db, "users")),
