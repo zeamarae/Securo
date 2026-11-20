@@ -4,7 +4,7 @@
   "main": "js/auth.js",
   "scripts": {
     "dev": "npx serve -p 5508 .",
-    "build": "node -e \"const fs=require('fs'); if(!fs.existsSync('www')) fs.mkdirSync('www'); fs.readdirSync('www').forEach(f=>{if(f.endsWith('.apk')||f.endsWith('.zip')) fs.unlinkSync('www/'+f);}); const copyFiles=(src,dst)=>{if(!fs.existsSync(dst)) fs.mkdirSync(dst,{recursive:true}); fs.readdirSync(src).forEach(f=>{const s=src+'/'+f,d=dst+'/'+f; if(fs.statSync(s).isDirectory()){if(['js','css'].includes(f)) copyFiles(s,d);}else if(['.html','.js','.css','.png','.jpg','.svg','.json'].some(ext=>f.endsWith(ext))) fs.copyFileSync(s,d);});}; copyFiles('.','www'); console.log('Assets copied to www');\"",
+    "build": "node -e \"const fs=require('fs'); if(!fs.existsSync('www')) fs.mkdirSync('www'); fs.readdirSync('www').forEach(f=>{if(f.endsWith('.apk')||f.endsWith('.zip')) fs.unlinkSync('www/'+f);}); const copyFiles=(src,dst)=>{if(!fs.existsSync(dst)) fs.mkdirSync(dst,{recursive:true}); fs.readdirSync(src).forEach(f=>{const s=src+'/'+f,d=dst+'/'+f; if(fs.statSync(s).isDirectory()){if(['js','css','parent','student','admin','staff','pages'].includes(f)) copyFiles(s,d);}else if(['.html','.js','.css','.png','.jpg','.svg','.json'].some(ext=>f.endsWith(ext))) fs.copyFileSync(s,d);});}; copyFiles('.','www'); console.log('Assets copied to www');\"",
     "apk:sync": "npm run build && npx cap sync android",
     "apk:build": "npm run build && npx cap sync android && cd android && .\\gradlew.bat assembleDebug",
     "test": "npx playwright test",
