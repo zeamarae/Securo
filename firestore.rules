@@ -70,7 +70,11 @@ service cloud.firestore {
     match /gad_posts/{postId} {
       allow read: if isSignedIn();
       allow create: if isAdmin() || isStaff();
-      allow update: if isAdmin() || isStaff();
+      // (2026-07-13) Allow signed-in users to toggle likes; was admin/staff only
+      allow update: if isAdmin() || isStaff() || (
+        isSignedIn() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy', 'likes'])
+      );
       allow delete: if isAdmin() || isStaff();
     }
     

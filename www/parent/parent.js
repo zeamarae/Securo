@@ -391,7 +391,9 @@ window.switchParentMode = function(mode) {
         
         // (2026-07-13) Add Firestore & findUserByEmail imports; was auth only
 
-        let map, studentMarker, polyline;
+        // (2026-07-13) Add static sosMarker separate from live marker; was live only
+        let map, studentMarker, sosMarker, polyline;
+        let activeSosAlert = null;
         let activeLink = null;
         let attendanceUnsub = null;
         let locationUnsub = null;
@@ -658,6 +660,78 @@ window.switchParentMode = function(mode) {
             }
         }
 
+        // (2026-07-13) Pin static SOS press point without live tracking; was missing
+        function clearSosMarker() {
+            activeSosAlert = null;
+            if (sosMarker && map) {
+                map.removeLayer(sosMarker);
+                sosMarker = null;
+            }
+        }
+
+        function renderSosLocationPin(alert) {
+            activeSosAlert = alert || null;
+            const lat = Number(alert?.location?.lat);
+            const lng = Number(alert?.location?.lng);
+            const hasValidCoords = !Number.isNaN(lat) && !Number.isNaN(lng) && !(lat === 0 && lng === 0);
+            if (!map || !hasValidCoords) {
+                if (sosMarker && map) {
+                    map.removeLayer(sosMarker);
+                    sosMarker = null;
+                }
+                return;
+            }
+            const pos = [lat, lng];
+            const childName = document.getElementById('activeStudentName')?.textContent?.trim() || activeLink?.studentName || alert.userName || 'Your child';
+            const timeStr = alert.timestamp?.toDate?.() ? alert.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active now';
+            const locText = alert.location?.address || `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            const isOutside = alert.location?.outOfBounds === true || alert.location?.isInside === false || !isPointInPolygon(pos, getCampusGeofencePolygon());
+            const popupHtml = `
+                <div style="padding:4px; min-width:170px;">
+                    <strong style="color:#d11f34; font-size:0.88rem; display:block;">🚨 SOS Pressed Location</strong>
+                    <div style="font-size:0.8rem; font-weight:700; margin-top:3px;">${escapeHtml(childName)}</div>
+                    <div style="font-size:0.74rem; color:#64748b; margin-top:2px;"><strong>Time:</strong> ${escapeHtml(timeStr)}</div>
+                    <div style="font-size:0.74rem; color:#64748b; margin-top:2px;"><strong>Location:</strong> ${escapeHtml(locText)}</div>
+                    ${isOutside ? '<div style="font-size:0.72rem; color:#b91c1c; font-weight:700; margin-top:4px;">Outside Campus · Static SOS point only (live tracking disabled)</div>' : ''}
+                </div>
+            `;
+            if (!sosMarker) {
+                const sosIcon = L.divIcon({
+                    className: 'guardian-sos-pin',
+                    html: `<div style="position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center;"><div style="position:absolute;width:28px;height:28px;background:rgba(209,31,52,0.32);border-radius:50%;"></div><div style="width:16px;height:16px;background:#d11f34;border:3px solid #fff;border-radius:50%;box-shadow:0 0 12px rgba(209,31,52,0.7);"></div></div>`,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
+                });
+                sosMarker = L.marker(pos, { icon: sosIcon }).addTo(map);
+            } else {
+                sosMarker.setLatLng(pos);
+            }
+            sosMarker.bindPopup(popupHtml);
+        }
+
+        window.focusGuardianSosLocation = (lat, lng, locText = '', timeStr = '') => {
+            const nLat = Number(lat);
+            const nLng = Number(lng);
+            if (Number.isNaN(nLat) || Number.isNaN(nLng) || (nLat === 0 && nLng === 0)) return;
+            setActiveView('map');
+            const notifDrop = document.getElementById('guardianNotifDropdown');
+            if (notifDrop) notifDrop.style.display = 'none';
+            if (!map) initMap();
+            renderSosLocationPin({
+                ...(activeSosAlert || {}),
+                location: { ...(activeSosAlert?.location || {}), lat: nLat, lng: nLng, address: locText || activeSosAlert?.location?.address },
+                timestamp: activeSosAlert?.timestamp || (timeStr ? new Date() : null)
+            });
+            if (map) {
+                map.setView([nLat, nLng], 18);
+                setTimeout(() => {
+                    map.invalidateSize();
+                    sosMarker?.openPopup();
+                }, 120);
+            }
+        };
+
+        // (2026-07-13) Allow outside_campus state without error banner; was lat check
         function getLocationUnavailableReason(loc) {
             if (!loc) {
                 return "We have not received your child's live location yet. Ask them to turn on location services.";
@@ -665,6 +739,10 @@ window.switchParentMode = function(mode) {
 
             if (loc.sharingEnabled === false) {
                 return loc.sharingMessage || "Your child has location sharing turned off. They need to enable it before you can see live tracking.";
+            }
+
+            if (loc.isInside === false || loc.sharingState === 'outside_campus') {
+                return "";
             }
 
             if (typeof loc.lat !== 'number' || typeof loc.lng !== 'number') {
@@ -1817,9 +1895,11 @@ window.switchParentMode = function(mode) {
             container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
         }
 
+        // (2026-07-13) Fallback to auth uid when opening GAD chat; was profile only
         function openGuardianSupportChat() {
             const overlay = document.getElementById('guardianChatOverlay');
-            if (!overlay || !guardianProfile?.uid) return;
+            const uid = guardianProfile?.uid || auth.currentUser?.uid;
+            if (!overlay || !uid) return;
             overlay.classList.add('active');
 
             const supportState = getGuardianSupportThreadState();
@@ -1863,6 +1943,8 @@ window.switchParentMode = function(mode) {
             }
         }
 
+        // (2026-07-13) Bind header message button to GAD chat; was GAD tab only
+        document.getElementById('headerGuardianMsgBtn')?.addEventListener('click', openGuardianSupportChat);
         document.getElementById('openGuardianSupportBtn')?.addEventListener('click', openGuardianSupportChat);
         document.getElementById('closeGuardianChatBtn')?.addEventListener('click', closeGuardianSupportChat);
         document.getElementById('guardianSendChatBtn')?.addEventListener('click', sendGuardianSupportMessage);
@@ -2029,6 +2111,8 @@ window.switchParentMode = function(mode) {
             initMap();
             latestStudentLocation = null;
             clearStudentMarker();
+            // (2026-07-13) Clear previous child's SOS pin on switch; was lingering
+            clearSosMarker();
             renderLocationAlert("Waiting for your child's live location...");
             document.getElementById('lastSeen').textContent = "Waiting for location...";
             document.getElementById('statusDot').style.background = 'var(--red)';
@@ -2345,18 +2429,19 @@ window.switchParentMode = function(mode) {
                     if (text) {
                         text.innerHTML = `<strong>${sName}</strong> · <strong>Status:</strong> ${alert.status?.toUpperCase() || 'ACTIVE'}<br><strong>Time:</strong> ${sTime} · <strong>Type:</strong> ${sType}<br><strong>Location:</strong> ${sLoc}`;
                     }
+                    // (2026-07-13) Render static SOS pin & jump on click; was pan without pin
+                    renderSosLocationPin(alert);
                     const btn = document.getElementById('viewSosLocationBtn');
-                    if (btn && alert.location?.lat && alert.location?.lng) {
+                    const hasValidSosCoords = typeof alert.location?.lat === 'number' && typeof alert.location?.lng === 'number' && !(alert.location.lat === 0 && alert.location.lng === 0);
+                    if (btn && hasValidSosCoords) {
                         btn.onclick = () => {
-                            setActiveView('map');
-                            const notifDrop = document.getElementById('guardianNotifDropdown');
-                            if (notifDrop) notifDrop.style.display = 'none';
-                            if (map) map.setView([alert.location.lat, alert.location.lng], 18);
+                            window.focusGuardianSosLocation(alert.location.lat, alert.location.lng, sLoc, sTime);
                         };
                     }
                     if (card) card.style.display = 'block';
                     updateGuardianNotifBadge();
                 } else {
+                    clearSosMarker();
                     if (card) card.style.display = 'none';
                     updateGuardianNotifBadge();
                 }
@@ -2419,7 +2504,11 @@ window.switchParentMode = function(mode) {
 
                 const time = loc.updatedAt?.toDate() || new Date();
                 const timeStr = time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                document.getElementById('lastSeen').innerHTML = `<span style="color:#d11f34; font-weight:700;">Outside Campus</span> · Tracking paused (Privacy)`;
+                // (2026-07-13) Keep live tracking blocked outside campus; note SOS pin
+                const hasSosPin = !!(activeSosAlert?.location?.lat && activeSosAlert?.location?.lng && !(activeSosAlert.location.lat === 0 && activeSosAlert.location.lng === 0));
+                document.getElementById('lastSeen').innerHTML = hasSosPin
+                    ? `<span style="color:#d11f34; font-weight:700;">Outside Campus</span> · Live tracking paused · SOS location pinned`
+                    : `<span style="color:#d11f34; font-weight:700;">Outside Campus</span> · Tracking paused (Privacy)`;
                 document.getElementById('statusDot').style.background = 'var(--red)';
                 return;
             }
@@ -2556,10 +2645,13 @@ window.switchParentMode = function(mode) {
                 const locText = log.location?.address || (log.location?.lat ? `${log.location.lat.toFixed(4)}, ${log.location.lng.toFixed(4)}` : 'Campus Location');
                 const sosStatus = (log.status || 'Active').toUpperCase();
                 const isResolved = sosStatus === 'RESOLVED';
-                const hasCoordinates = !!(log.location?.lat && log.location?.lng);
+                const hasCoordinates = !!(typeof log.location?.lat === 'number' && typeof log.location?.lng === 'number' && !(log.location.lat === 0 && log.location.lng === 0));
+                const safeLocAttr = escapeHtml(locText).replace(/'/g, '&#39;');
+                const safeTimeAttr = escapeHtml(date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })).replace(/'/g, '&#39;');
 
+                // (2026-07-13) Focus static SOS pin via module helper; was broken onclick
                 return `
-                    <div class="alert-item ${isSOS ? 'alert-item-sos' : ''}" style="${isSOS ? 'background:rgba(255,235,238,0.7); border:1px solid rgba(239,68,68,0.25);' + (hasCoordinates ? ' cursor:pointer;' : '') : ''}" ${isSOS && hasCoordinates ? `onclick="if(typeof setActiveView==='function'){setActiveView('map'); if(map) map.setView([${log.location.lat}, ${log.location.lng}], 18);}"` : ''}>
+                    <div class="alert-item ${isSOS ? 'alert-item-sos' : ''}" style="${isSOS ? 'background:rgba(255,235,238,0.7); border:1px solid rgba(239,68,68,0.25);' + (hasCoordinates ? ' cursor:pointer;' : '') : ''}" ${isSOS && hasCoordinates ? `onclick="window.focusGuardianSosLocation(${log.location.lat}, ${log.location.lng}, '${safeLocAttr}', '${safeTimeAttr}')"` : ''}>
                         <div class="alert-icon ${isSOS ? 'icon-sos' : 'icon-attendance'}">
                             <span class="material-symbols-outlined">${isSOS ? 'emergency' : (log.type === 'in' ? 'login' : 'logout')}</span>
                         </div>
@@ -2650,10 +2742,12 @@ window.switchParentMode = function(mode) {
             return (author || "GAD Office").replace(/\s+official$/i, "");
         }
 
+        // (2026-07-13) Fallback to auth uid for guardian post like; was profile only
         function renderPost(post) {
             const feed = document.getElementById('gadPostsFeed');
+            const activeUid = guardianProfile?.uid || auth.currentUser?.uid || "";
             const likeCount = typeof post.likes === "number" ? post.likes : (Array.isArray(post.likedBy) ? post.likedBy.length : 0);
-            const isLiked = !!(guardianProfile?.uid && Array.isArray(post.likedBy) && post.likedBy.includes(guardianProfile.uid));
+            const isLiked = !!(activeUid && Array.isArray(post.likedBy) && post.likedBy.includes(activeUid));
             const postHtml = `
                 <article class="card feed-card" id="post-${post.id}">
                     <div class="feed-head">
@@ -2679,9 +2773,11 @@ window.switchParentMode = function(mode) {
             feed.insertAdjacentHTML('beforeend', postHtml);
         }
 
+        // (2026-07-13) Fallback to auth uid & guard result on like; was profile only
         document.getElementById('gadPostsFeed').addEventListener("click", async (event) => {
             const likeButton = event.target.closest("[data-like-post]");
-            if (!likeButton || !guardianProfile?.uid) return;
+            const activeUid = guardianProfile?.uid || auth.currentUser?.uid || "";
+            if (!likeButton || !activeUid) return;
 
             const postId = likeButton.dataset.likePost;
             const postIndex = currentGadPosts.findIndex((post) => String(post.id) === String(postId));
@@ -2690,19 +2786,22 @@ window.switchParentMode = function(mode) {
             try {
                 if (String(postId).startsWith("fallback-")) {
                     const post = currentGadPosts[postIndex];
-                    const likedBy = [...post.likedBy];
-                    const likedIndex = likedBy.indexOf(guardianProfile.uid);
+                    const likedBy = Array.isArray(post.likedBy) ? [...post.likedBy] : [];
+                    const likedIndex = likedBy.indexOf(activeUid);
                     if (likedIndex >= 0) likedBy.splice(likedIndex, 1);
-                    else likedBy.push(guardianProfile.uid);
+                    else likedBy.push(activeUid);
                     currentGadPosts[postIndex] = { ...post, likedBy, likes: likedBy.length };
                 } else {
-                    const result = await toggleLikeGADPost(postId, guardianProfile.uid);
+                    const result = await toggleLikeGADPost(postId, activeUid);
+                    const existingLikedBy = Array.isArray(currentGadPosts[postIndex].likedBy) ? currentGadPosts[postIndex].likedBy : [];
+                    const nextLiked = !!result?.isLiked;
+                    const nextLikedBy = nextLiked
+                        ? Array.from(new Set([...existingLikedBy, activeUid]))
+                        : existingLikedBy.filter(id => id !== activeUid);
                     currentGadPosts[postIndex] = {
                         ...currentGadPosts[postIndex],
-                        likes: result.likes,
-                        likedBy: result.isLiked
-                            ? Array.from(new Set([...currentGadPosts[postIndex].likedBy, guardianProfile.uid]))
-                            : currentGadPosts[postIndex].likedBy.filter(id => id !== guardianProfile.uid)
+                        likes: typeof result?.likes === "number" ? result.likes : nextLikedBy.length,
+                        likedBy: nextLikedBy
                     };
                 }
 

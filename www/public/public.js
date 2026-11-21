@@ -17,7 +17,7 @@ function getRoleDashboardUrl(roleOverride) {
 }
 window.getRoleDashboardUrl = getRoleDashboardUrl;
 
-window.goBack = function() {
+window.goBack = function () {
     if (window.history.length > 1) {
         window.history.back();
     } else {
@@ -27,8 +27,8 @@ window.goBack = function() {
 };
 
 const PAGE_CONTROLLERS = {
-  'landing': async function() {
-(function () {
+    'landing': async function () {
+        (function () {
             const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web')) ||
                 window.location.protocol.startsWith('capacitor:') ||
                 !!window.cordova;
@@ -39,7 +39,7 @@ const PAGE_CONTROLLERS = {
             }
         })();
 
-// (2026-07-13) Update map preview label to Mommy Mafe Ramil; was John Paul
+        // (2026-07-13) Update map preview label to Mommy Mafe Ramil; was John Paul
         const PREVIEWS = {
             map: {
                 src: 'assets/images/student_map.png',
@@ -209,29 +209,29 @@ const PAGE_CONTROLLERS = {
                 window.location.href = url;
             }
         }
-if (typeof enterPortal === 'function') window.enterPortal = enterPortal;
-if (typeof switchPreview === 'function') window.switchPreview = switchPreview;
-  },
-  'about': async function() {
-// (2026-07-13) Prevent image drag across entire application; was draggable
+        if (typeof enterPortal === 'function') window.enterPortal = enterPortal;
+        if (typeof switchPreview === 'function') window.switchPreview = switchPreview;
+    },
+    'about': async function () {
+        // (2026-07-13) Prevent image drag across entire application; was draggable
         window.addEventListener('dragstart', (e) => {
             if (e.target && e.target.tagName === 'IMG') {
                 e.preventDefault();
             }
         }, false);
-  },
-  'terms': async function() {
-function goBack() {
+    },
+    'terms': async function () {
+        function goBack() {
             if (window.history.length > 1) {
                 window.history.back();
             } else {
                 window.location.href = '../index.html';
             }
         }
-if (typeof goBack === 'function') window.goBack = goBack;
-  },
-  'hotlines': async function() {
-let toastTimer = null;
+        if (typeof goBack === 'function') window.goBack = goBack;
+    },
+    'hotlines': async function () {
+        let toastTimer = null;
 
         function copyHotline(rawNumber, btnElement) {
             if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -285,10 +285,10 @@ let toastTimer = null;
                 if (indicator) indicator.innerHTML = originalHtml;
             }, 1800);
         }
-if (typeof copyHotline === 'function') window.copyHotline = copyHotline;
-  },
-  'incident': async function() {
-const ADMIN_STUDENT_ID = '12312312';
+        if (typeof copyHotline === 'function') window.copyHotline = copyHotline;
+    },
+    'incident': async function () {
+        const ADMIN_STUDENT_ID = '12312312';
         const toastStack = document.getElementById('toastStack');
         const incidentTitle = document.getElementById('incidentTitle');
         const incidentCopy = document.getElementById('incidentCopy');
@@ -402,7 +402,7 @@ const ADMIN_STUDENT_ID = '12312312';
 
         const _origLoad = loadIncidentReport;
         // Patch loadIncidentReport to cache the loaded report for export
-        loadIncidentReport = async function() {
+        loadIncidentReport = async function () {
             if (!reportId) {
                 incidentTitle.textContent = 'Report not found';
                 incidentCopy.textContent = 'This incident link is missing a report id.';
@@ -460,9 +460,9 @@ const ADMIN_STUDENT_ID = '12312312';
             URL.revokeObjectURL(url);
             showToast('Exported', 'Incident report downloaded as JSON.', 'info');
         });
-  },
-  'role-selection': async function() {
-/* (2026-07-13) Store preferred and user role; was preferred role only */
+    },
+    'role-selection': async function () {
+        /* (2026-07-13) Store preferred and user role; was preferred role only */
         function selectRole(role) {
             localStorage.setItem('securo_preferred_role', role);
             localStorage.setItem('securo_user_role', role);
@@ -484,10 +484,10 @@ const ADMIN_STUDENT_ID = '12312312';
                 e.preventDefault();
             }
         }, false);
-if (typeof selectRole === 'function') window.selectRole = selectRole;
-  },
-  'login': async function() {
-// (2026-07-13) Import student password reset helpers from db; was basic
+        if (typeof selectRole === 'function') window.selectRole = selectRole;
+    },
+    'login': async function () {
+        // (2026-07-13) Import student password reset helpers from db; was basic
         // (2026-07-13) Fix install-sw path to js/ folder; was broken root path
 
         // (2026-07-13) Keep session active on entry; was auto signOut on role select
@@ -645,7 +645,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
             isLoginMode = mode === 'login';
             loginTab.classList.toggle('active', isLoginMode);
             signupTab.classList.toggle('active', !isLoginMode);
-            
+
             document.querySelectorAll('.signup-only').forEach(el => {
                 el.style.display = isLoginMode ? 'none' : 'block';
                 const field = el.querySelector('input');
@@ -868,7 +868,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                         signal: ctrl.signal
                     }).catch(() => null);
                     clearTimeout(tId);
-                } catch (_) {}
+                } catch (_) { }
 
                 // Notify linked parent inside Guardian Dashboard as well when parent receives OTP
                 if (isParentRecipient && linkedParentUid) {
@@ -882,7 +882,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                         sourceUserId: studentUid || sid,
                         sourceName: studentName,
                         priority: 'high'
-                    }).catch(() => {});
+                    }).catch(() => { });
                 }
 
                 if (studentResetTargetEmail) studentResetTargetEmail.textContent = maskStudentEmail(recipientEmail);
@@ -1279,7 +1279,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                 title: 'Securo Guardian Registration',
                 text: 'Register as my guardian on the Securo campus safety app.',
                 url: link
-            }).catch(() => {});
+            }).catch(() => { });
         });
 
         skipGuardianInviteBtn.addEventListener('click', () => {
@@ -1295,7 +1295,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                 return;
             }
 
-            const user = auth.currentUser; 
+            const user = auth.currentUser;
             if (user) {
                 openOnboardingModal({
                     uid: user.uid,
@@ -1331,7 +1331,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                         localStorage.setItem('securo_session_token', loggedInUser.uid);
                         sessionStorage.setItem('securo_login_pending', '1');
                     }
-                    
+
                     // Check if profile exists and has completed onboarding
                     // Wrapped separately so a Firestore error never blocks a valid login
                     let profile = null;
@@ -1340,9 +1340,9 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                     } catch (_) {
                         // Profile fetch failed — proceed to dashboard anyway
                         // (2026-07-13) Cache user role upon login; was not setting role key
-                    const activeRole = profile?.role || preferredRole;
-                    try { localStorage.setItem('securo_user_role', activeRole); } catch (_) {}
-                    sessionStorage.setItem('securo_authenticated', '1');
+                        const activeRole = profile?.role || preferredRole;
+                        try { localStorage.setItem('securo_user_role', activeRole); } catch (_) { }
+                        sessionStorage.setItem('securo_authenticated', '1');
                         window.location.href = getRoleDashboardUrl();
                         return;
                     }
@@ -1362,7 +1362,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
 
                     // (2026-07-13) Cache user role upon login; was not setting role key
                     const activeRole = profile?.role || preferredRole;
-                    try { localStorage.setItem('securo_user_role', activeRole); } catch (_) {}
+                    try { localStorage.setItem('securo_user_role', activeRole); } catch (_) { }
                     sessionStorage.setItem('securo_authenticated', '1');
                     const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
                     const camOk = localStorage.getItem('securo_camera_granted') === 'true';
@@ -1495,61 +1495,61 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                         user = await signUp(authEmail, password);
                     } catch (signupErr) {
                         const code = String(signupErr?.code || '');
-                        if (code === 'auth/email-already-in-use') {
+                            if (code === 'auth/email-already-in-use') {
+                                throw new Error(`That ${roleLabel} ID is already registered. Please sign in.`);
+                            }
+                            throw signupErr;
+                        }
+                        // (2026-07-13) Verify ID uniqueness while signed in; was blocked by rules
+                        const duplicateInDb = await isStudentIdTaken(studentId, user.uid).catch(() => false);
+                        if (duplicateInDb) {
+                            try { await user.delete(); } catch (_) { }
+                            try { await logout(); } catch (_) { }
                             throw new Error(`That ${roleLabel} ID is already registered. Please sign in.`);
                         }
-                        throw signupErr;
-                    }
-                    // (2026-07-13) Verify ID uniqueness while signed in; was blocked by rules
-                    const duplicateInDb = await isStudentIdTaken(studentId, user.uid).catch(() => false);
-                    if (duplicateInDb) {
-                        try { await user.delete(); } catch (_) {}
-                        try { await logout(); } catch (_) {}
-                        throw new Error(`That ${roleLabel} ID is already registered. Please sign in.`);
-                    }
-                    const finalAuthEmail = user?.email || authEmail;
-                    if (user?.uid) {
-                        localStorage.setItem('securo_session_token', user.uid);
-                        sessionStorage.setItem('securo_login_pending', '1');
-                    }
-                    try {
-                        await saveUserProfile(user.uid, {
-                            studentId,
-                            email: studentEmail || "",
-                            recoveryEmail: studentEmail || "",
-                            authEmail: finalAuthEmail,
-                            role: preferredRole,
-                            createdAt: new Date().toISOString()
-                        });
-                    } catch (_) {}
-                    try {
-                        await saveAdminUserPassword(user.uid, finalAuthEmail, password);
-                    } catch (_) {}
-                    try {
-                        const raw = localStorage.getItem('securo_user_directory');
-                        const dir = raw ? JSON.parse(raw) : {};
-                        dir[user.uid] = { ...(dir[user.uid] || {}), uid: user.uid, studentId, email: studentEmail || "", recoveryEmail: studentEmail || "", authEmail: finalAuthEmail, role: preferredRole, updatedAt: new Date().toISOString() };
-                        localStorage.setItem('securo_user_directory', JSON.stringify(dir));
-                    } catch (_) {}
+                        const finalAuthEmail = user?.email || authEmail;
+                        if (user?.uid) {
+                            localStorage.setItem('securo_session_token', user.uid);
+                            sessionStorage.setItem('securo_login_pending', '1');
+                        }
+                        try {
+                            await saveUserProfile(user.uid, {
+                                studentId,
+                                email: studentEmail || "",
+                                recoveryEmail: studentEmail || "",
+                                authEmail: finalAuthEmail,
+                                role: preferredRole,
+                                createdAt: new Date().toISOString()
+                            });
+                        } catch (_) { }
+                        try {
+                            await saveAdminUserPassword(user.uid, finalAuthEmail, password);
+                        } catch (_) { }
+                        try {
+                            const raw = localStorage.getItem('securo_user_directory');
+                            const dir = raw ? JSON.parse(raw) : {};
+                            dir[user.uid] = { ...(dir[user.uid] || {}), uid: user.uid, studentId, email: studentEmail || "", recoveryEmail: studentEmail || "", authEmail: finalAuthEmail, role: preferredRole, updatedAt: new Date().toISOString() };
+                            localStorage.setItem('securo_user_directory', JSON.stringify(dir));
+                        } catch (_) { }
 
-                    if (termsModalEl) termsModalEl.classList.remove('active');
-                    sessionStorage.setItem('securo_just_registered', '1');
-                    const activeRole = preferredRole || 'student';
-                    try { localStorage.setItem('securo_user_role', activeRole); } catch (_) {}
-                    sessionStorage.setItem('securo_authenticated', '1');
-                    const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
-                    const camOk = localStorage.getItem('securo_camera_granted') === 'true';
-                    const locOk = localStorage.getItem('securo_location_granted') === 'true';
-                    window.location.href = (isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl(activeRole);
-                } catch (error) {
-                    const friendlyMessage = getFriendlyAuthMessage(error, "signup", roleLabel);
-                    errorMsg.textContent = friendlyMessage;
-                    showToast("Registration failed", friendlyMessage, "error");
-                    if (termsModalEl) termsModalEl.classList.remove('active');
-                } finally {
-                    setButtonBusy(agreeTermsBtn, false);
-                }
-            });
+                        if (termsModalEl) termsModalEl.classList.remove('active');
+                        sessionStorage.setItem('securo_just_registered', '1');
+                        const activeRole = preferredRole || 'student';
+                        try { localStorage.setItem('securo_user_role', activeRole); } catch (_) { }
+                        sessionStorage.setItem('securo_authenticated', '1');
+                        const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
+                        const camOk = localStorage.getItem('securo_camera_granted') === 'true';
+                        const locOk = localStorage.getItem('securo_location_granted') === 'true';
+                        window.location.href = (isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl(activeRole);
+                    } catch (error) {
+                        const friendlyMessage = getFriendlyAuthMessage(error, "signup", roleLabel);
+                        errorMsg.textContent = friendlyMessage;
+                        showToast("Registration failed", friendlyMessage, "error");
+                        if (termsModalEl) termsModalEl.classList.remove('active');
+                    } finally {
+                        setButtonBusy(agreeTermsBtn, false);
+                    }
+                });
         }
 
         // (2026-07-13) Prevent image drag across entire application; was draggable
@@ -1558,9 +1558,9 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                 e.preventDefault();
             }
         }, false);
-  },
-  'permissions': async function() {
-(() => {
+    },
+    'permissions': async function () {
+        (() => {
             const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
             const isDesktop = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
             if (isDesktop) {
@@ -1769,7 +1769,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                 grantCameraBtn.style.color = '#fff';
                 grantCameraBtn.style.borderColor = '#0f9b67';
                 grantCameraBtn.innerHTML = '<span class="material-symbols-outlined">check_circle</span><span>Camera Access Granted (Success)</span>';
-                
+
                 setTimeout(() => {
                     showLocationCard();
                 }, 800);
@@ -1933,11 +1933,11 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                 e.preventDefault();
             }
         }, false);
-  },
-  'profile': async function() {
-// Core utilities and offline support
+    },
+    'profile': async function () {
+        // Core utilities and offline support
         // (2026-07-13) Fix install-sw path to js/ folder; was broken root path
-        
+
         // (2026-07-13) Import deleteCurrentUserAccount; was omitted
 
         checkAuth();
@@ -2171,7 +2171,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                         resolvedName = profile.name;
                     }
                 } catch (error) {
-                    
+
                 }
 
                 if (isGenericChildName(resolvedName)) {
@@ -2182,7 +2182,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                             resolvedName = bootstrapProfile.name;
                         }
                     } catch (error) {
-                        
+
                     }
                 }
             }
@@ -2195,7 +2195,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                         resolvedName = studentMatch.name;
                     }
                 } catch (error) {
-                    
+
                 }
             }
 
@@ -2208,7 +2208,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                         resolvedName = matchedUser.name;
                     }
                 } catch (error) {
-                    
+
                 }
             }
 
@@ -2293,10 +2293,10 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
             const roleLabel = profile?.role === 'guardian'
                 ? 'Guardian'
                 : profile?.role === 'staff'
-                ? 'Staff'
-                : profile?.role === 'admin'
-                ? 'Admin'
-                : 'Student';
+                    ? 'Staff'
+                    : profile?.role === 'admin'
+                        ? 'Admin'
+                        : 'Student';
             const studentIdLabel = profile?.studentId || 'Not linked';
 
             state.role = profile?.role || 'student';
@@ -2383,7 +2383,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                     guardianOfMeta.textContent = state.studentId ? `Student ID: ${state.studentId}` : 'Student ID pending';
                     roleBadge.textContent = state.studentId ? `Guardian of ${state.studentId}` : 'Guardian of Pending Child';
                 }
-                    connectionsList.innerHTML = `<div class="empty-state">${state.role === 'guardian' ? 'No child access links yet.' : state.role === 'staff' ? 'Staff accounts do not have parent or guardian links.' : state.role === 'admin' ? 'Admin accounts do not have parent or guardian links.' : 'No parent or guardian requests yet.'}</div>`;
+                connectionsList.innerHTML = `<div class="empty-state">${state.role === 'guardian' ? 'No child access links yet.' : state.role === 'staff' ? 'Staff accounts do not have parent or guardian links.' : state.role === 'admin' ? 'Admin accounts do not have parent or guardian links.' : 'No parent or guardian requests yet.'}</div>`;
                 return;
             }
 
@@ -2569,7 +2569,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                 const photoURL = await readFileAsDataUrl(file);
                 await updateUserProfile(state.uid, { photoURL });
                 if (auth.currentUser) {
-                    await updateProfile(auth.currentUser, { photoURL }).catch(() => {});
+                    await updateProfile(auth.currentUser, { photoURL }).catch(() => { });
                 }
                 state.photoURL = photoURL;
                 renderProfileAvatar();
@@ -2599,7 +2599,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
             try {
                 await updateUserProfile(state.uid, { name: newName });
                 if (auth.currentUser) {
-                    await updateProfile(auth.currentUser, { displayName: newName }).catch(() => {});
+                    await updateProfile(auth.currentUser, { displayName: newName }).catch(() => { });
                 }
                 state.name = newName;
                 renderProfileAvatar();
@@ -2698,10 +2698,10 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                 const message = error.code === 'auth/wrong-password'
                     ? 'The current password you entered is incorrect.'
                     : error.code === 'auth/invalid-credential'
-                    ? 'The current password is incorrect. Please try again.'
-                    : error.code === 'auth/requires-recent-login'
-                    ? 'Please sign in again, then return here to change your password.'
-                    : (error.message || 'Could not update the password right now.');
+                        ? 'The current password is incorrect. Please try again.'
+                        : error.code === 'auth/requires-recent-login'
+                            ? 'Please sign in again, then return here to change your password.'
+                            : (error.message || 'Could not update the password right now.');
                 await showStatus('Password Update Failed', message, 'error');
             } finally {
                 setButtonBusy(savePasswordBtn, false);
@@ -2873,7 +2873,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
             event.preventDefault();
             currentContextLinkId = item.dataset.linkId;
             currentContextLinkAction = item.dataset.linkAction || 'remove';
-            
+
             const btnText = currentContextLinkAction === 'cancel' ? 'Cancel Request' : 'Remove Guardian';
             cancelGuardianBtn.querySelector('span:last-child').textContent = btnText;
 
@@ -2886,10 +2886,10 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
             if (!currentContextLinkId) return;
             const linkId = currentContextLinkId;
             const action = currentContextLinkAction;
-            
+
             const link = (state.connections || []).find((entry) => String(entry.id) === String(linkId));
             const label = link?.guardianName || 'this guardian';
-            
+
             setButtonBusy(cancelGuardianBtn, true);
             try {
                 await removeGuardianLink(linkId);
@@ -2936,7 +2936,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                         email: currentAuthEmail,
                         name: fixedName,
                         role: profile.role
-                    }).catch(() => {});
+                    }).catch(() => { });
                 }
 
                 if ((profile?.role || '') === 'admin' || user.email === 'admin@admin.com') {
@@ -2965,11 +2965,11 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
                 e.preventDefault();
             }
         }, false);
-  },
-  'settings': async function() {
-// Core utilities and offline support
+    },
+    'settings': async function () {
+        // Core utilities and offline support
         // (2026-07-13) Fix install-sw path to js/ folder; was broken root path
-        
+
         // (2026-07-13) Import deleteCurrentUserAccount; was getUserProfile only
 
         checkAuth();
@@ -3098,7 +3098,7 @@ if (typeof selectRole === 'function') window.selectRole = selectRole;
 
             bindSettings(user.uid);
         });
-  }
+    }
 };
 
 const activePage = document.body?.dataset?.page;

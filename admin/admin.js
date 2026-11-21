@@ -902,9 +902,29 @@ async function loadManagedUserLocation(user) {
             return bTime - aTime;
         })[0];
 
-    if (liveLocation?.lat && liveLocation?.lng) {
+    // (2026-07-13) Fallback to SOS press location when out of bounds; was live only
+    const latestSos = (cachedSosLogs || [])
+        .filter((log) => String(log.userId || log.studentUid) === String(user.id) && typeof log.location?.lat === 'number' && typeof log.location?.lng === 'number' && !(log.location.lat === 0 && log.location.lng === 0))
+        .sort((a, b) => {
+            const aTime = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : new Date(a.timestamp || 0).getTime();
+            const bTime = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : new Date(b.timestamp || 0).getTime();
+            return bTime - aTime;
+        })[0];
+
+    if (liveLocation?.lat && liveLocation?.lng && liveLocation?.isInside !== false) {
         userLocationTitle.textContent = `Live location: ${Number(liveLocation.lat).toFixed(5)}, ${Number(liveLocation.lng).toFixed(5)}`;
         userLocationCopy.textContent = liveLocation.updatedAt ? `Updated ${formatAdminTime(liveLocation.updatedAt)}` : 'Live location available.';
+        return;
+    }
+    if (latestSos?.location?.lat && latestSos?.location?.lng) {
+        const outTag = (latestSos.location.outOfBounds || latestSos.location.isInside === false) ? ' (Outside Campus)' : '';
+        userLocationTitle.textContent = `SOS location${outTag}: ${Number(latestSos.location.lat).toFixed(5)}, ${Number(latestSos.location.lng).toFixed(5)}`;
+        userLocationCopy.textContent = latestSos.timestamp ? `SOS pressed • ${formatAdminTime(latestSos.timestamp)}` : 'Captured at SOS trigger.';
+        return;
+    }
+    if (liveLocation?.isInside === false) {
+        userLocationTitle.textContent = 'Outside Campus Bounds';
+        userLocationCopy.textContent = 'Live tracking is paused outside campus. Only SOS trigger coordinates are recorded.';
         return;
     }
     if (latestEvidence?.location?.lat && latestEvidence?.location?.lng) {
@@ -3394,8 +3414,10 @@ function renderSosTable(logs) {
     tableEl.innerHTML = logs.map((log) => {
         const rep = getReporterInfo(log);
         const loc = log.location || {};
-        const hasCoords = typeof loc.lat === 'number' && typeof loc.lng === 'number';
-        const coordsStr = hasCoords ? `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}` : 'GPS unavailable';
+        // (2026-07-13) Label out-of-bounds SOS press location; was coords only
+        const hasCoords = typeof loc.lat === 'number' && typeof loc.lng === 'number' && !(loc.lat === 0 && loc.lng === 0);
+        const isOutOfBounds = !!(loc.outOfBounds || loc.isInside === false);
+        const coordsStr = hasCoords ? `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}${isOutOfBounds ? ' · Out of Bounds' : ''}` : 'GPS unavailable';
 
         const rawAddress = loc.address;
         const isNumericAddress = !rawAddress || /^\d+\.\d+/.test(rawAddress) || rawAddress.includes('GPS') || rawAddress === coordsStr;
@@ -3508,8 +3530,10 @@ function renderAdminSosMap() {
     if (sosBadge) sosBadge.textContent = `${sosCount} SOS Trigger${sosCount === 1 ? '' : 's'}`;
 
     (cachedSosLogs || []).forEach((log, idx) => {
+        // (2026-07-13) Skip zero coords & tag out-of-bounds SOS pin; was untagged
         const loc = log.location;
-        if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return;
+        if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number' || (loc.lat === 0 && loc.lng === 0)) return;
+        const isOutsideBounds = !!(loc.outOfBounds || loc.isInside === false);
 
         const pos = [loc.lat, loc.lng];
         const dateStr = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : (log.timestamp || 'Recently');
@@ -3539,6 +3563,7 @@ function renderAdminSosMap() {
                         <div style="font-size:0.75rem; color:#6f6a86; margin-top:2px;"><strong>Role:</strong> ${escapeHtml(rep.role)} • ID: ${escapeHtml(rep.studentId)}</div>
                         <div style="font-size:0.75rem; color:#6f6a86; margin-top:2px;"><strong>Time:</strong> ${escapeHtml(dateStr)}</div>
                         <div style="font-size:0.75rem; color:#6f6a86; margin-top:2px;"><strong>Location:</strong> ${escapeHtml(loc.address || `${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`)}</div>
+                        ${isOutsideBounds ? '<div style="font-size:0.72rem; color:#b91c1c; font-weight:700; margin-top:4px;">Outside Campus Bounds (SOS Press Point)</div>' : ''}
                     </div>
                 `);
 

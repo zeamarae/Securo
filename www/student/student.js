@@ -597,7 +597,8 @@ setTimeout(() => {
                 calculateStats(updatedHistory);
                 updateAttendanceSummary(updatedHistory);
                 syncPendingAttendanceLogs().catch((e) => console.warn("Auto attendance sync failed:", e));
-                updateStudentLiveLocation(appState.user.uid, { lat, lng, isInside: false }).catch(() => { });
+                // (2026-07-13) Hide live coords outside campus; was sending raw lat lng
+                syncPrivacyAwareLiveLocation(lat, lng);
                 notifyGuardiansOfGeofenceEvent(appState.user.uid, appState.user.name || appState.user.displayName || 'Student', 'out', location).catch(() => { });
 
                 triggerDevicePushNotification("Campus Exit", "You've exited the campus, automatically timed out.");
@@ -1034,7 +1035,8 @@ setTimeout(() => {
                     updateOwnLocationHighlight(latlng, true);
                     map.flyTo(latlng, 18, { duration: 0.6 });
                     if (appState.user?.uid) {
-                        updateStudentLiveLocation(appState.user.uid, { lat: pos.coords.latitude, lng: pos.coords.longitude }).catch(() => { });
+                        // (2026-07-13) Mask live GPS outside campus; was raw lat lng
+                        syncPrivacyAwareLiveLocation(pos.coords.latitude, pos.coords.longitude);
                     }
                 },
                 () => {
@@ -1045,7 +1047,7 @@ setTimeout(() => {
                             updateOwnLocationHighlight(latlng, true);
                             map.flyTo(latlng, 18, { duration: 0.6 });
                             if (appState.user?.uid) {
-                                updateStudentLiveLocation(appState.user.uid, { lat: pos.coords.latitude, lng: pos.coords.longitude }).catch(() => { });
+                                syncPrivacyAwareLiveLocation(pos.coords.latitude, pos.coords.longitude);
                             }
                         },
                         () => {
@@ -1075,7 +1077,7 @@ setTimeout(() => {
                     appState.lastLocation = { lat, lng };
                     updateOwnLocationHighlight([lat, lng], true);
                     if (appState.user?.uid) {
-                        await updateStudentLiveLocation(appState.user.uid, { lat, lng }).catch(() => { });
+                        await syncPrivacyAwareLiveLocation(lat, lng);
                     }
                     updateTrackingStatusBanner();
                     if (isInteractive) {
@@ -4157,10 +4159,11 @@ setTimeout(() => {
             return Array.isArray(post.likedBy) ? post.likedBy.length : 0;
         }
 
-        // (2026-07-13) Refine modern GAD post card styling; was basic article card
+        // (2026-07-13) Fallback to auth uid for post like state; was appState only
         function renderPost(post) {
             const likeCount = getPostLikeCount(post);
-            const isLiked = !!(appState.user.uid && Array.isArray(post.likedBy) && post.likedBy.includes(appState.user.uid));
+            const activeUid = appState.user?.uid || auth.currentUser?.uid || "";
+            const isLiked = !!(activeUid && Array.isArray(post.likedBy) && post.likedBy.includes(activeUid));
             const postHtml = `
                 <article class="card feed-card" id="post-${post.id}" style="margin-bottom: 20px; padding: 20px; border-radius: 22px; border: 1px solid rgba(90, 31, 224, 0.1); background: #ffffff; box-shadow: 0 4px 18px rgba(23, 20, 40, 0.04); transition: transform 0.18s ease, box-shadow 0.18s ease;">
                     <div class="feed-head" style="margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center;">
@@ -4191,9 +4194,11 @@ setTimeout(() => {
             gadPostsFeed.insertAdjacentHTML('beforeend', postHtml);
         }
 
+        // (2026-07-13) Fallback to auth uid on like click; was blocked if uid empty
         gadPostsFeed.addEventListener("click", async (event) => {
             const likeButton = event.target.closest("[data-like-post]");
-            if (!likeButton || !appState.user.uid) return;
+            const activeUid = appState.user?.uid || auth.currentUser?.uid || "";
+            if (!likeButton || !activeUid) return;
             if (likeButton.classList.contains("is-busy")) return;
 
             const postId = likeButton.dataset.likePost;
@@ -4205,22 +4210,24 @@ setTimeout(() => {
                 if (String(postId).startsWith("fallback-")) {
                     const post = currentGadPosts[postIndex];
                     const likedBy = Array.isArray(post.likedBy) ? [...post.likedBy] : [];
-                    const likedIndex = likedBy.indexOf(appState.user.uid);
+                    const likedIndex = likedBy.indexOf(activeUid);
                     if (likedIndex >= 0) {
                         likedBy.splice(likedIndex, 1);
                     } else {
-                        likedBy.push(appState.user.uid);
+                        likedBy.push(activeUid);
                     }
                     currentGadPosts[postIndex] = { ...post, likedBy, likes: likedBy.length };
                 } else {
-                    const result = await toggleLikeGADPost(postId, appState.user.uid);
+                    const result = await toggleLikeGADPost(postId, activeUid);
                     const existingLikedBy = Array.isArray(currentGadPosts[postIndex].likedBy) ? currentGadPosts[postIndex].likedBy : [];
+                    const nextLiked = !!result?.isLiked;
+                    const nextLikedBy = nextLiked
+                        ? Array.from(new Set([...existingLikedBy, activeUid]))
+                        : existingLikedBy.filter((id) => id !== activeUid);
                     currentGadPosts[postIndex] = {
                         ...currentGadPosts[postIndex],
-                        likes: result.likes,
-                        likedBy: result.isLiked
-                            ? Array.from(new Set([...existingLikedBy, appState.user.uid]))
-                            : existingLikedBy.filter((id) => id !== appState.user.uid)
+                        likes: typeof result?.likes === "number" ? result.likes : nextLikedBy.length,
+                        likedBy: nextLikedBy
                     };
                 }
 
@@ -4257,6 +4264,8 @@ setTimeout(() => {
         };
 
         const openGadPmBtn = document.getElementById("openGadPmBtn");
+        // (2026-07-13) Add header GAD msg button & thread cache; was modal btn only
+        const headerGadMsgBtn = document.getElementById("headerGadMsgBtn");
         const gadPmModal = document.getElementById("gadPmModal");
         const closeGadPmModalBtn = document.getElementById("closeGadPmModalBtn");
         const cancelGadPmBtn = document.getElementById("cancelGadPmBtn");
@@ -4265,36 +4274,56 @@ setTimeout(() => {
 
         // (2026-07-13) Real-time GAD chatbox thread & composer; was form modal
         let _cachedGadMessages = [];
+        let _cachedGadThreadMessages = [];
+        let gadThreadUnsub = null;
 
-        // (2026-07-13) Messenger group bubbles for GAD support; was standalone rows
+        // (2026-07-13) Merge GAD inquiries & admin replies in thread; was inquiries only
         function renderGadChatThread(messages) {
             const thread = document.getElementById("gadChatThread");
             if (!thread) return;
             const msgs = messages || _cachedGadMessages;
             const items = [
-                { type: 'them', text: "Hi! This is the GAD Desk. Tell us what is on your mind — your message is confidential." }
+                { type: 'them', text: "Hi! This is the GAD Desk. Tell us what is on your mind — your message is confidential.", ts: 0 }
             ];
-            let isWaitingReply = false;
+            const timeline = [];
+            const myUid = appState.user?.uid || "";
+
+            const toMs = (val) => {
+                if (!val) return 0;
+                if (typeof val === 'number') return val;
+                if (val.seconds) return val.seconds * 1000;
+                if (typeof val.toDate === 'function') return val.toDate().getTime();
+                const parsed = new Date(val).getTime();
+                return Number.isNaN(parsed) ? 0 : parsed;
+            };
 
             if (msgs && msgs.length) {
-                const sorted = [...msgs].sort((a, b) => {
-                    const ta = a.createdAt?.seconds || (a.createdAt?.toDate ? a.createdAt.toDate().getTime() / 1000 : (new Date(a.createdAt || 0).getTime() / 1000));
-                    const tb = b.createdAt?.seconds || (b.createdAt?.toDate ? b.createdAt.toDate().getTime() / 1000 : (new Date(b.createdAt || 0).getTime() / 1000));
-                    return ta - tb;
-                });
-
-                sorted.forEach(m => {
+                msgs.forEach(m => {
+                    const baseTs = toMs(m.createdAt);
                     if (m.message) {
-                        items.push({ type: 'me', text: m.message });
+                        timeline.push({ type: 'me', text: String(m.message).trim(), ts: baseTs });
                     }
                     if (m.status === 'answered' && m.reply) {
-                        items.push({ type: 'them', text: m.reply });
-                        isWaitingReply = false;
-                    } else {
-                        isWaitingReply = true;
+                        const repTs = toMs(m.repliedAt) || (baseTs + 1);
+                        timeline.push({ type: 'them', text: String(m.reply).trim(), ts: repTs });
                     }
                 });
             }
+
+            if (_cachedGadThreadMessages && _cachedGadThreadMessages.length) {
+                _cachedGadThreadMessages.forEach(tm => {
+                    const text = String(tm.text || tm.message || '').trim();
+                    if (!text) return;
+                    const type = (tm.senderId === myUid || tm.senderUid === myUid) ? 'me' : 'them';
+                    const ts = toMs(tm.timestamp) || toMs(tm.localTime) || toMs(tm.createdAt);
+                    const isDup = timeline.some(e => e.type === type && e.text === text && Math.abs(e.ts - ts) < 15000);
+                    if (!isDup) timeline.push({ type, text, ts });
+                });
+            }
+
+            timeline.sort((a, b) => a.ts - b.ts);
+            timeline.forEach(entry => items.push(entry));
+            const isWaitingReply = timeline.length > 0 && timeline[timeline.length - 1].type === 'me';
 
             // (2026-07-13) Render avatar alongside incoming GAD messages; was bare bubble
             let html = '';
@@ -4334,9 +4363,13 @@ setTimeout(() => {
             thread.scrollTop = thread.scrollHeight;
         }
 
+        // (2026-07-13) Load past GAD history on modal open; was empty until tab switch
         function openGadPmModal() {
             if (gadPmModal) {
                 gadPmModal.classList.add("active");
+                if (appState.user?.uid && (!gadInquiriesUnsub || !gadThreadUnsub)) {
+                    loadStudentGADInquiries();
+                }
                 renderGadChatThread();
                 const msgInput = document.getElementById("gadMessageBody");
                 if (msgInput) {
@@ -4360,6 +4393,7 @@ setTimeout(() => {
             }
         }
 
+        if (headerGadMsgBtn) headerGadMsgBtn.addEventListener("click", openGadPmModal);
         if (openGadPmBtn) openGadPmBtn.addEventListener("click", openGadPmModal);
         if (globalGadFab) globalGadFab.addEventListener("click", openGadPmModal);
         if (closeGadPmModalBtn) closeGadPmModalBtn.addEventListener("click", closeGadPmModal);
@@ -4403,9 +4437,18 @@ setTimeout(() => {
         }
 
         let gadInquiriesUnsub = null;
+        // (2026-07-13) Subscribe to both GAD inquiries & chat thread; was inquiries only
         function loadStudentGADInquiries() {
+            if (!appState.user?.uid) return;
             if (gadInquiriesUnsub) gadInquiriesUnsub();
+            if (gadThreadUnsub) gadThreadUnsub();
             const container = document.getElementById("gadInquiriesList");
+
+            const threadId = [appState.user.uid, "system_admin_securo"].sort().join("_");
+            gadThreadUnsub = subscribeToMessagesByThread(threadId, (threadMsgs) => {
+                _cachedGadThreadMessages = Array.isArray(threadMsgs) ? threadMsgs : [];
+                renderGadChatThread(_cachedGadMessages);
+            });
 
             gadInquiriesUnsub = subscribeToGADMessages(appState.user.uid, (messages) => {
                 _cachedGadMessages = Array.isArray(messages) ? messages : [];
@@ -4653,6 +4696,48 @@ setTimeout(() => {
             arc.style.strokeDashoffset = circumference - (clamped * circumference);
         }
 
+        // (2026-07-13) Mask live coords outside bounds & capture SOS point; was raw
+        function syncPrivacyAwareLiveLocation(lat, lng) {
+            if (!appState.user?.uid) return Promise.resolve();
+            const hasCoords = typeof lat === "number" && typeof lng === "number" && !Number.isNaN(lat) && !Number.isNaN(lng);
+            const isInside = hasCoords ? isPointInPolygon([lat, lng], getCampusGeofencePolygon()) : false;
+            const payload = isInside
+                ? { lat, lng, isInside: true, sharingEnabled: true, sharingState: "active" }
+                : { lat: null, lng: null, isInside: false, sharingEnabled: true, sharingState: "outside_campus" };
+            return updateStudentLiveLocation(appState.user.uid, payload).catch((e) => console.warn("Live tracking sync failed:", e));
+        }
+
+        async function captureSosLocationSnapshot() {
+            let lat = appState.lastLocation?.lat;
+            let lng = appState.lastLocation?.lng;
+            if ((typeof lat !== "number" || typeof lng !== "number" || (lat === 0 && lng === 0)) && navigator.geolocation) {
+                try {
+                    const pos = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 4000, maximumAge: 15000 });
+                    });
+                    lat = pos.coords.latitude;
+                    lng = pos.coords.longitude;
+                    appState.lastLocation = { lat, lng, timestamp: new Date() };
+                } catch (_) { }
+            }
+            const hasCoords = typeof lat === "number" && typeof lng === "number" && !(lat === 0 && lng === 0);
+            if (!hasCoords) {
+                return { lat: 0, lng: 0, address: "Location unavailable", isInside: false, outOfBounds: true, capturedAt: new Date().toISOString() };
+            }
+            const isInside = isPointInPolygon([lat, lng], getCampusGeofencePolygon());
+            let address = "";
+            if (isInside) {
+                const spot = typeof getNearestLandmark === "function" ? getNearestLandmark(lat, lng) : "CTU Daanbantayan Campus";
+                address = spot.startsWith("CTU") ? spot : `CTU Daanbantayan (${spot})`;
+            } else {
+                const localPlace = typeof getNearestLandmark === "function" ? getNearestLandmark(lat, lng) : "";
+                address = localPlace && !localPlace.includes("Outside")
+                    ? `${localPlace} (Outside Campus Bounds)`
+                    : `Outside Campus Bounds (${lat.toFixed(5)}, ${lng.toFixed(5)})`;
+            }
+            return { lat, lng, address, isInside, outOfBounds: !isInside, capturedAt: new Date().toISOString() };
+        }
+
         function startSosHold() {
             if (appState.sosTriggered || sosTimer) return;
             sosButton.classList.add("is-active");
@@ -4687,11 +4772,16 @@ setTimeout(() => {
                 triggerDevicePushNotification("EMERGENCY SOS ACTIVATED", "Your emergency alert and live coordinates have been broadcast to campus security and guardians.");
                 if (!appState.sosLogged && appState.user?.uid) {
                     appState.sosLogged = true;
-                    logSOS(appState.user.uid, appState.lastLocation || { lat: 0, lng: 0 }, {
-                        userName: appState.user?.name || appState.user?.displayName || "",
-                        userEmail: appState.user?.email || "",
-                        studentId: appState.user?.studentId || "",
-                        role: appState.user?.role || "student"
+                    // (2026-07-13) Capture exact SOS coords even outside bounds; was raw lastLoc
+                    captureSosLocationSnapshot().then((sosLoc) => {
+                        appState.lastSosLocation = sosLoc;
+                        return logSOS(appState.user.uid, sosLoc, {
+                            userName: appState.user?.name || appState.user?.displayName || "",
+                            userEmail: appState.user?.email || "",
+                            studentId: appState.user?.studentId || "",
+                            role: appState.user?.role || "student",
+                            outOfBounds: !!sosLoc.outOfBounds
+                        });
                     }).catch(e => console.warn("Instant SOS log failed:", e));
                 }
                 dispatchState.textContent = "Live Dispatch";
@@ -4784,8 +4874,8 @@ setTimeout(() => {
             if (!uid) return;
 
             try {
-                // Determine location
-                const location = appState.lastLocation || { lat: 0, lng: 0, address: "Unknown location" };
+                // (2026-07-13) Attach exact SOS press location to evidence; was lastLocation
+                const location = appState.lastSosLocation || appState.lastLocation || { lat: 0, lng: 0, address: "Unknown location" };
 
                 await saveEmergencyPost({
                     userId: uid,
@@ -5194,10 +5284,7 @@ setTimeout(() => {
             }
 
             if (shouldTrack && appState.lastLocation?.lat && appState.lastLocation?.lng && appState.user.uid) {
-                updateStudentLiveLocation(appState.user.uid, {
-                    lat: appState.lastLocation.lat,
-                    lng: appState.lastLocation.lng
-                }).catch((error) => console.warn("Live location sync refresh failed:", error));
+                syncPrivacyAwareLiveLocation(appState.lastLocation.lat, appState.lastLocation.lng);
             }
 
             updateTrackingStatusBanner();
@@ -5739,11 +5826,8 @@ setTimeout(() => {
                     updateTrackingStatusBanner();
 
                     if (appState.user.uid) {
-                        updateStudentLiveLocation(appState.user.uid, {
-                            lat: pos.coords.latitude,
-                            lng: pos.coords.longitude,
-                            isInside: appState.isInsideCampus
-                        }).catch(e => console.warn("Live tracking sync failed:", e));
+                        // (2026-07-13) Mask live tracking when out of bounds; was sending raw GPS
+                        syncPrivacyAwareLiveLocation(pos.coords.latitude, pos.coords.longitude);
                     }
                 },
                 (err) => {
@@ -5884,13 +5968,17 @@ setTimeout(() => {
         const checkSosTrigger = setInterval(() => {
             if (appState.sosTriggered && !appState.sosLogged) {
                 appState.sosLogged = true;
-                // (2026-07-13) Pass user metadata when logging SOS; was uid only
-                logSOS(appState.user.uid, appState.lastLocation || { lat: 0, lng: 0 }, {
-                    userName: appState.user?.name || appState.user?.displayName || "",
-                    userEmail: appState.user?.email || "",
-                    studentId: appState.user?.studentId || "",
-                    role: appState.user?.role || "student"
-                });
+                // (2026-07-13) Capture exact SOS coords including out of bounds; was raw loc
+                captureSosLocationSnapshot().then((sosLoc) => {
+                    appState.lastSosLocation = sosLoc;
+                    return logSOS(appState.user.uid, sosLoc, {
+                        userName: appState.user?.name || appState.user?.displayName || "",
+                        userEmail: appState.user?.email || "",
+                        studentId: appState.user?.studentId || "",
+                        role: appState.user?.role || "student",
+                        outOfBounds: !!sosLoc.outOfBounds
+                    });
+                }).catch(() => {});
             } else if (!appState.sosTriggered) {
                 appState.sosLogged = false;
             }
