@@ -790,13 +790,14 @@
     </div>
 
     <!-- Status/Success Modal (Date: 2026-05-01) -->
+    <!-- (2026-07-13) Replace placeholder status message text; was Message goes here. -->
     <div class="status-modal" id="statusModal">
         <div class="status-card">
             <div id="statusIconWrap" class="status-icon-wrap">
                 <span class="material-symbols-outlined" id="statusIcon">check_circle</span>
             </div>
             <h3 id="statusTitle" class="status-title">Success!</h3>
-            <p id="statusMessage" class="status-msg">Message goes here.</p>
+            <p id="statusMessage" class="status-msg">Your action has been completed successfully.</p>
             <button id="statusOkBtn" class="status-btn">Great!</button>
         </div>
     </div>
@@ -876,18 +877,7 @@
                         <span class="ios-slider"></span>
                     </label>
                 </div>
-                <div class="details-info-row">
-                    <div class="icon-box"><span id="detailsGuardianVisibilityIcon"
-                            class="material-symbols-outlined">group</span></div>
-                    <div class="info-text sta-u16">
-                        <strong>Parent Access</strong>
-                        <span id="detailsGuardianVisibility">Shared with Parents / Guardians</span>
-                    </div>
-                    <label class="ios-switch">
-                        <input type="checkbox" id="guardianAccessToggle">
-                        <span class="ios-slider"></span>
-                    </label>
-                </div>
+                <!-- (2026-07-13) Removed Parent Access toggle for staff vault; was shown -->
                 <button class="details-action-btn" id="closeDetailsBtn" type="button">Done</button>
             </div>
         </div>
@@ -1123,6 +1113,15 @@
                                         <input type="text" id="fsSection" placeholder="A" maxlength="4" required
                                             autocomplete="off" class="sta-u177">
                                     </div>
+                                </div>
+                            </div>
+
+                            <!-- (2026-07-13) Staff Department input for onboarding; was student section -->
+                            <div class="form-group sta-u167" id="fsStaffDepartmentRow" style="display:none; margin-top:12px;">
+                                <label class="form-label sta-u168">Department <span style="opacity:0.65; font-weight:500;">(Optional)</span></label>
+                                <div class="fs-input-field-wrap">
+                                    <span class="material-symbols-outlined input-icon">apartment</span>
+                                    <input type="text" id="fsDepartment" placeholder="e.g. Faculty, Admin Office, Security, IT" autocomplete="organization">
                                 </div>
                             </div>
 

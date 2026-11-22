@@ -55,7 +55,8 @@
                                 <span class="material-symbols-outlined">settings</span>
                                 <span>Settings</span>
                             </a>
-                            <a href="../student/student.html" class="btn-secondary">
+                            <!-- (2026-07-13) Add id to dashboard link for role routing; was static student -->
+                            <a href="../student/student.html" id="profileDashboardBtn" class="btn-secondary">
                                 <span class="material-symbols-outlined">dashboard</span>
                                 <span>Back to Dashboard</span>
                             </a>
@@ -84,9 +85,9 @@
                         <div class="info-label">Student ID</div>
                         <div class="info-value" id="profileStudentId">Not linked</div>
                     </div>
-                    <!-- (2026-07-13) Add section info row; was missing from profile card -->
+                    <!-- (2026-07-13) Add id to section label for staff Department; was static -->
                     <div class="info-row" id="sectionRow">
-                        <div class="info-label">Section</div>
+                        <div class="info-label" id="sectionRowLabel">Section</div>
                         <div class="info-value" id="profileSectionValue">--</div>
                     </div>
                     <!-- (2026-07-13) Support personal email input and hide synthetic auth email; was static text -->
@@ -222,11 +223,12 @@
         </div>
 
         <!-- Status Toast -->
+        <!-- (2026-07-13) Rename toast IDs to prevent statusModal ID clash; was statusTitle/Message -->
         <div id="statusToast" class="status-toast is-hidden">
-            <span id="statusIcon" class="material-symbols-outlined status-toast-icon">check_circle</span>
+            <span id="statusToastIcon" class="material-symbols-outlined status-toast-icon">check_circle</span>
             <div class="status-toast-content">
-                <span id="statusTitle" class="status-toast-title">Success</span>
-                <span id="statusMessage" class="status-toast-message">Action completed successfully.</span>
+                <span id="statusToastTitle" class="status-toast-title">Success</span>
+                <span id="statusToastMessage" class="status-toast-message">Action completed successfully.</span>
             </div>
         </div>
 
@@ -245,7 +247,7 @@
                 <span class="material-symbols-outlined" id="statusIcon">check_circle</span>
             </div>
             <h3 id="statusTitle" class="status-title">Success</h3>
-            <p id="statusMessage" class="status-msg">Message goes here.</p>
+            <p id="statusMessage" class="status-msg">Your changes have been saved successfully.</p>
             <button id="statusOkBtn" class="status-btn" type="button">Continue</button>
         </div>
     </div>

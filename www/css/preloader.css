@@ -115,6 +115,13 @@
     box-shadow: none;
     will-change: width;
 }
+/* (2026-07-13) Blue preloader progress bar for staff role; was purple */
+html.role-staff .securo-preloader-progress-track {
+    background: rgba(37, 99, 235, 0.12);
+}
+html.role-staff .securo-preloader-progress-bar {
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+}
 
 .securo-preloader-status-text {
     font-family: 'Sora', sans-serif;

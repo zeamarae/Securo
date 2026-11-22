@@ -8,6 +8,13 @@
 (function () {
     'use strict';
 
+    // (2026-07-13) Apply role-staff class early in head for blue theme; was delayed
+    try {
+        const urlRole = new URLSearchParams(window.location.search).get('role');
+        const activeRole = String(urlRole || localStorage.getItem('securo_preferred_role') || localStorage.getItem('securo_user_role') || '').toLowerCase();
+        document.documentElement.classList.toggle('role-staff', activeRole === 'staff');
+    } catch (_) { }
+
     // Detect GitHub Pages base path (e.g. /Securo/) vs root (/)
     const isGitHubPages = window.location.hostname.includes('github.io');
     const basePath = isGitHubPages

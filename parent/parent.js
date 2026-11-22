@@ -3,8 +3,8 @@ import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device }
 import { auth, db, firebaseConfig } from '../js/firebase-config.js';
 import { onAuthStateChanged, getAuth, signInWithEmailAndPassword, updatePassword, createUserWithEmailAndPassword, confirmPasswordReset } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { doc, onSnapshot, collection, query, where, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-// (2026-07-13) Import findStudentUid, vault & presence helper; was partial
-import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, getGuardianSharedEmergencyPosts, findStudentUidByStudentId, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, sendChatMessage, subscribeToMessagesByThread, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword, startUserPresenceHeartbeat } from '../js/db.js';
+// (2026-07-13) Import markAccountNotificationRead for read sync; was missing
+import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, getGuardianSharedEmergencyPosts, findStudentUidByStudentId, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, markAccountNotificationRead, sendChatMessage, subscribeToMessagesByThread, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword, startUserPresenceHeartbeat } from '../js/db.js';
 import { login, signUp, forgotPassword, getFriendlyAuthMessage } from '../js/auth.js';
 import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import '../js/install-sw.js';
@@ -73,6 +73,23 @@ window.switchParentMode = function(mode) {
             toastStack.appendChild(toast);
             setTimeout(() => toast.remove(), 3200);
         };
+
+        // (2026-07-13) Instant tap-lock & auto-reenable for all guardian buttons; was none
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (!btn || btn.disabled || btn.classList.contains('is-busy') || btn.dataset.noTapLock === '1') return;
+            setTimeout(() => {
+                if (btn.disabled || btn.classList.contains('is-busy')) return;
+                btn.disabled = true;
+                btn.dataset.tapLocked = '1';
+                setTimeout(() => {
+                    if (btn.dataset.tapLocked === '1' && !btn.classList.contains('is-busy')) {
+                        btn.disabled = false;
+                        delete btn.dataset.tapLocked;
+                    }
+                }, 420);
+            }, 0);
+        }, true);
 
         function setButtonBusy(button, isBusy = true) {
             if (!button) return;
@@ -577,12 +594,12 @@ window.switchParentMode = function(mode) {
                 zoomDelta: 0.5,
                 wheelPxPerZoomLevel: 140
             }).setView(CAMPUS_CENTER, 17);
-            // (2026-07-13) Use OSM tiles; was broken CartoDB tiles requiring API key
+            // (2026-07-13) Lazy fast tiles: idle updates, small buffer; prev: default opts
+            const fastTileOpts = { updateWhenIdle: true, updateWhenZooming: false, keepBuffer: 2 };
             const baseMapLayers = {
-                "Streets": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }),
-                "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }),
-                "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }),
-                "Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 })
+                "Streets": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { ...fastTileOpts, maxZoom: 19, attribution: '&copy; OpenStreetMap contributors' }),
+                "Satellite": L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { ...fastTileOpts, maxZoom: 19 }),
+                "Hybrid": L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { ...fastTileOpts, maxZoom: 20 })
             };
             baseMapLayers["Streets"].addTo(map);
 
@@ -823,7 +840,18 @@ window.switchParentMode = function(mode) {
             return 'info';
         }
 
-        const _notifiedAccountEventIds = new Set();
+        // (2026-07-13) Persist shown prompt IDs across reloads; was memory Set
+        const _notifiedAccountEventIds = new Set((() => {
+            try { return JSON.parse(localStorage.getItem('securo_guardian_notified_ids') || '[]'); } catch (_) { return []; }
+        })());
+        let _isInitialGuardianNotifSnapshot = true;
+        const markNotifiedAccountEvent = (id) => {
+            if (!id) return;
+            _notifiedAccountEventIds.add(id);
+            try {
+                localStorage.setItem('securo_guardian_notified_ids', JSON.stringify(Array.from(_notifiedAccountEventIds).slice(-100)));
+            } catch (_) {}
+        };
         // (2026-07-13) 5s audible alarm and haptics for parent; was 2.4s siren
         async function triggerDevicePushNotification(title, body, options = {}) {
             if (options.urgent || options.type === 'sos') {
@@ -945,26 +973,90 @@ window.switchParentMode = function(mode) {
                 }
             });
 
-            const notifsHtml = notifications.slice(0, 25).map(item => `
-                <div class="location-alert-card active" style="margin:0; background:${item.isRead ? '#f8fafc' : '#fff1f2'}; border:1px solid ${item.isRead ? '#e2e8f0' : '#fda4af'};">
-                    <div class="location-alert-icon" style="background:${item.isRead ? '#f1f5f9' : '#fee2e2'}; color:${item.isRead ? '#64748b' : '#e11d48'};">
-                        <span class="material-symbols-outlined">${getGuardianNotificationIcon(item.type)}</span>
+            // (2026-07-13) Hide cancelled student invites not in pendingList; was lingering
+            const activePendingIds = new Set((pendingList || []).map(l => String(l?.id || '')).filter(Boolean));
+            const cleanNotifications = (notifications || []).filter(n => {
+                if ((n?.type === 'student_guardian_request' || n?.type === 'guardian_request') && !n?.resolvedStatus) {
+                    const rId = String(n?.requestId || '');
+                    if (!rId || !activePendingIds.has(rId)) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            const unreadTotal = cleanNotifications.filter(n => !n.isRead).length;
+            const activeTab = window._guardianNotifFilter === 'unread' ? 'unread' : 'all';
+            const filteredNotifs = activeTab === 'unread' ? cleanNotifications.filter(n => !n.isRead) : cleanNotifications;
+
+            // (2026-07-13) Flat divider rows matching student notifs; was boxed cards
+            const filterBarHtml = `
+                <div class="guardian-notif-filter-bar" style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 16px 8px; border-bottom:1px solid rgba(15,23,42,0.06);">
+                    <div style="display:flex; gap:6px;">
+                        <button type="button" class="guardian-notif-tab-btn" data-filter="all" style="padding:5px 12px; border-radius:999px; border:none; font-size:0.76rem; font-weight:700; cursor:pointer; background:${activeTab === 'all' ? '#ffe4e6' : '#f1f5f9'}; color:${activeTab === 'all' ? '#e11d48' : '#475569'};">All</button>
+                        <button type="button" class="guardian-notif-tab-btn" data-filter="unread" style="padding:5px 12px; border-radius:999px; border:none; font-size:0.76rem; font-weight:700; cursor:pointer; background:${activeTab === 'unread' ? '#ffe4e6' : '#f1f5f9'}; color:${activeTab === 'unread' ? '#e11d48' : '#475569'};">Unread${unreadTotal ? ` (${unreadTotal})` : ''}</button>
                     </div>
-                    <div style="flex:1; min-width:0;">
-                        <strong style="font-size:0.84rem; color:var(--ink); font-weight:800; display:block;">${escapeHtml(item.title || "Notification")}</strong>
-                        <div style="font-size:0.75rem; color:var(--muted); line-height:1.35; margin-top:1px;">${escapeHtml(item.message || "")}</div>
-                        <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px;">${escapeHtml(formatNotificationTime(item.createdAt))}</div>
-                    </div>
+                    ${unreadTotal > 0 ? `<button type="button" class="guardian-mark-all-read-btn" style="border:none; background:transparent; color:#e11d48; font-size:0.75rem; font-weight:700; cursor:pointer; padding:4px 6px;">Mark all read</button>` : ''}
                 </div>
-            `).join('');
+            `;
 
-            listEl.innerHTML = pendingHtml + notifsHtml;
+            const notifsHtml = filteredNotifs.length
+                ? filteredNotifs.slice(0, 25).map(item => `
+                    <div class="guardian-notif-entry" data-notif-id="${item.id}" data-is-read="${item.isRead ? '1' : '0'}" style="display:flex; align-items:flex-start; gap:12px; padding:14px 18px; border-bottom:1px solid rgba(15,23,42,0.05); cursor:pointer; background:${item.isRead ? '#ffffff' : 'rgba(244, 63, 94, 0.06)'}; transition:background 0.2s;">
+                        <div style="width:36px; height:36px; border-radius:10px; background:${item.isRead ? '#fff1f2' : '#ffe4e6'}; color:#e11d48; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <span class="material-symbols-outlined" style="font-size:20px;">${getGuardianNotificationIcon(item.type)}</span>
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <strong style="font-size:0.85rem; color:var(--ink); font-weight:${item.isRead ? '600' : '800'}; display:block; margin-bottom:2px;">${escapeHtml(item.title || "Notification")}</strong>
+                            <div style="font-size:0.76rem; color:${item.isRead ? 'var(--muted)' : '#1e293b'}; line-height:1.35;">${escapeHtml(item.message || "")}</div>
+                            <div style="font-size:0.72rem; color:${item.isRead ? 'var(--muted)' : '#e11d48'}; font-weight:${item.isRead ? '500' : '700'}; margin-top:5px;">${escapeHtml(formatNotificationTime(item.createdAt))}</div>
+                        </div>
+                        ${item.isRead ? '' : '<span class="notif-unread-dot" style="width:9px; height:9px; border-radius:50%; background:#e11d48; flex-shrink:0; margin-top:6px;" title="Unread"></span>'}
+                    </div>
+                `).join('')
+                : `<div style="text-align:center; padding:40px 20px; color:#94a3b8; font-size:0.82rem; font-weight:600;">${activeTab === 'unread' ? 'No unread notifications' : 'No notifications yet'}</div>`;
 
-            // (2026-07-13) Disable and spin link buttons on response; was no loading state
+            listEl.innerHTML = pendingHtml + filterBarHtml + notifsHtml;
+
+            listEl.querySelectorAll('.guardian-notif-tab-btn').forEach(tabBtn => {
+                tabBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    window._guardianNotifFilter = tabBtn.dataset.filter || 'all';
+                    renderGuardianAllDropdownNotifications();
+                };
+            });
+            const markAllBtn = listEl.querySelector('.guardian-mark-all-read-btn');
+            if (markAllBtn) {
+                markAllBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    const unreadItems = (window._guardianAccountNotifications || []).filter(n => n?.id && !n.isRead);
+                    unreadItems.forEach(n => { n.isRead = true; });
+                    renderGuardianAllDropdownNotifications();
+                    updateGuardianNotifBadge();
+                    await Promise.all(unreadItems.map(n => markAccountNotificationRead(n.id).catch(() => { })));
+                };
+            }
+            listEl.querySelectorAll('.guardian-notif-entry').forEach(card => {
+                card.onclick = async (e) => {
+                    e.stopPropagation();
+                    const nid = card.dataset.notifId;
+                    const target = (window._guardianAccountNotifications || []).find(n => String(n.id) === String(nid));
+                    if (target && !target.isRead) {
+                        target.isRead = true;
+                        renderGuardianAllDropdownNotifications();
+                        updateGuardianNotifBadge();
+                        markAccountNotificationRead(nid).catch(() => { });
+                    }
+                };
+            });
+
+            // (2026-07-13) Guard duplicate clicks & spin buttons on response; was unlocked
+            if (!window._activeParentLinkRespIds) window._activeParentLinkRespIds = new Set();
             listEl.querySelectorAll('.guardian-dropdown-accept-btn').forEach(btn => {
                 btn.onclick = async (e) => {
                     e.stopPropagation();
                     const linkId = btn.dataset.linkId;
+                    if (!linkId || window._activeParentLinkRespIds.has(linkId)) return;
+                    window._activeParentLinkRespIds.add(linkId);
                     const studentUid = btn.dataset.studentUid;
                     const studentName = btn.dataset.studentName;
                     const decBtn = btn.parentElement ? btn.parentElement.querySelector('.guardian-dropdown-decline-btn') : null;
@@ -975,12 +1067,14 @@ window.switchParentMode = function(mode) {
                         window._guardianPendingLinks = (window._guardianPendingLinks || []).filter(l => l.id !== linkId);
                         localStorage.setItem('securo_guardian_pending_links', JSON.stringify(window._guardianPendingLinks));
                         renderGuardianAllDropdownNotifications();
-                        showToast("Connected to " + studentName);
+                        showGuardianRealtimePrompt("Child Connected", `You are now linked to ${studentName}.`);
                         if (auth.currentUser) initDashboard(auth.currentUser);
                     } catch (err) {
                         setButtonBusy(btn, false);
                         if (decBtn) decBtn.disabled = false;
                         showToast(err.message || "Failed to accept", "error");
+                    } finally {
+                        window._activeParentLinkRespIds.delete(linkId);
                     }
                 };
             });
@@ -988,23 +1082,26 @@ window.switchParentMode = function(mode) {
                 btn.onclick = async (e) => {
                     e.stopPropagation();
                     const linkId = btn.dataset.linkId;
+                    if (!linkId || window._activeParentLinkRespIds.has(linkId)) return;
+                    window._activeParentLinkRespIds.add(linkId);
                     const studentUid = btn.dataset.studentUid;
                     const studentName = btn.dataset.studentName;
                     const accBtn = btn.parentElement ? btn.parentElement.querySelector('.guardian-dropdown-accept-btn') : null;
                     setButtonBusy(btn, true);
                     if (accBtn) accBtn.disabled = true;
                     try {
-                        // (2026-07-13) Pass student profile on decline to notify; was ID-only reject
                         await respondToGuardianLink(linkId, 'rejected', studentUid, { name: studentName });
                         window._guardianPendingLinks = (window._guardianPendingLinks || []).filter(l => l.id !== linkId);
                         localStorage.setItem('securo_guardian_pending_links', JSON.stringify(window._guardianPendingLinks));
                         renderGuardianAllDropdownNotifications();
-                        showToast("Request declined");
+                        showGuardianRealtimePrompt("Request Declined", `You declined the link request for ${studentName}.`);
                         if (auth.currentUser) initDashboard(auth.currentUser);
                     } catch (err) {
                         setButtonBusy(btn, false);
                         if (accBtn) accBtn.disabled = false;
                         showToast(err.message || "Failed to decline", "error");
+                    } finally {
+                        window._activeParentLinkRespIds.delete(linkId);
                     }
                 };
             });
@@ -1047,13 +1144,53 @@ window.switchParentMode = function(mode) {
             }
         } catch (_) {}
 
+        // (2026-07-13) Defer toasts until all modals close; was overlapping open modals
+        const _guardianPendingToastQueue = [];
+        let _guardianModalPollTimer = null;
+        function isAnyGuardianModalOpen() {
+            const activeOverlay = document.querySelector('.modal-overlay.active, .status-modal.active');
+            if (activeOverlay) return true;
+            const otp = document.getElementById('guardianOtpModal');
+            if (otp && getComputedStyle(otp).display !== 'none') return true;
+            const terms = document.getElementById('guardianTermsModal');
+            if (terms && getComputedStyle(terms).display !== 'none') return true;
+            return false;
+        }
+        function waitForGuardianModalsClosed(fn) {
+            if (!isAnyGuardianModalOpen()) {
+                fn();
+                return;
+            }
+            _guardianPendingToastQueue.push(fn);
+            if (!_guardianModalPollTimer) {
+                _guardianModalPollTimer = setInterval(() => {
+                    if (!isAnyGuardianModalOpen()) {
+                        clearInterval(_guardianModalPollTimer);
+                        _guardianModalPollTimer = null;
+                        while (_guardianPendingToastQueue.length > 0) {
+                            const nextFn = _guardianPendingToastQueue.shift();
+                            try { nextFn(); } catch (_) {}
+                        }
+                    }
+                }, 150);
+            }
+        }
+
+        // (2026-07-13) Bottom realtime toast with swipe/tap; was top:20px
         function showGuardianRealtimePrompt(title, message) {
+            if (isAnyGuardianModalOpen()) {
+                const existing = document.getElementById('guardianRealtimePrompt');
+                if (existing) existing.remove();
+                waitForGuardianModalsClosed(() => showGuardianRealtimePrompt(title, message));
+                return;
+            }
             const existing = document.getElementById('guardianRealtimePrompt');
             if (existing) existing.remove();
 
             const toast = document.createElement('div');
             toast.id = 'guardianRealtimePrompt';
-            toast.style.cssText = 'position:fixed; top:20px; left:20px; right:20px; background:white; padding:16px; border-radius:18px; box-shadow:0 12px 36px rgba(0,0,0,0.18); border:1px solid #f43f5e; z-index:9999; display:flex; align-items:center; gap:12px; cursor:pointer;';
+            toast.className = 'guardian-realtime-toast';
+            toast.style.cssText = 'position:fixed; bottom:calc(88px + env(safe-area-inset-bottom, 0px)); left:16px; right:16px; max-width:440px; margin:0 auto; background:white; padding:16px; border-radius:18px; box-shadow:0 12px 36px rgba(0,0,0,0.18); border:1.5px solid #f43f5e; z-index:9999; display:flex; align-items:center; gap:12px; cursor:grab; touch-action:none; user-select:none; transition:transform 0.25s ease, opacity 0.25s ease;';
             toast.innerHTML = `
                 <div style="width:40px; height:40px; border-radius:12px; background:#fff1f2; color:#f43f5e; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                     <span class="material-symbols-outlined">notifications_active</span>
@@ -1062,14 +1199,81 @@ window.switchParentMode = function(mode) {
                     <strong style="font-size:0.88rem; color:#0f172a; display:block;">${escapeHtml(title)}</strong>
                     <span style="font-size:0.78rem; color:#64748b; line-height:1.3; display:block; margin-top:2px;">${escapeHtml(message)}</span>
                 </div>
+                <button type="button" class="guardian-toast-close" aria-label="Dismiss" style="width:28px; height:28px; border-radius:8px; border:none; background:rgba(15,23,42,0.06); color:#64748b; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+                </button>
             `;
-            toast.onclick = () => {
+
+            let dismissed = false;
+            let autoTimer = null;
+            const dismissToast = (tx = 0, ty = 30) => {
+                if (dismissed) return;
+                dismissed = true;
+                if (autoTimer) clearTimeout(autoTimer);
+                toast.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+                toast.style.transform = `translate(${tx}px, ${ty}px)`;
+                toast.style.opacity = '0';
+                setTimeout(() => { if (toast.parentNode) toast.remove(); }, 260);
+            };
+
+            let startX = 0, startY = 0, curX = 0, curY = 0, dragging = false, didSwipe = false;
+
+            const onDragStart = (x, y) => {
+                dragging = true;
+                didSwipe = false;
+                startX = x;
+                startY = y;
+                curX = 0;
+                curY = 0;
+                toast.style.transition = 'none';
+                toast.style.cursor = 'grabbing';
+            };
+            const onDragMove = (x, y) => {
+                if (!dragging || dismissed) return;
+                curX = x - startX;
+                curY = Math.max(0, y - startY);
+                if (Math.abs(curX) > 8 || Math.abs(curY) > 8) didSwipe = true;
+                const progress = Math.min(1, Math.max(Math.abs(curX) / 140, Math.abs(curY) / 80));
+                toast.style.transform = `translate(${curX}px, ${curY}px)`;
+                toast.style.opacity = String(Math.max(0.15, 1 - progress * 0.85));
+            };
+            const onDragEnd = () => {
+                if (!dragging || dismissed) return;
+                dragging = false;
+                toast.style.cursor = 'grab';
+                if (Math.abs(curX) > 65) {
+                    dismissToast(curX > 0 ? window.innerWidth : -window.innerWidth, curY);
+                } else if (curY > 35) {
+                    dismissToast(curX, 120);
+                } else {
+                    toast.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+                    toast.style.transform = 'translate(0, 0)';
+                    toast.style.opacity = '1';
+                }
+            };
+
+            toast.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('button')) return;
+                toast.setPointerCapture?.(e.pointerId);
+                onDragStart(e.clientX, e.clientY);
+            });
+            toast.addEventListener('pointermove', (e) => onDragMove(e.clientX, e.clientY));
+            toast.addEventListener('pointerup', onDragEnd);
+            toast.addEventListener('pointercancel', onDragEnd);
+
+            toast.onclick = (e) => {
+                if (e.target.closest('.guardian-toast-close')) {
+                    e.stopPropagation();
+                    dismissToast(0, 24);
+                    return;
+                }
+                if (didSwipe) return;
                 const drop = document.getElementById('guardianNotifDropdown');
                 if (drop) drop.style.display = 'block';
-                toast.remove();
+                dismissToast(0, 24);
             };
             document.body.appendChild(toast);
-            setTimeout(() => { if (toast && toast.parentNode) toast.remove(); }, 8000);
+            autoTimer = setTimeout(() => dismissToast(0, 24), 6000);
         }
 
         function renderGuardianNotificationHistory(notifications = []) {
@@ -1102,9 +1306,13 @@ window.switchParentMode = function(mode) {
 
             renderGuardianDropdownNotifications(notifications);
 
+            // (2026-07-13) Skip popup replay on initial reload; was popping every load
+            const isInitialBatch = _isInitialGuardianNotifSnapshot;
+            _isInitialGuardianNotifSnapshot = false;
             notifications.forEach((item) => {
                 if (!item.isRead && !_notifiedAccountEventIds.has(item.id)) {
-                    _notifiedAccountEventIds.add(item.id);
+                    markNotifiedAccountEvent(item.id);
+                    if (isInitialBatch) return;
                     triggerBrowserNotification(item.title || "Campus Update", item.message || "");
                     showGuardianRealtimePrompt(item.title || "New Notification", item.message || "");
                     // (2026-07-13) Refresh dashboard on declined notification; was accepted only
@@ -1183,8 +1391,11 @@ window.switchParentMode = function(mode) {
             if (activeStudentName) {
                 activeStudentName.textContent = `${childDisplayName} (Pending)`;
             }
+            // (2026-07-13) Reflect student-initiated invite text; was always waiting
             if (lastSeen) {
-                lastSeen.textContent = `Waiting for ${childDisplayName} to approve`;
+                lastSeen.textContent = link.requestedBy === 'student'
+                    ? `${childDisplayName} invited you to connect`
+                    : `Waiting for ${childDisplayName} to approve`;
             }
             if (statusDot) statusDot.style.background = '#f59e0b';
             if (studentAvatar) studentAvatar.textContent = 'â³';
@@ -1301,6 +1512,7 @@ window.switchParentMode = function(mode) {
             return `${timeStr} ${dayStr}`;
         }
 
+        // (2026-07-13) Hide campus chip if child offline/no event; was fake inside
         function updateGuardianTrackingChip() {
             const banner = document.getElementById('guardianTrackingStatusBanner');
             const icon = document.getElementById('guardianTrackingStatusIcon');
@@ -1312,11 +1524,15 @@ window.switchParentMode = function(mode) {
                 return;
             }
 
-            banner.style.display = 'inline-flex';
-            const currentChild = linkedChildrenData[activeChildStatusIndex % linkedChildrenData.length];
-            if (!currentChild) return;
+            const currentChild = (activeLink?.studentUid && linkedChildrenData.find(c => c.id === activeLink.studentUid))
+                || linkedChildrenData[activeChildStatusIndex % linkedChildrenData.length];
+            if (!currentChild || currentChild.isOnline === false || typeof currentChild.isInside !== 'boolean' || !currentChild.timestamp) {
+                banner.style.display = 'none';
+                return;
+            }
 
-            const isInside = currentChild.isInside !== false;
+            banner.style.display = 'inline-flex';
+            const isInside = currentChild.isInside === true;
             banner.classList.toggle('is-inside', isInside);
             banner.classList.toggle('is-outside', !isInside);
             icon.textContent = isInside ? 'login' : 'logout';
@@ -1363,6 +1579,11 @@ window.switchParentMode = function(mode) {
         // (2026-07-13) Resolve guardian name & initials live; was uid only
         async function initDashboard(user) {
             console.log("Initializing dashboard for:", user.email);
+            // (2026-07-13) Init map before data awaits for fast load; prev: after fetches
+            try {
+                initMap();
+                if (map) requestAnimationFrame(() => map.invalidateSize(false));
+            } catch (_) {}
             // (2026-07-13) Request push notification permissions on init; was deferred
             if (window.Capacitor?.Plugins?.LocalNotifications) {
                 window.Capacitor.Plugins.LocalNotifications.requestPermissions().catch(() => {});
@@ -1370,74 +1591,9 @@ window.switchParentMode = function(mode) {
                 Notification.requestPermission().catch(() => {});
             }
             try {
-                guardianProfile = await getUserProfile(user.uid);
-                const currentAuthEmail = (user.email || '').toLowerCase().trim();
-                const profileEmailNorm = (guardianProfile?.email || '').toLowerCase().trim();
-
-                // (2026-07-13) Fix mismatched guardian profile on login; was stale email
-                if (currentAuthEmail && profileEmailNorm && currentAuthEmail !== profileEmailNorm) {
-                    const matchedUser = await findUserByEmail(currentAuthEmail);
-                    const fixedName = matchedUser?.name || user.displayName || currentAuthEmail.split('@')[0];
-                    guardianProfile = {
-                        ...(guardianProfile || {}),
-                        ...(matchedUser || {}),
-                        email: currentAuthEmail,
-                        name: fixedName,
-                        role: 'guardian'
-                    };
-                    await saveUserProfile(user.uid, {
-                        email: currentAuthEmail,
-                        name: fixedName,
-                        role: 'guardian'
-                    }).catch(() => {});
-                }
-
-                const emailPrefix = (user.email || '').split('@')[0].toLowerCase();
-                if (!guardianProfile?.name || guardianProfile.name.toLowerCase() === emailPrefix) {
-                    const byEmail = await findUserByEmail(user.email);
-                    if (byEmail?.name) {
-                        guardianProfile = { ...(guardianProfile || {}), ...byEmail };
-                    }
-                }
-                if (guardianProfile) guardianProfile.uid = user.uid;
-                // (2026-07-13) Ensure guardian role in Firestore for rules; was unchecked
-                if (!guardianProfile || guardianProfile.role !== 'guardian') {
-                    guardianProfile = { ...(guardianProfile || {}), uid: user.uid, role: 'guardian', email: user.email || guardianProfile?.email || '' };
-                    await saveUserProfile(user.uid, {
-                        name: guardianProfile.name || user.displayName || (user.email ? user.email.split('@')[0] : 'Guardian'),
-                        email: user.email || guardianProfile.email || '',
-                        role: 'guardian'
-                    }).catch(() => {});
-                }
-                console.log("Guardian Profile:", guardianProfile);
-                updateGuardianProfileUI(guardianProfile?.name);
-
-                if (!guardianProfileUnsub) {
-                    const normEmail = (user.email || '').toLowerCase().trim();
-                    const handleProfileSnap = (data) => {
-                        if (data?.name) {
-                            if (!guardianProfile) guardianProfile = { uid: user.uid };
-                            guardianProfile.name = data.name;
-                            updateGuardianProfileUI(data.name);
-                        }
-                    };
-                    try {
-                        guardianProfileUnsub = onSnapshot(doc(db, "users", user.uid), (snap) => {
-                            if (snap.exists()) handleProfileSnap(snap.data());
-                        }, () => {});
-                    } catch (e) {}
-                    if (normEmail) {
-                        try {
-                            const eq = query(collection(db, "users"), where("email", "==", normEmail));
-                            onSnapshot(eq, (snap) => {
-                                if (!snap.empty) handleProfileSnap(snap.docs[0].data());
-                            }, () => {});
-                        } catch (e) {}
-                    }
-                }
-
+                // (2026-07-13) Render fallback guardian name immediately; prev: waited on DB
+                updateGuardianProfileUI(user.displayName || (user.email ? user.email.split('@')[0] : 'Guardian'));
                 if (notificationUnsub) notificationUnsub();
-                // (2026-07-13) Subscribe guardian notifs by UID and email; was UID only
                 notificationUnsub = subscribeToAccountNotifications(user.uid, renderGuardianNotificationHistory, user.email);
 
                 if (guardianLinksLiveUnsub) guardianLinksLiveUnsub();
@@ -1466,11 +1622,17 @@ window.switchParentMode = function(mode) {
                     try { localStorage.setItem('securo_guardian_pending_links', JSON.stringify(pending)); } catch (_) {}
                     renderGuardianAllDropdownNotifications();
 
-                    // (2026-07-13) Hide child status & silence stale toast; was stuck card
+                    // (2026-07-13) Toast on child invite, accept, or decline; was accept/decline
                     allLiveLinks.forEach(l => {
-                        if (l.status === 'accepted') {
+                        if (l.status === 'pending' && l.requestedBy === 'student') {
+                            const invKey = 'pending_student_invite_' + l.id;
+                            if (!_notifiedAccountEventIds.has(invKey)) {
+                                markNotifiedAccountEvent(invKey);
+                                showGuardianRealtimePrompt("Child Link Request", `${l.studentName || "Your child"} invited you to connect as their guardian.`);
+                            }
+                        } else if (l.status === 'accepted') {
                             if (!_notifiedAccountEventIds.has(l.id)) {
-                                _notifiedAccountEventIds.add(l.id);
+                                markNotifiedAccountEvent(l.id);
                                 if (!_isInitialGuardianLinkSnapshot) {
                                     showGuardianRealtimePrompt("Child Connected", `${l.studentName || "Your child"} has linked to your guardian account.`);
                                 }
@@ -1478,9 +1640,12 @@ window.switchParentMode = function(mode) {
                         } else if (l.status === 'rejected' || l.status === 'declined') {
                             const decKey = 'declined_' + l.id;
                             if (!_notifiedAccountEventIds.has(decKey)) {
-                                _notifiedAccountEventIds.add(decKey);
-                                showGuardianRealtimePrompt("Child Link Declined", `${l.studentName || "Your child"} declined your link request.`);
-                                showToast("Link request declined by child.", "error");
+                                markNotifiedAccountEvent(decKey);
+                                // (2026-07-13) Skip declined popup on initial load; was replaying
+                                if (!_isInitialGuardianLinkSnapshot) {
+                                    showGuardianRealtimePrompt("Child Link Declined", `${l.studentName || "Your child"} declined your link request.`);
+                                    showToast("Link request declined by child.", "error");
+                                }
                             }
                         }
                     });
@@ -1512,12 +1677,85 @@ window.switchParentMode = function(mode) {
                         if (studentStatusCard) studentStatusCard.style.display = 'none';
                         const addBtn = document.getElementById('addStudentBtn');
                         if (addBtn) addBtn.style.display = 'flex';
+                        // (2026-07-13) Prompt Link Child modal immediately on empty snapshot; was delayed
+                        if (!window.__securoParentLinkPromptShown) {
+                            window.__securoParentLinkPromptShown = true;
+                            document.getElementById('linkModal')?.classList.add('active');
+                        }
                     }
                     updateGuardianNotifBadge();
                 }, user.email);
 
-                // (2026-07-13) Sync and load links by UID and email; was UID-only query
-                await syncGuardianLinksForGuardian(user.uid, { email: user.email, name: user.name }).catch(() => {});
+                // (2026-07-13) Run profile reconciliation in background; prev: blocked links
+                (async () => {
+                    try {
+                        guardianProfile = await getUserProfile(user.uid);
+                        const currentAuthEmail = (user.email || '').toLowerCase().trim();
+                        const profileEmailNorm = (guardianProfile?.email || '').toLowerCase().trim();
+
+                        if (currentAuthEmail && profileEmailNorm && currentAuthEmail !== profileEmailNorm) {
+                            const matchedUser = await findUserByEmail(currentAuthEmail);
+                            const fixedName = matchedUser?.name || user.displayName || currentAuthEmail.split('@')[0];
+                            guardianProfile = {
+                                ...(guardianProfile || {}),
+                                ...(matchedUser || {}),
+                                email: currentAuthEmail,
+                                name: fixedName,
+                                role: 'guardian'
+                            };
+                            await saveUserProfile(user.uid, {
+                                email: currentAuthEmail,
+                                name: fixedName,
+                                role: 'guardian'
+                            }).catch(() => {});
+                        }
+
+                        const emailPrefix = (user.email || '').split('@')[0].toLowerCase();
+                        if (!guardianProfile?.name || guardianProfile.name.toLowerCase() === emailPrefix) {
+                            const byEmail = await findUserByEmail(user.email);
+                            if (byEmail?.name) {
+                                guardianProfile = { ...(guardianProfile || {}), ...byEmail };
+                            }
+                        }
+                        if (guardianProfile) guardianProfile.uid = user.uid;
+                        if (!guardianProfile || guardianProfile.role !== 'guardian') {
+                            guardianProfile = { ...(guardianProfile || {}), uid: user.uid, role: 'guardian', email: user.email || guardianProfile?.email || '' };
+                            await saveUserProfile(user.uid, {
+                                name: guardianProfile.name || user.displayName || (user.email ? user.email.split('@')[0] : 'Guardian'),
+                                email: user.email || guardianProfile.email || '',
+                                role: 'guardian'
+                            }).catch(() => {});
+                        }
+                        updateGuardianProfileUI(guardianProfile?.name);
+
+                        if (!guardianProfileUnsub) {
+                            const normEmail = (user.email || '').toLowerCase().trim();
+                            const handleProfileSnap = (data) => {
+                                if (data?.name) {
+                                    if (!guardianProfile) guardianProfile = { uid: user.uid };
+                                    guardianProfile.name = data.name;
+                                    updateGuardianProfileUI(data.name);
+                                }
+                            };
+                            try {
+                                guardianProfileUnsub = onSnapshot(doc(db, "users", user.uid), (snap) => {
+                                    if (snap.exists()) handleProfileSnap(snap.data());
+                                }, () => {});
+                            } catch (e) {}
+                            if (normEmail) {
+                                try {
+                                    const eq = query(collection(db, "users"), where("email", "==", normEmail));
+                                    onSnapshot(eq, (snap) => {
+                                        if (!snap.empty) handleProfileSnap(snap.docs[0].data());
+                                    }, () => {});
+                                } catch (e) {}
+                            }
+                        }
+                    } catch (_) {}
+                })();
+
+                // (2026-07-13) Sync links in background without blocking map/UI; was awaited
+                syncGuardianLinksForGuardian(user.uid, { email: user.email, name: user.name }).catch(() => {});
                 const links = await getAcceptedLinksForGuardian(user.uid, user.email);
                 console.log("Accepted Links:", links.length);
                 renderStudentSelector(links);
@@ -1530,10 +1768,11 @@ window.switchParentMode = function(mode) {
                     document.getElementById('requestLocationBtn').style.display = 'inline-flex';
                     selectStudent(links[0]);
 
-                    linkedChildrenData = await Promise.all(links.map(async (link) => {
+                    // (2026-07-13) Load child history in background; prev: blocking await
+                    Promise.all(links.map(async (link) => {
                         const name = await resolveChildDisplayName(link);
-                        let isInside = true;
-                        let ts = Date.now();
+                        let isInside = null;
+                        let ts = null;
                         try {
                             const hist = await getAttendanceHistory(link.studentUid);
                             if (hist && hist.length > 0) {
@@ -1550,11 +1789,14 @@ window.switchParentMode = function(mode) {
                             id: link.studentUid,
                             name: name,
                             isInside: isInside,
+                            isOnline: false,
                             timestamp: ts
                         };
-                    }));
-                    updateGuardianTrackingChip();
-                    setupChildStatusRotation();
+                    })).then((data) => {
+                        linkedChildrenData = data;
+                        updateGuardianTrackingChip();
+                        setupChildStatusRotation();
+                    }).catch(() => {});
                 } else {
                     // (2026-07-13) Reset active child & hide child card when unlinked; was retained
                     activeLink = null;
@@ -1575,19 +1817,32 @@ window.switchParentMode = function(mode) {
                     // (2026-07-13) Filter strictly pending links; was allLinks[0] fallback
                     const pendingLinks = (allLinks || []).filter((link) => link.status === 'pending');
                     if (pendingLinks.length > 0) {
+                        const firstPending = pendingLinks[0];
+                        const isChildInvite = firstPending.requestedBy === 'student';
                         document.getElementById('addStudentBtn').style.display = 'none';
-                        showToast("Waiting for child approval...");
-                        setPendingGuardianState(pendingLinks[0]);
+                        // (2026-07-13) Match toast & copy to invite sender; was child approval
+                        showToast(isChildInvite ? "You have a child link invitation." : "Waiting for child approval...");
+                        setPendingGuardianState(firstPending);
                         document.getElementById('vaultEmpty').style.display = 'block';
-                        document.getElementById('vaultEmpty').querySelector('h3').textContent = 'Vault unlocks after approval';
-                        document.getElementById('vaultEmpty').querySelector('p').textContent = 'Your child needs to accept your invitation before shared vault media appears here.';
+                        document.getElementById('vaultEmpty').querySelector('h3').textContent = isChildInvite ? 'Accept invite to unlock Vault' : 'Vault unlocks after approval';
+                        document.getElementById('vaultEmpty').querySelector('p').textContent = isChildInvite
+                            ? 'Accept your child\'s invitation to view shared vault media here.'
+                            : 'Your child needs to accept your invitation before shared vault media appears here.';
                         document.getElementById('alertsEmpty').style.display = 'block';
-                        document.getElementById('alertsEmpty').querySelector('h3').textContent = 'Safety feed pending approval';
-                        document.getElementById('alertsEmpty').querySelector('p').textContent = 'Emergency alerts and attendance updates will appear after your child approves your request.';
+                        document.getElementById('alertsEmpty').querySelector('h3').textContent = isChildInvite ? 'Accept invite to view Safety feed' : 'Safety feed pending approval';
+                        document.getElementById('alertsEmpty').querySelector('p').textContent = isChildInvite
+                            ? 'Accept your child\'s invitation to receive emergency alerts and attendance updates.'
+                            : 'Emergency alerts and attendance updates will appear after your child approves your request.';
                     } else {
                         setPendingGuardianState(null);
                         if (studentStatusCard) studentStatusCard.style.display = 'none';
                         document.getElementById('addStudentBtn').style.display = 'flex';
+                        renderStudentSelector([]);
+                        // (2026-07-13) Prompt each load while unlinked; prev: once per session
+                        if (!window.__securoParentLinkPromptShown) {
+                            window.__securoParentLinkPromptShown = true;
+                            document.getElementById('linkModal')?.classList.add('active');
+                        }
                     }
                 }
             } catch (err) {
@@ -1687,8 +1942,10 @@ window.switchParentMode = function(mode) {
             }
         });
 
-        // Modal Handlers
-        const closeLinkModal = () => document.getElementById('linkModal').classList.remove('active');
+        // (2026-07-13) Close only; re-prompts on next load; prev: session dismiss flag
+        const closeLinkModal = () => {
+            document.getElementById('linkModal').classList.remove('active');
+        };
         document.getElementById('addStudentBtn').onclick = () => {
             document.getElementById('linkModal').classList.add('active');
         };
@@ -1793,28 +2050,36 @@ window.switchParentMode = function(mode) {
         document.getElementById('cancelPendingRequestBtn')?.addEventListener('click', async () => {
             if (!pendingGuardianLink?.id && !pendingGuardianLink?.studentId) return;
 
+            // (2026-07-13) Capture link fields before await; was null after snapshot
+            const cancelledId = pendingGuardianLink.id;
+            const cancelledSid = pendingGuardianLink.studentId;
+            const cancelledUid = pendingGuardianLink.studentUid;
             const button = document.getElementById('cancelPendingRequestBtn');
             try {
                 setButtonBusy(button, true);
-                // (2026-07-13) Pass student profile to remove link & clear cache; was id only
-                await removeGuardianLink(pendingGuardianLink.id, {
+                await removeGuardianLink(cancelledId, {
                     guardianId: auth.currentUser?.uid,
                     guardianEmail: auth.currentUser?.email,
-                    studentId: pendingGuardianLink.studentId,
-                    studentUid: pendingGuardianLink.studentUid
+                    studentId: cancelledSid,
+                    studentUid: cancelledUid
                 });
-                const cancelledId = pendingGuardianLink.id;
-                const cancelledSid = pendingGuardianLink.studentId;
-                const cancelledUid = pendingGuardianLink.studentUid;
                 pendingGuardianLink = null;
                 window._guardianPendingLinks = (window._guardianPendingLinks || []).filter(l => l.id !== cancelledId && (!cancelledSid || String(l.studentId) !== String(cancelledSid)) && (!cancelledUid || l.studentUid !== cancelledUid));
                 try { localStorage.setItem('securo_guardian_pending_links', JSON.stringify(window._guardianPendingLinks)); } catch (_) {}
                 renderGuardianAllDropdownNotifications();
-                document.getElementById('studentIdInput').value = '';
+                const pendingCard = document.getElementById('pendingStateCard');
+                if (pendingCard) {
+                    pendingCard.classList.remove('active');
+                    pendingCard.style.display = 'none';
+                }
+                const sidInput = document.getElementById('studentIdInput');
+                if (sidInput) sidInput.value = '';
                 showToast("Pending request cancelled.");
-                document.getElementById('addStudentBtn').style.display = 'flex';
-                document.getElementById('linkModal').classList.add('active');
-                await initDashboard(auth.currentUser);
+                const addBtn = document.getElementById('addStudentBtn');
+                if (addBtn) addBtn.style.display = 'flex';
+                const linkModalEl = document.getElementById('linkModal');
+                if (linkModalEl) linkModalEl.classList.add('active');
+                if (auth.currentUser) await initDashboard(auth.currentUser);
             } catch (error) {
                 console.warn("Cancel pending request failed:", error);
                 showToast("Could not cancel that request right now.", "error");
@@ -1997,8 +2262,18 @@ window.switchParentMode = function(mode) {
             }
 
             if (currentToken !== _renderStudentSelectorToken) return;
-            // (2026-07-13) Guard against duplicate student chips in selector bar; was duplicate append
+            // (2026-07-13) Show empty dashed chip when no children linked; was blank
             bar.innerHTML = '';
+            if (!resolvedList.length) {
+                const emptyChip = document.createElement('div');
+                emptyChip.className = 'selector-chip guardian-empty-child-chip';
+                emptyChip.style.cssText = 'background:rgba(255,255,255,0.88); border:1px dashed rgba(244,63,94,0.32); color:#64748b; font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer;';
+                emptyChip.title = 'Tap to link a child';
+                emptyChip.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px; color:var(--primary);">family_restroom</span><span>No children linked yet</span>';
+                emptyChip.onclick = () => document.getElementById('linkModal')?.classList.add('active');
+                bar.appendChild(emptyChip);
+                return;
+            }
             for (const { link, resolvedName } of resolvedList) {
                 const normName = (resolvedName || '').trim().toLowerCase();
                 const existing = [...bar.querySelectorAll('.selector-chip')].some(c => (c.textContent || '').trim().toLowerCase() === normName);
@@ -2113,7 +2388,8 @@ window.switchParentMode = function(mode) {
             clearStudentMarker();
             // (2026-07-13) Clear previous child's SOS pin on switch; was lingering
             clearSosMarker();
-            renderLocationAlert("Waiting for your child's live location...");
+            // (2026-07-13) Avoid redundant waiting alert card; was stacking on card
+            renderLocationAlert("");
             document.getElementById('lastSeen').textContent = "Waiting for location...";
             document.getElementById('statusDot').style.background = 'var(--red)';
             startMonitoring(link.studentUid);
@@ -2456,6 +2732,11 @@ window.switchParentMode = function(mode) {
             if (isInactiveSession) {
                 latestStudentLocation = null;
                 clearStudentMarker();
+                // (2026-07-13) Hide campus banner & alert when offline; was stale green
+                renderLocationAlert("");
+                const offlineChild = linkedChildrenData.find(c => c.id === activeLink.studentUid);
+                if (offlineChild) offlineChild.isOnline = false;
+                updateGuardianTrackingChip();
                 document.getElementById('lastSeen').innerHTML = `<span style="color:#64748b; font-weight:700;">Student Offline / Signed Out</span> · Tracking stopped`;
                 document.getElementById('statusDot').style.background = '#94a3b8';
                 const locateBtn = document.getElementById('locateBtn');
@@ -2484,10 +2765,12 @@ window.switchParentMode = function(mode) {
                 const currentChild = linkedChildrenData.find(c => c.id === activeLink.studentUid);
                 if (currentChild) {
                     const prevInside = currentChild.isInside;
+                    // (2026-07-13) Mark online & alert only on boolean change; was null fire
+                    currentChild.isOnline = true;
                     currentChild.isInside = isInside;
                     currentChild.timestamp = loc.updatedAt?.toDate ? loc.updatedAt.toDate().getTime() : Date.now();
                     updateGuardianTrackingChip();
-                    if (prevInside !== undefined && prevInside !== isInside) {
+                    if (typeof prevInside === 'boolean' && prevInside !== isInside) {
                         const cName = currentChild.name || 'Your child';
                         const gTitle = isInside ? `Campus Entry: ${cName}` : `Campus Exit: ${cName}`;
                         const gBody = isInside ? `${cName} entered CTU campus grounds.` : `${cName} exited CTU campus grounds. Tracking is paused for privacy.`;
@@ -2813,6 +3096,11 @@ window.switchParentMode = function(mode) {
         });
 
         function showToast(msg, type = 'success') {
+            // (2026-07-13) Queue toast until active modal closes; was showing under modal
+            if (typeof isAnyGuardianModalOpen === 'function' && isAnyGuardianModalOpen()) {
+                waitForGuardianModalsClosed(() => showToast(msg, type));
+                return;
+            }
             const toast = document.getElementById("toastNotify");
             if (!toast) return;
             const msgEl = document.getElementById("toastMsg");
@@ -2855,6 +3143,16 @@ window.switchParentMode = function(mode) {
         }
 
         // --- Auth Hub ---
+        // (2026-07-13) Pre-show dashboard & map if cached session; prev: waited on auth
+        try {
+            const initReqView = new URLSearchParams(window.location.search).get('view');
+            if (initReqView !== 'auth' && (localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated'))) {
+                window.switchParentMode('dashboard');
+                initMap();
+                if (map) requestAnimationFrame(() => map.invalidateSize(false));
+            }
+        } catch (_) {}
+
         onAuthStateChanged(auth, (user) => {
             const reqView = new URLSearchParams(window.location.search).get('view');
             // (2026-07-13) Broadcast live guardian presence heartbeat; was partial
@@ -2880,7 +3178,13 @@ window.switchParentMode = function(mode) {
         try {
             const ch = new BroadcastChannel('securo_users_channel');
             ch.onmessage = (e) => {
-                if (e.data?.type === 'guardian_link_created' || e.data?.type === 'guardian_link_updated') {
+                if (e.data?.type === 'guardian_link_created' || e.data?.type === 'guardian_link_updated' || e.data?.type === 'guardian_link_removed' || e.data?.type === 'guardian_link_responded') {
+                    if (e.data?.type === 'guardian_link_removed') {
+                        const delSet = new Set([e.data.linkId, ...(e.data.deletedIds || [])].filter(Boolean).map(String));
+                        window._guardianPendingLinks = (window._guardianPendingLinks || []).filter(l => !delSet.has(String(l?.id || '')));
+                        try { localStorage.setItem('securo_guardian_pending_links', JSON.stringify(window._guardianPendingLinks)); } catch (_) {}
+                        renderGuardianAllDropdownNotifications();
+                    }
                     if (auth.currentUser) initDashboard(auth.currentUser);
                 }
             };

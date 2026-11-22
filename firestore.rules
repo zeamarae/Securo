@@ -35,8 +35,9 @@ service cloud.firestore {
     }
     
     // Users collection
+    // (2026-07-13) Allow read for student ID validation & OTP; was signedIn only
     match /users/{userId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn();
       allow update: if isOwner(userId) || isAdmin();
       allow delete: if isOwner(userId) || isAdmin();
@@ -78,9 +79,9 @@ service cloud.firestore {
       allow delete: if isAdmin() || isStaff();
     }
     
-    // (2026-07-13) Allow signed in users to read guardian links; was restricted
+    // (2026-07-13) Allow read for parent OTP lookup; was signedIn only
     match /guardian_links/{linkId} {
-      allow read: if isSignedIn();
+      allow read: if true;
       allow create: if isSignedIn();
       allow update: if isSignedIn();
       allow delete: if isSignedIn();
@@ -129,15 +130,17 @@ service cloud.firestore {
     }
     
     // Account Notifications
+    // (2026-07-13) Allow sender (sourceUserId) to clean up cancelled invite notifs; was owner only
     match /notifications/{notificationId} {
       allow read: if isSignedIn() && (
         isAdmin() ||
         isOwner(resource.data.userId) ||
-        isOwner(resource.data.recipientUid)
+        isOwner(resource.data.recipientUid) ||
+        isOwner(resource.data.sourceUserId)
       );
       allow create: if isSignedIn();
-      allow update: if isOwner(resource.data.userId) || isOwner(resource.data.recipientUid) || isAdmin();
-      allow delete: if isOwner(resource.data.userId) || isOwner(resource.data.recipientUid) || isAdmin();
+      allow update: if isOwner(resource.data.userId) || isOwner(resource.data.recipientUid) || isOwner(resource.data.sourceUserId) || isAdmin();
+      allow delete: if isOwner(resource.data.userId) || isOwner(resource.data.recipientUid) || isOwner(resource.data.sourceUserId) || isAdmin();
     }
     
     // Audit Logs (Admin only)
@@ -146,6 +149,11 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow update: if false;
       allow delete: if false;
+    }
+
+    // (2026-07-13) Store reset password sync markers; was unmapped collection
+    match /user_passwords/{email} {
+      allow read, write: if true;
     }
   }
 }
