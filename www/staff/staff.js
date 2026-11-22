@@ -4495,10 +4495,12 @@ if (submitGadPmBtn) {
         submitGadPmBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">hourglass_top</span>';
 
         try {
+            // (2026-07-13) Pass staff role & real profile name to GAD message; was student
             await sendGADMessage({
                 studentUid: appState.user.uid,
-                studentName: appState.user.name,
-                studentId: appState.user.studentId,
+                studentName: appState.profile?.name || appState.user.name || "Campus Staff",
+                studentId: appState.profile?.studentId || appState.user.studentId || "",
+                role: "staff",
                 isAnonymous: isAnon,
                 subject: category === 'counseling' ? 'Counseling Request' : 'GAD Inquiry',
                 category,

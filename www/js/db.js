@@ -1445,24 +1445,118 @@ export const getEmergencyPostById = async (postId) => {
         return Date.now() / 1000;
     };
 
+    // (2026-07-13) Persist all chat messages to localStorage & IDB; was sent-only 300 cap
+    const MSG_IDB_NAME = "securo_messages_cache_db";
+    const MSG_IDB_STORE = "kv";
+    let _memChatCache = null;
+    let _msgIdbWriteTimer = null;
+
+    const normalizeMsgForCache = (m) => {
+        if (!m || typeof m !== "object") return m;
+        const c = { ...m };
+        if (c.timestamp && typeof c.timestamp.toMillis === "function") {
+            const ms = c.timestamp.toMillis();
+            c.timestamp = { seconds: Math.floor(ms / 1000), nanoseconds: 0 };
+            if (!c.localTime) c.localTime = ms;
+        } else if (c.timestamp && typeof c.timestamp.seconds === "number") {
+            c.timestamp = { seconds: c.timestamp.seconds, nanoseconds: c.timestamp.nanoseconds || 0 };
+            if (!c.localTime) c.localTime = c.timestamp.seconds * 1000;
+        }
+        if (c.createdAt && typeof c.createdAt.toMillis === "function") {
+            const ms = c.createdAt.toMillis();
+            c.createdAt = { seconds: Math.floor(ms / 1000), nanoseconds: 0 };
+        }
+        if (c.seenAt && typeof c.seenAt.toMillis === "function") {
+            const ms = c.seenAt.toMillis();
+            c.seenAt = { seconds: Math.floor(ms / 1000), nanoseconds: 0 };
+        }
+        return c;
+    };
+
+    const openMsgCacheDB = () => new Promise((resolve, reject) => {
+        if (typeof indexedDB === "undefined") return reject(new Error("no idb"));
+        const req = indexedDB.open(MSG_IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+            if (!req.result.objectStoreNames.contains(MSG_IDB_STORE)) {
+                req.result.createObjectStore(MSG_IDB_STORE);
+            }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+
+    const scheduleMsgIdbPut = (key, list) => {
+        if (_msgIdbWriteTimer) clearTimeout(_msgIdbWriteTimer);
+        _msgIdbWriteTimer = setTimeout(async () => {
+            try {
+                const dbInst = await openMsgCacheDB();
+                const tx = dbInst.transaction(MSG_IDB_STORE, "readwrite");
+                tx.objectStore(MSG_IDB_STORE).put(list, key);
+                tx.oncomplete = () => dbInst.close();
+            } catch (_) { }
+        }, 400);
+    };
+
+    const hydrateChatCacheFromIdb = async () => {
+        try {
+            const dbInst = await openMsgCacheDB();
+            const stored = await new Promise((resolve) => {
+                const tx = dbInst.transaction(MSG_IDB_STORE, "readonly");
+                const req = tx.objectStore(MSG_IDB_STORE).get("chat_messages");
+                req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : null);
+                req.onerror = () => resolve(null);
+            });
+            dbInst.close();
+            if (stored && stored.length) {
+                const current = readLocalChatMessages();
+                if (stored.length > current.length) {
+                    _memChatCache = mergeChatMessagesList(stored, current);
+                    try { localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(_memChatCache.slice(-1500))); } catch (_) { }
+                }
+            }
+        } catch (_) { }
+    };
+    if (typeof window !== "undefined") hydrateChatCacheFromIdb();
+
     const readLocalChatMessages = () => {
+        if (Array.isArray(_memChatCache) && _memChatCache.length) return _memChatCache;
         try {
             const raw = localStorage.getItem(LOCAL_CHAT_MESSAGES_KEY);
             const parsed = raw ? JSON.parse(raw) : [];
-            return Array.isArray(parsed) ? parsed : [];
+            const list = Array.isArray(parsed) ? parsed : [];
+            if (list.length) _memChatCache = list;
+            return list;
         } catch (_) {
             return [];
         }
     };
 
+    const persistChatMessagesBulk = (incoming = []) => {
+        if (!Array.isArray(incoming) || !incoming.length) return;
+        try {
+            const normalized = incoming.map(normalizeMsgForCache);
+            const merged = mergeChatMessagesList(normalized, readLocalChatMessages());
+            _memChatCache = merged;
+            try { localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(merged.slice(-1500))); } catch (_) {
+                try { localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(merged.slice(-500))); } catch (__) { }
+            }
+            scheduleMsgIdbPut("chat_messages", merged);
+        } catch (_) { }
+    };
+
     const writeLocalChatMessage = (msg) => {
         try {
+            const cleanMsg = normalizeMsgForCache(msg);
             const list = readLocalChatMessages();
-            const filtered = list.filter(m => m.id !== msg.id);
-            filtered.push(msg);
-            localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(filtered.slice(-300)));
+            const filtered = list.filter(m => m.id !== cleanMsg.id);
+            filtered.push(cleanMsg);
+            _memChatCache = filtered;
+            try { localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(filtered.slice(-1500))); } catch (_) {
+                try { localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(filtered.slice(-500))); } catch (__) { }
+            }
+            scheduleMsgIdbPut("chat_messages", filtered);
             const ch = new BroadcastChannel('securo_chat_channel');
-            ch.postMessage({ type: 'chat_message', msg });
+            ch.postMessage({ type: 'chat_message', msg: cleanMsg });
             ch.close();
         } catch (_) { }
     };
@@ -1521,6 +1615,8 @@ export const getEmergencyPostById = async (postId) => {
                     }
                 });
             });
+            // (2026-07-13) Cache all fetched admin thread messages; was uncached
+            if (remoteMsgs.length) persistChatMessagesBulk(remoteMsgs);
             return buildThreadsFromMessages(mergeChatMessagesList(remoteMsgs, localMsgs));
         } catch (error) {
             console.warn("Error getting chat threads once:", error);
@@ -1568,6 +1664,8 @@ export const getEmergencyPostById = async (postId) => {
         );
         const unsubFs = onSnapshot(q, (snapshot) => {
             remoteMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // (2026-07-13) Cache all received thread messages for reload; was volatile
+            if (remoteMessages.length) persistChatMessagesBulk(remoteMessages);
             emit();
         }, () => emit());
 
@@ -1724,6 +1822,8 @@ export const getEmergencyPostById = async (postId) => {
                     }
                 });
             });
+            // (2026-07-13) Cache all realtime thread messages for reload; was volatile
+            if (remoteMsgs.length) persistChatMessagesBulk(remoteMsgs);
             const merged = mergeChatMessagesList(remoteMsgs, readLocalChatMessages());
             callback(buildThreadsFromMessages(merged));
         };
@@ -3915,9 +4015,28 @@ export const getEmergencyPostById = async (postId) => {
         localMessages.unshift({ id: localId, ...payload });
         writeLocalGADMessages(localMessages);
 
+        // (2026-07-13) Always send unified chat message even if gad_messages fails; was after
+        const senderRole = String(messageData.role || 'student').toLowerCase();
+        const defaultRoleName = senderRole === 'staff' ? 'Campus Staff' : 'Student';
+        const displaySenderName = isAnon
+            ? (senderRole === 'staff' ? 'Anonymous Staff' : 'Anonymous Student')
+            : (messageData.studentName || defaultRoleName);
+        if (messageData.studentUid) {
+            await sendChatMessage(messageData.studentUid, "system_admin_securo", messageData.message || "", displaySenderName, {
+                threadId: [messageData.studentUid, "system_admin_securo"].sort().join("_"),
+                senderRole,
+                recipientRole: "admin",
+                supportMode: "gad_support",
+                isAnonymous: isAnon,
+                senderLabel: displaySenderName,
+                ownerId: messageData.studentUid
+            }).catch((err) => console.warn("Unified GAD chat sync warning:", err));
+        }
+
         try {
             const docRef = await addDoc(collection(db, "gad_messages"), {
                 ...payload,
+                role: senderRole,
                 createdAt: serverTimestamp()
             });
 
@@ -3925,26 +4044,15 @@ export const getEmergencyPostById = async (postId) => {
                 userId: 'admin',
                 type: 'gad',
                 title: 'GAD Support Activity',
-                message: isAnon ? 'A new confidential GAD report was submitted.' : `New GAD report from ${messageData.studentName || 'Student'}.`,
+                message: isAnon ? 'A new confidential GAD report was submitted.' : `New GAD report from ${messageData.studentName || defaultRoleName}.`,
                 sourceUserId: messageData.studentUid || '',
-                sourceName: isAnon ? 'Confidential' : (messageData.studentName || 'Student'),
+                sourceName: isAnon ? 'Confidential' : (messageData.studentName || defaultRoleName),
                 metadata: {
                     category: messageData.category || 'counseling',
                     subject: messageData.subject || '',
                     location: messageData.location || null
                 }
             }).catch(err => console.warn("Failed GAD admin notify:", err));
-
-            // (2026-07-13) Synchronize GAD inquiry into unified chat thread; was separate
-            if (messageData.studentUid) {
-                sendChatMessage(messageData.studentUid, "system_admin_securo", messageData.message || "", isAnon ? "Anonymous Student" : (messageData.studentName || "Student"), {
-                    threadId: [messageData.studentUid, "system_admin_securo"].sort().join("_"),
-                    supportMode: "gad_support",
-                    isAnonymous: isAnon,
-                    senderLabel: isAnon ? "Anonymous Student" : (messageData.studentName || "Student"),
-                    ownerId: messageData.studentUid
-                }).catch(() => { });
-            }
 
             return { id: docRef.id, ...payload };
         } catch (error) {
@@ -3963,7 +4071,7 @@ export const getEmergencyPostById = async (postId) => {
                 : query(collection(db, "gad_messages"));
 
             return onSnapshot(q, (snapshot) => {
-                const remote = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const remote = snapshot.docs.map(doc => normalizeMsgForCache({ id: doc.id, ...doc.data() }));
                 const merged = [...remote];
                 local.forEach(l => {
                     if (!merged.some(r => r.id === l.id)) merged.push(l);
@@ -3973,6 +4081,13 @@ export const getEmergencyPostById = async (postId) => {
                     const bT = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime();
                     return bT - aT;
                 });
+                // (2026-07-13) Persist remote GAD messages to local cache; was volatile
+                if (remote.length) {
+                    const allCachedGad = readLocalGADMessages();
+                    const combined = [...remote];
+                    allCachedGad.forEach(m => { if (!combined.some(r => r.id === m.id)) combined.push(m); });
+                    writeLocalGADMessages(combined);
+                }
                 callback(merged);
                 // (2026-07-13) Fix catch block in subscribeToGADMessages; was catch without param
             }, () => callback(local));

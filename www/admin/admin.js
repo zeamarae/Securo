@@ -2792,6 +2792,8 @@ function loadFromLocalCache(force = false) {
         applyFilters();
         renderReporterStats();
         renderAdminNotifications();
+        // (2026-07-13) Render cached chat threads immediately on reload; was waiting FS
+        if (typeof renderThreads === 'function' && cachedThreads.length) renderThreads(cachedThreads);
         if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
         if (typeof renderDailyReport === 'function') renderDailyReport();
         if (typeof renderAdminSosQueue === 'function') renderAdminSosQueue(cachedSosLogs);
@@ -4643,8 +4645,10 @@ function renderThreads(threads) {
         }
 
         if (currentMsgFilter === 'unread' && !unread) return false;
-        if (currentMsgFilter === 'student' && role === 'guardian') return false;
+        // (2026-07-13) Support Staff filter tab in Messages; was Student/Guardian only
+        if (currentMsgFilter === 'student' && role !== 'student') return false;
         if (currentMsgFilter === 'guardian' && role !== 'guardian') return false;
+        if (currentMsgFilter === 'staff' && role !== 'staff') return false;
 
         return true;
     });
