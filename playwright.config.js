@@ -21,7 +21,7 @@ export default defineConfig({
     {
       name: 'Mobile Chrome',
       use: { ...devices['Pixel 5'] },
-      testMatch: /student\.spec\.js|guardian\.spec\.js|staff\.spec\.js/
+      testMatch: /student\.spec\.js|guardian\.spec\.js|staff\.spec\.js|all-roles\.spec\.js/
     },
     {
       name: 'Desktop Chrome',

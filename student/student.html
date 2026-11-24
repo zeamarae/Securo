@@ -766,37 +766,31 @@
                 </div>
             </div>
 
+            <!-- (2026-07-13) Show Student ID for parent linking; prev: share link + copy -->
             <div class="stu-u147">
                 <div class="stu-u148"></div>
-                <span class="stu-u149">or share link</span>
+                <span class="stu-u149">or give parent your Student ID</span>
                 <div class="stu-u148"></div>
             </div>
 
             <div class="invite-link-box" id="inviteLinkBox">
-                <span id="guardianInviteUrlText" class="invite-url-text">Generating link...</span>
+                <span id="guardianInviteUrlText" class="invite-url-text" style="font-size:22px;letter-spacing:3px;font-weight:800;">-------</span>
             </div>
             <div class="invite-modal-actions">
-                <button type="button" class="invite-btn-primary" id="copyGuardianInviteBtn">
-                    <span class="material-symbols-outlined stu-u150">content_copy</span>
-                    <span id="copyInviteBtnLabel">Copy Invite Link</span>
-                </button>
-                <button type="button" class="invite-btn-share stu-u86" id="shareGuardianInviteBtn">
-                    <span class="material-symbols-outlined stu-u150">share</span>
-                    <span>Share via App</span>
-                </button>
-                <button type="button" class="invite-btn-done" id="closeInviteParentBtn">Done</button>
+                <button type="button" class="invite-btn-done" id="closeInviteParentBtn">Later</button>
             </div>
         </div>
     </div>
 
     <!-- Status/Success Modal (Date: 2026-05-01) -->
+    <!-- (2026-07-13) Replace placeholder status message text; was Message goes here. -->
     <div class="status-modal" id="statusModal">
         <div class="status-card">
             <div id="statusIconWrap" class="status-icon-wrap">
                 <span class="material-symbols-outlined" id="statusIcon">check_circle</span>
             </div>
             <h3 id="statusTitle" class="status-title">Success!</h3>
-            <p id="statusMessage" class="status-msg">Message goes here.</p>
+            <p id="statusMessage" class="status-msg">Your action has been completed successfully.</p>
             <button id="statusOkBtn" class="status-btn">Great!</button>
         </div>
     </div>
@@ -1147,38 +1141,34 @@
 
                             <h2 class="stu-u183">
                                 Link Your Account With Your Parents</h2>
+                            <!-- (2026-07-13) Link via Student ID / parent email; prev: copy link -->
                             <p class="stu-u184">
-                                Copy this link to link your account with your parents. Give this link to them to
-                                register.
+                                Enter your parent's email to send a link request, or give them your
+                                Student ID to enter in their Guardian app.
                             </p>
 
-                            <!-- Link Container -->
+                            <!-- Student ID Container -->
                             <div class="stu-u185">
                                 <div class="stu-u186">
-                                    <span class="stu-u187">Parent
-                                        Registration Link</span>
-                                    <span class="material-symbols-outlined stu-u188">link</span>
+                                    <span class="stu-u187">Your Student ID</span>
+                                    <span class="material-symbols-outlined stu-u188">badge</span>
                                 </div>
-                                <div id="fsGuardianInviteLink" class="stu-u189">
-                                    <!-- (2026-07-13) Dynamic link placeholder; prev: zea domain -->
-                                    Generating link...
+                                <div id="fsGuardianInviteLink" class="stu-u189" style="font-size:22px;letter-spacing:3px;font-weight:800;text-align:center;">
+                                    -------
                                 </div>
                             </div>
 
                             <!-- Action buttons -->
                             <div class="stu-u190">
-                                <!-- (2026-07-13) Shorter copy button label; prev: long prompt label -->
-                                <button type="button" class="btn-action stu-u191" id="fsCopyGuardianLinkBtn">
-                                    <span class="material-symbols-outlined">content_copy</span>
-                                    <span id="fsCopyLinkText">Copy Link</span>
+                                <!-- Parent email invite field -->
+                                <input type="email" id="fsGuardianEmailInput" placeholder="Parent email e.g. parent@gmail.com"
+                                    style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(90,31,224,0.25);font-size:14px;outline:none;">
+                                <button type="button" class="btn-action stu-u191" id="fsSendGuardianInviteBtn">
+                                    <span class="material-symbols-outlined">send</span>
+                                    <span id="fsSendInviteText">Send Link Request</span>
                                 </button>
 
-                                <button type="button" class="btn-action stu-u192" id="fsShareGuardianLinkBtn">
-                                    <span class="material-symbols-outlined">share</span>
-                                    <span>Share Link</span>
-                                </button>
-
-                                <button type="button" id="fsProceedToAppBtn" class="stu-u193">
+                                <button type="button" id="fsProceedToAppBtn" class="stu-u193" style="opacity:1;border-color:#5a1fe0;color:#5a1fe0;">
                                     <span>Proceed to App</span>
                                     <span class="material-symbols-outlined">arrow_forward</span>
                                 </button>
@@ -1186,8 +1176,8 @@
 
                             <!-- Swipe hint -->
                             <div id="fsSwipeHintBox" class="stu-u194">
-                                <span class="material-symbols-outlined stu-u195" id="fsSwipeHintIcon">lock</span>
-                                <span id="fsSwipeHintText">Copy link above to unlock app</span>
+                                <span class="material-symbols-outlined stu-u195" id="fsSwipeHintIcon" style="color:#0f9b67;">swipe_left</span>
+                                <span id="fsSwipeHintText">Swipe left or tap to open app</span>
                             </div>
                         </div>
                     </div>

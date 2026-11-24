@@ -4,7 +4,8 @@
  * Date: 2026-10-06
  */
 
-const CACHE_NAME = 'securo-v2.0';
+// (2026-07-13) Bump SW cache version to flush stale JS; was securo-v2.0
+const CACHE_NAME = 'securo-v2.1';
 const RUNTIME_CACHE = 'securo-runtime';
 
 // (2026-07-13) Update SW cached routes to modular folders; was root

@@ -342,25 +342,35 @@ export const getUserProfile = async (userId) => {
         return localUsers.find((user) => String(user.id) === String(userId)) || null;
     }
 };
-// (2026-07-13) Include guardian links and notify in SOS log; was userId only
+// (2026-07-13) Resolve real profile name & role in logSOS; was defaulting Student
 export const logSOS = async (userId, location, metadata = {}) => {
     try {
         const localUsers = readLocalUsers();
         const fallback = localUsers.find(u => String(u.id || u.uid || '') === String(userId)) || {};
+        const isGeneric = (v) => {
+            const s = String(v || '').trim().toLowerCase();
+            return !s || ['student', 'user', 'staff', 'staff member', 'unknown', 'student reporter', 'unnamed user'].includes(s);
+        };
+        let profile = null;
+        if (isGeneric(metadata.userName) && isGeneric(fallback.name)) {
+            profile = await getUserProfile(userId).catch(() => null);
+        }
         const links = await getLinksForStudent(null, userId).catch(() => []);
         const guardianUids = (Array.isArray(links) ? links : []).filter(l => l.status === 'accepted' && l.guardianId).map(l => l.guardianId);
-        const name = metadata.userName || fallback.name || "Student";
-        const email = metadata.userEmail || fallback.email || "";
-        const studentId = metadata.studentId || fallback.studentId || "";
+        const role = metadata.role || profile?.role || fallback.role || "student";
+        const email = metadata.userEmail || profile?.email || fallback.email || auth.currentUser?.email || "";
+        const studentId = metadata.studentId || profile?.studentId || fallback.studentId || "";
+        const candidates = [metadata.userName, profile?.name, profile?.fullName, fallback.name, auth.currentUser?.displayName];
+        const resolvedName = candidates.find(c => !isGeneric(c)) || (role === 'staff' ? "Campus Staff" : "Student");
 
         await addDoc(collection(db, "sos_logs"), {
             userId,
             studentUid: userId,
             guardianUids,
-            userName: name,
+            userName: resolvedName,
             userEmail: email,
             studentId,
-            role: metadata.role || fallback.role || "student",
+            role,
             location,
             accuracy: location?.accuracy || null,
             battery: metadata.battery || null,
@@ -372,14 +382,15 @@ export const logSOS = async (userId, location, metadata = {}) => {
         addDoc(collection(db, "attendance"), {
             userId,
             studentUid: userId,
-            studentName: name,
+            studentName: resolvedName,
             studentId,
+            role,
             type: "sos",
             location: location || {},
             timestamp: serverTimestamp()
         }).catch(err => console.warn("SOS attendance log sync fallback:", err));
 
-        notifyGuardiansSOS(userId, name, location, metadata).catch(e => console.warn("SOS notify err:", e));
+        notifyGuardiansSOS(userId, resolvedName, location, metadata).catch(e => console.warn("SOS notify err:", e));
     } catch (error) {
         if (error?.code === "permission-denied" || /permissions/i.test(error?.message)) {
             console.warn("SOS log could not be saved to Firestore due to permission denied. The emergency signal is still active on this device.");
@@ -712,17 +723,22 @@ export const toggleEmergencyPostGuardianAccess = async (postId, isVisible) => {
 /**
  * Fetch all emergency posts for admin incident review
  */
-// (2026-07-13) Fetch all vault posts without gadVisible filter; was filtered
-// (2026-07-13) Direct emergency posts fetch; was 2s timeout dropping data
-export const getAllEmergencyPosts = async () => {
+// (2026-07-13) Support maxDocs recent limit for fast admin load; was full scan
+export const getAllEmergencyPosts = async (opts = {}) => {
+    const maxDocs = Number(opts?.maxDocs) || 0;
     const localPosts = readLocalEmergencyPosts();
     try {
         let querySnapshot;
         try {
-            const q = query(collection(db, "emergency_posts"), orderBy("createdAt", "desc"));
+            const q = maxDocs > 0
+                ? query(collection(db, "emergency_posts"), orderBy("createdAt", "desc"), limit(maxDocs))
+                : query(collection(db, "emergency_posts"), orderBy("createdAt", "desc"));
             querySnapshot = await getDocs(q);
         } catch (idxError) {
-            querySnapshot = await getDocs(collection(db, "emergency_posts"));
+            const qFallback = maxDocs > 0
+                ? query(collection(db, "emergency_posts"), limit(maxDocs))
+                : collection(db, "emergency_posts");
+            querySnapshot = await getDocs(qFallback);
         }
         const remotePosts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         remotePosts.sort((a, b) => {
@@ -762,21 +778,24 @@ export const getEmergencyPostById = async (postId) => {
  * Check if a Student ID is already registered
  * @param {string} studentId 
  */
-    // (2026-07-13) Support excludeUid in studentId check; was matching all docs
+    // (2026-07-13) Ignore soft-deleted users in studentId check; was matching deleted
     export const isStudentIdTaken = async (studentId, excludeUid = null) => {
         const raw = String(studentId || "").trim();
         if (!raw) return false;
+        const isActiveOther = (d) => {
+            if (excludeUid && String(d.id) === String(excludeUid)) return false;
+            const data = d.data() || {};
+            return !data.isDeleted && !data.deletedAt;
+        };
         try {
             const q1 = query(collection(db, "users"), where("studentId", "==", raw));
             const snap1 = await getDocs(q1);
-            if (!snap1.empty) return true;
-            if (snap1.docs.some((d) => !excludeUid || d.id !== excludeUid)) return true;
+            if (snap1.docs.some(isActiveOther)) return true;
             const num = Number(raw);
             if (!Number.isNaN(num)) {
                 const q2 = query(collection(db, "users"), where("studentId", "==", num));
                 const snap2 = await getDocs(q2);
-                if (!snap2.empty) return true;
-                if (snap2.docs.some((d) => !excludeUid || d.id !== excludeUid)) return true;
+                if (snap2.docs.some(isActiveOther)) return true;
             }
             return false;
         } catch (error) {
@@ -796,9 +815,9 @@ export const getEmergencyPostById = async (postId) => {
             if (raw) {
                 const dir = JSON.parse(raw);
                 const found = Object.values(dir).find(u => String(u.studentId || '') === String(studentId));
-                if (found?.email) return found.email;
                 // (2026-07-13) Prefer authEmail over recovery email; was email only
-                if (found?.authEmail || found?.email) return found.authEmail || found.email;
+                if (found?.authEmail) return found.authEmail;
+                if (found?.email) return found.email;
             }
         } catch (_) { }
         try {
@@ -830,6 +849,7 @@ export const getEmergencyPostById = async (postId) => {
      * @param {string} uid 
      * @param {object} data 
      */
+    // (2026-07-13) Run guardian link sync in background after save; was blocking UI
     export const updateUserProfile = async (uid, data) => {
         upsertLocalUser(uid, data);
         try {
@@ -838,11 +858,10 @@ export const getEmergencyPostById = async (postId) => {
                 ...data,
                 updatedAt: serverTimestamp()
             }, { merge: true });
-            await syncGuardianLinksForStudent(uid, data).catch((error) => {
+            syncGuardianLinksForStudent(uid, data).catch((error) => {
                 console.warn("Guardian link sync skipped after updateUserProfile:", error);
             });
-            // (2026-07-13) Sync guardian link names on profile update; was student only
-            await syncGuardianLinksForGuardian(uid, data).catch(() => { });
+            syncGuardianLinksForGuardian(uid, data).catch(() => { });
             return true;
         } catch (error) {
             if (isPermissionDeniedError(error)) {
@@ -984,7 +1003,9 @@ export const getEmergencyPostById = async (postId) => {
         });
     };
 
-    export const getGADPosts = async () => {
+    // (2026-07-13) Support maxDocs recent limit for GAD posts; was full scan
+    export const getGADPosts = async (opts = {}) => {
+        const maxDocs = Number(opts?.maxDocs) || 0;
         const localPosts = readLocalGADPosts();
         const curUid = auth.currentUser?.uid || null;
         let userLikedSet = null;
@@ -997,8 +1018,16 @@ export const getEmergencyPostById = async (postId) => {
             } catch (_) { }
         }
         try {
-            const q = query(collection(db, "gad_posts"));
-            const querySnapshot = await getDocs(q);
+            let querySnapshot;
+            if (maxDocs > 0) {
+                try {
+                    querySnapshot = await getDocs(query(collection(db, "gad_posts"), orderBy("createdAt", "desc"), limit(maxDocs)));
+                } catch (_) {
+                    querySnapshot = await getDocs(query(collection(db, "gad_posts"), limit(maxDocs)));
+                }
+            } else {
+                querySnapshot = await getDocs(query(collection(db, "gad_posts")));
+            }
             const remote = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
             const merged = [...remote];
             localPosts.forEach((lp) => {
@@ -1165,15 +1194,21 @@ export const getEmergencyPostById = async (postId) => {
         }
     };
 
-    // (2026-07-13) Direct attendance records fetch; was 2s timeout dropping data
-    export const getAllAttendance = async () => {
+    // (2026-07-13) Support maxDocs recent limit for attendance; was full scan
+    export const getAllAttendance = async (opts = {}) => {
+        const maxDocs = Number(opts?.maxDocs) || 0;
         try {
             let querySnapshot;
             try {
-                const q = query(collection(db, "attendance"), orderBy("timestamp", "desc"));
+                const q = maxDocs > 0
+                    ? query(collection(db, "attendance"), orderBy("timestamp", "desc"), limit(maxDocs))
+                    : query(collection(db, "attendance"), orderBy("timestamp", "desc"));
                 querySnapshot = await getDocs(q);
             } catch (_) {
-                querySnapshot = await getDocs(collection(db, "attendance"));
+                const qFallback = maxDocs > 0
+                    ? query(collection(db, "attendance"), limit(maxDocs))
+                    : collection(db, "attendance");
+                querySnapshot = await getDocs(qFallback);
             }
             return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         } catch (error) {
@@ -1226,17 +1261,59 @@ export const getEmergencyPostById = async (postId) => {
             return null;
         }
     };
-    // (2026-07-13) Direct SOS logs fetch for admin; was 2s timeout dropping data
-    export const getAllSOSLogs = async () => {
+    // (2026-07-13) Support maxDocs recent limit for SOS logs; was full scan
+    export const getAllSOSLogs = async (opts = {}) => {
+        const maxDocs = Number(opts?.maxDocs) || 0;
         try {
-            let querySnapshot;
-            try {
-                const q = query(collection(db, "sos_logs"), orderBy("timestamp", "desc"));
-                querySnapshot = await getDocs(q);
-            } catch (_) {
-                querySnapshot = await getDocs(collection(db, "sos_logs"));
-            }
-            return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const fetchSosSnap = async () => {
+                if (maxDocs > 0) {
+                    try {
+                        return await getDocs(query(collection(db, "sos_logs"), orderBy("timestamp", "desc"), limit(maxDocs)));
+                    } catch (_) {
+                        return await getDocs(query(collection(db, "sos_logs"), limit(maxDocs)));
+                    }
+                }
+                return await getDocs(collection(db, "sos_logs"));
+            };
+            const fetchAttSnap = async () => {
+                const q = maxDocs > 0
+                    ? query(collection(db, "attendance"), where("type", "==", "sos"), limit(maxDocs))
+                    : query(collection(db, "attendance"), where("type", "==", "sos"));
+                return await getDocs(q);
+            };
+            const [sosSnap, attSnap] = await Promise.all([
+                fetchSosSnap().catch(() => null),
+                fetchAttSnap().catch(() => null)
+            ]);
+            const logs = (sosSnap?.docs || []).map(d => ({ id: d.id, ...d.data() }));
+            const getMs = (item) => {
+                const ts = item?.timestamp || item?.createdAt;
+                if (!ts) return 0;
+                if (typeof ts.toMillis === "function") return ts.toMillis();
+                if (typeof ts.seconds === "number") return ts.seconds * 1000;
+                const parsed = new Date(ts).getTime();
+                return Number.isNaN(parsed) ? 0 : parsed;
+            };
+            (attSnap?.docs || []).forEach(d => {
+                const data = d.data() || {};
+                const attMs = getMs(data);
+                const uid = String(data.userId || data.studentUid || "");
+                const isDup = logs.some(l => String(l.userId || l.studentUid || "") === uid && Math.abs(getMs(l) - attMs) < 15000);
+                if (!isDup) {
+                    logs.push({
+                        id: d.id,
+                        userId: data.userId || data.studentUid || "",
+                        studentUid: data.studentUid || data.userId || "",
+                        userName: data.studentName || data.userName || "",
+                        studentId: data.studentId || "",
+                        role: data.role || "",
+                        location: data.location || {},
+                        timestamp: data.timestamp,
+                        status: data.status || "active"
+                    });
+                }
+            });
+            return logs.sort((a, b) => getMs(b) - getMs(a));
         } catch (error) {
             console.warn("Error getting all SOS logs:", error);
             return [];
@@ -1276,12 +1353,18 @@ export const getEmergencyPostById = async (postId) => {
     /**
      * Fetch all users for admin
      */
-    // (2026-07-13) Fetch all users with allSettled; was 2s timeout dropping data
-    export const getAllUsers = async () => {
+    // (2026-07-13) Support maxDocs recent limit for users; was full scan
+    export const getAllUsers = async (opts = {}) => {
+        const maxDocs = Number(opts?.maxDocs) || 0;
+        const usersQ = maxDocs > 0 ? query(collection(db, "users"), limit(maxDocs)) : collection(db, "users");
+        const attQ = maxDocs > 0
+            ? query(collection(db, "attendance"), where("type", "==", "profile_bootstrap"), limit(maxDocs))
+            : query(collection(db, "attendance"), where("type", "==", "profile_bootstrap"));
+        const linksQ = maxDocs > 0 ? query(collection(db, "guardian_links"), limit(maxDocs)) : collection(db, "guardian_links");
         const [usersResult, attendanceResult, guardianLinksResult] = await Promise.allSettled([
-            getDocs(collection(db, "users")),
-            getDocs(query(collection(db, "attendance"), where("type", "==", "profile_bootstrap"))),
-            getDocs(collection(db, "guardian_links"))
+            getDocs(usersQ),
+            getDocs(attQ),
+            getDocs(linksQ)
         ]);
 
         const remoteUsers = usersResult.status === "fulfilled"
@@ -1362,24 +1445,118 @@ export const getEmergencyPostById = async (postId) => {
         return Date.now() / 1000;
     };
 
+    // (2026-07-13) Persist all chat messages to localStorage & IDB; was sent-only 300 cap
+    const MSG_IDB_NAME = "securo_messages_cache_db";
+    const MSG_IDB_STORE = "kv";
+    let _memChatCache = null;
+    let _msgIdbWriteTimer = null;
+
+    const normalizeMsgForCache = (m) => {
+        if (!m || typeof m !== "object") return m;
+        const c = { ...m };
+        if (c.timestamp && typeof c.timestamp.toMillis === "function") {
+            const ms = c.timestamp.toMillis();
+            c.timestamp = { seconds: Math.floor(ms / 1000), nanoseconds: 0 };
+            if (!c.localTime) c.localTime = ms;
+        } else if (c.timestamp && typeof c.timestamp.seconds === "number") {
+            c.timestamp = { seconds: c.timestamp.seconds, nanoseconds: c.timestamp.nanoseconds || 0 };
+            if (!c.localTime) c.localTime = c.timestamp.seconds * 1000;
+        }
+        if (c.createdAt && typeof c.createdAt.toMillis === "function") {
+            const ms = c.createdAt.toMillis();
+            c.createdAt = { seconds: Math.floor(ms / 1000), nanoseconds: 0 };
+        }
+        if (c.seenAt && typeof c.seenAt.toMillis === "function") {
+            const ms = c.seenAt.toMillis();
+            c.seenAt = { seconds: Math.floor(ms / 1000), nanoseconds: 0 };
+        }
+        return c;
+    };
+
+    const openMsgCacheDB = () => new Promise((resolve, reject) => {
+        if (typeof indexedDB === "undefined") return reject(new Error("no idb"));
+        const req = indexedDB.open(MSG_IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+            if (!req.result.objectStoreNames.contains(MSG_IDB_STORE)) {
+                req.result.createObjectStore(MSG_IDB_STORE);
+            }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+
+    const scheduleMsgIdbPut = (key, list) => {
+        if (_msgIdbWriteTimer) clearTimeout(_msgIdbWriteTimer);
+        _msgIdbWriteTimer = setTimeout(async () => {
+            try {
+                const dbInst = await openMsgCacheDB();
+                const tx = dbInst.transaction(MSG_IDB_STORE, "readwrite");
+                tx.objectStore(MSG_IDB_STORE).put(list, key);
+                tx.oncomplete = () => dbInst.close();
+            } catch (_) { }
+        }, 400);
+    };
+
+    const hydrateChatCacheFromIdb = async () => {
+        try {
+            const dbInst = await openMsgCacheDB();
+            const stored = await new Promise((resolve) => {
+                const tx = dbInst.transaction(MSG_IDB_STORE, "readonly");
+                const req = tx.objectStore(MSG_IDB_STORE).get("chat_messages");
+                req.onsuccess = () => resolve(Array.isArray(req.result) ? req.result : null);
+                req.onerror = () => resolve(null);
+            });
+            dbInst.close();
+            if (stored && stored.length) {
+                const current = readLocalChatMessages();
+                if (stored.length > current.length) {
+                    _memChatCache = mergeChatMessagesList(stored, current);
+                    try { localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(_memChatCache.slice(-1500))); } catch (_) { }
+                }
+            }
+        } catch (_) { }
+    };
+    if (typeof window !== "undefined") hydrateChatCacheFromIdb();
+
     const readLocalChatMessages = () => {
+        if (Array.isArray(_memChatCache) && _memChatCache.length) return _memChatCache;
         try {
             const raw = localStorage.getItem(LOCAL_CHAT_MESSAGES_KEY);
             const parsed = raw ? JSON.parse(raw) : [];
-            return Array.isArray(parsed) ? parsed : [];
+            const list = Array.isArray(parsed) ? parsed : [];
+            if (list.length) _memChatCache = list;
+            return list;
         } catch (_) {
             return [];
         }
     };
 
+    const persistChatMessagesBulk = (incoming = []) => {
+        if (!Array.isArray(incoming) || !incoming.length) return;
+        try {
+            const normalized = incoming.map(normalizeMsgForCache);
+            const merged = mergeChatMessagesList(normalized, readLocalChatMessages());
+            _memChatCache = merged;
+            try { localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(merged.slice(-1500))); } catch (_) {
+                try { localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(merged.slice(-500))); } catch (__) { }
+            }
+            scheduleMsgIdbPut("chat_messages", merged);
+        } catch (_) { }
+    };
+
     const writeLocalChatMessage = (msg) => {
         try {
+            const cleanMsg = normalizeMsgForCache(msg);
             const list = readLocalChatMessages();
-            const filtered = list.filter(m => m.id !== msg.id);
-            filtered.push(msg);
-            localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(filtered.slice(-300)));
+            const filtered = list.filter(m => m.id !== cleanMsg.id);
+            filtered.push(cleanMsg);
+            _memChatCache = filtered;
+            try { localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(filtered.slice(-1500))); } catch (_) {
+                try { localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(filtered.slice(-500))); } catch (__) { }
+            }
+            scheduleMsgIdbPut("chat_messages", filtered);
             const ch = new BroadcastChannel('securo_chat_channel');
-            ch.postMessage({ type: 'chat_message', msg });
+            ch.postMessage({ type: 'chat_message', msg: cleanMsg });
             ch.close();
         } catch (_) { }
     };
@@ -1438,6 +1615,8 @@ export const getEmergencyPostById = async (postId) => {
                     }
                 });
             });
+            // (2026-07-13) Cache all fetched admin thread messages; was uncached
+            if (remoteMsgs.length) persistChatMessagesBulk(remoteMsgs);
             return buildThreadsFromMessages(mergeChatMessagesList(remoteMsgs, localMsgs));
         } catch (error) {
             console.warn("Error getting chat threads once:", error);
@@ -1445,9 +1624,12 @@ export const getEmergencyPostById = async (postId) => {
         }
     };
 
-    export const getAllGuardianLinksAdmin = async () => {
+    // (2026-07-13) Support maxDocs recent limit for guardian links; was full scan
+    export const getAllGuardianLinksAdmin = async (opts = {}) => {
+        const maxDocs = Number(opts?.maxDocs) || 0;
         try {
-            const snapshot = await getDocs(collection(db, "guardian_links"));
+            const q = maxDocs > 0 ? query(collection(db, "guardian_links"), limit(maxDocs)) : collection(db, "guardian_links");
+            const snapshot = await getDocs(q);
             return snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() }));
         } catch (error) {
             console.warn("Error getting guardian links for admin:", error);
@@ -1482,6 +1664,8 @@ export const getEmergencyPostById = async (postId) => {
         );
         const unsubFs = onSnapshot(q, (snapshot) => {
             remoteMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // (2026-07-13) Cache all received thread messages for reload; was volatile
+            if (remoteMessages.length) persistChatMessagesBulk(remoteMessages);
             emit();
         }, () => emit());
 
@@ -1638,6 +1822,8 @@ export const getEmergencyPostById = async (postId) => {
                     }
                 });
             });
+            // (2026-07-13) Cache all realtime thread messages for reload; was volatile
+            if (remoteMsgs.length) persistChatMessagesBulk(remoteMsgs);
             const merged = mergeChatMessagesList(remoteMsgs, readLocalChatMessages());
             callback(buildThreadsFromMessages(merged));
         };
@@ -1703,6 +1889,7 @@ export const getEmergencyPostById = async (postId) => {
      * Soft-delete a user record and related admin-visible links.
      * @param {string} userId
      */
+    // (2026-07-13) Mark user deleted immediately & clean links async; was blocking
     export const deleteUserRecord = async (userId) => {
         if (!userId) return false;
 
@@ -1715,37 +1902,41 @@ export const getEmergencyPostById = async (postId) => {
         });
 
         try {
-            const profile = await getUserProfile(userId).catch(() => null);
-
             await setDoc(doc(db, "users", userId), {
                 isDeleted: true,
                 deletedAt: new Date().toISOString()
             }, { merge: true });
 
-            await deleteDoc(doc(db, "student_locations", userId)).catch(() => { });
+            // Run secondary link & message cleanup in background so admin UI never stalls
+            (async () => {
+                try {
+                    const profile = await getUserProfile(userId).catch(() => null);
+                    await deleteDoc(doc(db, "student_locations", userId)).catch(() => { });
 
-            const guardianLinkSnapshots = await Promise.all([
-                getDocs(query(collection(db, "guardian_links"), where("guardianId", "==", userId))).catch(() => null),
-                getDocs(query(collection(db, "guardian_links"), where("studentUid", "==", userId))).catch(() => null),
-                profile?.studentId
-                    ? getDocs(query(collection(db, "guardian_links"), where("studentId", "==", profile.studentId))).catch(() => null)
-                    : Promise.resolve(null)
-            ]);
+                    const guardianLinkSnapshots = await Promise.all([
+                        getDocs(query(collection(db, "guardian_links"), where("guardianId", "==", userId))).catch(() => null),
+                        getDocs(query(collection(db, "guardian_links"), where("studentUid", "==", userId))).catch(() => null),
+                        profile?.studentId
+                            ? getDocs(query(collection(db, "guardian_links"), where("studentId", "==", profile.studentId))).catch(() => null)
+                            : Promise.resolve(null)
+                    ]);
 
-            const guardianLinkIds = new Set();
-            guardianLinkSnapshots.forEach((snapshot) => {
-                snapshot?.docs?.forEach((entry) => guardianLinkIds.add(entry.id));
-            });
-            await Promise.all(Array.from(guardianLinkIds).map((id) => deleteDoc(doc(db, "guardian_links", id)).catch(() => { })));
+                    const guardianLinkIds = new Set();
+                    guardianLinkSnapshots.forEach((snapshot) => {
+                        snapshot?.docs?.forEach((entry) => guardianLinkIds.add(entry.id));
+                    });
+                    await Promise.all(Array.from(guardianLinkIds).map((id) => deleteDoc(doc(db, "guardian_links", id)).catch(() => { })));
 
-            const messagesSnapshot = await getDocs(collection(db, "messages")).catch(() => null);
-            const messageIds = (messagesSnapshot?.docs || [])
-                .filter((entry) => {
-                    const data = entry.data();
-                    return String(data.senderId) === String(userId) || String(data.receiverId) === String(userId);
-                })
-                .map((entry) => entry.id);
-            await Promise.all(messageIds.map((id) => deleteDoc(doc(db, "messages", id)).catch(() => { })));
+                    const messagesSnapshot = await getDocs(collection(db, "messages")).catch(() => null);
+                    const messageIds = (messagesSnapshot?.docs || [])
+                        .filter((entry) => {
+                            const data = entry.data();
+                            return String(data.senderId) === String(userId) || String(data.receiverId) === String(userId);
+                        })
+                        .map((entry) => entry.id);
+                    await Promise.all(messageIds.map((id) => deleteDoc(doc(db, "messages", id)).catch(() => { })));
+                } catch (_) { }
+            })();
 
             return true;
         } catch (error) {
@@ -1986,6 +2177,50 @@ export const getEmergencyPostById = async (postId) => {
         }
     };
 
+    // (2026-07-13) Invite expiry & notification cleanup helpers; was no expiry
+    const GUARDIAN_INVITE_TTL_MS = 30 * 60 * 1000;
+    const toEpochMs = (val) => {
+        if (!val) return 0;
+        if (typeof val === "number") return val;
+        if (typeof val?.toMillis === "function") return val.toMillis();
+        if (typeof val?.seconds === "number") return val.seconds * 1000;
+        const parsed = new Date(val).getTime();
+        return Number.isNaN(parsed) ? 0 : parsed;
+    };
+    const isInviteExpired = (item) => {
+        if (!item) return false;
+        const exp = toEpochMs(item.expiresAt);
+        if (exp > 0) return Date.now() > exp;
+        const created = toEpochMs(item.createdAt);
+        if (created > 0) return (Date.now() - created) > GUARDIAN_INVITE_TTL_MS;
+        return false;
+    };
+    const cleanupInviteNotifications = async (requestIds = []) => {
+        const ids = Array.from(new Set((requestIds || []).filter(Boolean)));
+        if (!ids.length) return;
+        // (2026-07-13) Query with recipientUid/userId/sourceUserId for rules; was requestId only
+        const currentUid = auth.currentUser?.uid || "";
+        for (const reqId of ids) {
+            try {
+                if (currentUid) {
+                    const [s1, s2, s3] = await Promise.all([
+                        getDocs(query(collection(db, "notifications"), where("recipientUid", "==", currentUid), where("requestId", "==", reqId))).catch(() => ({ docs: [] })),
+                        getDocs(query(collection(db, "notifications"), where("userId", "==", currentUid), where("requestId", "==", reqId))).catch(() => ({ docs: [] })),
+                        getDocs(query(collection(db, "notifications"), where("sourceUserId", "==", currentUid), where("requestId", "==", reqId))).catch(() => ({ docs: [] }))
+                    ]);
+                    const map = new Map();
+                    s1.docs.forEach(d => map.set(d.id, d));
+                    s2.docs.forEach(d => map.set(d.id, d));
+                    s3.docs.forEach(d => map.set(d.id, d));
+                    await Promise.all(Array.from(map.values()).map((d) => deleteDoc(doc(db, "notifications", d.id)).catch(() => { })));
+                } else {
+                    const snap = await getDocs(query(collection(db, "notifications"), where("requestId", "==", reqId)));
+                    await Promise.all(snap.docs.map((d) => deleteDoc(doc(db, "notifications", d.id)).catch(() => { })));
+                }
+            } catch (_) { }
+        }
+    };
+
     /**
      * Create a guardian link request (pending consent from student)
      * @param {object} linkData { guardianId, guardianName, guardianEmail, studentId }
@@ -2011,7 +2246,15 @@ export const getEmergencyPostById = async (postId) => {
             if (studentRecord.role && studentRecord.role !== "student") {
                 throw new Error("The specified account is not a student account.");
             }
+            // (2026-07-13) Enforce max 1 accepted parent per student; was unlimited
+            const existingStudentLinks = await getLinksForStudent(linkData.studentId, studentRecord.uid).catch(() => []);
+            const otherAccepted = (existingStudentLinks || []).find(l => l.status === "accepted" && l.guardianId !== linkData.guardianId && l.guardianUid !== linkData.guardianId);
+            if (otherAccepted) {
+                throw new Error("This student is already connected to a parent or guardian.");
+            }
 
+            // (2026-07-13) Block double/active invites & set expiry; was overwriting
+            const expiresAtMs = Date.now() + GUARDIAN_INVITE_TTL_MS;
             const enrichedLinkData = {
                 ...linkData,
                 guardianId: linkData.guardianId,
@@ -2022,9 +2265,9 @@ export const getEmergencyPostById = async (postId) => {
                 studentName: studentRecord.name || linkData.studentName || "Student",
                 relationshipType: linkData.relationshipType || "parent",
                 permissions: linkData.permissions || { sosAlerts: true, attendanceAlerts: true, liveLocation: true },
-                // (2026-07-13) Set requestedBy to guardian on ID request; was omitting field
                 requestedBy: "guardian",
                 status: "pending",
+                expiresAt: expiresAtMs,
                 createdAt: serverTimestamp()
             };
 
@@ -2034,6 +2277,21 @@ export const getEmergencyPostById = async (postId) => {
                 studentId: enrichedLinkData.studentId,
                 studentUid: enrichedLinkData.studentUid
             });
+            if (existingLink) {
+                if (existingLink.status === "accepted") {
+                    throw new Error("This student is already connected to your account.");
+                }
+                if (existingLink.status === "pending") {
+                    if (!isInviteExpired(existingLink)) {
+                        throw new Error("An invite for this student is already pending.");
+                    }
+                    await cleanupInviteNotifications([existingLink.id]);
+                }
+            }
+            const activePendingOther = (existingStudentLinks || []).find(l => l.status === "pending" && l.id !== existingLink?.id && !isInviteExpired(l));
+            if (activePendingOther) {
+                throw new Error("This student already has an active pending parent invite.");
+            }
 
             let linkId = "";
             if (existingLink?.id) {
@@ -2055,6 +2313,7 @@ export const getEmergencyPostById = async (postId) => {
                 sourceName: enrichedLinkData.guardianName,
                 requestId: linkId,
                 studentId: enrichedLinkData.studentId,
+                expiresAt: expiresAtMs,
                 priority: "high"
             }).catch((err) => console.warn("Guardian request notification skipped:", err));
 
@@ -2101,6 +2360,21 @@ export const getEmergencyPostById = async (postId) => {
             if (guardianRecord && (guardianRecord.role === "admin" || guardianRecord.role === "staff")) {
                 throw new Error("Staff and admin accounts cannot be linked as a guardian.");
             }
+            // (2026-07-13) Enforce max 1 accepted parent per student; was unlimited
+            // (2026-07-13) Block double student invites & purge expired; was open
+            const currentLinks = await getLinksForStudent(requestData.studentId || studentProfile?.studentId, requestData.studentUid).catch(() => []);
+            if ((currentLinks || []).some(l => l.status === "accepted")) {
+                throw new Error("You can only connect to 1 parent or guardian at a time.");
+            }
+            const activePendingStudentInvite = (currentLinks || []).find(l => l.status === "pending" && !isInviteExpired(l));
+            if (activePendingStudentInvite) {
+                throw new Error("You already have an active pending parent invite.");
+            }
+            const expiredPending = (currentLinks || []).filter(l => l.status === "pending" && isInviteExpired(l));
+            if (expiredPending.length) {
+                await Promise.all(expiredPending.map(l => deleteDoc(doc(db, "guardian_links", l.id)).catch(() => { })));
+                await cleanupInviteNotifications(expiredPending.map(l => l.id));
+            }
 
             const existingLink = await findExistingGuardianStudentLink({
                 guardianId: guardianRecord?.uid || "",
@@ -2113,7 +2387,7 @@ export const getEmergencyPostById = async (postId) => {
                 if (existingStatus === "accepted") {
                     throw new Error("That parent or guardian is already linked to your account.");
                 }
-                if (existingStatus === "pending") {
+                if (existingStatus === "pending" && !isInviteExpired(existingLink)) {
                     throw new Error("A request for that parent or guardian is already pending.");
                 }
             }
@@ -2126,7 +2400,8 @@ export const getEmergencyPostById = async (postId) => {
                 });
             }
 
-            // (2026-07-13) Set pending status for student invite; was auto-accepted
+            // (2026-07-13) Set pending status & expiry for student invite; was no TTL
+            const expiresAtMs = Date.now() + GUARDIAN_INVITE_TTL_MS;
             const linkPayload = {
                 guardianId: guardianRecord?.uid || "",
                 guardianUid: guardianRecord?.uid || "",
@@ -2139,6 +2414,7 @@ export const getEmergencyPostById = async (postId) => {
                 requestedBy: "student",
                 relationshipType: requestData.relationshipType || "parent",
                 permissions: { sosAlerts: true, attendanceAlerts: true, liveLocation: true },
+                expiresAt: expiresAtMs,
                 createdAt: serverTimestamp(),
                 lastSyncedAt: serverTimestamp()
             };
@@ -2153,7 +2429,7 @@ export const getEmergencyPostById = async (postId) => {
             }
             upsertLocalGuardianLink({ id: linkId, ...linkPayload });
 
-            // (2026-07-13) Dispatch notif by UID and email; was UID-only gate
+            // (2026-07-13) Dispatch notif with expiry; was non-expiring notif
             const targetGuardianUid = guardianRecord?.uid || normEmail;
             await sendAccountNotification({
                 userId: targetGuardianUid,
@@ -2162,6 +2438,7 @@ export const getEmergencyPostById = async (postId) => {
                 type: "student_guardian_request",
                 title: "Student linked your guardian account",
                 message: `${requestData.studentName || studentProfile?.name || "A student"} connected you as their parent or guardian.`,
+                expiresAt: expiresAtMs,
                 sourceUserId: requestData.studentUid || "",
                 sourceName: requestData.studentName || studentProfile?.name || "Student",
                 requestId: linkId,
@@ -2226,7 +2503,19 @@ export const getEmergencyPostById = async (postId) => {
                 const cached = readLocalGuardianLinks().filter(l => l.status === "pending" && ((studentId && String(l.studentId).trim() === String(studentId).trim()) || (studentUid && l.studentUid === studentUid)));
                 cached.forEach(c => map.set(c.id, c));
             }
-            return Array.from(map.values()).filter(r => r.status === "pending");
+            // (2026-07-13) Expire & purge stale pending requests; was never expiring
+            const activePending = [];
+            Array.from(map.values()).forEach((r) => {
+                if (r.status !== "pending") return;
+                if (isInviteExpired(r)) {
+                    removeLocalGuardianLink(r.id);
+                    deleteDoc(doc(db, "guardian_links", r.id)).catch(() => { });
+                    cleanupInviteNotifications([r.id]).catch(() => { });
+                    return;
+                }
+                activePending.push(r);
+            });
+            return activePending;
         };
 
         const emit = () => callback(mergeRequests(snap1, snapNum, snap2));
@@ -2349,8 +2638,37 @@ export const getEmergencyPostById = async (postId) => {
                 };
             }
 
+            if (response === "accepted") {
+                // (2026-07-13) Reject expired invite & cap to 1 parent; was accepting all
+                if (linkData?.status === "pending" && isInviteExpired(linkData)) {
+                    const expiredId = linkRef?.id || linkId;
+                    removeLocalGuardianLink(expiredId);
+                    if (linkRef) await deleteDoc(linkRef).catch(() => { });
+                    await cleanupInviteNotifications([expiredId]);
+                    throw new Error("This invite has expired. Please ask for a new invite.");
+                }
+                const sIdCheck = studentProfileData?.studentId || linkData?.studentId || "";
+                const sUidCheck = studentUid || linkData?.studentUid || "";
+                const currentId = linkRef?.id || linkId;
+                // (2026-07-13) Check 1-parent cap via local cache unless caller demands remote; was slow getLinksForStudent
+                if (!studentProfileData?.skipCapacityQuery) {
+                    const localAccepted = readLocalGuardianLinks().filter(l =>
+                        l.status === "accepted" &&
+                        String(l.id) !== String(currentId) &&
+                        ((sUidCheck && l.studentUid === sUidCheck) || (sIdCheck && String(l.studentId).trim() === String(sIdCheck).trim()))
+                    );
+                    if (localAccepted.length > 0) {
+                        throw new Error("You can only connect to 1 parent or guardian at a time.");
+                    }
+                }
+                try {
+                    const unlinked = JSON.parse(localStorage.getItem('securo_unlinked_links') || '[]');
+                    const filtered = unlinked.filter(u => u.linkId !== currentId && u.linkId !== linkId);
+                    localStorage.setItem('securo_unlinked_links', JSON.stringify(filtered));
+                } catch (_) { }
+            }
             if (response === "accepted" && linkData?.guardianId && linkData?.studentId) {
-                await assertGuardianCapacityForRequest({
+                assertGuardianCapacityForRequest({
                     guardianId: linkData.guardianId,
                     studentId: linkData.studentId,
                     currentLinkId: linkRef?.id || linkId
@@ -2394,122 +2712,133 @@ export const getEmergencyPostById = async (postId) => {
             }
             removeLocalGuardianLink(linkId);
             if (linkRef?.id) removeLocalGuardianLink(linkRef.id);
-
-            // (2026-07-13) Invalidate all links on rejection; was single doc update
-            if (response === "rejected" || response === "declined") {
-                const sid = studentProfileData?.studentId || linkData?.studentId || cached?.studentId;
-                const suid = studentUid || linkData?.studentUid || cached?.studentUid;
-                const gId = guardianUid || linkData?.guardianId || linkData?.guardianUid || auth.currentUser?.uid;
-                const gEmail = linkData?.guardianEmail || cached?.guardianEmail || auth.currentUser?.email;
-                const matchDocs = [];
-                if (gId) {
-                    const s1 = await getDocs(query(collection(db, "guardian_links"), where("guardianId", "==", gId))).catch(() => null);
-                    if (s1?.docs) matchDocs.push(...s1.docs);
-                    const s2 = await getDocs(query(collection(db, "guardian_links"), where("guardianUid", "==", gId))).catch(() => null);
-                    if (s2?.docs) matchDocs.push(...s2.docs);
-                }
-                if (gEmail) {
-                    const s3 = await getDocs(query(collection(db, "guardian_links"), where("guardianEmail", "==", String(gEmail).toLowerCase().trim()))).catch(() => null);
-                    if (s3?.docs) matchDocs.push(...s3.docs);
-                }
-                const seenMatchIds = new Set();
-                for (const d of matchDocs) {
-                    if (seenMatchIds.has(d.id)) continue;
-                    seenMatchIds.add(d.id);
-                    const dat = d.data();
-                    const matchStudent = (suid && (dat.studentUid === suid || dat.studentId === suid)) ||
-                        (sid && String(dat.studentId || "").trim() === String(sid).trim());
-                    if (matchStudent) {
-                        await updateDoc(d.ref, { status: "rejected", respondedAt: serverTimestamp() }).catch(() => { });
-                        removeLocalGuardianLink(d.id);
-                    }
-                }
-            }
-
             try {
                 const ch = new BroadcastChannel('securo_users_channel');
                 ch.postMessage({ type: 'guardian_link_responded', linkId: linkRef?.id || linkId, response, studentUid, guardianUid });
                 ch.close();
             } catch (e) { }
 
-            // (2026-07-13) Save accept/decline history for both ends; was one-sided
-            const targetGuardianUid = linkData?.guardianUid || linkData?.guardianId || cached?.guardianUid || cached?.guardianId || (auth.currentUser && auth.currentUser.uid ? auth.currentUser.uid : "");
-            const targetGuardianEmail = linkData?.guardianEmail || cached?.guardianEmail || (auth.currentUser?.email ? normalizeEmail(auth.currentUser.email) : "");
-            let targetStudentUid = studentUid || linkData?.studentUid || cached?.studentUid || "";
-            if (!targetStudentUid) {
-                const sid = studentProfileData?.studentId || linkData?.studentId || cached?.studentId;
-                if (sid) {
-                    try {
-                        const sRec = await findStudentUidByStudentId(sid);
-                        if (sRec?.uid) targetStudentUid = sRec.uid;
-                    } catch (_) { }
-                }
-            }
-            const studentName = studentProfileData?.name || linkData?.studentName || cached?.studentName || "Student";
-            const guardianName = linkData?.guardianName || cached?.guardianName || auth.currentUser?.displayName || "Parent/Guardian";
-            const isGuardianResponder = auth.currentUser?.uid === targetGuardianUid;
-            const studentIdVal = studentProfileData?.studentId || linkData?.studentId || cached?.studentId || "";
-            const reqId = linkRef?.id || linkId;
-
-            if (reqId) {
+            // (2026-07-13) Run cleanup & notifications in background for instant UI; was blocking
+            (async () => {
                 try {
-                    const notifSnap = await getDocs(query(collection(db, "notifications"), where("requestId", "==", reqId)));
-                    notifSnap.docs.forEach(d => {
-                        updateDoc(d.ref, { resolvedStatus: response, isRead: true, read: true }).catch(() => { });
-                    });
+                    cleanupInviteNotifications([linkId, linkRef?.id]).catch(() => { });
+                    if (response === "rejected" || response === "declined") {
+                        const sid = studentProfileData?.studentId || linkData?.studentId || cached?.studentId;
+                        const suid = studentUid || linkData?.studentUid || cached?.studentUid;
+                        const gId = guardianUid || linkData?.guardianId || linkData?.guardianUid || auth.currentUser?.uid;
+                        const gEmail = linkData?.guardianEmail || cached?.guardianEmail || auth.currentUser?.email;
+                        const queries = [];
+                        if (gId) {
+                            queries.push(getDocs(query(collection(db, "guardian_links"), where("guardianId", "==", gId))).catch(() => null));
+                            queries.push(getDocs(query(collection(db, "guardian_links"), where("guardianUid", "==", gId))).catch(() => null));
+                        }
+                        if (gEmail) {
+                            queries.push(getDocs(query(collection(db, "guardian_links"), where("guardianEmail", "==", String(gEmail).toLowerCase().trim()))).catch(() => null));
+                        }
+                        const snaps = await Promise.all(queries);
+                        const matchDocs = [];
+                        snaps.forEach(s => { if (s?.docs) matchDocs.push(...s.docs); });
+                        const seenMatchIds = new Set();
+                        const rejectOps = [];
+                        for (const d of matchDocs) {
+                            if (seenMatchIds.has(d.id)) continue;
+                            seenMatchIds.add(d.id);
+                            const dat = d.data();
+                            const matchStudent = (suid && (dat.studentUid === suid || dat.studentId === suid)) ||
+                                (sid && String(dat.studentId || "").trim() === String(sid).trim());
+                            if (matchStudent) {
+                                rejectOps.push(updateDoc(d.ref, { status: "rejected", respondedAt: serverTimestamp() }).catch(() => { }));
+                                removeLocalGuardianLink(d.id);
+                            }
+                        }
+                        await Promise.all(rejectOps);
+                    }
+
+                    const targetGuardianUid = linkData?.guardianUid || linkData?.guardianId || cached?.guardianUid || cached?.guardianId || (auth.currentUser && auth.currentUser.uid ? auth.currentUser.uid : "");
+                    const targetGuardianEmail = linkData?.guardianEmail || cached?.guardianEmail || (auth.currentUser?.email ? normalizeEmail(auth.currentUser.email) : "");
+                    let targetStudentUid = studentUid || linkData?.studentUid || cached?.studentUid || "";
+                    if (!targetStudentUid) {
+                        const sid = studentProfileData?.studentId || linkData?.studentId || cached?.studentId;
+                        if (sid) {
+                            try {
+                                const sRec = await findStudentUidByStudentId(sid);
+                                if (sRec?.uid) targetStudentUid = sRec.uid;
+                            } catch (_) { }
+                        }
+                    }
+                    const studentName = studentProfileData?.name || linkData?.studentName || cached?.studentName || "Student";
+                    const guardianName = linkData?.guardianName || cached?.guardianName || auth.currentUser?.displayName || "Parent/Guardian";
+                    const isGuardianResponder = auth.currentUser?.uid === targetGuardianUid;
+                    const studentIdVal = studentProfileData?.studentId || linkData?.studentId || cached?.studentId || "";
+                    const reqId = linkRef?.id || linkId;
+
+                    if (reqId) {
+                        const curUid = auth.currentUser?.uid || targetStudentUid || targetGuardianUid || "";
+                        if (curUid) {
+                            Promise.all([
+                                getDocs(query(collection(db, "notifications"), where("recipientUid", "==", curUid), where("requestId", "==", reqId))).catch(() => ({ docs: [] })),
+                                getDocs(query(collection(db, "notifications"), where("userId", "==", curUid), where("requestId", "==", reqId))).catch(() => ({ docs: [] }))
+                            ]).then(([s1, s2]) => {
+                                const map = new Map();
+                                s1.docs.forEach(d => map.set(d.id, d));
+                                s2.docs.forEach(d => map.set(d.id, d));
+                                map.forEach(d => {
+                                    updateDoc(d.ref, { resolvedStatus: response, isRead: true, read: true }).catch(() => { });
+                                });
+                            }).catch(() => { });
+                        }
+                    }
+
+                    const notifPromises = [];
+                    if (targetGuardianUid || targetGuardianEmail) {
+                        const gTitle = response === "accepted" ? "Child link accepted" : "Child link declined";
+                        const gMsg = isGuardianResponder
+                            ? (response === "accepted" ? `You accepted the link request for ${studentName}.` : `You declined the link request for ${studentName}.`)
+                            : (response === "accepted" ? `${studentName} accepted your monitoring request.` : `${studentName} declined your monitoring request.`);
+                        notifPromises.push(sendAccountNotification({
+                            userId: targetGuardianUid || targetGuardianEmail,
+                            recipientUid: targetGuardianUid || targetGuardianEmail,
+                            recipientEmail: targetGuardianEmail,
+                            type: response === "accepted" ? "guardian_request_accepted" : "guardian_request_declined",
+                            title: gTitle,
+                            message: gMsg,
+                            sourceUserId: targetStudentUid || "",
+                            sourceName: studentName,
+                            requestId: reqId,
+                            studentId: studentIdVal,
+                            priority: "normal",
+                            metadata: {
+                                resolvedStatus: response,
+                                linkOrigin: "guardian_request"
+                            }
+                        }).catch(() => { }));
+                    }
+
+                    if (targetStudentUid) {
+                        const sTitle = response === "accepted" ? "Parent or guardian linked" : "Parent or guardian request declined";
+                        const sMsg = isGuardianResponder
+                            ? (response === "accepted" ? `${guardianName} accepted your invitation to connect.` : `${guardianName} declined your invitation to connect.`)
+                            : (response === "accepted" ? `You connected ${guardianName} to your account.` : `You declined the link request from ${guardianName}.`);
+                        notifPromises.push(sendAccountNotification({
+                            userId: targetStudentUid,
+                            recipientUid: targetStudentUid,
+                            type: response === "accepted" ? "guardian_request_accepted" : "guardian_request_declined",
+                            title: sTitle,
+                            message: sMsg,
+                            sourceUserId: targetGuardianUid || "",
+                            sourceName: guardianName,
+                            requestId: reqId,
+                            studentId: studentIdVal,
+                            priority: "normal",
+                            metadata: {
+                                resolvedStatus: response,
+                                linkOrigin: "guardian_request"
+                            }
+                        }).catch(() => { }));
+                    }
+                    await Promise.all(notifPromises);
                 } catch (_) { }
-            }
-
-            if (targetGuardianUid || targetGuardianEmail) {
-                const gTitle = response === "accepted" ? "Child link accepted" : "Child link declined";
-                const gMsg = isGuardianResponder
-                    ? (response === "accepted" ? `You accepted the link request for ${studentName}.` : `You declined the link request for ${studentName}.`)
-                    : (response === "accepted" ? `${studentName} accepted your monitoring request.` : `${studentName} declined your monitoring request.`);
-                await sendAccountNotification({
-                    userId: targetGuardianUid || targetGuardianEmail,
-                    recipientUid: targetGuardianUid || targetGuardianEmail,
-                    recipientEmail: targetGuardianEmail,
-                    type: response === "accepted" ? "guardian_request_accepted" : "guardian_request_declined",
-                    title: gTitle,
-                    message: gMsg,
-                    sourceUserId: targetStudentUid || "",
-                    sourceName: studentName,
-                    requestId: reqId,
-                    studentId: studentIdVal,
-                    priority: "normal",
-                    metadata: {
-                        resolvedStatus: response,
-                        linkOrigin: "guardian_request"
-                    }
-                }).catch((error) => {
-                    console.warn("Guardian response notification skipped:", error);
-                });
-            }
-
-            if (targetStudentUid) {
-                const sTitle = response === "accepted" ? "Parent or guardian linked" : "Parent or guardian request declined";
-                const sMsg = isGuardianResponder
-                    ? (response === "accepted" ? `${guardianName} accepted your invitation to connect.` : `${guardianName} declined your invitation to connect.`)
-                    : (response === "accepted" ? `You connected ${guardianName} to your account.` : `You declined the link request from ${guardianName}.`);
-                await sendAccountNotification({
-                    userId: targetStudentUid,
-                    recipientUid: targetStudentUid,
-                    type: response === "accepted" ? "guardian_request_accepted" : "guardian_request_declined",
-                    title: sTitle,
-                    message: sMsg,
-                    sourceUserId: targetGuardianUid || "",
-                    sourceName: guardianName,
-                    requestId: reqId,
-                    studentId: studentIdVal,
-                    priority: "normal",
-                    metadata: {
-                        resolvedStatus: response,
-                        linkOrigin: "guardian_request"
-                    }
-                }).catch((error) => {
-                    console.warn("Student response notification skipped:", error);
-                });
-            }
+            })();
             return true;
         } catch (error) {
             console.warn("Error responding to guardian link:", error);
@@ -2680,7 +3009,17 @@ export const getEmergencyPostById = async (postId) => {
                 const cached = readLocalGuardianLinks().filter(l => (guardianId && (l.guardianId === guardianId || l.guardianUid === guardianId)) || (norm && l.guardianEmail === norm));
                 cached.forEach(c => map.set(c.id, c));
             }
-            let list = Array.from(map.values()).filter(r => r.status !== 'removed');
+            // (2026-07-13) Purge expired pending links on guardian side; was kept
+            let list = Array.from(map.values()).filter(r => {
+                if (r.status === 'removed') return false;
+                if (r.status === 'pending' && isInviteExpired(r)) {
+                    removeLocalGuardianLink(r.id);
+                    deleteDoc(doc(db, "guardian_links", r.id)).catch(() => { });
+                    cleanupInviteNotifications([r.id]).catch(() => { });
+                    return false;
+                }
+                return true;
+            });
             if (guardianEmail) {
                 list = list.filter(r => !r.guardianEmail || r.guardianEmail.trim().toLowerCase() === norm || (guardianId && (r.guardianId === guardianId || r.guardianUid === guardianId)));
             }
@@ -2974,47 +3313,42 @@ export const getEmergencyPostById = async (postId) => {
         const toDeleteIds = new Set();
         if (linkId) toDeleteIds.add(linkId);
 
+        // (2026-07-13) Only sweep duplicate links when student is specified; was wildcard
         const currentUid = auth.currentUser?.uid;
         const currentEmail = (auth.currentUser?.email || meta.guardianEmail || '').trim().toLowerCase();
-        const permittedQueries = [];
-        if (currentUid) {
-            permittedQueries.push(query(collection(db, "guardian_links"), where("guardianId", "==", currentUid)));
-            permittedQueries.push(query(collection(db, "guardian_links"), where("guardianUid", "==", currentUid)));
-            permittedQueries.push(query(collection(db, "guardian_links"), where("studentUid", "==", currentUid)));
-        }
-        if (currentEmail) {
-            permittedQueries.push(query(collection(db, "guardian_links"), where("guardianEmail", "==", currentEmail)));
-        }
-        if (meta.studentId) {
-            permittedQueries.push(query(collection(db, "guardian_links"), where("studentId", "==", String(meta.studentId).trim())));
-        }
-        if (meta.studentUid) {
-            permittedQueries.push(query(collection(db, "guardian_links"), where("studentUid", "==", meta.studentUid)));
-        }
+        const targetStudentUid = meta.studentUid || null;
+        const targetStudentId = meta.studentId ? String(meta.studentId).trim() : null;
+        const targetGuardianId = meta.guardianId || currentUid || null;
+        const targetGuardianEmail = meta.guardianEmail ? String(meta.guardianEmail).trim().toLowerCase() : (currentEmail || null);
 
-        for (const qItem of permittedQueries) {
-            try {
-                const snap = await getDocs(qItem);
-                snap.docs.forEach((d) => {
-                    const data = d.data();
-                    const targetStudentUid = meta.studentUid;
-                    const targetStudentId = meta.studentId ? String(meta.studentId).trim() : null;
-                    const targetGuardianId = meta.guardianId || currentUid;
-                    const targetGuardianEmail = meta.guardianEmail ? String(meta.guardianEmail).trim().toLowerCase() : currentEmail;
+        if ((targetStudentUid || targetStudentId) && (targetGuardianId || targetGuardianEmail)) {
+            const permittedQueries = [];
+            if (targetStudentId) {
+                permittedQueries.push(query(collection(db, "guardian_links"), where("studentId", "==", targetStudentId)));
+            }
+            if (targetStudentUid) {
+                permittedQueries.push(query(collection(db, "guardian_links"), where("studentUid", "==", targetStudentUid)));
+            }
 
-                    const matchStudent = (!targetStudentUid && !targetStudentId) ||
-                        (targetStudentUid && (data.studentUid === targetStudentUid || data.studentId === targetStudentUid)) ||
-                        (targetStudentId && String(data.studentId || "").trim() === targetStudentId);
-
-                    const matchGuardian = (!targetGuardianId && !targetGuardianEmail) ||
-                        (targetGuardianId && (data.guardianId === targetGuardianId || data.guardianUid === targetGuardianId)) ||
-                        (targetGuardianEmail && String(data.guardianEmail || "").trim().toLowerCase() === targetGuardianEmail);
-
-                    if (matchStudent && matchGuardian) {
-                        toDeleteIds.add(d.id);
-                    }
-                });
-            } catch (e) { }
+            for (const qItem of permittedQueries) {
+                try {
+                    const snap = await getDocs(qItem);
+                    snap.docs.forEach((d) => {
+                        const data = d.data();
+                        const matchStudent = Boolean(
+                            (targetStudentUid && (data.studentUid === targetStudentUid || data.studentId === targetStudentUid)) ||
+                            (targetStudentId && String(data.studentId || "").trim() === targetStudentId)
+                        );
+                        const matchGuardian = Boolean(
+                            (targetGuardianId && (data.guardianId === targetGuardianId || data.guardianUid === targetGuardianId)) ||
+                            (targetGuardianEmail && String(data.guardianEmail || "").trim().toLowerCase() === targetGuardianEmail)
+                        );
+                        if (matchStudent && matchGuardian) {
+                            toDeleteIds.add(d.id);
+                        }
+                    });
+                } catch (e) { }
+            }
         }
 
         toDeleteIds.forEach(id => removeLocalGuardianLink(id));
@@ -3037,6 +3371,8 @@ export const getEmergencyPostById = async (postId) => {
                 }
             });
             await Promise.all(deleteOps);
+            // (2026-07-13) Remove invite notifications when link cancelled; was orphan
+            await cleanupInviteNotifications(Array.from(toDeleteIds)).catch(() => { });
             success = true;
         }
 
@@ -3056,7 +3392,8 @@ export const getEmergencyPostById = async (postId) => {
 
         try {
             const ch = new BroadcastChannel('securo_users_channel');
-            ch.postMessage({ type: 'guardian_link_removed', linkId, meta });
+            // (2026-07-13) Broadcast all deleted link IDs on cancel; was single linkId
+            ch.postMessage({ type: 'guardian_link_removed', linkId, deletedIds: Array.from(toDeleteIds), meta });
             ch.close();
         } catch (e) { }
 
@@ -3403,6 +3740,20 @@ export const getEmergencyPostById = async (postId) => {
         });
     };
 
+    // (2026-07-13) Export deleteAccountNotification for cancelled invite cleanup; was missing
+    export const deleteAccountNotification = async (notificationId) => {
+        if (!notificationId || String(notificationId).startsWith("guardian-request-")) return;
+        try {
+            await deleteDoc(doc(db, "notifications", notificationId));
+        } catch (_) {
+            await updateDoc(doc(db, "notifications", notificationId), {
+                resolvedStatus: "cancelled",
+                isRead: true,
+                read: true
+            }).catch(() => { });
+        }
+    };
+
     // (2026-07-13) Subscribe notifs by userId, recipientUid & email; was 2 queries
     export const subscribeToAccountNotifications = (userId, callback, userEmail = "") => {
         if (!userId && !userEmail) return () => { };
@@ -3415,10 +3766,28 @@ export const getEmergencyPostById = async (postId) => {
                         snap.docs.forEach((d) => map.set(d.id, { id: d.id, ...d.data() }));
                     }
                 });
-                const list = Array.from(map.values()).sort((a, b) => {
+                // (2026-07-13) Purge expired & duplicate invite notifs; was keeping stale
+                const sorted = Array.from(map.values()).sort((a, b) => {
                     const timeA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
                     const timeB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
                     return timeB - timeA;
+                });
+                const seenInviteReqIds = new Set();
+                const list = sorted.filter((item) => {
+                    const isInviteNotif = item.type === "guardian_request" || item.type === "student_guardian_request";
+                    if (!isInviteNotif) return true;
+                    if (!item.resolvedStatus && isInviteExpired(item)) {
+                        deleteDoc(doc(db, "notifications", item.id)).catch(() => { });
+                        return false;
+                    }
+                    if (item.requestId) {
+                        if (seenInviteReqIds.has(item.requestId)) {
+                            deleteDoc(doc(db, "notifications", item.id)).catch(() => { });
+                            return false;
+                        }
+                        seenInviteReqIds.add(item.requestId);
+                    }
+                    return true;
                 });
                 return list.slice(0, 50);
             };
@@ -3646,9 +4015,28 @@ export const getEmergencyPostById = async (postId) => {
         localMessages.unshift({ id: localId, ...payload });
         writeLocalGADMessages(localMessages);
 
+        // (2026-07-13) Always send unified chat message even if gad_messages fails; was after
+        const senderRole = String(messageData.role || 'student').toLowerCase();
+        const defaultRoleName = senderRole === 'staff' ? 'Campus Staff' : 'Student';
+        const displaySenderName = isAnon
+            ? (senderRole === 'staff' ? 'Anonymous Staff' : 'Anonymous Student')
+            : (messageData.studentName || defaultRoleName);
+        if (messageData.studentUid) {
+            await sendChatMessage(messageData.studentUid, "system_admin_securo", messageData.message || "", displaySenderName, {
+                threadId: [messageData.studentUid, "system_admin_securo"].sort().join("_"),
+                senderRole,
+                recipientRole: "admin",
+                supportMode: "gad_support",
+                isAnonymous: isAnon,
+                senderLabel: displaySenderName,
+                ownerId: messageData.studentUid
+            }).catch((err) => console.warn("Unified GAD chat sync warning:", err));
+        }
+
         try {
             const docRef = await addDoc(collection(db, "gad_messages"), {
                 ...payload,
+                role: senderRole,
                 createdAt: serverTimestamp()
             });
 
@@ -3656,26 +4044,15 @@ export const getEmergencyPostById = async (postId) => {
                 userId: 'admin',
                 type: 'gad',
                 title: 'GAD Support Activity',
-                message: isAnon ? 'A new confidential GAD report was submitted.' : `New GAD report from ${messageData.studentName || 'Student'}.`,
+                message: isAnon ? 'A new confidential GAD report was submitted.' : `New GAD report from ${messageData.studentName || defaultRoleName}.`,
                 sourceUserId: messageData.studentUid || '',
-                sourceName: isAnon ? 'Confidential' : (messageData.studentName || 'Student'),
+                sourceName: isAnon ? 'Confidential' : (messageData.studentName || defaultRoleName),
                 metadata: {
                     category: messageData.category || 'counseling',
                     subject: messageData.subject || '',
                     location: messageData.location || null
                 }
             }).catch(err => console.warn("Failed GAD admin notify:", err));
-
-            // (2026-07-13) Synchronize GAD inquiry into unified chat thread; was separate
-            if (messageData.studentUid) {
-                sendChatMessage(messageData.studentUid, "system_admin_securo", messageData.message || "", isAnon ? "Anonymous Student" : (messageData.studentName || "Student"), {
-                    threadId: [messageData.studentUid, "system_admin_securo"].sort().join("_"),
-                    supportMode: "gad_support",
-                    isAnonymous: isAnon,
-                    senderLabel: isAnon ? "Anonymous Student" : (messageData.studentName || "Student"),
-                    ownerId: messageData.studentUid
-                }).catch(() => { });
-            }
 
             return { id: docRef.id, ...payload };
         } catch (error) {
@@ -3694,7 +4071,7 @@ export const getEmergencyPostById = async (postId) => {
                 : query(collection(db, "gad_messages"));
 
             return onSnapshot(q, (snapshot) => {
-                const remote = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const remote = snapshot.docs.map(doc => normalizeMsgForCache({ id: doc.id, ...doc.data() }));
                 const merged = [...remote];
                 local.forEach(l => {
                     if (!merged.some(r => r.id === l.id)) merged.push(l);
@@ -3704,6 +4081,13 @@ export const getEmergencyPostById = async (postId) => {
                     const bT = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime();
                     return bT - aT;
                 });
+                // (2026-07-13) Persist remote GAD messages to local cache; was volatile
+                if (remote.length) {
+                    const allCachedGad = readLocalGADMessages();
+                    const combined = [...remote];
+                    allCachedGad.forEach(m => { if (!combined.some(r => r.id === m.id)) combined.push(m); });
+                    writeLocalGADMessages(combined);
+                }
                 callback(merged);
                 // (2026-07-13) Fix catch block in subscribeToGADMessages; was catch without param
             }, () => callback(local));

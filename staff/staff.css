@@ -6,28 +6,28 @@
     --role-theme: #2563eb;
 }
 
-/* (2026-07-13) Extracted unified student styles; was inline style */
+/* (2026-07-13) Blue staff root theme tokens; was purple student tokens */
 :root {
-            --bg: #f4f3ff;
-            --bg-strong: #e8e3ff;
+            --bg: #f0f7ff;
+            --bg-strong: #dbeafe;
             --surface: rgba(255, 255, 255, 0.7);
             --surface-strong: rgba(255, 255, 255, 0.9);
             --surface-deep: rgba(255, 255, 255, 0.58);
             --ink: #171428;
             --muted: #6e6a84;
-            --line: rgba(94, 63, 177, 0.15);
+            --line: rgba(37, 99, 235, 0.15);
             --line-strong: rgba(255, 255, 255, 0.45);
-            --primary: #5a1fe0;
-            --primary-strong: #4311c5;
-            --primary-soft: #f1ebff;
-            --primary-wash: rgba(90, 31, 224, 0.14);
+            --primary: #2563eb;
+            --primary-strong: #1d4ed8;
+            --primary-soft: #eff6ff;
+            --primary-wash: rgba(37, 99, 235, 0.14);
             --cyan: #67d5ff;
             --red: #d11f34;
             --red-soft: rgba(255, 121, 145, 0.16);
             --green: #0f9b67;
-            --shadow: 0 35px 80px rgba(49, 30, 105, 0.2);
-            --shadow-soft: 0 18px 36px rgba(59, 35, 130, 0.14);
-            --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 18px 48px rgba(79, 22, 201, 0.16);
+            --shadow: 0 35px 80px rgba(30, 58, 138, 0.18);
+            --shadow-soft: 0 18px 36px rgba(30, 58, 138, 0.12);
+            --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 18px 48px rgba(37, 99, 235, 0.16);
             --radius-xl: 32px;
             --radius-lg: 24px;
             --radius-md: 18px;
@@ -4176,10 +4176,7 @@
             pointer-events: auto !important;
             align-items: center;
             justify-content: center;
-            transform: translateZ(0);
-            will-change: transform;
-            contain: paint;
-            /* Prevent safe area issues on mobile */
+            /* (2026-07-13) Remove contain/will-change GPU bug hiding nav icons; was paint */
             padding-bottom: env(safe-area-inset-bottom, 8px);
         }
 
@@ -4205,24 +4202,27 @@
             text-decoration: none;
             padding: 10px 0;
             border-radius: 20px;
-            /* Perf: only animate compositor-friendly properties */
-            transition: color 0.2s ease, background 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: color 0.2s ease, background 0.2s ease;
             position: relative;
             background: transparent;
             border: none;
-            will-change: transform;
-            transform: translateZ(0);
             cursor: pointer;
         }
 
         .nav-item:hover {
             color: var(--primary);
             background: rgba(90, 31, 224, 0.08);
-            transform: translateY(-2px);
         }
 
+        /* (2026-07-13) Keep bottom nav icons visible on active click; was GPU clipped */
         .nav-item .material-symbols-outlined {
             font-size: 1.55rem;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1 !important;
+            visibility: visible !important;
         }
 
         .nav-item span:last-child {
@@ -4986,18 +4986,19 @@
             width: 100%;
         }
 
+        /* (2026-07-13) Blue staff onboarding & form theme; was purple #5a1fe0 */
         .fs-progress-step-pill {
             flex: 1;
             height: 6px;
             border-radius: 999px;
-            background: rgba(90, 31, 224, 0.12);
+            background: rgba(37, 99, 235, 0.12);
             transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
         }
 
         .fs-progress-step-pill.active {
-            background: linear-gradient(90deg, #5a1fe0, #7c3aed);
-            box-shadow: 0 2px 10px rgba(90, 31, 224, 0.4);
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4);
         }
 
         .fs-slides-viewport {
@@ -5029,14 +5030,15 @@
             animation: fadeIn 0.2s ease;
         }
 
+        /* (2026-07-13) Blue staff onboarding avatar & inputs; was purple */
         .fs-loading-spinner {
             width: 38px;
             height: 38px;
-            border: 3.5px solid rgba(90, 31, 224, 0.15);
-            border-top-color: #5a1fe0;
+            border: 3.5px solid rgba(37, 99, 235, 0.15);
+            border-top-color: #2563eb;
             border-radius: 50%;
             animation: fsSpin 0.7s infinite linear;
-            box-shadow: 0 4px 16px rgba(90, 31, 224, 0.15);
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.15);
         }
 
         .fs-slide-card {
@@ -5074,9 +5076,9 @@
             width: 165px;
             height: 165px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #f3eeff 0%, #e9ddff 100%);
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
             border: 4px solid #ffffff;
-            box-shadow: 0 16px 45px rgba(90, 31, 224, 0.28), 0 0 0 3px rgba(90, 31, 224, 0.18);
+            box-shadow: 0 16px 45px rgba(37, 99, 235, 0.25), 0 0 0 3px rgba(37, 99, 235, 0.18);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -5126,7 +5128,7 @@
             height: 100%;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #5a1fe0 0%, #7b42f6 50%, #4311c5 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%);
         }
 
         .fs-avatar-img {
@@ -5151,7 +5153,7 @@
             align-items: center;
             justify-content: center;
             border: 2.5px solid white;
-            box-shadow: 0 4px 14px rgba(90, 31, 224, 0.45);
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
             transition: transform 0.15s ease;
         }
 
@@ -5175,15 +5177,15 @@
             border-radius: 20px;
             font-size: 0.82rem;
             font-weight: 700;
-            border: 1px solid rgba(90, 31, 224, 0.2);
-            background: rgba(90, 31, 224, 0.06);
+            border: 1px solid rgba(37, 99, 235, 0.2);
+            background: rgba(37, 99, 235, 0.06);
             color: var(--primary);
             cursor: pointer;
             transition: all 0.18s ease;
         }
 
         .fs-action-chip:hover {
-            background: rgba(90, 31, 224, 0.12);
+            background: rgba(37, 99, 235, 0.12);
             transform: translateY(-1px);
         }
 
@@ -5219,13 +5221,13 @@
 
         .fs-input-field-wrap:focus-within {
             background: #ffffff;
-            border-color: #5a1fe0;
-            box-shadow: 0 0 0 3.5px rgba(90, 31, 224, 0.14);
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.14);
         }
 
         .fs-input-field-wrap .input-icon {
             font-size: 20px;
-            color: #5a1fe0;
+            color: #2563eb;
             flex-shrink: 0;
         }
 
@@ -5446,10 +5448,10 @@
             position: relative;
             z-index: 100001;
         }
-        /* (2026-07-13) Tight Messenger GAD chat styling; was loose layout with anon bar */
+        /* (2026-07-13) Remove forced 40px top inset on GAD header; was max(40px) */
         .gad-chat-header {
             padding: 10px 16px;
-            padding-top: max(40px, calc(10px + env(safe-area-inset-top, 0px)));
+            padding-top: calc(10px + env(safe-area-inset-top, 0px));
             background: #ffffff;
             color: var(--ink);
             display: flex;
@@ -5527,12 +5529,13 @@
             word-break: break-word;
             position: relative;
         }
+        /* (2026-07-13) Blue staff GAD bubble; was purple gradient */
         .gad-bubble.me {
             align-self: flex-end;
             margin-left: auto;
-            background: linear-gradient(135deg, #7c3aed 0%, #5a1fe0 100%);
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
             color: #ffffff;
-            box-shadow: 0 1px 3px rgba(90, 31, 224, 0.16);
+            box-shadow: 0 1px 3px rgba(37, 99, 235, 0.2);
         }
         .gad-bubble.them {
             margin: 0;
@@ -5581,9 +5584,10 @@
             align-items: center;
             gap: 4px;
         }
+        /* (2026-07-13) Remove forced 32px bottom inset on GAD composer; was max(32px) */
         .gad-chat-composer {
             padding: 8px 14px;
-            padding-bottom: max(32px, calc(8px + env(safe-area-inset-bottom, 0px)));
+            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
             border-top: 1px solid rgba(0, 0, 0, 0.05);
             background: #ffffff;
             position: sticky;
@@ -5834,7 +5838,8 @@
 .sta-u176 { color: var(--muted); font-weight: 700; font-size: 1.1rem; user-select: none; }
 .sta-u177 { flex: 1; border: none; background: transparent; outline: none; font-size: 1rem; font-weight: 700; text-transform: uppercase; padding: 0; height: 50px; }
 .sta-u178 { color: #d11f34; font-size: 0.82rem; font-weight: 600; margin-bottom: 12px; text-align: center; }
-.sta-u179 { width: 100%; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #5a1fe0, #4311c5); color: white; border: none; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 12px 24px rgba(90, 31, 224, 0.25); cursor: pointer; transition: opacity 0.2s ease; }
+/* (2026-07-13) Blue staff submit button in onboarding; was purple gradient */
+.sta-u179 { width: 100%; height: 52px; border-radius: 16px; background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 12px 24px rgba(37, 99, 235, 0.25); cursor: pointer; transition: opacity 0.2s ease; }
 .sta-u180 { background: linear-gradient(180deg, #ffffff, #faf9ff); border: 1px solid rgba(90, 31, 224, 0.12); border-radius: 28px; padding: 26px 20px; box-shadow: 0 20px 48px -12px rgba(90, 31, 224, 0.12); text-align: center; position: relative; }
 .sta-u181 { width: 72px; height: 72px; border-radius: 22px; background: linear-gradient(135deg, rgba(90, 31, 224, 0.1), rgba(124, 58, 237, 0.18)); color: #5a1fe0; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; box-shadow: 0 10px 22px -6px rgba(90, 31, 224, 0.2); border: 1px solid rgba(90, 31, 224, 0.16); }
 .sta-u182 { font-size: 36px; }

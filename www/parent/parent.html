@@ -393,13 +393,14 @@
                             <div class="notif-badge par-u49" id="guardianNotifBadge"></div>
                         </button>
                         <!-- (2026-07-13) Fix notif dropdown clipping on mobile; was overflow left -->
+                        <!-- (2026-07-13) Match student notifications sheet header; was Alerts & Requests -->
                         <div class="notif-dropdown par-u50" id="guardianNotifDropdown">
                             <div class="par-u51">
                                 <div>
-                                    <strong class="par-u52">Alerts & Requests</strong>
-                                    <span class="par-u53">Emergency and location status</span>
+                                    <strong class="par-u52">Notifications</strong>
+                                    <span class="par-u53">Requests, approvals, and app activity</span>
                                 </div>
-                                <button type="button" id="closeGuardianNotifDropdown" class="par-u54">
+                                <button type="button" id="closeGuardianNotifDropdown" class="par-u54" aria-label="Close notifications">
                                     <span class="material-symbols-outlined par-u55">close</span>
                                 </button>
                             </div>
@@ -495,10 +496,10 @@
             <div id="studentSelector" class="par-u74">
                 <!-- Chips will be injected -->
             </div>
-            <button class="selector-chip par-u75" id="addStudentBtn"
-               >
-                <span class="material-symbols-outlined par-u55">add</span>
-                Link Child
+            <!-- (2026-07-13) Match student invite pill button icon; was plain add -->
+            <button class="selector-chip par-u75" id="addStudentBtn" type="button">
+                <span class="material-symbols-outlined par-u55">person_add</span>
+                <span>Link Child</span>
             </button>
         </div>
 

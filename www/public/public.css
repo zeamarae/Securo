@@ -2033,6 +2033,98 @@ body.page-about {
             --radius-md: 18px;
         }
 
+        /* (2026-07-13) Complete blue theme for staff login & registration; was purple */
+        html.role-staff body.page-login,
+        body.page-login.role-staff {
+            --bg: #f0f7ff;
+            --bg-strong: #dbeafe;
+            --primary: #2563eb;
+            --primary-strong: #1d4ed8;
+            --primary-soft: #eff6ff;
+            --shadow: 0 35px 80px rgba(30, 58, 138, 0.2);
+            --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 18px 48px rgba(37, 99, 235, 0.16);
+            background:
+                linear-gradient(180deg, rgba(29, 78, 216, 0.92) 0%, rgba(59, 130, 246, 0.3) 18%, rgba(255, 255, 255, 0) 34%),
+                linear-gradient(180deg, #bfdbfe 0%, #f0f7ff 22%, #f8fbff 100%);
+        }
+        html.role-staff body.page-login .brand-logo-img,
+        body.page-login.role-staff .brand-logo-img,
+        html.role-staff body.page-login .onboarding-badge-icon img,
+        body.page-login.role-staff .onboarding-badge-icon img {
+            filter: hue-rotate(-45deg) saturate(1.35) brightness(1.08);
+        }
+        html.role-staff body.page-login .input-wrapper,
+        body.page-login.role-staff .input-wrapper,
+        html.role-staff body.page-login .year-section-wrapper,
+        body.page-login.role-staff .year-section-wrapper {
+            border-color: rgba(37, 99, 235, 0.28) !important;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.04);
+        }
+        html.role-staff body.page-login .input-wrapper:hover,
+        body.page-login.role-staff .input-wrapper:hover {
+            border-color: rgba(37, 99, 235, 0.45) !important;
+        }
+        html.role-staff body.page-login .input-wrapper:focus-within,
+        body.page-login.role-staff .input-wrapper:focus-within,
+        html.role-staff body.page-login .year-section-wrapper:focus-within,
+        body.page-login.role-staff .year-section-wrapper:focus-within {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14) !important;
+        }
+        html.role-staff body.page-login .btn-action,
+        body.page-login.role-staff .btn-action {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+        }
+        html.role-staff body.page-login .onboarding-badge-icon,
+        body.page-login.role-staff .onboarding-badge-icon {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.18));
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.12);
+        }
+        html.role-staff body.page-login .onboarding-avatar-circle,
+        body.page-login.role-staff .onboarding-avatar-circle {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%);
+            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28), 0 0 0 4px white;
+        }
+        html.role-staff body.page-login .photo-action-btn,
+        body.page-login.role-staff .photo-action-btn {
+            border-color: rgba(37, 99, 235, 0.2);
+            background: rgba(37, 99, 235, 0.06);
+            color: #2563eb;
+        }
+        html.role-staff body.page-login .photo-action-btn:hover,
+        body.page-login.role-staff .photo-action-btn:hover {
+            background: rgba(37, 99, 235, 0.12);
+        }
+        html.role-staff body.page-login .camera-viewport-circle,
+        body.page-login.role-staff .camera-viewport-circle {
+            box-shadow: 0 0 0 3px #2563eb, 0 8px 24px rgba(0,0,0,0.5);
+        }
+        html.role-staff body.page-login .cam-control-btn.snap .snap-inner,
+        body.page-login.role-staff .cam-control-btn.snap .snap-inner {
+            background: #2563eb;
+        }
+        html.role-staff body.page-login .toast-icon,
+        body.page-login.role-staff .toast-icon,
+        html.role-staff body.page-login .pub-login-u38,
+        body.page-login.role-staff .pub-login-u38 {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+        html.role-staff body.page-login .pub-login-u30,
+        body.page-login.role-staff .pub-login-u30,
+        html.role-staff body.page-login .pub-login-u47,
+        body.page-login.role-staff .pub-login-u47 {
+            border-color: rgba(37, 99, 235, 0.22);
+        }
+        html.role-staff body.page-login .pub-login-u54,
+        body.page-login.role-staff .pub-login-u54,
+        html.role-staff body.page-login .pub-login-u60,
+        body.page-login.role-staff .pub-login-u60 {
+            background: #f0f7ff;
+            border-color: rgba(37, 99, 235, 0.14);
+        }
+
         /* (2026-07-13) Disable dragging for all images; was default draggable */
         :where(body.page-about) img {
             -webkit-user-drag: none;
@@ -3723,6 +3815,98 @@ body.page-role-selection {
             padding: 24px;
         }
 
+        /* (2026-07-13) Complete blue theme for staff login & registration; was purple */
+        html.role-staff body.page-login,
+        body.page-login.role-staff {
+            --bg: #f0f7ff;
+            --bg-strong: #dbeafe;
+            --primary: #2563eb;
+            --primary-strong: #1d4ed8;
+            --primary-soft: #eff6ff;
+            --shadow: 0 35px 80px rgba(30, 58, 138, 0.2);
+            --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 18px 48px rgba(37, 99, 235, 0.16);
+            background:
+                linear-gradient(180deg, rgba(29, 78, 216, 0.92) 0%, rgba(59, 130, 246, 0.3) 18%, rgba(255, 255, 255, 0) 34%),
+                linear-gradient(180deg, #bfdbfe 0%, #f0f7ff 22%, #f8fbff 100%);
+        }
+        html.role-staff body.page-login .brand-logo-img,
+        body.page-login.role-staff .brand-logo-img,
+        html.role-staff body.page-login .onboarding-badge-icon img,
+        body.page-login.role-staff .onboarding-badge-icon img {
+            filter: hue-rotate(-45deg) saturate(1.35) brightness(1.08);
+        }
+        html.role-staff body.page-login .input-wrapper,
+        body.page-login.role-staff .input-wrapper,
+        html.role-staff body.page-login .year-section-wrapper,
+        body.page-login.role-staff .year-section-wrapper {
+            border-color: rgba(37, 99, 235, 0.28) !important;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.04);
+        }
+        html.role-staff body.page-login .input-wrapper:hover,
+        body.page-login.role-staff .input-wrapper:hover {
+            border-color: rgba(37, 99, 235, 0.45) !important;
+        }
+        html.role-staff body.page-login .input-wrapper:focus-within,
+        body.page-login.role-staff .input-wrapper:focus-within,
+        html.role-staff body.page-login .year-section-wrapper:focus-within,
+        body.page-login.role-staff .year-section-wrapper:focus-within {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14) !important;
+        }
+        html.role-staff body.page-login .btn-action,
+        body.page-login.role-staff .btn-action {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+        }
+        html.role-staff body.page-login .onboarding-badge-icon,
+        body.page-login.role-staff .onboarding-badge-icon {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.18));
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.12);
+        }
+        html.role-staff body.page-login .onboarding-avatar-circle,
+        body.page-login.role-staff .onboarding-avatar-circle {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%);
+            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28), 0 0 0 4px white;
+        }
+        html.role-staff body.page-login .photo-action-btn,
+        body.page-login.role-staff .photo-action-btn {
+            border-color: rgba(37, 99, 235, 0.2);
+            background: rgba(37, 99, 235, 0.06);
+            color: #2563eb;
+        }
+        html.role-staff body.page-login .photo-action-btn:hover,
+        body.page-login.role-staff .photo-action-btn:hover {
+            background: rgba(37, 99, 235, 0.12);
+        }
+        html.role-staff body.page-login .camera-viewport-circle,
+        body.page-login.role-staff .camera-viewport-circle {
+            box-shadow: 0 0 0 3px #2563eb, 0 8px 24px rgba(0,0,0,0.5);
+        }
+        html.role-staff body.page-login .cam-control-btn.snap .snap-inner,
+        body.page-login.role-staff .cam-control-btn.snap .snap-inner {
+            background: #2563eb;
+        }
+        html.role-staff body.page-login .toast-icon,
+        body.page-login.role-staff .toast-icon,
+        html.role-staff body.page-login .pub-login-u38,
+        body.page-login.role-staff .pub-login-u38 {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+        html.role-staff body.page-login .pub-login-u30,
+        body.page-login.role-staff .pub-login-u30,
+        html.role-staff body.page-login .pub-login-u47,
+        body.page-login.role-staff .pub-login-u47 {
+            border-color: rgba(37, 99, 235, 0.22);
+        }
+        html.role-staff body.page-login .pub-login-u54,
+        body.page-login.role-staff .pub-login-u54,
+        html.role-staff body.page-login .pub-login-u60,
+        body.page-login.role-staff .pub-login-u60 {
+            background: #f0f7ff;
+            border-color: rgba(37, 99, 235, 0.14);
+        }
+
         /* (2026-07-13) Disable dragging for all images; was default draggable */
         :where(body.page-role-selection) img {
             -webkit-user-drag: none;
@@ -4004,6 +4188,98 @@ body.page-role-selection {
             --radius-md: 18px;
         }
 
+        /* (2026-07-13) Complete blue theme for staff login & registration; was purple */
+        html.role-staff body.page-login,
+        body.page-login.role-staff {
+            --bg: #f0f7ff;
+            --bg-strong: #dbeafe;
+            --primary: #2563eb;
+            --primary-strong: #1d4ed8;
+            --primary-soft: #eff6ff;
+            --shadow: 0 35px 80px rgba(30, 58, 138, 0.2);
+            --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 18px 48px rgba(37, 99, 235, 0.16);
+            background:
+                linear-gradient(180deg, rgba(29, 78, 216, 0.92) 0%, rgba(59, 130, 246, 0.3) 18%, rgba(255, 255, 255, 0) 34%),
+                linear-gradient(180deg, #bfdbfe 0%, #f0f7ff 22%, #f8fbff 100%);
+        }
+        html.role-staff body.page-login .brand-logo-img,
+        body.page-login.role-staff .brand-logo-img,
+        html.role-staff body.page-login .onboarding-badge-icon img,
+        body.page-login.role-staff .onboarding-badge-icon img {
+            filter: hue-rotate(-45deg) saturate(1.35) brightness(1.08);
+        }
+        html.role-staff body.page-login .input-wrapper,
+        body.page-login.role-staff .input-wrapper,
+        html.role-staff body.page-login .year-section-wrapper,
+        body.page-login.role-staff .year-section-wrapper {
+            border-color: rgba(37, 99, 235, 0.28) !important;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.04);
+        }
+        html.role-staff body.page-login .input-wrapper:hover,
+        body.page-login.role-staff .input-wrapper:hover {
+            border-color: rgba(37, 99, 235, 0.45) !important;
+        }
+        html.role-staff body.page-login .input-wrapper:focus-within,
+        body.page-login.role-staff .input-wrapper:focus-within,
+        html.role-staff body.page-login .year-section-wrapper:focus-within,
+        body.page-login.role-staff .year-section-wrapper:focus-within {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14) !important;
+        }
+        html.role-staff body.page-login .btn-action,
+        body.page-login.role-staff .btn-action {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+        }
+        html.role-staff body.page-login .onboarding-badge-icon,
+        body.page-login.role-staff .onboarding-badge-icon {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.18));
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.12);
+        }
+        html.role-staff body.page-login .onboarding-avatar-circle,
+        body.page-login.role-staff .onboarding-avatar-circle {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%);
+            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28), 0 0 0 4px white;
+        }
+        html.role-staff body.page-login .photo-action-btn,
+        body.page-login.role-staff .photo-action-btn {
+            border-color: rgba(37, 99, 235, 0.2);
+            background: rgba(37, 99, 235, 0.06);
+            color: #2563eb;
+        }
+        html.role-staff body.page-login .photo-action-btn:hover,
+        body.page-login.role-staff .photo-action-btn:hover {
+            background: rgba(37, 99, 235, 0.12);
+        }
+        html.role-staff body.page-login .camera-viewport-circle,
+        body.page-login.role-staff .camera-viewport-circle {
+            box-shadow: 0 0 0 3px #2563eb, 0 8px 24px rgba(0,0,0,0.5);
+        }
+        html.role-staff body.page-login .cam-control-btn.snap .snap-inner,
+        body.page-login.role-staff .cam-control-btn.snap .snap-inner {
+            background: #2563eb;
+        }
+        html.role-staff body.page-login .toast-icon,
+        body.page-login.role-staff .toast-icon,
+        html.role-staff body.page-login .pub-login-u38,
+        body.page-login.role-staff .pub-login-u38 {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+        html.role-staff body.page-login .pub-login-u30,
+        body.page-login.role-staff .pub-login-u30,
+        html.role-staff body.page-login .pub-login-u47,
+        body.page-login.role-staff .pub-login-u47 {
+            border-color: rgba(37, 99, 235, 0.22);
+        }
+        html.role-staff body.page-login .pub-login-u54,
+        body.page-login.role-staff .pub-login-u54,
+        html.role-staff body.page-login .pub-login-u60,
+        body.page-login.role-staff .pub-login-u60 {
+            background: #f0f7ff;
+            border-color: rgba(37, 99, 235, 0.14);
+        }
+
         /* (2026-07-13) Disable dragging for all images; was default draggable */
         :where(body.page-login) img {
             -webkit-user-drag: none;
@@ -4231,20 +4507,23 @@ body.page-role-selection {
         :where(body.page-login) .btn-action.is-busy > * {
             opacity: 0;
         }
+        /* (2026-07-13) Use unique loginBtnSpin keyframes; was overwritten by spin */
         :where(body.page-login) .btn-action.is-busy::after {
             content: "";
             width: 20px;
             height: 20px;
+            box-sizing: border-box;
             border-radius: 50%;
             border: 2.5px solid rgba(255,255,255,0.35);
             border-top-color: #fff;
             position: absolute;
             left: 50%;
             top: 50%;
-            transform: translate(-50%, -50%);
-            animation: spin 0.8s linear infinite;
+            transform: translate(-50%, -50%) rotate(0deg);
+            animation: loginBtnSpin 0.8s linear infinite;
         }
-        @keyframes spin {
+        @keyframes loginBtnSpin {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
             to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
@@ -4695,6 +4974,98 @@ body.page-permissions {
             justify-content: center;
             color: var(--ink);
             padding: 20px 16px;
+        }
+
+        /* (2026-07-13) Complete blue theme for staff login & registration; was purple */
+        html.role-staff body.page-login,
+        body.page-login.role-staff {
+            --bg: #f0f7ff;
+            --bg-strong: #dbeafe;
+            --primary: #2563eb;
+            --primary-strong: #1d4ed8;
+            --primary-soft: #eff6ff;
+            --shadow: 0 35px 80px rgba(30, 58, 138, 0.2);
+            --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 18px 48px rgba(37, 99, 235, 0.16);
+            background:
+                linear-gradient(180deg, rgba(29, 78, 216, 0.92) 0%, rgba(59, 130, 246, 0.3) 18%, rgba(255, 255, 255, 0) 34%),
+                linear-gradient(180deg, #bfdbfe 0%, #f0f7ff 22%, #f8fbff 100%);
+        }
+        html.role-staff body.page-login .brand-logo-img,
+        body.page-login.role-staff .brand-logo-img,
+        html.role-staff body.page-login .onboarding-badge-icon img,
+        body.page-login.role-staff .onboarding-badge-icon img {
+            filter: hue-rotate(-45deg) saturate(1.35) brightness(1.08);
+        }
+        html.role-staff body.page-login .input-wrapper,
+        body.page-login.role-staff .input-wrapper,
+        html.role-staff body.page-login .year-section-wrapper,
+        body.page-login.role-staff .year-section-wrapper {
+            border-color: rgba(37, 99, 235, 0.28) !important;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.04);
+        }
+        html.role-staff body.page-login .input-wrapper:hover,
+        body.page-login.role-staff .input-wrapper:hover {
+            border-color: rgba(37, 99, 235, 0.45) !important;
+        }
+        html.role-staff body.page-login .input-wrapper:focus-within,
+        body.page-login.role-staff .input-wrapper:focus-within,
+        html.role-staff body.page-login .year-section-wrapper:focus-within,
+        body.page-login.role-staff .year-section-wrapper:focus-within {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14) !important;
+        }
+        html.role-staff body.page-login .btn-action,
+        body.page-login.role-staff .btn-action {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+        }
+        html.role-staff body.page-login .onboarding-badge-icon,
+        body.page-login.role-staff .onboarding-badge-icon {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.18));
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.12);
+        }
+        html.role-staff body.page-login .onboarding-avatar-circle,
+        body.page-login.role-staff .onboarding-avatar-circle {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%);
+            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28), 0 0 0 4px white;
+        }
+        html.role-staff body.page-login .photo-action-btn,
+        body.page-login.role-staff .photo-action-btn {
+            border-color: rgba(37, 99, 235, 0.2);
+            background: rgba(37, 99, 235, 0.06);
+            color: #2563eb;
+        }
+        html.role-staff body.page-login .photo-action-btn:hover,
+        body.page-login.role-staff .photo-action-btn:hover {
+            background: rgba(37, 99, 235, 0.12);
+        }
+        html.role-staff body.page-login .camera-viewport-circle,
+        body.page-login.role-staff .camera-viewport-circle {
+            box-shadow: 0 0 0 3px #2563eb, 0 8px 24px rgba(0,0,0,0.5);
+        }
+        html.role-staff body.page-login .cam-control-btn.snap .snap-inner,
+        body.page-login.role-staff .cam-control-btn.snap .snap-inner {
+            background: #2563eb;
+        }
+        html.role-staff body.page-login .toast-icon,
+        body.page-login.role-staff .toast-icon,
+        html.role-staff body.page-login .pub-login-u38,
+        body.page-login.role-staff .pub-login-u38 {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+        html.role-staff body.page-login .pub-login-u30,
+        body.page-login.role-staff .pub-login-u30,
+        html.role-staff body.page-login .pub-login-u47,
+        body.page-login.role-staff .pub-login-u47 {
+            border-color: rgba(37, 99, 235, 0.22);
+        }
+        html.role-staff body.page-login .pub-login-u54,
+        body.page-login.role-staff .pub-login-u54,
+        html.role-staff body.page-login .pub-login-u60,
+        body.page-login.role-staff .pub-login-u60 {
+            background: #f0f7ff;
+            border-color: rgba(37, 99, 235, 0.14);
         }
 
         /* (2026-07-13) Disable dragging for all images; was default draggable */
@@ -5175,6 +5546,98 @@ body.page-profile {
 
         body.page-profile, :where(body.page-profile) * {
             box-sizing: border-box;
+        }
+
+        /* (2026-07-13) Complete blue theme for staff login & registration; was purple */
+        html.role-staff body.page-login,
+        body.page-login.role-staff {
+            --bg: #f0f7ff;
+            --bg-strong: #dbeafe;
+            --primary: #2563eb;
+            --primary-strong: #1d4ed8;
+            --primary-soft: #eff6ff;
+            --shadow: 0 35px 80px rgba(30, 58, 138, 0.2);
+            --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.28), 0 18px 48px rgba(37, 99, 235, 0.16);
+            background:
+                linear-gradient(180deg, rgba(29, 78, 216, 0.92) 0%, rgba(59, 130, 246, 0.3) 18%, rgba(255, 255, 255, 0) 34%),
+                linear-gradient(180deg, #bfdbfe 0%, #f0f7ff 22%, #f8fbff 100%);
+        }
+        html.role-staff body.page-login .brand-logo-img,
+        body.page-login.role-staff .brand-logo-img,
+        html.role-staff body.page-login .onboarding-badge-icon img,
+        body.page-login.role-staff .onboarding-badge-icon img {
+            filter: hue-rotate(-45deg) saturate(1.35) brightness(1.08);
+        }
+        html.role-staff body.page-login .input-wrapper,
+        body.page-login.role-staff .input-wrapper,
+        html.role-staff body.page-login .year-section-wrapper,
+        body.page-login.role-staff .year-section-wrapper {
+            border-color: rgba(37, 99, 235, 0.28) !important;
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.04);
+        }
+        html.role-staff body.page-login .input-wrapper:hover,
+        body.page-login.role-staff .input-wrapper:hover {
+            border-color: rgba(37, 99, 235, 0.45) !important;
+        }
+        html.role-staff body.page-login .input-wrapper:focus-within,
+        body.page-login.role-staff .input-wrapper:focus-within,
+        html.role-staff body.page-login .year-section-wrapper:focus-within,
+        body.page-login.role-staff .year-section-wrapper:focus-within {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14) !important;
+        }
+        html.role-staff body.page-login .btn-action,
+        body.page-login.role-staff .btn-action {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+        }
+        html.role-staff body.page-login .onboarding-badge-icon,
+        body.page-login.role-staff .onboarding-badge-icon {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.18));
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.12);
+        }
+        html.role-staff body.page-login .onboarding-avatar-circle,
+        body.page-login.role-staff .onboarding-avatar-circle {
+            background: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #1d4ed8 100%);
+            box-shadow: 0 10px 24px rgba(37, 99, 235, 0.28), 0 0 0 4px white;
+        }
+        html.role-staff body.page-login .photo-action-btn,
+        body.page-login.role-staff .photo-action-btn {
+            border-color: rgba(37, 99, 235, 0.2);
+            background: rgba(37, 99, 235, 0.06);
+            color: #2563eb;
+        }
+        html.role-staff body.page-login .photo-action-btn:hover,
+        body.page-login.role-staff .photo-action-btn:hover {
+            background: rgba(37, 99, 235, 0.12);
+        }
+        html.role-staff body.page-login .camera-viewport-circle,
+        body.page-login.role-staff .camera-viewport-circle {
+            box-shadow: 0 0 0 3px #2563eb, 0 8px 24px rgba(0,0,0,0.5);
+        }
+        html.role-staff body.page-login .cam-control-btn.snap .snap-inner,
+        body.page-login.role-staff .cam-control-btn.snap .snap-inner {
+            background: #2563eb;
+        }
+        html.role-staff body.page-login .toast-icon,
+        body.page-login.role-staff .toast-icon,
+        html.role-staff body.page-login .pub-login-u38,
+        body.page-login.role-staff .pub-login-u38 {
+            background: #eff6ff;
+            color: #2563eb;
+        }
+        html.role-staff body.page-login .pub-login-u30,
+        body.page-login.role-staff .pub-login-u30,
+        html.role-staff body.page-login .pub-login-u47,
+        body.page-login.role-staff .pub-login-u47 {
+            border-color: rgba(37, 99, 235, 0.22);
+        }
+        html.role-staff body.page-login .pub-login-u54,
+        body.page-login.role-staff .pub-login-u54,
+        html.role-staff body.page-login .pub-login-u60,
+        body.page-login.role-staff .pub-login-u60 {
+            background: #f0f7ff;
+            border-color: rgba(37, 99, 235, 0.14);
         }
 
         /* (2026-07-13) Disable dragging for all images; was default draggable */
@@ -6500,3 +6963,55 @@ body.page-settings {
 .pub-settings-u18 { display:flex; gap:10px; }
 .pub-settings-u19 { flex:1; padding:12px; border-radius:12px; border:1px solid #cbd5e1; background:#f1f5f9; color:#475569; font-weight:700; cursor:pointer; }
 .pub-settings-u20 { flex:1; padding:12px; border-radius:12px; border:none; background:#dc2626; color:white; font-weight:700; cursor:pointer; }
+
+/* (2026-07-13) Blue staff theme for profile, settings & onboarding; was purple */
+body.staff-theme,
+html.role-staff body.page-profile,
+html.role-staff body.page-settings {
+    --primary: #2563eb;
+    --primary-strong: #1d4ed8;
+    --primary-soft: rgba(37, 99, 235, 0.12);
+    --bg: #eff6ff;
+    --border: rgba(37, 99, 235, 0.16);
+}
+html.role-staff body.page-profile .hero-banner,
+body.staff-theme .hero-banner {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+}
+html.role-staff body.page-profile .eyebrow,
+body.staff-theme .eyebrow,
+html.role-staff body.page-profile .id-chip,
+body.staff-theme .id-chip {
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    border-color: #bfdbfe !important;
+}
+html.role-staff body.page-profile .btn-primary,
+body.staff-theme .btn-primary,
+html.role-staff body.page-profile .avatar-cam-btn,
+body.staff-theme .avatar-cam-btn {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    box-shadow: 0 10px 22px rgba(37, 99, 235, 0.25) !important;
+}
+html.role-staff body.page-profile .avatar-circle,
+body.staff-theme .avatar-circle,
+html.role-staff body.page-profile .back-btn,
+body.staff-theme .back-btn {
+    color: #1d4ed8 !important;
+}
+html.role-staff body.page-settings .hero-card,
+body.staff-theme.page-settings .hero-card {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+}
+html.role-staff body.page-settings .switch input:checked + .slider,
+body.staff-theme.page-settings .switch input:checked + .slider {
+    background: #2563eb !important;
+}
+html.role-staff body.page-login .onboarding-avatar-circle {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+}
+html.role-staff body.page-login .photo-action-btn:not(.secondary) {
+    color: #1d4ed8 !important;
+    border-color: #bfdbfe !important;
+    background: #eff6ff !important;
+}

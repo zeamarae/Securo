@@ -84,12 +84,12 @@
                 </div>
             </div>
 
-            <!-- (2026-07-13) Make recovery email optional on signup; was required -->
+            <!-- (2026-07-13) Omit required on hidden signup email; was blocking login -->
             <div class="form-group signup-only">
-                <label class="form-label">Email Address (Optional)</label>
+                <label class="form-label">Email Address</label>
                 <div class="input-wrapper">
                     <span class="material-symbols-outlined input-icon">mail</span>
-                    <input type="email" id="studentEmailSignup" placeholder="Optional email for OTP recovery" autocomplete="email">
+                    <input type="email" id="studentEmailSignup" placeholder="Enter email address for OTP recovery" autocomplete="email">
                 </div>
             </div>
 
@@ -245,6 +245,15 @@
                             required class="pub-login-u19">
                     </div>
                     <div class="pub-login-u20">Year 1–5 · Section letters only (e.g. A)</div>
+                </div>
+
+                <!-- (2026-07-13) Staff Department field for onboarding; was absent -->
+                <div class="form-group pub-login-u13" id="onboardingDepartmentGroup" style="display:none;">
+                    <label class="form-label pub-login-u14">Department <span style="opacity:0.6; font-weight:500;">(Optional)</span></label>
+                    <div class="input-wrapper">
+                        <span class="material-symbols-outlined input-icon">apartment</span>
+                        <input type="text" id="onboardingDepartment" placeholder="e.g. Faculty, Admin Office, Security" autocomplete="organization">
+                    </div>
                 </div>
 
                 <div id="onboardingErrorMsg" class="error-msg pub-login-u21"></div>
@@ -550,13 +559,13 @@
                 <h4 class="pub-login-u61">15. Acknowledgment</h4>
                 <p class="pub-login-u63">By clicking "I Agree", you acknowledge that you have read, understood, and agree to be bound by these Terms and Conditions.</p>
             </div>
-            <!-- (2026-07-13) Disable terms buttons until scrolled; was always active -->
+            <!-- (2026-07-13) Enable terms buttons on modal open; was disabled scroll locked -->
             <div class="pub-login-u64">
-                <button type="button" id="declineTermsBtn" disabled class="pub-login-u65">
+                <button type="button" id="declineTermsBtn" class="pub-login-u65">
                     <span class="material-symbols-outlined pub-login-u66">cancel</span>
                     <span>Decline</span>
                 </button>
-                <button type="button" id="agreeTermsBtn" class="btn-action pub-login-u67" disabled>
+                <button type="button" id="agreeTermsBtn" class="btn-action pub-login-u67">
                     <span class="material-symbols-outlined pub-login-u66">check_circle</span>
                     <span>I Agree</span>
                 </button>

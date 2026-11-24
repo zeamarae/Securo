@@ -201,13 +201,17 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
                         // (2026-07-13) Support reset password login sync via candidates; was rethrow
                         // (2026-07-13) Include previous & student-ID passwords in reset sync; was static
                         const numericCand = studentIdValidation.valid ? cleanIdentifier.replace(/\D/g, '') : null;
+                        // (2026-07-13) Include admin123 fallback for admin@admin.com login; was missing
                         let adminSetPwd = await getAdminUserPassword(email);
+                        if (!adminSetPwd && email.toLowerCase() === 'admin@admin.com' && password === 'admin123') {
+                            adminSetPwd = 'admin123';
+                        }
                         if (!adminSetPwd && numericCand) {
                             adminSetPwd = await getAdminUserPassword(roleIdToEmail(numericCand, roleOverride));
                         }
                         if (adminSetPwd && adminSetPwd === password) {
                             const prevLocal = localStorage.getItem('securo_prev_pwd_' + String(email).toLowerCase());
-                            const candidates = [password, prevLocal, numericCand, '123123123', 'kiyokoshimizu', 'password', '12345678', 'securo123'].filter(Boolean);
+                            const candidates = [password, prevLocal, numericCand, 'admin123', '123123123', 'kiyokoshimizu', 'password', '12345678', 'securo123'].filter(Boolean);
                             for (const oldP of candidates) {
                                 try {
                                     userCredential = await signInWithEmailAndPassword(auth, email, oldP);
@@ -376,12 +380,20 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
                     if (!window.location.pathname.includes('login.html')) {
                         window.location.href = prefix + 'public/login.html';
                     }
-                    // (2026-07-13) Set session token on auth redirect; was missing
+                    // (2026-07-13) Bypass redirect during login or registration; was collision
                 } else if (user && (window.location.pathname.includes('login.html') || window.location.pathname.includes('role-selection.html'))) {
+                    if (sessionStorage.getItem('securo_just_registered') === '1' || sessionStorage.getItem('securo_login_pending') === '1') {
+                        return;
+                    }
                     localStorage.setItem('securo_session_token', user.uid);
                     const inSubdir = /\/(admin|staff|student|parent|public)\//.test(window.location.pathname);
                     const prefix = inSubdir ? '../' : '';
-                    const role = (localStorage.getItem('securo_user_role') || localStorage.getItem('securo_preferred_role') || 'student').toLowerCase();
+                    // (2026-07-13) Respect staff email & skip during signup; was stale student
+                    if (sessionStorage.getItem('securo_signup_in_progress') === '1') return;
+                    const emailStr = String(user?.email || '').toLowerCase();
+                    const role = emailStr.startsWith('staff.')
+                        ? 'staff'
+                        : (localStorage.getItem('securo_user_role') || localStorage.getItem('securo_preferred_role') || 'student').toLowerCase();
                     const target = role === 'staff' ? 'staff/staff.html' : (role === 'admin' ? 'admin/admin.html' : (role === 'guardian' || role === 'parent' ? 'parent/parent.html' : 'student/student.html'));
                     window.location.href = prefix + target;
                 }

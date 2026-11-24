@@ -10,10 +10,10 @@ import '../js/install-sw.js';
 
 // Extracted inline scripts from staff.html
 (() => {
+    // (2026-07-13) Always apply role-staff class in staff portal; was conditional
     try {
-        if (localStorage.getItem('securo_user_role') === 'staff') {
-            document.documentElement.classList.add('role-staff');
-        }
+        document.documentElement.classList.add('role-staff');
+        if (document.body) document.body.classList.add('role-staff');
     } catch (_) { }
     const pathname = window.location.pathname;
     const isRootUrl = (pathname === '/' || pathname === '/index.html' || pathname.endsWith('/index.html') || !pathname) &&
@@ -319,7 +319,8 @@ function renderStudentCampusMarkers() {
     currentStudentBuildings.forEach(b => {
         const bIcon = L.divIcon({
             className: 'campus-facility-icon-marker',
-            html: `<div style="background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 3px 10px rgba(24,20,40,0.16); border:2px solid #5a1fe0; display:flex; align-items:center; justify-content:center; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:16px; color:#5a1fe0;">${b.icon || 'location_on'}</span></div>`,
+            // (2026-07-13) Blue theme for staff map building markers; was purple
+            html: `<div style="background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 3px 10px rgba(24,20,40,0.16); border:2px solid #2563eb; display:flex; align-items:center; justify-content:center; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:16px; color:#2563eb;">${b.icon || 'location_on'}</span></div>`,
             iconSize: [30, 30],
             iconAnchor: [15, 15]
         });
@@ -332,7 +333,8 @@ function renderStudentCampusMarkers() {
         marker.bindPopup(`
                     <div style="padding:4px 2px; min-width:160px;">
                         <strong style="display:flex; align-items:center; gap:6px; font-size:0.9rem; color:#181428;">
-                            <span class="material-symbols-outlined" style="font-size:18px; color:#5a1fe0;">${b.icon || 'location_on'}</span>
+                            <!-- (2026-07-13) Blue staff map popup icon; was purple -->
+                            <span class="material-symbols-outlined" style="font-size:18px; color:#2563eb;">${b.icon || 'location_on'}</span>
                             ${b.name}
                         </strong>
                         <p style="margin:6px 0 0; font-size:0.78rem; color:#64748b; line-height:1.4;">${bDesc}</p>
@@ -369,11 +371,12 @@ function syncMapGeofenceAndMarkers(config = {}) {
             map.removeLayer(campusGeofencePolygonLayer);
         }
         // (2026-07-13) Purple dotted geofence for student view; was red dashed
+        // (2026-07-13) Blue geofence polygon for staff map; was purple
         campusGeofencePolygonLayer = L.polygon(currentStudentGeofence, {
-            color: '#5a1fe0',
+            color: '#2563eb',
             weight: 3,
             dashArray: '3, 6',
-            fillColor: '#7c3aed',
+            fillColor: '#3b82f6',
             fillOpacity: 0.08
         }).addTo(map);
     }
@@ -767,11 +770,12 @@ async function initInteractiveMap() {
         setTimeout(() => { if (map) map.invalidateSize(); }, 500);
 
         // (2026-07-13) Purple dotted geofence for student view; was red dashed
+        // (2026-07-13) Blue geofence polygon for staff map; was purple
         campusGeofencePolygonLayer = L.polygon(currentStudentGeofence, {
-            color: '#5a1fe0',
+            color: '#2563eb',
             weight: 3,
             dashArray: '3, 6',
-            fillColor: '#7c3aed',
+            fillColor: '#3b82f6',
             fillOpacity: 0.08
         }).addTo(map);
 
@@ -1106,7 +1110,8 @@ function updateOwnLocationHighlight(latlng, centerMap = false) {
     if (!userMarker) {
         const userIcon = L.divIcon({
             className: 'user-marker',
-            html: '<div class="secure-indicator" style="width: 20px; height: 20px; background: #5a1fe0; box-shadow: 0 0 0 10px rgba(90, 31, 224, 0.2); animation: pulse-voice 2s infinite;"></div>',
+            // (2026-07-13) Blue user location marker for staff map; was purple
+            html: '<div class="secure-indicator" style="width: 20px; height: 20px; background: #2563eb; box-shadow: 0 0 0 10px rgba(37, 99, 235, 0.22); animation: pulse-voice 2s infinite;"></div>',
             iconSize: [20, 20],
             iconAnchor: [10, 10]
         });
@@ -1116,11 +1121,12 @@ function updateOwnLocationHighlight(latlng, centerMap = false) {
     }
 
     if (!userLocationRing) {
+        // (2026-07-13) Blue user accuracy ring for staff map; was purple
         userLocationRing = L.circle(latlng, {
             radius: 18,
-            color: '#5a1fe0',
+            color: '#2563eb',
             weight: 1,
-            fillColor: '#7c5cff',
+            fillColor: '#3b82f6',
             fillOpacity: 0.16
         }).addTo(map);
     } else {
@@ -2118,8 +2124,11 @@ function openVaultItemDetails(item) {
     if (guardianAccessToggle) guardianAccessToggle.checked = isGuardianVisible;
     document.getElementById("detailsVisibility").textContent = isVisible ? "Shared with GAD Response Team" : "Private (Hidden from GAD)";
     document.getElementById("detailsVisibilityIcon").textContent = isVisible ? "visibility" : "visibility_off";
-    document.getElementById("detailsGuardianVisibility").textContent = isGuardianVisible ? "Shared with Parents / Guardians" : "Private (Hidden from Parents / Guardians)";
-    document.getElementById("detailsGuardianVisibilityIcon").textContent = isGuardianVisible ? "group" : "group_off";
+    // (2026-07-13) Guard removed Parent Access elements in staff vault; was direct
+    const detailsGuardEl = document.getElementById("detailsGuardianVisibility");
+    const detailsGuardIconEl = document.getElementById("detailsGuardianVisibilityIcon");
+    if (detailsGuardEl) detailsGuardEl.textContent = isGuardianVisible ? "Shared with Parents / Guardians" : "Private (Hidden from Parents / Guardians)";
+    if (detailsGuardIconEl) detailsGuardIconEl.textContent = isGuardianVisible ? "group" : "group_off";
 
     overlay.classList.add("active");
 }
@@ -2285,15 +2294,11 @@ function setButtonBusy(button, isBusy = true) {
     button.setAttribute("aria-busy", isBusy ? "true" : "false");
 }
 
+// (2026-07-13) Keep unread state until clicked/marked; was auto-read on open
 function openNotifications() {
     if (!notifDropdown) return;
     notifDropdown.classList.add("active");
     if (profileDropdown) profileDropdown.classList.remove("active");
-    appState.accountNotifications
-        .filter((item) => item?.id && !item.isRead)
-        .forEach((item) => {
-            markAccountNotificationRead(item.id).catch(() => { });
-        });
 }
 
 function closeNotifications() {
@@ -2406,6 +2411,8 @@ function getVisibleNotifications() {
     });
 }
 
+// (2026-07-13) Facebook-style All/Unread tabs & click-to-read; was plain list
+let activeNotifFilter = "all";
 function syncNotificationViews() {
     const visibleNotifications = getVisibleNotifications();
     renderNotificationHistorySection(visibleNotifications);
@@ -2414,24 +2421,38 @@ function syncNotificationViews() {
     const unreadCount = visibleNotifications.filter((item) => !item.isRead).length;
     notifBadge.classList.toggle("active", unreadCount > 0);
 
-    if (!visibleNotifications.length) {
-        notifList.innerHTML = '<div class="notif-empty">No notifications yet</div>';
+    const filtered = activeNotifFilter === "unread"
+        ? visibleNotifications.filter((item) => !item.isRead)
+        : visibleNotifications;
+
+    const filterBar = `
+        <div class="notif-filter-bar" style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 14px 6px; border-bottom:1px solid rgba(15,23,42,0.06);">
+            <div style="display:flex; gap:6px;">
+                <button type="button" class="notif-filter-pill" data-notif-filter="all" style="padding:5px 12px; border-radius:999px; border:none; font-size:0.76rem; font-weight:700; cursor:pointer; background:${activeNotifFilter === 'all' ? 'var(--primary-soft, #ecfdf5)' : '#f1f5f9'}; color:${activeNotifFilter === 'all' ? 'var(--primary)' : '#475569'};">All</button>
+                <button type="button" class="notif-filter-pill" data-notif-filter="unread" style="padding:5px 12px; border-radius:999px; border:none; font-size:0.76rem; font-weight:700; cursor:pointer; background:${activeNotifFilter === 'unread' ? 'var(--primary-soft, #ecfdf5)' : '#f1f5f9'}; color:${activeNotifFilter === 'unread' ? 'var(--primary)' : '#475569'};">Unread${unreadCount ? ` (${unreadCount})` : ''}</button>
+            </div>
+            ${unreadCount > 0 ? `<button type="button" class="notif-mark-all-btn" style="border:none; background:transparent; color:var(--primary); font-size:0.75rem; font-weight:700; cursor:pointer; padding:4px 6px;">Mark all read</button>` : ''}
+        </div>
+    `;
+
+    if (!filtered.length) {
+        notifList.innerHTML = filterBar + `<div class="notif-empty">${activeNotifFilter === 'unread' ? 'No unread notifications' : 'No notifications yet'}</div>`;
         return;
     }
 
-    notifList.innerHTML = visibleNotifications.map((item) => {
+    notifList.innerHTML = filterBar + filtered.map((item) => {
         const requestId = item.requestId || "";
-        // (2026-07-13) Support student_guardian_request actions; was guardian_request
         const actionable = (item.type === "guardian_request" || item.type === "student_guardian_request") && !item.resolvedStatus && requestId;
+        const isUnread = !item.isRead;
         return `
-                    <div class="notif-item" id="${requestId ? `notif-request-${requestId}` : `notif-${item.id}`}">
+                    <div class="notif-item ${isUnread ? 'is-unread' : 'is-read'}" data-notif-item-id="${item.id || ''}" id="${requestId ? `notif-request-${requestId}` : `notif-${item.id}`}" style="cursor:pointer; background:${isUnread ? 'rgba(15, 155, 103, 0.07)' : '#ffffff'}; align-items:flex-start;">
                         <div class="notif-item-icon">
                             <span class="material-symbols-outlined">${getNotificationIcon(item.type)}</span>
                         </div>
-                        <div class="notif-item-content">
-                            <strong class="notif-item-title">${escapeHtml(item.title || "Notification")}</strong>
-                            <span class="notif-item-desc">${escapeHtml(item.message || "")}</span>
-                            <div style="font-size:0.72rem; color:var(--muted); margin-top:6px;">${escapeHtml(formatNotificationTimestamp(item.createdAt))}</div>
+                        <div class="notif-item-content" style="flex:1; min-width:0;">
+                            <strong class="notif-item-title" style="font-weight:${isUnread ? '800' : '600'};">${escapeHtml(item.title || "Notification")}</strong>
+                            <span class="notif-item-desc" style="color:${isUnread ? '#1e293b' : 'var(--muted)'};">${escapeHtml(item.message || "")}</span>
+                            <div style="font-size:0.72rem; color:${isUnread ? 'var(--primary)' : 'var(--muted)'}; font-weight:${isUnread ? '700' : '500'}; margin-top:6px;">${escapeHtml(formatNotificationTimestamp(item.createdAt))}</div>
                             ${actionable ? `
                                 <div class="notif-actions">
                                     <button class="notif-action-btn accept" type="button" data-request-id="${requestId}" data-request-status="accepted" data-notification-id="${item.id}">Accept</button>
@@ -2439,6 +2460,7 @@ function syncNotificationViews() {
                                 </div>
                             ` : ""}
                         </div>
+                        ${isUnread ? '<span class="notif-unread-dot" style="width:9px; height:9px; border-radius:50%; background:var(--primary); flex-shrink:0; margin-top:6px;" title="Unread"></span>' : ''}
                     </div>
                 `;
     }).join("");
@@ -3055,26 +3077,26 @@ function getGuardianBaseUrl() {
     return "https://securo.cebutech.digital/parent/parent.html?view=auth";
 }
 
-// (2026-07-13) Skip course, section, & parents for staff; was required student
+// (2026-07-13) Show Department & hide Section/Step2 for staff; was student fields
 function triggerFullscreenOnboarding(user, existingProfile) {
     fsCurrentUserContext = { user, profile: existingProfile };
     if (fsOnboardingError) fsOnboardingError.textContent = "";
-    const isStaff = user?.email?.startsWith("staff.") || existingProfile?.role === "staff" || appState.user?.role === "staff";
+    const isStaff = true;
     const courseSecRow = document.getElementById("fsCourseSectionRow");
-    if (courseSecRow) courseSecRow.style.display = isStaff ? "none" : "";
-    if (fsCourse) fsCourse.required = !isStaff;
-    if (fsYearLevel) fsYearLevel.required = !isStaff;
-    if (fsSection) fsSection.required = !isStaff;
+    const staffDeptRow = document.getElementById("fsStaffDepartmentRow");
+    const fsDepartment = document.getElementById("fsDepartment");
+    const step2Pill = document.getElementById("fsProgStep2");
+    if (courseSecRow) courseSecRow.style.display = "none";
+    if (staffDeptRow) staffDeptRow.style.display = "block";
+    if (step2Pill) step2Pill.style.display = "none";
+    if (fsCourse) fsCourse.required = false;
+    if (fsYearLevel) fsYearLevel.required = false;
+    if (fsSection) fsSection.required = false;
     const titleEl = document.querySelector(".fs-onboarding-title");
-    if (titleEl) titleEl.textContent = isStaff ? "Set Up Staff Profile" : "Set Up Your Profile";
+    if (titleEl) titleEl.textContent = "Set Up Staff Profile";
     if (existingProfile?.firstName && fsFirstName) fsFirstName.value = toTitleCase(existingProfile.firstName);
     if (existingProfile?.lastName && fsLastName) fsLastName.value = toTitleCase(existingProfile.lastName);
-    if (existingProfile?.course && fsCourse) fsCourse.value = existingProfile.course;
-    if (existingProfile?.yearLevel && fsYearLevel) fsYearLevel.value = existingProfile.yearLevel;
-    if (existingProfile?.section && fsSection) {
-        const extractedSec = existingProfile.section.replace(/^.*[0-9]-?/, '').replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase();
-        fsSection.value = extractedSec || existingProfile.section.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase();
-    }
+    if (existingProfile?.department && fsDepartment) fsDepartment.value = existingProfile.department;
     updateFsAvatarPreview();
     const loader = document.getElementById("fsOnboardingLoadingOverlay");
     if (loader) loader.style.display = "none";
@@ -3143,7 +3165,9 @@ if (fsOnboardingForm) {
             const derivedRole = user.email?.startsWith("staff.") ? "staff" : "student";
             const fullName = `${fn} ${ln}`;
             const initials = (fn[0] + ln[0]).toUpperCase();
-            const formattedSection = isStaff ? "Staff" : `${course} ${year}-${rawSec}`;
+            // (2026-07-13) Save staff department instead of section; was Staff section
+            const staffDepartment = document.getElementById("fsDepartment")?.value?.trim() || "";
+            const formattedSection = "";
 
             const updatedProfile = {
                 studentId: fsCurrentUserContext?.profile?.studentId || derivedId,
@@ -3151,20 +3175,24 @@ if (fsOnboardingForm) {
                 lastName: ln,
                 name: fullName,
                 initials,
-                course: isStaff ? "" : course,
-                yearLevel: isStaff ? "" : year,
+                department: staffDepartment,
+                course: "",
+                yearLevel: "",
                 section: formattedSection,
                 photoURL: fsOnboardingPhotoData || "",
                 avatar: fsOnboardingPhotoData || "",
                 email: user.email || "",
-                role: isStaff ? "staff" : (fsCurrentUserContext?.profile?.role || derivedRole),
+                role: "staff",
                 onboardingCompleted: true,
                 updatedAt: new Date().toISOString()
             };
+            try { localStorage.setItem('securo_user_role', 'staff'); } catch (_) { }
 
             await saveUserProfile(user.uid, updatedProfile);
             await saveUserDirectoryMarker(user.uid, updatedProfile);
             saveLocalUserDirectoryEntry(user.uid, updatedProfile);
+            // (2026-07-13) Clear signup flag after save; was kept until slide 2
+            sessionStorage.removeItem('securo_just_registered');
 
             appState.user.studentId = updatedProfile.studentId;
             appState.user.name = updatedProfile.name;
@@ -3469,9 +3497,18 @@ onAuthStateChanged(auth, async (user) => {
 
     // --- Step 2: Load profile & data in the background ---
     try {
-        // (2026-07-13) Fast profile load with timeout fallback; was blocking await
+        // (2026-07-13) Prevent false onboarding on timeout/legacy; was strict flag
+        const PROFILE_TIMEOUT = Symbol('profile_timeout');
         const profilePromise = getUserProfile(user.uid).catch(() => null);
-        let profile = await Promise.race([profilePromise, new Promise(r => setTimeout(() => r(cachedProfile || null), 2000))]);
+        const racedProfile = await Promise.race([
+            profilePromise,
+            new Promise(r => setTimeout(() => r(PROFILE_TIMEOUT), 2500))
+        ]);
+        const profileTimedOut = racedProfile === PROFILE_TIMEOUT;
+        let profile = profileTimedOut ? (cachedProfile || { onboardingCompleted: true }) : racedProfile;
+        if (!profileTimedOut && profile) {
+            saveLocalUserDirectoryEntry(user.uid, profile);
+        }
         if (!profile) profile = cachedProfile || { onboardingCompleted: true };
         if (profile?.role === 'guardian' && user.email !== ADMIN_EMAIL) {
             window.location.replace("../parent/parent.html");
@@ -3483,22 +3520,24 @@ onAuthStateChanged(auth, async (user) => {
         }
 
         const isStaff = profile?.role === 'staff' || user.email?.startsWith('staff.');
-        const incomplete = isStaff
-            ? (!profile || !profile.name || !profile.onboardingCompleted)
-            : (!profile || !profile.name || profile.name === 'Student' || !profile.section || !profile.onboardingCompleted);
+        const hasValidName = Boolean(profile?.name && profile.name !== 'Student' && profile.name !== 'Staff Member');
+        const hasProfileData = isStaff ? hasValidName : (hasValidName && Boolean(profile?.section));
+        const incomplete = !profile?.onboardingCompleted && !hasProfileData;
 
-        if (incomplete && (isJustRegistered || !profile?.onboardingCompleted)) {
+        // (2026-07-13) Only onboard freshly registered users; was re-prompting
+        if (isJustRegistered && !profileTimedOut && incomplete) {
             triggerFullscreenOnboarding(user, profile || cachedProfile);
             return;
         }
 
+        // (2026-07-13) Close onboarding overlay when complete; was stuck active
         sessionStorage.removeItem('securo_just_registered');
-        if (!fsOnboardingScreen || !fsOnboardingScreen.classList.contains("active")) {
-            appView.classList.add("active");
-            if (!appState.initialViewDone) {
-                setActiveView("map");
-                appState.initialViewDone = true;
-            }
+        if (fsOnboardingScreen) fsOnboardingScreen.classList.remove("active");
+        stopCircleLiveCamera();
+        appView.classList.add("active");
+        if (!appState.initialViewDone) {
+            setActiveView("map");
+            appState.initialViewDone = true;
         }
 
         const derivedId = user.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1] || "";
@@ -3950,10 +3989,52 @@ function showGuardianRequestNotification(request, force = false) {
 }
 
 if (notifList) {
-    // (2026-07-13) Disable and spin request buttons on click; was instant state
+    // (2026-07-13) Handle All/Unread tabs, mark-read & actions; was actions only
     notifList.addEventListener("click", async (event) => {
+        const filterBtn = event.target.closest("[data-notif-filter]");
+        if (filterBtn) {
+            event.stopPropagation();
+            activeNotifFilter = filterBtn.dataset.notifFilter || "all";
+            syncNotificationViews();
+            return;
+        }
+        if (event.target.closest(".notif-mark-all-btn")) {
+            event.stopPropagation();
+            const unread = (appState.accountNotifications || []).filter(n => n?.id && !n.isRead);
+            unread.forEach(n => { n.isRead = true; });
+            try { localStorage.setItem('securo_student_notifications', JSON.stringify(appState.accountNotifications)); } catch (_) { }
+            syncNotificationViews();
+            await Promise.all(unread.map(n => markAccountNotificationRead(n.id).catch(() => { })));
+            return;
+        }
         const actionButton = event.target.closest("[data-request-id][data-request-status]");
-        if (!actionButton) return;
+        if (!actionButton) {
+            const notifRow = event.target.closest("[data-notif-item-id]");
+            const nid = notifRow?.dataset?.notifItemId;
+            if (nid) {
+                const target = (appState.accountNotifications || []).find(n => String(n.id) === String(nid));
+                if (target && !target.isRead) {
+                    target.isRead = true;
+                    try { localStorage.setItem('securo_student_notifications', JSON.stringify(appState.accountNotifications)); } catch (_) { }
+                    syncNotificationViews();
+                    markAccountNotificationRead(nid).catch(() => { });
+                }
+                // (2026-07-13) Redirect GAD & chat notifications to chat/GAD; was no-op
+                if (target) {
+                    const nType = String(target.type || '').toLowerCase();
+                    const nText = `${target.title || ''} ${target.message || ''}`.toLowerCase();
+                    if (nType === 'gad_bulletin') {
+                        closeNotifications();
+                        // (2026-07-13) Use setActiveView for GAD redirect; was switchPage
+                        if (typeof setActiveView === 'function') setActiveView('gad');
+                    } else if (nType === 'chat_message' || nType === 'gad' || nType === 'gad_reply' || nText.includes('gad') || nText.includes('reply') || nText.includes('message') || nText.includes('support')) {
+                        closeNotifications();
+                        if (typeof openChat === 'function') openChat();
+                    }
+                }
+            }
+            return;
+        }
         event.stopPropagation();
         const requestId = actionButton.dataset.requestId;
         const status = actionButton.dataset.requestStatus;
@@ -4058,14 +4139,15 @@ logoutLink.addEventListener("click", async () => {
 
 function showStatus(title, msg, type = 'success') {
     const statusModal = document.getElementById("statusModal");
-    const statusTitle = document.getElementById("statusTitle");
-    const statusMessage = document.getElementById("statusMessage");
-    const statusIconWrap = document.getElementById("statusIconWrap");
-    const statusIcon = document.getElementById("statusIcon");
-    const okBtn = document.getElementById("statusOkBtn");
+    // (2026-07-13) Scope status elements & guarantee fallback message; was raw msg
+    const statusTitle = statusModal?.querySelector("#statusTitle") || document.getElementById("statusTitle");
+    const statusMessage = statusModal?.querySelector("#statusMessage") || document.getElementById("statusMessage");
+    const statusIconWrap = statusModal?.querySelector("#statusIconWrap") || document.getElementById("statusIconWrap");
+    const statusIcon = statusModal?.querySelector("#statusIcon") || document.getElementById("statusIcon");
+    const okBtn = statusModal?.querySelector("#statusOkBtn") || document.getElementById("statusOkBtn");
 
-    statusTitle.textContent = title;
-    statusMessage.textContent = msg;
+    if (statusTitle) statusTitle.textContent = title || (type === 'success' ? 'Success!' : 'Notice');
+    if (statusMessage) statusMessage.textContent = msg || (type === 'success' ? 'Your action has been completed successfully.' : 'An unexpected issue occurred. Please try again.');
 
     statusIconWrap.classList.remove('success', 'error');
     statusIconWrap.classList.add(type);
@@ -4413,10 +4495,12 @@ if (submitGadPmBtn) {
         submitGadPmBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">hourglass_top</span>';
 
         try {
+            // (2026-07-13) Pass staff role & real profile name to GAD message; was student
             await sendGADMessage({
                 studentUid: appState.user.uid,
-                studentName: appState.user.name,
-                studentId: appState.user.studentId,
+                studentName: appState.profile?.name || appState.user.name || "Campus Staff",
+                studentId: appState.profile?.studentId || appState.user.studentId || "",
+                role: "staff",
                 isAnonymous: isAnon,
                 subject: category === 'counseling' ? 'Counseling Request' : 'GAD Inquiry',
                 category,
@@ -4730,11 +4814,12 @@ function startSosHold() {
         triggerDevicePushNotification("EMERGENCY SOS ACTIVATED", "Your emergency alert and live coordinates have been broadcast to campus security and guardians.");
         if (!appState.sosLogged && appState.user?.uid) {
             appState.sosLogged = true;
+            // (2026-07-13) Pass real staff profile name & role; was defaulting student
             logSOS(appState.user.uid, appState.lastLocation || { lat: 0, lng: 0 }, {
-                userName: appState.user?.name || appState.user?.displayName || "",
-                userEmail: appState.user?.email || "",
-                studentId: appState.user?.studentId || "",
-                role: appState.user?.role || "student"
+                userName: appState.profile?.name || appState.user?.name || appState.user?.displayName || "Campus Staff",
+                userEmail: appState.profile?.email || appState.user?.email || "",
+                studentId: appState.profile?.studentId || appState.user?.studentId || "",
+                role: appState.profile?.role || appState.user?.role || "staff"
             }).catch(e => console.warn("Instant SOS log failed:", e));
         }
         dispatchState.textContent = "Live Dispatch";
@@ -5927,12 +6012,12 @@ startSosHold = async () => {
 const checkSosTrigger = setInterval(() => {
     if (appState.sosTriggered && !appState.sosLogged) {
         appState.sosLogged = true;
-        // (2026-07-13) Pass user metadata when logging SOS; was uid only
+        // (2026-07-13) Pass real staff profile name & role; was defaulting student
         logSOS(appState.user.uid, appState.lastLocation || { lat: 0, lng: 0 }, {
-            userName: appState.user?.name || appState.user?.displayName || "",
-            userEmail: appState.user?.email || "",
-            studentId: appState.user?.studentId || "",
-            role: appState.user?.role || "student"
+            userName: appState.profile?.name || appState.user?.name || appState.user?.displayName || "Campus Staff",
+            userEmail: appState.profile?.email || appState.user?.email || "",
+            studentId: appState.profile?.studentId || appState.user?.studentId || "",
+            role: appState.profile?.role || appState.user?.role || "staff"
         });
     } else if (!appState.sosTriggered) {
         appState.sosLogged = false;

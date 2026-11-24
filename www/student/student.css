@@ -434,7 +434,8 @@
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 3000;
+            /* (2026-07-13) Keep status modal above notif dropdown; was 3000 */
+            z-index: 9500;
             padding: 24px;
             will-change: opacity;
         }
@@ -451,7 +452,8 @@
             padding: 40px 32px;
             text-align: center;
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
-            animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            /* (2026-07-13) Snappy 0.18s status modal entrance; was 0.5s */
+            animation: modalPop 0.18s cubic-bezier(0.22, 1, 0.36, 1);
             position: relative;
             overflow: hidden;
         }
@@ -896,7 +898,8 @@
             height: 18px;
             margin: -9px 0 0 -9px;
             border: 2px solid rgba(255, 255, 255, 0.35);
-            border-top-color: currentColor;
+            /* (2026-07-13) Visible white spinner on busy buttons; was transparent currentColor */
+            border-top-color: #ffffff;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
@@ -4168,10 +4171,7 @@
             pointer-events: auto !important;
             align-items: center;
             justify-content: center;
-            transform: translateZ(0);
-            will-change: transform;
-            contain: paint;
-            /* Prevent safe area issues on mobile */
+            /* (2026-07-13) Remove contain/will-change GPU bug hiding nav icons; was paint */
             padding-bottom: env(safe-area-inset-bottom, 8px);
         }
 
@@ -4197,24 +4197,27 @@
             text-decoration: none;
             padding: 10px 0;
             border-radius: 20px;
-            /* Perf: only animate compositor-friendly properties */
-            transition: color 0.2s ease, background 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: color 0.2s ease, background 0.2s ease;
             position: relative;
             background: transparent;
             border: none;
-            will-change: transform;
-            transform: translateZ(0);
             cursor: pointer;
         }
 
         .nav-item:hover {
             color: var(--primary);
             background: rgba(90, 31, 224, 0.08);
-            transform: translateY(-2px);
         }
 
+        /* (2026-07-13) Keep bottom nav icons visible on active click; was GPU clipped */
         .nav-item .material-symbols-outlined {
             font-size: 1.55rem;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1 !important;
+            visibility: visible !important;
         }
 
         .nav-item span:last-child {
@@ -4861,21 +4864,29 @@
                     font-size: 18px;
                 }
 
+                /* (2026-07-13) Sticky bottom toast for parent invite; was top: 18px */
                 .guardian-notify {
                     position: fixed;
-                    bottom: 100px;
-                    left: 20px;
-                    right: 20px;
-                    background: white;
-                    padding: 20px;
-                    border-radius: 24px;
-                    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-                    z-index: 2000;
+                    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+                    left: 16px;
+                    right: 16px;
+                    max-width: 440px;
+                    margin: 0 auto;
+                    background: rgba(255, 255, 255, 0.98);
+                    backdrop-filter: blur(14px);
+                    -webkit-backdrop-filter: blur(14px);
+                    padding: 16px;
+                    border-radius: 20px;
+                    box-shadow: 0 14px 40px rgba(90, 31, 224, 0.22);
+                    z-index: 9999;
                     display: flex;
                     flex-direction: column;
-                    gap: 12px;
-                    border: 1px solid var(--primary);
-                    animation: slideUp 0.4s ease;
+                    gap: 10px;
+                    border: 1.5px solid rgba(90, 31, 224, 0.35);
+                    animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+                    touch-action: none;
+                    user-select: none;
+                    transition: transform 0.25s ease, opacity 0.25s ease;
                 }
 
                 @keyframes slideUp {
@@ -5438,10 +5449,10 @@
             position: relative;
             z-index: 100001;
         }
-        /* (2026-07-13) Tight Messenger GAD chat styling; was loose layout with anon bar */
+        /* (2026-07-13) Remove forced 40px top inset on GAD header; was max(40px) */
         .gad-chat-header {
             padding: 10px 16px;
-            padding-top: max(40px, calc(10px + env(safe-area-inset-top, 0px)));
+            padding-top: calc(10px + env(safe-area-inset-top, 0px));
             background: #ffffff;
             color: var(--ink);
             display: flex;
@@ -5573,9 +5584,10 @@
             align-items: center;
             gap: 4px;
         }
+        /* (2026-07-13) Remove forced 32px bottom inset on GAD composer; was max(32px) */
         .gad-chat-composer {
             padding: 8px 14px;
-            padding-bottom: max(32px, calc(8px + env(safe-area-inset-bottom, 0px)));
+            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
             border-top: 1px solid rgba(0, 0, 0, 0.05);
             background: #ffffff;
             position: sticky;

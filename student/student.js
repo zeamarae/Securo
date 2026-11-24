@@ -3,8 +3,8 @@ import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device }
 import { renderEmergencyContactWidget } from '../js/emergency-contacts.js';
 import { checkAuth, logout } from '../js/auth.js';
 import { auth } from '../js/firebase-config.js';
-// (2026-07-13) Import startUserPresenceHeartbeat; was missing
-import { getUserProfile, saveUserProfile, saveUserDirectoryMarker, getGADPosts, toggleLikeGADPost, logAttendance, getAttendanceHistory, logSOS, getUserSOSLogs, saveEmergencyPost, getUserEmergencyPosts, deleteEmergencyPost, updateEmergencyPostAttachments, getEmergencyPostById, toggleEmergencyPostAccess, toggleEmergencyPostGuardianAccess, sendChatMessage, subscribeToMessages, subscribeToMessagesByThread, subscribeToGuardianRequests, getLinksForStudent, createGuardianLinkFromStudent, respondToGuardianLink, removeGuardianLink, updateStudentLiveLocation, syncGuardianLinksForStudent, setStudentLocationSharingStatus, subscribeToAccountNotifications, markAccountNotificationRead, sendAccountNotification, subscribeToStudentLinks, sendGADMessage, subscribeToGADMessages, subscribeToCampusMapConfig, notifyGuardiansOfGeofenceEvent, attachPhotoToActiveSOS, fetchLatestCampusMapConfig, startUserPresenceHeartbeat } from '../js/db.js';
+// (2026-07-13) Import deleteAccountNotification for cancelled invites; was missing
+import { getUserProfile, saveUserProfile, saveUserDirectoryMarker, getGADPosts, toggleLikeGADPost, logAttendance, getAttendanceHistory, logSOS, getUserSOSLogs, saveEmergencyPost, getUserEmergencyPosts, deleteEmergencyPost, updateEmergencyPostAttachments, getEmergencyPostById, toggleEmergencyPostAccess, toggleEmergencyPostGuardianAccess, sendChatMessage, subscribeToMessages, subscribeToMessagesByThread, subscribeToGuardianRequests, getLinksForStudent, createGuardianLinkFromStudent, respondToGuardianLink, removeGuardianLink, updateStudentLiveLocation, syncGuardianLinksForStudent, setStudentLocationSharingStatus, subscribeToAccountNotifications, markAccountNotificationRead, deleteAccountNotification, sendAccountNotification, subscribeToStudentLinks, sendGADMessage, subscribeToGADMessages, subscribeToCampusMapConfig, notifyGuardiansOfGeofenceEvent, attachPhotoToActiveSOS, fetchLatestCampusMapConfig, startUserPresenceHeartbeat } from '../js/db.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import '../js/install-sw.js';
 
@@ -49,19 +49,21 @@ setTimeout(() => {
 
 // Meta apps style swipe down to close
         document.addEventListener('DOMContentLoaded', () => {
-            const modals = document.querySelectorAll('.status-modal, .mandatory-modal, .notif-dropdown, .profile-dropdown');
+            // (2026-07-13) Exclude notif & profile dropdowns from swipe-close; was breaking taps
+            const modals = document.querySelectorAll('.status-modal, .mandatory-modal');
 
             modals.forEach(modal => {
                 let startY = 0;
                 let currentY = 0;
                 let isDragging = false;
-                const innerCard = modal.querySelector('.status-card, .modal-inner, .notif-panel, .dropdown-item') || modal;
+                const innerCard = modal.querySelector('.status-card, .modal-inner') || modal;
 
                 modal.classList.add('swipe-to-close-element');
                 innerCard.style.transition = 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)';
 
                 modal.addEventListener('touchstart', (e) => {
                     startY = e.touches[0].clientY;
+                    currentY = startY;
                     isDragging = true;
                     innerCard.style.transition = 'none';
                 }, { passive: true });
@@ -85,7 +87,6 @@ setTimeout(() => {
                         innerCard.style.transform = 'translateY(100vh)';
                         setTimeout(() => {
                             modal.classList.remove('active');
-                            modal.style.display = 'none';
                             innerCard.style.transform = ''; // reset
                         }, 200);
                     } else {
@@ -1815,7 +1816,8 @@ setTimeout(() => {
                                 await updateEmergencyPostAttachments(postId, updatedAttachments);
                             }
                         }
-                        await loadVaultItems();
+                        // (2026-07-13) Show status modal immediately & reload vault in background
+                        loadVaultItems().catch(() => {});
                         await showStatus("Deleted", "Media has been removed from your vault.");
                     } catch (error) {
                         console.warn("Delete media error:", error);
@@ -1922,7 +1924,8 @@ setTimeout(() => {
             try {
                 await deleteSelectedVaultItems();
                 exitVaultSelectionMode();
-                await loadVaultItems();
+                // (2026-07-13) Show status modal immediately & reload vault in background
+                loadVaultItems().catch(() => {});
                 await showStatus("Deleted", "Selected media has been removed from your vault.");
             } catch (error) {
                 console.warn("Bulk delete error:", error);
@@ -2179,7 +2182,8 @@ setTimeout(() => {
 
             try {
                 await toggleEmergencyPostAccess(item.postId, newVis);
-                await loadVaultItems();
+                // (2026-07-13) Show status modal immediately & reload vault in background
+                loadVaultItems().catch(() => {});
                 showStatus("Access Updated", newVis ? "Evidence shared with GAD." : "Evidence is now private.");
             } catch (err) {
                 showStatus("Error", "Could not update access.", "error");
@@ -2204,7 +2208,8 @@ setTimeout(() => {
                         await updateEmergencyPostAttachments(item.postId, updatedAttachments);
                     }
                 }
-                await loadVaultItems();
+                // (2026-07-13) Show status modal immediately & reload vault in background
+                loadVaultItems().catch(() => {});
                 showStatus("Deleted", "Media removed.");
             } catch (err) {
                 showStatus("Error", "Failed to delete.", "error");
@@ -2272,7 +2277,9 @@ setTimeout(() => {
         let notificationUnsub = null;
         let guardianRequestUnsub = null;
         let guardianLinkReminderUnsub = null;
+        let _hasLoadedPendingRequestsSnap = false;
         const seenGuardianRequestToasts = new Set();
+        const _activeGuardianResponseIds = new Set();
 
         if (notifDropdown && notifDropdown.parentElement !== document.body) {
             document.body.appendChild(notifDropdown);
@@ -2285,19 +2292,17 @@ setTimeout(() => {
             button.setAttribute("aria-busy", isBusy ? "true" : "false");
         }
 
+        // (2026-07-13) Clear inline display on notif open/close; was stuck none
         function openNotifications() {
             if (!notifDropdown) return;
+            notifDropdown.style.display = "";
             notifDropdown.classList.add("active");
             if (profileDropdown) profileDropdown.classList.remove("active");
-            appState.accountNotifications
-                .filter((item) => item?.id && !item.isRead)
-                .forEach((item) => {
-                    markAccountNotificationRead(item.id).catch(() => { });
-                });
         }
 
         function closeNotifications() {
             if (!notifDropdown) return;
+            notifDropdown.style.display = "";
             notifDropdown.classList.remove("active");
         }
 
@@ -2310,9 +2315,10 @@ setTimeout(() => {
                 .replace(/'/g, "&#39;");
         }
 
+        // (2026-07-13) Parse Firestore seconds timestamps cleanly; was Invalid Date
         function formatNotificationTimestamp(value) {
-            const date = value?.toDate?.() || (value ? new Date(value) : null);
-            return date ? date.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Just now";
+            const date = value?.toDate?.() || (typeof value?.seconds === "number" ? new Date(value.seconds * 1000) : (value ? new Date(value) : null));
+            return (date && !Number.isNaN(date.getTime())) ? date.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "Just now";
         }
 
         function getNotificationTimestampMs(value) {
@@ -2375,7 +2381,7 @@ setTimeout(() => {
         }
 
         function getVisibleNotifications() {
-            const persisted = Array.isArray(appState.accountNotifications) ? [...appState.accountNotifications] : [];
+            const rawPersisted = Array.isArray(appState.accountNotifications) ? [...appState.accountNotifications] : [];
             const pendingRequests = Array.isArray(appState.pendingGuardianRequests) ? appState.pendingGuardianRequests : [];
             const pendingByRequestId = new Map();
             const reminderLinks = Array.isArray(appState.guardianLinkReminders) ? appState.guardianLinkReminders : [];
@@ -2384,6 +2390,24 @@ setTimeout(() => {
             pendingRequests.forEach((request) => {
                 if (!request?.id) return;
                 pendingByRequestId.set(request.id, buildGuardianRequestNotification(request));
+            });
+
+            // (2026-07-13) Hide & purge cancelled invite notifs not in pendingRequests; was stale
+            const activePendingSet = new Set([
+                ...pendingRequests.map(r => String(r?.id || '')),
+                ...reminderLinks.filter(l => l?.status === 'pending').map(l => String(l?.id || ''))
+            ].filter(Boolean));
+            const persisted = rawPersisted.filter((item) => {
+                if ((item?.type === "guardian_request" || item?.type === "student_guardian_request") && !item?.resolvedStatus) {
+                    const rId = String(item?.requestId || '');
+                    if (_hasLoadedPendingRequestsSnap && (!rId || !activePendingSet.has(rId))) {
+                        if (item?.id && !String(item.id).startsWith("guardian-request-")) {
+                            deleteAccountNotification(item.id).catch(() => { });
+                        }
+                        return false;
+                    }
+                }
+                return true;
             });
 
             reminderLinks.forEach((link) => {
@@ -2406,6 +2430,8 @@ setTimeout(() => {
             });
         }
 
+        // (2026-07-13) Facebook-style All/Unread tabs & click-to-read; was plain list
+        let activeNotifFilter = "all";
         function syncNotificationViews() {
             const visibleNotifications = getVisibleNotifications();
             renderNotificationHistorySection(visibleNotifications);
@@ -2414,31 +2440,48 @@ setTimeout(() => {
             const unreadCount = visibleNotifications.filter((item) => !item.isRead).length;
             notifBadge.classList.toggle("active", unreadCount > 0);
 
-            if (!visibleNotifications.length) {
-                notifList.innerHTML = '<div class="notif-empty">No notifications yet</div>';
+            const filtered = activeNotifFilter === "unread"
+                ? visibleNotifications.filter((item) => !item.isRead)
+                : visibleNotifications;
+
+            const filterBar = `
+                <div class="notif-filter-bar" style="display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 14px 6px; border-bottom:1px solid rgba(15,23,42,0.06);">
+                    <div style="display:flex; gap:6px;">
+                        <button type="button" class="notif-filter-pill" data-notif-filter="all" style="padding:5px 12px; border-radius:999px; border:none; font-size:0.76rem; font-weight:700; cursor:pointer; background:${activeNotifFilter === 'all' ? 'var(--primary-soft, #f3efff)' : '#f1f5f9'}; color:${activeNotifFilter === 'all' ? 'var(--primary)' : '#475569'};">All</button>
+                        <button type="button" class="notif-filter-pill" data-notif-filter="unread" style="padding:5px 12px; border-radius:999px; border:none; font-size:0.76rem; font-weight:700; cursor:pointer; background:${activeNotifFilter === 'unread' ? 'var(--primary-soft, #f3efff)' : '#f1f5f9'}; color:${activeNotifFilter === 'unread' ? 'var(--primary)' : '#475569'};">Unread${unreadCount ? ` (${unreadCount})` : ''}</button>
+                    </div>
+                    ${unreadCount > 0 ? `<button type="button" class="notif-mark-all-btn" style="border:none; background:transparent; color:var(--primary); font-size:0.75rem; font-weight:700; cursor:pointer; padding:4px 6px;">Mark all read</button>` : ''}
+                </div>
+            `;
+
+            if (!filtered.length) {
+                notifList.innerHTML = filterBar + `<div class="notif-empty">${activeNotifFilter === 'unread' ? 'No unread notifications' : 'No notifications yet'}</div>`;
                 return;
             }
 
-            notifList.innerHTML = visibleNotifications.map((item) => {
-                const requestId = item.requestId || "";
-                // (2026-07-13) Support student_guardian_request actions; was guardian_request
+            notifList.innerHTML = filterBar + filtered.map((item) => {
+                // (2026-07-13) Fallback requestId to item.id & preserve busy state; was empty
+                const requestId = item.requestId || item.id || "";
                 const actionable = (item.type === "guardian_request" || item.type === "student_guardian_request") && !item.resolvedStatus && requestId;
+                const isBusyReq = actionable && typeof _activeGuardianResponseIds !== "undefined" && _activeGuardianResponseIds.has(String(requestId));
+                const isUnread = !item.isRead;
                 return `
-                    <div class="notif-item" id="${requestId ? `notif-request-${requestId}` : `notif-${item.id}`}">
+                    <div class="notif-item ${isUnread ? 'is-unread' : 'is-read'}" data-notif-item-id="${item.id || ''}" id="${requestId ? `notif-request-${requestId}` : `notif-${item.id}`}" style="cursor:pointer; background:${isUnread ? 'rgba(90, 31, 224, 0.06)' : '#ffffff'}; align-items:flex-start;">
                         <div class="notif-item-icon">
                             <span class="material-symbols-outlined">${getNotificationIcon(item.type)}</span>
                         </div>
-                        <div class="notif-item-content">
-                            <strong class="notif-item-title">${escapeHtml(item.title || "Notification")}</strong>
-                            <span class="notif-item-desc">${escapeHtml(item.message || "")}</span>
-                            <div style="font-size:0.72rem; color:var(--muted); margin-top:6px;">${escapeHtml(formatNotificationTimestamp(item.createdAt))}</div>
+                        <div class="notif-item-content" style="flex:1; min-width:0;">
+                            <strong class="notif-item-title" style="font-weight:${isUnread ? '800' : '600'};">${escapeHtml(item.title || "Notification")}</strong>
+                            <span class="notif-item-desc" style="color:${isUnread ? '#1e293b' : 'var(--muted)'};">${escapeHtml(item.message || "")}</span>
+                            <div style="font-size:0.72rem; color:${isUnread ? 'var(--primary)' : 'var(--muted)'}; font-weight:${isUnread ? '700' : '500'}; margin-top:6px;">${escapeHtml(formatNotificationTimestamp(item.createdAt))}</div>
                             ${actionable ? `
                                 <div class="notif-actions">
-                                    <button class="notif-action-btn accept" type="button" data-request-id="${requestId}" data-request-status="accepted" data-notification-id="${item.id}">Accept</button>
-                                    <button class="notif-action-btn reject" type="button" data-request-id="${requestId}" data-request-status="rejected" data-notification-id="${item.id}">Decline</button>
+                                    <button class="notif-action-btn accept ${isBusyReq ? 'is-busy' : ''}" type="button" data-request-id="${requestId}" data-request-status="accepted" data-notification-id="${item.id || ''}" ${isBusyReq ? 'disabled aria-busy="true"' : ''}>Accept</button>
+                                    <button class="notif-action-btn reject" type="button" data-request-id="${requestId}" data-request-status="rejected" data-notification-id="${item.id || ''}" ${isBusyReq ? 'disabled' : ''}>Decline</button>
                                 </div>
                             ` : ""}
                         </div>
+                        ${isUnread ? '<span class="notif-unread-dot" style="width:9px; height:9px; border-radius:50%; background:var(--primary); flex-shrink:0; margin-top:6px;" title="Unread"></span>' : ''}
                     </div>
                 `;
             }).join("");
@@ -2450,20 +2493,53 @@ setTimeout(() => {
             try { localStorage.setItem('securo_student_notifications', JSON.stringify(appState.accountNotifications)); } catch (_) {}
             syncNotificationViews();
 
-            // (2026-07-13) Show accept/decline notifs on snapshot; was request types only
+            // (2026-07-13) Show bottom toast & status for invites/accepts; was request only
+            const activeReqIdSet = new Set([
+                ...(appState.pendingGuardianRequests || []).map(r => String(r?.id || '')),
+                ...(appState.guardianLinkReminders || []).filter(l => l?.status === 'pending').map(l => String(l?.id || ''))
+            ].filter(Boolean));
             notifications.forEach(item => {
                 if (!item.isRead && (item.type === "guardian_request" || item.type === "student_guardian_request")) {
-                    showGuardianRequestNotification({
-                        id: item.requestId || item.id,
-                        guardianName: item.sourceName || "A parent / guardian",
-                        message: item.message || "A parent or guardian wants to link to your account."
-                    });
+                    if (!item.resolvedStatus) {
+                        const reqToastId = item.requestId || item.id;
+                        if (_hasLoadedPendingRequestsSnap && item.requestId && !activeReqIdSet.has(String(item.requestId))) {
+                            if (item.id) deleteAccountNotification(item.id).catch(() => { });
+                            return;
+                        }
+                        const guardianLabel = item.sourceName || "A parent / guardian";
+                        const inviteMsg = item.message || `${guardianLabel} wants to link to your account.`;
+                        showGuardianRequestNotification({
+                            id: reqToastId,
+                            guardianName: guardianLabel,
+                            message: inviteMsg
+                        });
+                        // (2026-07-13) Also trigger bottom toast on new parent invite; was sticky only
+                        const invEvtKey = 'invite_toast_' + (item.id || reqToastId);
+                        if (!window._seenStudentNotifEventIds) window._seenStudentNotifEventIds = new Set();
+                        if (!window._seenStudentNotifEventIds.has(invEvtKey)) {
+                            window._seenStudentNotifEventIds.add(invEvtKey);
+                            showStudentRealtimePrompt("Parent Invite Request", inviteMsg, "family_restroom");
+                        }
+                    }
                 } else if (!item.isRead && (item.type === "guardian_request_accepted" || item.type === "guardian_request_declined")) {
                     const evtKey = 'notif_seen_' + item.id;
                     if (!window._seenStudentNotifEventIds) window._seenStudentNotifEventIds = new Set();
                     if (!window._seenStudentNotifEventIds.has(evtKey)) {
                         window._seenStudentNotifEventIds.add(evtKey);
-                        showStatus(item.title || "Guardian Update", item.message || "");
+                        try {
+                            const saved = JSON.parse(localStorage.getItem('securo_student_seen_toasts') || '[]');
+                            if (!saved.includes(evtKey)) {
+                                saved.push(evtKey);
+                                localStorage.setItem('securo_student_seen_toasts', JSON.stringify(saved.slice(-100)));
+                                showStudentRealtimePrompt(
+                                    item.title || (item.type === "guardian_request_accepted" ? "Parent Link Accepted" : "Parent Link Declined"),
+                                    item.message || "Your parent/guardian responded to your invite.",
+                                    item.type === "guardian_request_accepted" ? "check_circle" : "cancel"
+                                );
+                            }
+                        } catch (_) {
+                            showStudentRealtimePrompt(item.title || "Guardian Update", item.message || "");
+                        }
                         const existingPopup = document.getElementById('guardianNotify');
                         if (existingPopup) existingPopup.remove();
                     }
@@ -3078,13 +3154,11 @@ setTimeout(() => {
             updateFsAvatarPreview();
             const loader = document.getElementById("fsOnboardingLoadingOverlay");
             if (loader) loader.style.display = "none";
-            fsHasCopiedGuardianLink = false;
             goToSlide(0);
             const sId = existingProfile?.studentId || (user?.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1]) || "";
-            // (2026-07-13) Dynamic guardian URL using current site; prev: hardcoded zea
-            const guardianUrl = getGuardianBaseUrl() + (sId ? `?ref=${encodeURIComponent(sId)}` : "");
+            // (2026-07-13) Show Student ID for linking; prev: guardian invite URL
             const inviteEl = document.getElementById("fsGuardianInviteLink");
-            if (inviteEl) inviteEl.textContent = guardianUrl;
+            if (inviteEl) inviteEl.textContent = sId || "-------";
             if (appView) appView.classList.remove("active");
             if (fsOnboardingScreen) fsOnboardingScreen.classList.add("active");
             if (!fsOnboardingPhotoData) {
@@ -3165,6 +3239,8 @@ setTimeout(() => {
                     await saveUserProfile(user.uid, updatedProfile);
                     await saveUserDirectoryMarker(user.uid, updatedProfile);
                     saveLocalUserDirectoryEntry(user.uid, updatedProfile);
+                    // (2026-07-13) Clear signup flag after save; was kept until slide 2
+                    sessionStorage.removeItem('securo_just_registered');
 
                     appState.user.studentId = updatedProfile.studentId;
                     appState.user.name = updatedProfile.name;
@@ -3209,15 +3285,10 @@ setTimeout(() => {
                         finishOnboardingAndEnterApp();
                         return;
                     }
-                    // (2026-07-13) Dynamic guardian URL on save; prev: hardcoded zea link
+                    // (2026-07-13) Show Student ID on save; prev: guardian invite URL
                     const studentId = updatedProfile.studentId || "";
-                    const guardianUrl = getGuardianBaseUrl() + (studentId ? `?ref=${encodeURIComponent(studentId)}` : "");
                     const fsGuardianInviteLink = document.getElementById("fsGuardianInviteLink");
-                    if (fsGuardianInviteLink) fsGuardianInviteLink.textContent = guardianUrl;
-                    const fsShareGuardianLinkBtn = document.getElementById("fsShareGuardianLinkBtn");
-                    if (fsShareGuardianLinkBtn && navigator.share) {
-                        fsShareGuardianLinkBtn.style.display = "flex";
-                    }
+                    if (fsGuardianInviteLink) fsGuardianInviteLink.textContent = studentId || "-------";
                     goToSlide(1);
                 } catch (err) {
                     console.warn("Onboarding submit failed:", err);
@@ -3231,89 +3302,49 @@ setTimeout(() => {
             });
         }
 
-        // (2026-07-13) Require copying link before finishing app; prev: immediate finish
-        let fsHasCopiedGuardianLink = false;
-        const fsCopyGuardianLinkBtn = document.getElementById("fsCopyGuardianLinkBtn");
-        const fsCopyLinkText = document.getElementById("fsCopyLinkText");
-        const fsShareGuardianLinkBtn = document.getElementById("fsShareGuardianLinkBtn");
+        // (2026-07-13) Link via parent email/Student ID; prev: forced copy link gate
+        const fsSendGuardianInviteBtn = document.getElementById("fsSendGuardianInviteBtn");
+        const fsGuardianEmailInput = document.getElementById("fsGuardianEmailInput");
         const fsProceedToAppBtn = document.getElementById("fsProceedToAppBtn");
 
-        function markGuardianLinkCopied() {
-            fsHasCopiedGuardianLink = true;
-            if (fsProceedToAppBtn) {
-                fsProceedToAppBtn.style.opacity = "1";
-                fsProceedToAppBtn.style.borderColor = "#5a1fe0";
-                fsProceedToAppBtn.style.color = "#5a1fe0";
-            }
-            const hintIcon = document.getElementById("fsSwipeHintIcon");
-            const hintText = document.getElementById("fsSwipeHintText");
-            if (hintIcon) {
-                hintIcon.textContent = "swipe_left";
-                hintIcon.style.color = "#0f9b67";
-            }
-            if (hintText) {
-                hintText.textContent = "Link copied! Swipe left or tap to open app";
-                hintText.style.color = "#0f9b67";
-            }
-        }
-
-        if (fsCopyGuardianLinkBtn) {
-            fsCopyGuardianLinkBtn.addEventListener("click", () => {
-                const fsGuardianInviteLink = document.getElementById("fsGuardianInviteLink");
-                const link = fsGuardianInviteLink ? fsGuardianInviteLink.textContent.trim() : "";
-                if (!link) return;
-                const fullTextToCopy = "Dear Parent/Guardian please register here: " + link;
-                const copySuccess = () => {
-                    markGuardianLinkCopied();
-                    if (fsCopyLinkText) fsCopyLinkText.textContent = "Copied to Clipboard!";
-                    fsCopyGuardianLinkBtn.style.background = "linear-gradient(135deg, #0f9b67, #0a7a52)";
-                    setTimeout(() => {
-                        if (fsCopyLinkText) fsCopyLinkText.textContent = "Copy Link";
-                        fsCopyGuardianLinkBtn.style.background = "linear-gradient(135deg, #5a1fe0, #4311c5)";
-                    }, 2500);
-                };
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(fullTextToCopy).then(copySuccess).catch(() => {
-                        const el = document.createElement("textarea");
-                        el.value = fullTextToCopy;
-                        document.body.appendChild(el);
-                        el.select();
-                        document.execCommand("copy");
-                        document.body.removeChild(el);
-                        copySuccess();
+        if (fsSendGuardianInviteBtn && fsGuardianEmailInput) {
+            const fsSendInvite = async () => {
+                const email = fsGuardianEmailInput.value.trim().toLowerCase();
+                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    showToast("Please enter a valid parent email.", "error");
+                    return;
+                }
+                const sid = (document.getElementById("fsGuardianInviteLink")?.textContent || "").trim();
+                const fsSendInviteText = document.getElementById("fsSendInviteText");
+                fsSendGuardianInviteBtn.disabled = true;
+                if (fsSendInviteText) fsSendInviteText.textContent = "Sending...";
+                try {
+                    await createGuardianLinkFromStudent({
+                        studentUid: appState.user?.uid || auth.currentUser?.uid,
+                        studentId: /^\d{7}$/.test(sid) ? sid : (appState.profile?.studentId || ""),
+                        studentName: appState.profile?.name || appState.user?.name || "Student",
+                        guardianEmail: email
                     });
-                } else {
-                    const el = document.createElement("textarea");
-                    el.value = fullTextToCopy;
-                    document.body.appendChild(el);
-                    el.select();
-                    document.execCommand("copy");
-                    document.body.removeChild(el);
-                    copySuccess();
+                    showToast(`Link request sent to ${email}`);
+                    fsGuardianEmailInput.value = "";
+                    if (fsSendInviteText) fsSendInviteText.textContent = "Request Sent!";
+                } catch (err) {
+                    showToast(err.message || "Could not send request.", "error");
+                    if (fsSendInviteText) fsSendInviteText.textContent = "Send Link Request";
+                } finally {
+                    fsSendGuardianInviteBtn.disabled = false;
+                    setTimeout(() => { if (fsSendInviteText) fsSendInviteText.textContent = "Send Link Request"; }, 2500);
                 }
-            });
-        }
-
-        if (fsShareGuardianLinkBtn) {
-            fsShareGuardianLinkBtn.addEventListener("click", () => {
-                const fsGuardianInviteLink = document.getElementById("fsGuardianInviteLink");
-                const link = fsGuardianInviteLink ? fsGuardianInviteLink.textContent.trim() : "";
-                if (navigator.share && link) {
-                    navigator.share({
-                        title: "Securo - Parent Link",
-                        text: "Dear Parent/Guardian please register here:",
-                        url: link
-                    }).then(() => markGuardianLinkCopied()).catch(() => { });
-                }
+            };
+            fsSendGuardianInviteBtn.addEventListener("click", fsSendInvite);
+            fsGuardianEmailInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") { e.preventDefault(); fsSendInvite(); }
             });
         }
 
         if (fsProceedToAppBtn) {
             fsProceedToAppBtn.addEventListener("click", () => {
-                if (!fsHasCopiedGuardianLink) {
-                    showToast("Please copy the parent link first to continue", "info");
-                    return;
-                }
+                // (2026-07-13) Proceed without copy gate; prev: required copied link
                 finishOnboardingAndEnterApp();
             });
         }
@@ -3354,10 +3385,7 @@ setTimeout(() => {
                             }
                             return;
                         } else if (currentOnboardingSlide === 1) {
-                            if (!fsHasCopiedGuardianLink) {
-                                showToast("Please copy the parent link first to continue", "info");
-                                return;
-                            }
+                            // (2026-07-13) Allow finish w/o copying link; prev: copy-link gate
                             finishOnboardingAndEnterApp();
                         }
                     } else if (diffX > 0) {
@@ -3425,10 +3453,9 @@ setTimeout(() => {
                 return;
             }
 
-            // (2026-07-13) Skip permissions check on desktop; was halting on return
+            // (2026-07-13) Only enforce permissions check on native APK; was halting web
             const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
-            const isDesktopDevice = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-            if (!isDesktopDevice) {
+            if (isNativeApk) {
                 const camAllowed = localStorage.getItem('securo_camera_granted') === 'true';
                 const locAllowed = localStorage.getItem('securo_location_granted') === 'true';
                 if (!camAllowed || !locAllowed) {
@@ -3469,9 +3496,18 @@ setTimeout(() => {
 
             // --- Step 2: Load profile & data in the background ---
             try {
-                // (2026-07-13) Fast profile load with timeout fallback; was blocking await
+                // (2026-07-13) Prevent false onboarding on timeout/legacy; was strict flag
+                const PROFILE_TIMEOUT = Symbol('profile_timeout');
                 const profilePromise = getUserProfile(user.uid).catch(() => null);
-                let profile = await Promise.race([profilePromise, new Promise(r => setTimeout(() => r(cachedProfile || null), 2000))]);
+                const racedProfile = await Promise.race([
+                    profilePromise,
+                    new Promise(r => setTimeout(() => r(PROFILE_TIMEOUT), 2500))
+                ]);
+                const profileTimedOut = racedProfile === PROFILE_TIMEOUT;
+                let profile = profileTimedOut ? (cachedProfile || { onboardingCompleted: true }) : racedProfile;
+                if (!profileTimedOut && profile) {
+                    saveLocalUserDirectoryEntry(user.uid, profile);
+                }
                 if (!profile) profile = cachedProfile || { onboardingCompleted: true };
                 if (profile?.role === 'guardian' && user.email !== ADMIN_EMAIL) {
                     window.location.replace("../parent/parent.html");
@@ -3483,22 +3519,24 @@ setTimeout(() => {
                 }
 
                 const isStaff = profile?.role === 'staff' || user.email?.startsWith('staff.');
-                const incomplete = isStaff
-                    ? (!profile || !profile.name || !profile.onboardingCompleted)
-                    : (!profile || !profile.name || profile.name === 'Student' || !profile.section || !profile.onboardingCompleted);
+                const hasValidName = Boolean(profile?.name && profile.name !== 'Student' && profile.name !== 'Staff Member');
+                const hasProfileData = isStaff ? hasValidName : (hasValidName && Boolean(profile?.section));
+                const incomplete = !profile?.onboardingCompleted && !hasProfileData;
 
-                if (incomplete && (isJustRegistered || !profile?.onboardingCompleted)) {
+                // (2026-07-13) Only onboard freshly registered users; was re-prompting
+                if (isJustRegistered && !profileTimedOut && incomplete) {
                     triggerFullscreenOnboarding(user, profile || cachedProfile);
                     return;
                 }
 
+                // (2026-07-13) Close onboarding overlay when complete; was stuck active
                 sessionStorage.removeItem('securo_just_registered');
-                if (!fsOnboardingScreen || !fsOnboardingScreen.classList.contains("active")) {
-                    appView.classList.add("active");
-                    if (!appState.initialViewDone) {
-                        setActiveView("map");
-                        appState.initialViewDone = true;
-                    }
+                if (fsOnboardingScreen) fsOnboardingScreen.classList.remove("active");
+                stopCircleLiveCamera();
+                appView.classList.add("active");
+                if (!appState.initialViewDone) {
+                    setActiveView("map");
+                    appState.initialViewDone = true;
                 }
 
                 const derivedId = user.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1] || "";
@@ -3513,7 +3551,8 @@ setTimeout(() => {
                 appState.user.photoURL = profile?.photoURL || profile?.avatar || "";
                 appState.user.initials = profile?.initials || appState.user.name.split(" ").map(n => n[0]).join("").toUpperCase();
 
-                if (profile?.role === 'student') {
+                // (2026-07-13) Use appState role for link sync; was profile.role only
+                if (appState.user.role === 'student') {
                     syncGuardianLinksForStudent(user.uid, {
                         studentId: appState.user.studentId,
                         name: appState.user.name
@@ -3592,17 +3631,75 @@ setTimeout(() => {
                 // (2026-07-13) Subscribe guardian requests for students only; was all
                 if (appState.user.role === 'student') {
                     guardianRequestUnsub = subscribeToGuardianRequests(appState.user.studentId, (requests) => {
+                        _hasLoadedPendingRequestsSnap = true;
                         appState.pendingGuardianRequests = Array.isArray(requests) ? requests : [];
-                        // (2026-07-13) Persist student pending requests offline; was memory only
+                        // (2026-07-13) Purge cancelled invite notifs from state & cache; was left behind
+                        const liveIds = new Set(appState.pendingGuardianRequests.map(r => String(r?.id || '')).filter(Boolean));
+                        const beforeLen = (appState.accountNotifications || []).length;
+                        appState.accountNotifications = (appState.accountNotifications || []).filter(n => {
+                            if ((n?.type === "guardian_request" || n?.type === "student_guardian_request") && !n?.resolvedStatus) {
+                                const rId = String(n?.requestId || '');
+                                if (!rId || !liveIds.has(rId)) {
+                                    if (n?.id && !String(n.id).startsWith("guardian-request-")) {
+                                        deleteAccountNotification(n.id).catch(() => { });
+                                    }
+                                    return false;
+                                }
+                            }
+                            return true;
+                        });
+                        if ((appState.accountNotifications || []).length !== beforeLen) {
+                            try { localStorage.setItem('securo_student_notifications', JSON.stringify(appState.accountNotifications)); } catch (_) {}
+                        }
                         try { localStorage.setItem('securo_student_pending_requests', JSON.stringify(appState.pendingGuardianRequests)); } catch (_) {}
                         syncNotificationViews();
-                        requests.forEach(req => showGuardianRequestNotification(req));
+                        // (2026-07-13) Keep sticky & bottom toasts synced on pending requests; was one-shot
+                        if (appState.pendingGuardianRequests.length > 0) {
+                            const topReq = appState.pendingGuardianRequests[0];
+                            showGuardianRequestNotification(topReq);
+                            const reqEvtKey = 'req_toast_' + topReq.id;
+                            if (!window._seenStudentNotifEventIds) window._seenStudentNotifEventIds = new Set();
+                            if (!window._seenStudentNotifEventIds.has(reqEvtKey)) {
+                                window._seenStudentNotifEventIds.add(reqEvtKey);
+                                showStudentRealtimePrompt("Parent Invite Request", `${topReq.guardianName || "A parent or guardian"} invited you to be their child.`, "family_restroom");
+                            }
+                        } else {
+                            const staleNotify = document.getElementById('guardianNotify');
+                            if (staleNotify) staleNotify.remove();
+                        }
                     }, user.uid);
                     guardianLinkReminderUnsub = subscribeToStudentLinks(user.uid, (links) => {
+                        // (2026-07-13) Toast on parent invite or acceptance live; was accepted only
+                        const prevAcceptedIds = new Set((appState.guardianLinkReminders || []).filter(l => l.status === "accepted").map(l => l.id));
                         appState.guardianLinkReminders = Array.isArray(links) ? links : [];
+                        const nowAccepted = appState.guardianLinkReminders.filter(l => l.status === "accepted");
+                        const nowPendingInvites = appState.guardianLinkReminders.filter(l => l.status === "pending" && l.requestedBy !== "student");
+                        nowPendingInvites.forEach(l => {
+                            showGuardianRequestNotification({
+                                id: l.id,
+                                guardianName: l.guardianName || l.guardianEmail || "A parent or guardian",
+                                message: `${l.guardianName || l.guardianEmail || "A parent or guardian"} wants to link to your account.`
+                            });
+                            const pKey = 'link_inv_toast_' + l.id;
+                            if (!window._seenStudentNotifEventIds) window._seenStudentNotifEventIds = new Set();
+                            if (!window._seenStudentNotifEventIds.has(pKey)) {
+                                window._seenStudentNotifEventIds.add(pKey);
+                                showStudentRealtimePrompt("Parent Invite Request", `${l.guardianName || l.guardianEmail || "A parent or guardian"} invited you to be their child.`, "family_restroom");
+                            }
+                        });
+                        if (window._hasInitStudentLinksSnap) {
+                            nowAccepted.forEach(l => {
+                                if (!prevAcceptedIds.has(l.id)) {
+                                    const pName = l.guardianName || l.guardianEmail || "Your parent/guardian";
+                                    showStudentRealtimePrompt("Parent Invite Accepted", `${pName} accepted your link request and is now connected.`, "check_circle");
+                                }
+                            });
+                        }
+                        window._hasInitStudentLinksSnap = true;
+                        appState.acceptedGuardianCount = nowAccepted.length;
                         syncNotificationViews();
-                        // (2026-07-13) Show accepted guardians on map chip; was not displayed
                         renderGuardianWatchers(appState.guardianLinkReminders);
+                        refreshLocationTracking();
                     }, appState.user.studentId);
                 }
 
@@ -3639,17 +3736,55 @@ setTimeout(() => {
                                 }
                                 try { localStorage.setItem('securo_student_pending_requests', JSON.stringify(appState.pendingGuardianRequests)); } catch (_) {}
                                 showGuardianRequestNotification(reqObj, true);
+                                // (2026-07-13) Show bottom toast immediately on broadcast invite; was sticky only
+                                showStudentRealtimePrompt("Parent Invite Request", `${reqObj.guardianName} invited you to be their child.`, "family_restroom");
                                 syncNotificationViews();
                             }
                         } else if (data.type === 'guardian_link_responded') {
-                            if (data.studentUid === user.uid) {
+                            if (data.studentUid === user.uid || !data.studentUid) {
+                                // (2026-07-13) Show bottom toast on parent response; was modal only
                                 if (data.response === 'accepted') {
-                                    showStatus('Guardian Connected', 'Your parent or guardian accepted your link request.');
+                                    showStudentRealtimePrompt('Parent Invite Accepted', 'Your parent or guardian accepted your link request.', 'check_circle');
+                                } else if (data.response === 'rejected' || data.response === 'declined') {
+                                    showStudentRealtimePrompt('Parent Invite Declined', 'Your parent or guardian declined your link request.', 'cancel');
                                 }
                                 getLinksForStudent(appState.user?.studentId, user.uid).then(validLinks => {
                                     appState.guardianLinkReminders = Array.isArray(validLinks) ? validLinks : [];
                                     renderGuardianWatchers(appState.guardianLinkReminders);
                                     syncNotificationViews();
+                                }).catch(() => {});
+                            }
+                        } else if (data.type === 'guardian_link_removed') {
+                            // (2026-07-13) Remove cancelled invite notif & sticky toast immediately; was ignored
+                            const delSet = new Set([data.linkId, ...(data.deletedIds || [])].filter(Boolean).map(String));
+                            const metaSid = data.meta?.studentId ? String(data.meta.studentId).trim() : '';
+                            const metaUid = data.meta?.studentUid || '';
+                            const isForMe = delSet.size > 0 || (metaUid && metaUid === user.uid) || (metaSid && metaSid === String(appState.user?.studentId || '').trim());
+                            if (isForMe) {
+                                appState.pendingGuardianRequests = (appState.pendingGuardianRequests || []).filter(r => !delSet.has(String(r?.id || '')) && !(data.meta?.guardianId && (r.guardianId === data.meta.guardianId || r.guardianUid === data.meta.guardianId)));
+                                appState.accountNotifications = (appState.accountNotifications || []).filter(n => {
+                                    if ((n?.type === "guardian_request" || n?.type === "student_guardian_request") && !n?.resolvedStatus) {
+                                        if (delSet.has(String(n?.requestId || '')) || delSet.has(String(n?.id || '')) || (data.meta?.guardianId && n.sourceUserId === data.meta.guardianId)) {
+                                            if (n?.id && !String(n.id).startsWith("guardian-request-")) {
+                                                deleteAccountNotification(n.id).catch(() => { });
+                                            }
+                                            return false;
+                                        }
+                                    }
+                                    return true;
+                                });
+                                try {
+                                    localStorage.setItem('securo_student_pending_requests', JSON.stringify(appState.pendingGuardianRequests));
+                                    localStorage.setItem('securo_student_notifications', JSON.stringify(appState.accountNotifications));
+                                } catch (_) {}
+                                if (appState.pendingGuardianRequests.length === 0) {
+                                    document.getElementById('guardianNotify')?.remove();
+                                    document.getElementById('studentRealtimePrompt')?.remove();
+                                }
+                                syncNotificationViews();
+                                getLinksForStudent(appState.user?.studentId, user.uid).then(validLinks => {
+                                    appState.guardianLinkReminders = Array.isArray(validLinks) ? validLinks : [];
+                                    renderGuardianWatchers(appState.guardianLinkReminders);
                                 }).catch(() => {});
                             }
                         }
@@ -3673,9 +3808,10 @@ setTimeout(() => {
             }
             const container = document.getElementById("studentParentChips");
             if (!container) return;
-            const accepted = (links || []).filter(l => l.status === "accepted");
+            // (2026-07-13) Hide invite button & cap to 1 parent; was always shown
+            const accepted = (links || []).filter(l => l.status === "accepted").slice(0, 1);
             const inviteBarBtnEl = document.getElementById("inviteParentBarBtn");
-            if (inviteBarBtnEl) inviteBarBtnEl.style.display = "inline-flex";
+            if (inviteBarBtnEl) inviteBarBtnEl.style.display = accepted.length ? "none" : "inline-flex";
             if (!accepted.length) {
                 container.innerHTML = `
                     <div class="parent-selector-chip" id="noParentsChip" style="background: rgba(255, 255, 255, 0.85); border: 1px dashed rgba(90, 31, 224, 0.25); color: #64748b; font-weight: 500; cursor: pointer;" title="Tap to invite parents">
@@ -3685,6 +3821,14 @@ setTimeout(() => {
                 `;
                 const noChip = document.getElementById("noParentsChip");
                 if (noChip) noChip.onclick = () => openInviteParentModal();
+                // (2026-07-13) Auto-prompt Invite Parent modal once if unlinked; was bar only
+                const hasPendingReq = (appState.pendingGuardianRequests || []).length > 0 || (links || []).some(l => l.status === "pending");
+                const onboardingOpen = fsOnboardingScreen && fsOnboardingScreen.classList.contains("active");
+                // (2026-07-13) Prompt every load while unlinked; prev: once per session
+                if (!hasPendingReq && !onboardingOpen && !window.__securoInvitePromptShown) {
+                    window.__securoInvitePromptShown = true;
+                    openInviteParentModal();
+                }
                 return;
             }
             const localUsers = (() => {
@@ -3762,8 +3906,13 @@ setTimeout(() => {
             });
         }
 
-        // (2026-07-13) Fix parent invite link studentId lookup; prev: missing ref
+        // (2026-07-13) Block invite modal if 1 parent linked; was unlimited
         function openInviteParentModal() {
+            const hasAcceptedParent = (appState.guardianLinkReminders || []).some(l => l.status === "accepted");
+            if (hasAcceptedParent) {
+                showStatus("Parent Already Connected", "You can only connect to 1 parent or guardian. Remove your current parent first.", "info");
+                return;
+            }
             const modal = document.getElementById("inviteParentModal");
             const urlText = document.getElementById("guardianInviteUrlText");
             const shareBtn = document.getElementById("shareGuardianInviteBtn");
@@ -3786,9 +3935,9 @@ setTimeout(() => {
                         return uid && parsed[uid]?.studentId ? parsed[uid].studentId : "";
                     } catch (_) { return ""; }
                 })() || "";
-            // (2026-07-13) Use dynamic getGuardianBaseUrl; prev: hardcoded zea base
+            // (2026-07-13) Show Student ID instead of invite URL; prev: guardian link
             const guardianUrl = getGuardianBaseUrl() + (studentId ? `?ref=${encodeURIComponent(studentId)}` : "");
-            if (urlText) urlText.textContent = guardianUrl;
+            if (urlText) urlText.textContent = studentId || "-------";
             if (copyBtnLabel) copyBtnLabel.textContent = "Copy Invite Link";
             if (shareBtn) {
                 if (navigator.share) {
@@ -3872,12 +4021,16 @@ setTimeout(() => {
                     }
                 };
             }
+            // (2026-07-13) Close only; re-prompts next load; prev: session dismiss flag
+            const dismissInviteModal = () => {
+                modal.classList.remove("active");
+            };
             const closeBtn = document.getElementById("closeInviteParentBtn");
             if (closeBtn) {
-                closeBtn.onclick = () => modal.classList.remove("active");
+                closeBtn.onclick = dismissInviteModal;
             }
             modal.onclick = (e) => {
-                if (e.target === modal) modal.classList.remove("active");
+                if (e.target === modal) dismissInviteModal();
             };
             modal.classList.add("active");
         }
@@ -3891,9 +4044,154 @@ setTimeout(() => {
             noParentsChipInit.addEventListener("click", () => openInviteParentModal());
         }
 
-        // (2026-07-13) Actionable guardian request prompt modal; was static banner
+        // (2026-07-13) Instant tap-lock & auto-reenable for all buttons; was manual only
+        document.addEventListener("click", (e) => {
+            const btn = e.target.closest("button");
+            if (!btn || btn.disabled || btn.classList.contains("is-busy") || btn.dataset.noTapLock === "1") return;
+            if (btn.id === "captureAction" || btn.classList.contains("capture-action")) return;
+            setTimeout(() => {
+                if (btn.disabled || btn.classList.contains("is-busy")) return;
+                btn.disabled = true;
+                btn.dataset.tapLocked = "1";
+                setTimeout(() => {
+                    if (btn.dataset.tapLocked === "1" && !btn.classList.contains("is-busy")) {
+                        btn.disabled = false;
+                        delete btn.dataset.tapLocked;
+                    }
+                }, 420);
+            }, 0);
+        }, true);
+
+        // (2026-07-13) Defer toasts until all modals close; was overlapping open modals
+        const _studentPendingToastQueue = [];
+        let _studentModalPollTimer = null;
+        function isAnyStudentModalOpen() {
+            const activeModal = document.querySelector(".status-modal.active, .mandatory-modal.active, #fullscreenOnboardingScreen.active");
+            return Boolean(activeModal);
+        }
+        function waitForStudentModalsClosed(fn) {
+            if (!isAnyStudentModalOpen()) {
+                fn();
+                return;
+            }
+            _studentPendingToastQueue.push(fn);
+            if (!_studentModalPollTimer) {
+                _studentModalPollTimer = setInterval(() => {
+                    if (!isAnyStudentModalOpen()) {
+                        clearInterval(_studentModalPollTimer);
+                        _studentModalPollTimer = null;
+                        while (_studentPendingToastQueue.length > 0) {
+                            const nextFn = _studentPendingToastQueue.shift();
+                            try { nextFn(); } catch (_) {}
+                        }
+                    }
+                }, 150);
+            }
+        }
+
+        // (2026-07-13) Bottom realtime toast for student invite/accept events; was none
+        function showStudentRealtimePrompt(title, message, icon = "notifications_active") {
+            if (isAnyStudentModalOpen()) {
+                const existing = document.getElementById("studentRealtimePrompt");
+                if (existing) existing.remove();
+                waitForStudentModalsClosed(() => showStudentRealtimePrompt(title, message, icon));
+                return;
+            }
+            const existing = document.getElementById("studentRealtimePrompt");
+            if (existing) existing.remove();
+
+            const toast = document.createElement("div");
+            toast.id = "studentRealtimePrompt";
+            toast.className = "student-realtime-toast";
+            toast.style.cssText = "position:fixed; bottom:calc(88px + env(safe-area-inset-bottom, 0px)); left:16px; right:16px; max-width:440px; margin:0 auto; background:white; padding:16px; border-radius:18px; box-shadow:0 14px 40px rgba(90,31,224,0.22); border:1.5px solid #5a1fe0; z-index:9999; display:flex; align-items:center; gap:12px; cursor:grab; touch-action:none; user-select:none; transition:transform 0.25s ease, opacity 0.25s ease;";
+            toast.innerHTML = `
+                <div style="width:40px; height:40px; border-radius:12px; background:var(--primary-soft, #f3efff); color:var(--primary, #5a1fe0); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <span class="material-symbols-outlined">${escapeHtml(icon)}</span>
+                </div>
+                <div style="flex:1; min-width:0;">
+                    <strong style="font-size:0.88rem; color:#0f172a; display:block;">${escapeHtml(title)}</strong>
+                    <span style="font-size:0.78rem; color:#64748b; line-height:1.3; display:block; margin-top:2px;">${escapeHtml(message)}</span>
+                </div>
+                <button type="button" class="student-toast-close" aria-label="Dismiss" style="width:28px; height:28px; border-radius:8px; border:none; background:rgba(15,23,42,0.06); color:#64748b; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+                </button>
+            `;
+
+            let dismissed = false;
+            let autoTimer = null;
+            const dismissToast = (tx = 0, ty = 30) => {
+                if (dismissed) return;
+                dismissed = true;
+                if (autoTimer) clearTimeout(autoTimer);
+                toast.style.transition = "transform 0.25s ease, opacity 0.25s ease";
+                toast.style.transform = `translate(${tx}px, ${ty}px)`;
+                toast.style.opacity = "0";
+                setTimeout(() => { if (toast.parentNode) toast.remove(); }, 260);
+            };
+
+            let startX = 0, startY = 0, curX = 0, curY = 0, dragging = false, didSwipe = false;
+            toast.addEventListener("pointerdown", (e) => {
+                if (e.target.closest("button")) return;
+                toast.setPointerCapture?.(e.pointerId);
+                dragging = true;
+                didSwipe = false;
+                startX = e.clientX;
+                startY = e.clientY;
+                curX = 0;
+                curY = 0;
+                toast.style.transition = "none";
+                toast.style.cursor = "grabbing";
+            });
+            toast.addEventListener("pointermove", (e) => {
+                if (!dragging || dismissed) return;
+                curX = e.clientX - startX;
+                curY = Math.max(0, e.clientY - startY);
+                if (Math.abs(curX) > 8 || Math.abs(curY) > 8) didSwipe = true;
+                const progress = Math.min(1, Math.max(Math.abs(curX) / 140, Math.abs(curY) / 80));
+                toast.style.transform = `translate(${curX}px, ${curY}px)`;
+                toast.style.opacity = String(Math.max(0.15, 1 - progress * 0.85));
+            });
+            const onDragEnd = () => {
+                if (!dragging || dismissed) return;
+                dragging = false;
+                toast.style.cursor = "grab";
+                if (Math.abs(curX) > 65) {
+                    dismissToast(curX > 0 ? window.innerWidth : -window.innerWidth, curY);
+                } else if (curY > 35) {
+                    dismissToast(curX, 120);
+                } else {
+                    toast.style.transition = "transform 0.25s ease, opacity 0.25s ease";
+                    toast.style.transform = "translate(0, 0)";
+                    toast.style.opacity = "1";
+                }
+            };
+            toast.addEventListener("pointerup", onDragEnd);
+            toast.addEventListener("pointercancel", onDragEnd);
+
+            toast.onclick = (e) => {
+                if (e.target.closest(".student-toast-close")) {
+                    e.stopPropagation();
+                    dismissToast(0, 24);
+                    return;
+                }
+                if (didSwipe) return;
+                openNotifications();
+                dismissToast(0, 24);
+            };
+            document.body.appendChild(toast);
+            autoTimer = setTimeout(() => dismissToast(0, 24), 6000);
+        }
+
+        // (2026-07-13) Sticky actionable parent invite toast; was 12s auto-hide
         function showGuardianRequestNotification(request, force = false) {
             if (!request?.id) return;
+            // (2026-07-13) Wait until modals close before showing sticky invite toast
+            if (isAnyStudentModalOpen()) {
+                const existing = document.getElementById('guardianNotify');
+                if (existing) existing.remove();
+                waitForStudentModalsClosed(() => showGuardianRequestNotification(request, force));
+                return;
+            }
             if (!force && seenGuardianRequestToasts.has(request.id)) return;
             seenGuardianRequestToasts.add(request.id);
 
@@ -3903,57 +4201,100 @@ setTimeout(() => {
             const notify = document.createElement('div');
             notify.className = 'guardian-notify';
             notify.id = 'guardianNotify';
+            notify.dataset.requestId = String(request.id);
             notify.style.cursor = 'pointer';
             notify.innerHTML = `
                 <div style="display:flex; align-items:center; gap:12px;">
-                    <div style="width:44px; height:44px; border-radius:50%; background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <div style="width:42px; height:42px; border-radius:14px; background:var(--primary-soft, #f3efff); color:var(--primary); display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                         <span class="material-symbols-outlined">family_restroom</span>
                     </div>
-                    <div style="flex:1;">
-                        <strong style="display:block; font-size:0.95rem; color:var(--ink);">Parent / Guardian Request</strong>
-                        <span style="font-size:0.8rem; color:var(--muted);">${escapeHtml(request.guardianName || "A parent or guardian")} wants to link to your account.</span>
+                    <div style="flex:1; min-width:0;">
+                        <strong style="display:block; font-size:0.92rem; color:var(--ink);">Parent Invite Request</strong>
+                        <span style="font-size:0.8rem; color:var(--muted); display:block; line-height:1.35;">${escapeHtml(request.guardianName || "A parent or guardian")} invited you to connect.</span>
                     </div>
+                    <button type="button" class="guardian-notify-close" aria-label="Dismiss" style="width:30px; height:30px; border-radius:10px; border:none; background:rgba(15,23,42,0.06); color:var(--muted); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">close</span>
+                    </button>
                 </div>
-                <div style="display:flex; gap:8px; margin-top:10px;">
-                    <button class="notif-action-btn accept" type="button" style="flex:1; padding:8px; border-radius:10px; font-weight:700; font-size:0.84rem; cursor:pointer;" data-request-id="${request.id}" data-request-status="accepted">Accept</button>
-                    <button class="notif-action-btn reject" type="button" style="flex:1; padding:8px; border-radius:10px; font-weight:700; font-size:0.84rem; cursor:pointer;" data-request-id="${request.id}" data-request-status="rejected">Decline</button>
+                <div style="display:flex; gap:8px;">
+                    <button class="notif-action-btn accept" type="button" style="flex:1; padding:9px; border-radius:12px; font-weight:700; font-size:0.84rem; cursor:pointer;" data-request-id="${request.id}" data-request-status="accepted">Accept</button>
+                    <button class="notif-action-btn reject" type="button" style="flex:1; padding:9px; border-radius:12px; font-weight:700; font-size:0.84rem; cursor:pointer;" data-request-id="${request.id}" data-request-status="rejected">Decline</button>
                 </div>
             `;
             notify.addEventListener('click', (e) => {
+                if (e.target.closest('.guardian-notify-close')) {
+                    e.stopPropagation();
+                    notify.remove();
+                    return;
+                }
                 const btn = e.target.closest('[data-request-id][data-request-status]');
                 if (btn) {
                     e.stopPropagation();
+                    if (btn.disabled || btn.classList.contains('is-busy')) return;
                     const reqId = btn.dataset.requestId;
                     const status = btn.dataset.requestStatus;
                     const siblingBtn = btn.parentElement ? btn.parentElement.querySelector(`button:not([data-request-status="${status}"])`) : null;
                     setButtonBusy(btn, true);
                     if (siblingBtn) siblingBtn.disabled = true;
-                    // (2026-07-13) Remove responded request from local storage; was not cleared
-                    respondToGuardianLink(reqId, status, appState.user?.uid, appState.profile).then(() => {
-                        notify.remove();
-                        appState.pendingGuardianRequests = (appState.pendingGuardianRequests || []).filter((item) => String(item.id) !== String(reqId));
-                        try { localStorage.setItem('securo_student_pending_requests', JSON.stringify(appState.pendingGuardianRequests)); } catch (_) {}
-                        syncNotificationViews();
-                        showStatus(status === 'accepted' ? 'Guardian Linked' : 'Request Declined', status === 'accepted' ? 'Parent is now linked to your account.' : 'Guardian request was declined.');
-                    }).catch(err => {
+                    // (2026-07-13) Delegate sticky toast buttons to handleGuardianResponse; was separate
+                    window.handleGuardianResponse(reqId, status, "").catch(() => {
                         setButtonBusy(btn, false);
                         if (siblingBtn) siblingBtn.disabled = false;
-                        showStatus('Error', err.message || 'Could not update request', 'error');
                     });
                     return;
                 }
                 openNotifications();
-                notify.remove();
             });
             document.body.appendChild(notify);
-            setTimeout(() => { if (notify && notify.parentNode) notify.remove(); }, 12000);
         }
 
         if (notifList) {
-            // (2026-07-13) Disable and spin request buttons on click; was instant state
+            // (2026-07-13) Handle All/Unread tabs, mark-read & actions; was actions only
             notifList.addEventListener("click", async (event) => {
+                const filterBtn = event.target.closest("[data-notif-filter]");
+                if (filterBtn) {
+                    event.stopPropagation();
+                    activeNotifFilter = filterBtn.dataset.notifFilter || "all";
+                    syncNotificationViews();
+                    return;
+                }
+                if (event.target.closest(".notif-mark-all-btn")) {
+                    event.stopPropagation();
+                    const unread = (appState.accountNotifications || []).filter(n => n?.id && !n.isRead);
+                    unread.forEach(n => { n.isRead = true; });
+                    try { localStorage.setItem('securo_student_notifications', JSON.stringify(appState.accountNotifications)); } catch (_) {}
+                    syncNotificationViews();
+                    await Promise.all(unread.map(n => markAccountNotificationRead(n.id).catch(() => { })));
+                    return;
+                }
                 const actionButton = event.target.closest("[data-request-id][data-request-status]");
-                if (!actionButton) return;
+                if (!actionButton) {
+                    const notifRow = event.target.closest("[data-notif-item-id]");
+                    const nid = notifRow?.dataset?.notifItemId;
+                    if (nid) {
+                        const target = (appState.accountNotifications || []).find(n => String(n.id) === String(nid));
+                        if (target && !target.isRead) {
+                            target.isRead = true;
+                            try { localStorage.setItem('securo_student_notifications', JSON.stringify(appState.accountNotifications)); } catch (_) {}
+                            syncNotificationViews();
+                            markAccountNotificationRead(nid).catch(() => { });
+                        }
+                        // (2026-07-13) Redirect GAD & chat notifications to chat/GAD; was no-op
+                        if (target) {
+                            const nType = String(target.type || '').toLowerCase();
+                            const nText = `${target.title || ''} ${target.message || ''}`.toLowerCase();
+                            if (nType === 'gad_bulletin') {
+                                closeNotifications();
+                                // (2026-07-13) Use setActiveView for GAD redirect; was switchPage
+                                if (typeof setActiveView === 'function') setActiveView('gad');
+                            } else if (nType === 'chat_message' || nType === 'gad' || nType === 'gad_reply' || nText.includes('gad') || nText.includes('reply') || nText.includes('message') || nText.includes('support')) {
+                                closeNotifications();
+                                if (typeof openChat === 'function') openChat();
+                            }
+                        }
+                    }
+                    return;
+                }
                 event.stopPropagation();
                 const requestId = actionButton.dataset.requestId;
                 const status = actionButton.dataset.requestStatus;
@@ -3976,18 +4317,24 @@ setTimeout(() => {
         }
 
         window.handleGuardianResponse = async (requestId, status, notificationId = "") => {
+            const lockKey = String(requestId || notificationId || "");
+            if (lockKey && _activeGuardianResponseIds.has(lockKey)) return;
+            if (lockKey) _activeGuardianResponseIds.add(lockKey);
             try {
+                // (2026-07-13) Keep buttons spinning during await & lock duplicates; was immediate destroy
+                if (status === 'accepted' && (appState.guardianLinkReminders || []).some(l => l.status === 'accepted' && String(l.id) !== String(requestId))) {
+                    showStatus("Parent Limit Reached", "You can only connect to 1 parent or guardian at a time.", "error");
+                    return;
+                }
                 const request = (appState.pendingGuardianRequests || []).find((item) => String(item.id) === String(requestId));
-                // (2026-07-13) Filter responded request from student cache; was retained
+                await respondToGuardianLink(requestId, status, appState.user?.uid || auth.currentUser?.uid, {
+                    studentId: appState.user?.studentId || appState.profile?.studentId || "",
+                    name: appState.user?.name || appState.profile?.name || "Student"
+                });
                 appState.pendingGuardianRequests = (appState.pendingGuardianRequests || []).filter((item) => String(item.id) !== String(requestId));
                 try { localStorage.setItem('securo_student_pending_requests', JSON.stringify(appState.pendingGuardianRequests)); } catch (_) {}
-                syncNotificationViews();
-                await respondToGuardianLink(requestId, status, appState.user.uid, {
-                    studentId: appState.user.studentId,
-                    name: appState.user.name
-                });
-                if (notificationId) {
-                    await markAccountNotificationRead(notificationId, {
+                if (notificationId && !String(notificationId).startsWith("guardian-request-")) {
+                    markAccountNotificationRead(notificationId, {
                         resolvedStatus: status
                     }).catch(() => { });
                 }
@@ -4001,15 +4348,15 @@ setTimeout(() => {
                 try { localStorage.setItem('securo_student_notifications', JSON.stringify(appState.accountNotifications)); } catch (_) {}
                 syncNotificationViews();
                 if (!notificationId && request?.id) {
-                    await sendAccountNotification({
-                        userId: appState.user.uid,
+                    sendAccountNotification({
+                        userId: appState.user?.uid || auth.currentUser?.uid,
                         type: "guardian_request",
                         title: "Guardian tracking request",
                         message: `${request.guardianName || "A parent or guardian"} wanted to link to your account.`,
                         sourceUserId: request.guardianId || "",
                         sourceName: request.guardianName || "",
                         requestId: request.id,
-                        studentId: request.studentId || appState.user.studentId || "",
+                        studentId: request.studentId || appState.user?.studentId || "",
                         resolvedStatus: status,
                         isRead: true
                     }).catch(() => { });
@@ -4018,17 +4365,28 @@ setTimeout(() => {
                 // Cleanup UI
                 const notify = document.getElementById('guardianNotify');
                 if (notify) notify.remove();
+                const rtPrompt = document.getElementById('studentRealtimePrompt');
+                if (rtPrompt) rtPrompt.remove();
 
+                // (2026-07-13) Show status modal immediately; refresh links in background
                 if (status === 'accepted') {
-                    appState.acceptedGuardianCount = Number(appState.acceptedGuardianCount || 0) + 1;
-                    refreshLocationTracking();
                     showStatus("Link Accepted", "Your guardian can now monitor your safety status.", "success");
+                    showStudentRealtimePrompt("Parent Linked", "Your parent or guardian can now monitor your safety status.", "check_circle");
+                    getLinksForStudent(appState.user?.studentId, appState.user?.uid).then((validLinks) => {
+                        appState.guardianLinkReminders = Array.isArray(validLinks) ? validLinks : [];
+                        appState.acceptedGuardianCount = appState.guardianLinkReminders.filter(l => l.status === 'accepted').length;
+                        renderGuardianWatchers(appState.guardianLinkReminders);
+                        refreshLocationTracking();
+                    }).catch(() => {});
                 } else {
                     showStatus("Link Declined", "The request was declined.");
+                    showStudentRealtimePrompt("Invite Declined", "The guardian link request was declined.", "cancel");
                 }
             } catch (err) {
                 console.warn("Link response failed:", err);
-                showStatus("Error", "Could not process request.", "error");
+                showStatus("Error", err?.message || "Could not process request.", "error");
+            } finally {
+                if (lockKey) _activeGuardianResponseIds.delete(lockKey);
             }
         };
 
@@ -4058,14 +4416,15 @@ setTimeout(() => {
 
         function showStatus(title, msg, type = 'success') {
             const statusModal = document.getElementById("statusModal");
-            const statusTitle = document.getElementById("statusTitle");
-            const statusMessage = document.getElementById("statusMessage");
-            const statusIconWrap = document.getElementById("statusIconWrap");
-            const statusIcon = document.getElementById("statusIcon");
-            const okBtn = document.getElementById("statusOkBtn");
+            // (2026-07-13) Scope status elements & guarantee fallback message; was raw msg
+            const statusTitle = statusModal?.querySelector("#statusTitle") || document.getElementById("statusTitle");
+            const statusMessage = statusModal?.querySelector("#statusMessage") || document.getElementById("statusMessage");
+            const statusIconWrap = statusModal?.querySelector("#statusIconWrap") || document.getElementById("statusIconWrap");
+            const statusIcon = statusModal?.querySelector("#statusIcon") || document.getElementById("statusIcon");
+            const okBtn = statusModal?.querySelector("#statusOkBtn") || document.getElementById("statusOkBtn");
 
-            statusTitle.textContent = title;
-            statusMessage.textContent = msg;
+            if (statusTitle) statusTitle.textContent = title || (type === 'success' ? 'Success!' : 'Notice');
+            if (statusMessage) statusMessage.textContent = msg || (type === 'success' ? 'Your action has been completed successfully.' : 'An unexpected issue occurred. Please try again.');
 
             statusIconWrap.classList.remove('success', 'error');
             statusIconWrap.classList.add(type);
@@ -4854,6 +5213,11 @@ setTimeout(() => {
         // Capture logic initialized above in the main variables block
 
         function showToast(msg, type = 'success') {
+            // (2026-07-13) Queue toast until active modal closes; was showing under modal
+            if (typeof isAnyStudentModalOpen === 'function' && isAnyStudentModalOpen()) {
+                waitForStudentModalsClosed(() => showToast(msg, type));
+                return;
+            }
             const toast = document.getElementById("toastNotify");
             const toastMsg = document.getElementById("toastMsg");
             const toastIcon = document.getElementById("toastIcon");

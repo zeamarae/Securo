@@ -646,6 +646,7 @@ const PAGE_CONTROLLERS = {
             loginTab.classList.toggle('active', isLoginMode);
             signupTab.classList.toggle('active', !isLoginMode);
 
+            // (2026-07-13) Set all signup fields required in signup mode; was optional
             document.querySelectorAll('.signup-only').forEach(el => {
                 el.style.display = isLoginMode ? 'none' : 'block';
                 const field = el.querySelector('input');
@@ -679,11 +680,16 @@ const PAGE_CONTROLLERS = {
             }
         };
 
-        // (2026-07-13) Enable staff register tab; was hidden signup tab for staff
+        // (2026-07-13) Apply blue staff theme on html and body; was html inline var only
+        document.documentElement.classList.toggle('role-staff', isStaffRole);
+        document.body.classList.toggle('role-staff', isStaffRole);
         if (isStaffRole) {
             document.documentElement.style.setProperty('--primary', '#2563eb');
             document.documentElement.style.setProperty('--primary-strong', '#1d4ed8');
             document.documentElement.style.setProperty('--primary-soft', '#eff6ff');
+            document.body.style.setProperty('--primary', '#2563eb');
+            document.body.style.setProperty('--primary-strong', '#1d4ed8');
+            document.body.style.setProperty('--primary-soft', '#eff6ff');
         }
         if (localStorage.getItem('securo_terms_agreed') === 'true') {
             const termsBox = document.getElementById('termsCheckbox');
@@ -701,10 +707,12 @@ const PAGE_CONTROLLERS = {
         loginTab.addEventListener('click', () => setMode('login'));
         signupTab.addEventListener('click', () => setMode('signup'));
 
-        // (2026-07-13) Auto-select signup tab for all roles; was exclude staff role
+        // (2026-07-13) Initialize login mode on boot to clear hidden required; was uncalled
         const authUrlParams = new URLSearchParams(window.location.search);
         if (authUrlParams.get('mode') === 'register' || window.location.hash === '#register') {
             setMode('signup');
+        } else {
+            setMode('login');
         }
 
         // (2026-07-13) 3-step OTP reset to student or linked parent email; was link
@@ -798,14 +806,14 @@ const PAGE_CONTROLLERS = {
                 const studentName = studentRec?.name || `Student #${sid}`;
                 const studentAuthEmail = studentRec?.authEmail || (studentRec?.email && studentRec.email.includes('@') ? studentRec.email : (directEmail || roleIdToEmail(sid, 'student')));
 
-                // 1) Prefer student's registered real email
-                let recipientEmail = isRealEmail(studentRec?.email) ? studentRec.email.trim() : (isRealEmail(directEmail) ? directEmail.trim() : '');
+                // (2026-07-13) Send OTP to student email, or linked parent if none; was sid reversed
+                let recipientEmail = isRealEmail(studentRec?.email) ? studentRec.email.trim() : (isRealEmail(studentRec?.recoveryEmail) ? studentRec.recoveryEmail.trim() : (isRealEmail(directEmail) ? directEmail.trim() : ''));
                 let isParentRecipient = false;
                 let linkedParentUid = '';
 
-                // 2) Fallback to linked parent's email if student has no real email
+                // Fallback to linked parent's email if student has no registered email
                 if (!recipientEmail) {
-                    const links = await getLinksForStudent(studentUid, sid).catch(() => []);
+                    const links = await getLinksForStudent(sid, studentUid).catch(() => []);
                     const orderedLinks = [
                         ...(links || []).filter(l => l.status === 'accepted'),
                         ...(links || []).filter(l => l.status !== 'accepted')
@@ -827,6 +835,24 @@ const PAGE_CONTROLLERS = {
                                 break;
                             }
                         }
+                    }
+                    if (!recipientEmail) {
+                        try {
+                            const rawDir = localStorage.getItem('securo_user_directory');
+                            if (rawDir) {
+                                const dir = JSON.parse(rawDir);
+                                for (const u of Object.values(dir)) {
+                                    if ((u.role === 'guardian' || u.role === 'parent') && isRealEmail(u.email)) {
+                                        if (String(u.linkedStudentId || '') === String(sid) || String(u.wardStudentId || '') === String(sid)) {
+                                            recipientEmail = u.email.trim();
+                                            isParentRecipient = true;
+                                            linkedParentUid = u.uid || '';
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (_) { }
                     }
                 }
 
@@ -1128,15 +1154,23 @@ const PAGE_CONTROLLERS = {
             showToast("Photo captured", "Profile picture updated from camera.", "success");
         });
 
-        // (2026-07-13) Hide Year & Section for staff onboarding; was always required
+        // (2026-07-13) Show Department & hide Section for staff onboarding; was hidden
         function openOnboardingModal(userContext) {
             onboardingUserContext = userContext;
             onboardingErrorMsg.textContent = '';
             const isStaff = (userContext?.role || preferredRole) === 'staff';
             const yearSecGroup = document.getElementById('onboardingYearSectionGroup');
+            const deptGroup = document.getElementById('onboardingDepartmentGroup');
             if (yearSecGroup) yearSecGroup.style.display = isStaff ? 'none' : 'block';
+            if (deptGroup) deptGroup.style.display = isStaff ? 'block' : 'none';
             if (onboardingYear) onboardingYear.required = !isStaff;
             if (onboardingSection) onboardingSection.required = !isStaff;
+            const subtitleEl = document.querySelector('#onboardingModal .onboarding-subtitle');
+            if (subtitleEl) {
+                subtitleEl.textContent = isStaff
+                    ? 'Complete your staff profile to access your campus dashboard and safety tools.'
+                    : 'Complete your student identity to access your campus dashboard and safety tools.';
+            }
             updateOnboardingInitials();
             onboardingModal.classList.add('active');
             onboardingFirstName.focus();
@@ -1158,9 +1192,10 @@ const PAGE_CONTROLLERS = {
                 return;
             }
 
-            // (2026-07-13) Set staff default section & bypass student check; was student
+            // (2026-07-13) Save staff department with empty section; was section Staff
             const isStaff = (onboardingUserContext?.role || preferredRole) === 'staff';
-            let section = 'Staff';
+            const department = isStaff ? (document.getElementById('onboardingDepartment')?.value?.trim() || '') : '';
+            let section = '';
             if (!isStaff) {
                 const year = onboardingYear.value.trim();
                 const sectionLetter = onboardingSection.value.trim().toUpperCase();
@@ -1195,6 +1230,7 @@ const PAGE_CONTROLLERS = {
                     name: fullName,
                     initials,
                     section,
+                    department,
                     photoURL: onboardingPhotoData || '',
                     avatar: onboardingPhotoData || '',
                     email,
@@ -1208,6 +1244,7 @@ const PAGE_CONTROLLERS = {
                 saveLocalUserDirectoryEntry(uid, profilePayload);
                 await saveUserProfile(uid, profilePayload);
                 await saveUserDirectoryMarker(uid, profilePayload);
+                try { localStorage.setItem('securo_user_role', role); } catch (_) { }
 
                 stopOnboardingCamera();
                 setButtonBusy(onboardingSubmitBtn, false);
@@ -1217,7 +1254,7 @@ const PAGE_CONTROLLERS = {
                     showGuardianInviteModal(studentId, firstName);
                 } else {
                     showToast("Profile ready", `Welcome, ${firstName}! Entering your Securo Hub...`, "success");
-                    window.setTimeout(() => { window.location.href = getRoleDashboardUrl(); }, 700);
+                    window.setTimeout(() => { window.location.href = getRoleDashboardUrl(role); }, 700);
                 }
             } catch (err) {
                 console.warn("Onboarding save failed:", err);
@@ -1339,15 +1376,20 @@ const PAGE_CONTROLLERS = {
                         profile = await getUserProfile(loggedInUser.uid);
                     } catch (_) {
                         // Profile fetch failed — proceed to dashboard anyway
-                        // (2026-07-13) Cache user role upon login; was not setting role key
+                        // (2026-07-13) Route login to active role dashboard; was unparameterized
                         const activeRole = profile?.role || preferredRole;
                         try { localStorage.setItem('securo_user_role', activeRole); } catch (_) { }
                         sessionStorage.setItem('securo_authenticated', '1');
-                        window.location.href = getRoleDashboardUrl();
+                        window.location.href = getRoleDashboardUrl(activeRole);
                         return;
                     }
 
-                    if (!profile || !profile.name || profile.name === 'Student' || !profile.firstName || !profile.section || !profile.onboardingCompleted) {
+                    // (2026-07-13) Skip onboarding if profile has name/section; was strict
+                    const isStaffLogin = (profile?.role || preferredRole) === 'staff';
+                    const hasValidName = Boolean(profile?.name && profile.name !== 'Student' && profile.name !== 'Staff Member');
+                    const hasRequiredProfile = isStaffLogin ? hasValidName : (hasValidName && Boolean(profile?.section));
+                    // (2026-07-13) Never block existing login with onboarding; was strict
+                    if (profile && profile.onboardingCompleted === false && !hasRequiredProfile) {
                         setButtonBusy(submitBtn, false);
                         // (2026-07-13) Preserve recovery email on onboarding; was auth email
                         const recoveryEmail = (profile?.email && !profile.email.endsWith('@securo.app')) ? profile.email : (profile?.recoveryEmail || '');
@@ -1367,7 +1409,7 @@ const PAGE_CONTROLLERS = {
                     const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
                     const camOk = localStorage.getItem('securo_camera_granted') === 'true';
                     const locOk = localStorage.getItem('securo_location_granted') === 'true';
-                    window.location.href = (isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl();
+                    window.location.href = (isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl(activeRole);
                 } else {
                     const studentId = signupIdInput.value.trim();
                     const studentEmail = document.getElementById('studentEmailSignup')?.value?.trim();
@@ -1376,10 +1418,9 @@ const PAGE_CONTROLLERS = {
                     if (!/^\d{7}$/.test(studentId)) {
                         throw new Error(`Please enter a valid 7-digit ${roleLabel} ID number.`);
                     }
-                    // (2026-07-13) Validate student recovery email; was ID & password only
-                    // (2026-07-13) Allow optional recovery email on student signup; was mandatory
-                    if (studentEmail && !Validation.email(studentEmail).valid) {
-                        throw new Error("Please enter a valid email address or leave it blank.");
+                    // (2026-07-13) Require valid recovery email on signup; was optional
+                    if (!studentEmail || !Validation.email(studentEmail).valid) {
+                        throw new Error("Please enter a valid email address.");
                     }
                     if (password.length < 8) {
                         throw new Error("Password must be at least 8 characters.");
@@ -1388,7 +1429,7 @@ const PAGE_CONTROLLERS = {
                         throw new Error("Passwords do not match.");
                     }
 
-                    // (2026-07-13) Check Firestore DB for duplicate ID only; was stale cache first
+                    // (2026-07-13) Auto-register & log in if ID is not taken; was terms gate
                     let idTaken = await isStudentIdTaken(studentId).catch(() => false);
                     if (!idTaken) {
                         const existingRec = await findStudentUidByStudentId(studentId).catch(() => null);
@@ -1398,13 +1439,58 @@ const PAGE_CONTROLLERS = {
                         throw new Error(`That ${roleLabel} ID is already registered. Please sign in.`);
                     }
 
-                    setButtonBusy(submitBtn, false);
-                    // (2026-07-13) Open terms modal on register; was inline checkbox check
-                    const termsModal = document.getElementById('termsModal');
-                    if (termsModal) {
-                        termsModal.classList.add('active');
-                        resetTermsModalScroll();
+                    // (2026-07-13) Set role & signup lock before signUp; was racing to student
+                    const activeRole = preferredRole || 'student';
+                    try { localStorage.setItem('securo_user_role', activeRole); } catch (_) { }
+                    sessionStorage.setItem('securo_signup_in_progress', '1');
+                    const authEmail = roleIdToEmail(studentId, activeRole);
+                    let user;
+                    try {
+                        user = await signUp(authEmail, password);
+                    } catch (signupErr) {
+                        sessionStorage.removeItem('securo_signup_in_progress');
+                        const code = String(signupErr?.code || '');
+                        if (code === 'auth/email-already-in-use') {
+                            throw new Error(`That ${roleLabel} ID is already registered. Please sign in.`);
+                        }
+                        throw signupErr;
                     }
+
+                    const finalAuthEmail = user?.email || authEmail;
+                    if (user?.uid) {
+                        localStorage.setItem('securo_session_token', user.uid);
+                        sessionStorage.setItem('securo_login_pending', '1');
+                    }
+                    try {
+                        await saveUserProfile(user.uid, {
+                            studentId,
+                            email: studentEmail || "",
+                            recoveryEmail: studentEmail || "",
+                            authEmail: finalAuthEmail,
+                            role: activeRole,
+                            createdAt: new Date().toISOString()
+                        });
+                    } catch (_) { }
+                    try {
+                        await saveAdminUserPassword(user.uid, finalAuthEmail, password);
+                    } catch (_) { }
+                    try {
+                        const raw = localStorage.getItem('securo_user_directory');
+                        const dir = raw ? JSON.parse(raw) : {};
+                        dir[user.uid] = { ...(dir[user.uid] || {}), uid: user.uid, studentId, email: studentEmail || "", recoveryEmail: studentEmail || "", authEmail: finalAuthEmail, role: activeRole, updatedAt: new Date().toISOString() };
+                        localStorage.setItem('securo_user_directory', JSON.stringify(dir));
+                    } catch (_) { }
+
+                    sessionStorage.setItem('securo_just_registered', '1');
+                    sessionStorage.removeItem('securo_signup_in_progress');
+                    try { localStorage.setItem('securo_user_role', activeRole); } catch (_) { }
+                    sessionStorage.setItem('securo_authenticated', '1');
+                    showToast("Registration successful", "Account created! Entering dashboard...", "success");
+                    const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
+                    const camOk = localStorage.getItem('securo_camera_granted') === 'true';
+                    const locOk = localStorage.getItem('securo_location_granted') === 'true';
+                    window.location.href = (isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl(activeRole);
+                    return;
                 }
             } catch (error) {
                 const friendlyMessage = getFriendlyAuthMessage(error, isLoginMode ? "login" : "signup", roleLabel);
@@ -1433,8 +1519,9 @@ const PAGE_CONTROLLERS = {
             }
         }
 
+        // (2026-07-13) Enable terms buttons on modal open; was scroll locked disabled
         function resetTermsModalScroll() {
-            setTermsButtonsEnabled(false);
+            setTermsButtonsEnabled(true);
             if (termsScrollBox) termsScrollBox.scrollTop = 0;
         }
 
@@ -1477,9 +1564,9 @@ const PAGE_CONTROLLERS = {
                     if (!/^\d{7}$/.test(studentId)) {
                         throw new Error(`Please enter a valid 7-digit ${roleLabel} ID number.`);
                     }
-                    // (2026-07-13) Allow optional recovery email on student signup; was mandatory
-                    if (studentEmail && !Validation.email(studentEmail).valid) {
-                        throw new Error("Please enter a valid email address or leave it blank.");
+                    // (2026-07-13) Require valid recovery email on signup; was optional
+                    if (!studentEmail || !Validation.email(studentEmail).valid) {
+                        throw new Error("Please enter a valid email address.");
                     }
                     if (password.length < 8) {
                         throw new Error("Password must be at least 8 characters.");
@@ -1560,10 +1647,12 @@ const PAGE_CONTROLLERS = {
         }, false);
     },
     'permissions': async function () {
+        // (2026-07-13) Retain authenticated desktop users; was auto redirect landing
         (() => {
             const isNativeApk = !!(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
             const isDesktop = !isNativeApk && (window.innerWidth >= 768 || window.screen.width >= 992) && !/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-            if (isDesktop) {
+            const isLoggedIn = Boolean(localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated') === '1');
+            if (isDesktop && !isLoggedIn) {
                 sessionStorage.setItem('securo_allow_landing', '1');
                 window.location.replace('../index.html');
             }
@@ -2223,14 +2312,15 @@ const PAGE_CONTROLLERS = {
 
         function showStatus(title, msg, type = 'success') {
             const statusModal = document.getElementById('statusModal');
-            const statusTitle = document.getElementById('statusTitle');
-            const statusMessage = document.getElementById('statusMessage');
-            const statusIconWrap = document.getElementById('statusIconWrap');
-            const statusIcon = document.getElementById('statusIcon');
-            const okBtn = document.getElementById('statusOkBtn');
+            // (2026-07-13) Scope elements to statusModal & fallback text; was global getElementById
+            const statusTitle = statusModal?.querySelector('#statusTitle') || document.getElementById('statusTitle');
+            const statusMessage = statusModal?.querySelector('#statusMessage') || document.getElementById('statusMessage');
+            const statusIconWrap = statusModal?.querySelector('#statusIconWrap') || document.getElementById('statusIconWrap');
+            const statusIcon = statusModal?.querySelector('#statusIcon') || document.getElementById('statusIcon');
+            const okBtn = statusModal?.querySelector('#statusOkBtn') || document.getElementById('statusOkBtn');
 
-            statusTitle.textContent = title;
-            statusMessage.textContent = msg;
+            if (statusTitle) statusTitle.textContent = title || (type === 'success' ? 'Success' : 'Notice');
+            if (statusMessage) statusMessage.textContent = msg || (type === 'success' ? 'Your changes have been saved successfully.' : 'Please review your details and try again.');
             statusIconWrap.classList.remove('success', 'error');
             statusIconWrap.classList.add(type);
 
@@ -2290,29 +2380,35 @@ const PAGE_CONTROLLERS = {
         }
 
         function renderIdentity(profile) {
-            const roleLabel = profile?.role === 'guardian'
+            const authEmailLower = String(auth.currentUser?.email || profile?.authEmail || profile?.email || '').toLowerCase();
+            const inferredRole = profile?.role || (authEmailLower.startsWith('staff.') ? 'staff' : (localStorage.getItem('securo_user_role') || 'student'));
+            const roleLabel = inferredRole === 'guardian'
                 ? 'Guardian'
-                : profile?.role === 'staff'
+                : inferredRole === 'staff'
                     ? 'Staff'
-                    : profile?.role === 'admin'
+                    : inferredRole === 'admin'
                         ? 'Admin'
                         : 'Student';
             const studentIdLabel = profile?.studentId || 'Not linked';
 
-            state.role = profile?.role || 'student';
+            state.role = inferredRole;
             state.studentId = profile?.studentId || '';
             state.name = profile?.name || auth.currentUser?.displayName || 'Securo User';
             state.email = profile?.email || auth.currentUser?.email || '';
             state.personalEmail = getDisplayEmail(profile);
+            state.department = profile?.department || '';
             state.section = profile?.section || (profile?.course && profile?.yearLevel ? `${profile.course} ${profile.yearLevel}` : '');
             state.photoURL = profile?.photoURL || auth.currentUser?.photoURL || '';
+
+            const profileDashboardBtn = document.getElementById('profileDashboardBtn');
+            const sectionRowLabel = document.getElementById('sectionRowLabel');
 
             profileNameInput.value = state.name;
             profileEmail.textContent = state.personalEmail || 'No email registered';
             profileEmailValue.textContent = state.personalEmail || 'No email registered';
             if (personalEmailInput) personalEmailInput.value = state.personalEmail || '';
             profileStudentId.textContent = studentIdLabel;
-            if (profileSectionValue) profileSectionValue.textContent = state.section || 'Not set';
+            if (profileSectionValue) profileSectionValue.textContent = state.role === 'staff' ? (state.department || 'Not set') : (state.section || 'Not set');
             profileRoleValue.textContent = roleLabel;
             roleBadge.textContent = `${roleLabel} Account`;
             myIdLabel.textContent = state.studentId ? `ID: ${state.studentId}` : 'ID: Not linked';
@@ -2331,8 +2427,11 @@ const PAGE_CONTROLLERS = {
 
             if (state.role === 'guardian') {
                 if (myProfCard) myProfCard.classList.add('is-hidden');
+                document.body.classList.remove('staff-theme');
+                document.documentElement.classList.remove('role-staff');
                 document.body.classList.add('guardian-theme');
                 profileBackBtn.href = '../parent/parent.html';
+                if (profileDashboardBtn) profileDashboardBtn.href = '../parent/parent.html';
                 profileStudentId.textContent = 'Locked for guardian accounts';
                 myIdLabel.textContent = 'Guardian Account';
                 connectionsTitle.textContent = 'Child Access List';
@@ -2347,12 +2446,24 @@ const PAGE_CONTROLLERS = {
                 document.getElementById('myIdChip').classList.add('is-hidden');
             } else if (state.role === 'staff' || state.role === 'admin') {
                 document.body.classList.remove('guardian-theme');
-                profileBackBtn.href = state.role === 'admin' ? '../admin/admin.html' : getRoleDashboardUrl(state?.role);
-                // (2026-07-13) Hide connections card for staff; was showing placeholder card
+                // (2026-07-13) Blue staff theme, Department row & staff dash link; was student
+                if (state.role === 'staff') {
+                    document.body.classList.add('staff-theme');
+                    document.documentElement.classList.add('role-staff');
+                }
+                const dashHref = state.role === 'admin' ? '../admin/admin.html' : '../staff/staff.html';
+                profileBackBtn.href = dashHref;
+                if (profileDashboardBtn) profileDashboardBtn.href = dashHref;
                 const connectionsCard = connectionsTitle?.closest('.profile-card');
                 if (connectionsCard) connectionsCard.classList.add('is-hidden');
-                // (2026-07-13) Hide section and set staff ID label; was student layout
-                if (sectionRow) sectionRow.classList.add('is-hidden');
+                if (sectionRow) {
+                    if (state.role === 'staff') {
+                        sectionRow.classList.remove('is-hidden');
+                        if (sectionRowLabel) sectionRowLabel.textContent = 'Department';
+                    } else {
+                        sectionRow.classList.add('is-hidden');
+                    }
+                }
                 const staffIdLabel = studentIdRow?.querySelector('.info-label');
                 if (staffIdLabel) staffIdLabel.textContent = state.role === 'staff' ? 'Staff ID' : 'Admin ID';
                 heroNote.textContent = state.role === 'admin'
@@ -2360,12 +2471,15 @@ const PAGE_CONTROLLERS = {
                     : 'Your staff ID stays locked after signup. Only your display name and password can be updated here.';
                 guardianRequestCard.classList.add('is-hidden');
             } else {
-                document.body.classList.remove('guardian-theme');
-                profileBackBtn.href = getRoleDashboardUrl(state?.role);
+                document.body.classList.remove('guardian-theme', 'staff-theme');
+                document.documentElement.classList.remove('role-staff');
+                profileBackBtn.href = '../student/student.html';
+                if (profileDashboardBtn) profileDashboardBtn.href = '../student/student.html';
                 const connectionsCard = connectionsTitle?.closest('.profile-card');
                 if (connectionsCard) connectionsCard.classList.remove('is-hidden');
                 const studentIdLabelEl = studentIdRow?.querySelector('.info-label');
                 if (studentIdLabelEl) studentIdLabelEl.textContent = 'Student ID';
+                if (sectionRowLabel) sectionRowLabel.textContent = 'Section';
                 if (sectionRow) sectionRow.classList.remove('is-hidden');
                 connectionsTitle.textContent = 'Parents / Guardians';
                 connectionsCopy.textContent = 'Pending requests and approved family links appear here.';
@@ -3080,20 +3194,32 @@ const PAGE_CONTROLLERS = {
             settingsUserMeta.textContent = `${name} • ${role === 'guardian' ? 'Guardian' : role === 'staff' ? 'Staff' : role === 'admin' ? 'Admin' : 'Student'} • ${idLabel}`;
 
             if (role === 'admin' || user.email === 'admin@admin.com') {
-                document.body.classList.remove('guardian-theme');
+                document.body.classList.remove('guardian-theme', 'staff-theme');
+                document.documentElement.classList.remove('role-staff');
                 settingsBackBtn.href = '../admin/admin.html';
                 dashboardShortcut.href = '../admin/admin.html';
                 guardianShareRow.style.display = 'none';
             } else if (role === 'guardian') {
+                document.body.classList.remove('staff-theme');
+                document.documentElement.classList.remove('role-staff');
                 document.body.classList.add('guardian-theme');
                 settingsBackBtn.href = '../parent/parent.html';
                 dashboardShortcut.href = '../parent/parent.html';
                 guardianShareRow.style.display = 'none';
-            } else {
+            } else if (role === 'staff') {
+                // (2026-07-13) Blue staff settings & hide parent share row; was student
                 document.body.classList.remove('guardian-theme');
-                settingsBackBtn.href = getRoleDashboardUrl(state?.role);
-                dashboardShortcut.href = getRoleDashboardUrl(state?.role);
-                guardianShareRow.style.display = 'flex';
+                document.body.classList.add('staff-theme');
+                document.documentElement.classList.add('role-staff');
+                settingsBackBtn.href = '../staff/staff.html';
+                dashboardShortcut.href = '../staff/staff.html';
+                if (guardianShareRow) guardianShareRow.style.display = 'none';
+            } else {
+                document.body.classList.remove('guardian-theme', 'staff-theme');
+                document.documentElement.classList.remove('role-staff');
+                settingsBackBtn.href = getRoleDashboardUrl(role);
+                dashboardShortcut.href = getRoleDashboardUrl(role);
+                if (guardianShareRow) guardianShareRow.style.display = 'flex';
             }
 
             bindSettings(user.uid);

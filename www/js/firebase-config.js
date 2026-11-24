@@ -22,11 +22,30 @@ const firebaseConfig = {
   measurementId: "G-C9J26BV4GE"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// (2026-07-13) Isolate admin Firebase app from student/parent tabs; was shared default
+const resolveFirebaseAppName = () => {
+  try {
+    const path = (typeof window !== 'undefined' && window.location?.pathname) ? window.location.pathname.toLowerCase() : '';
+    if (path.includes('/admin/')) {
+      sessionStorage.setItem('securo_portal_app', 'securo-admin');
+      return 'securo-admin';
+    }
+    if (path.includes('/student/') || path.includes('/parent/') || path.includes('/staff/')) {
+      sessionStorage.setItem('securo_portal_app', '[DEFAULT]');
+      return '[DEFAULT]';
+    }
+    if (path.includes('/public/') && sessionStorage.getItem('securo_portal_app') === 'securo-admin') {
+      return 'securo-admin';
+    }
+  } catch (_) {}
+  return '[DEFAULT]';
+};
+const appName = resolveFirebaseAppName();
+const app = appName === '[DEFAULT]' ? initializeApp(firebaseConfig) : initializeApp(firebaseConfig, appName);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
-const analytics = getAnalytics(app);
+let analytics = null;
+try { analytics = getAnalytics(app); } catch (_) {}
 
 export { auth, db, storage, analytics, app, firebaseConfig };

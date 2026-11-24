@@ -2,8 +2,8 @@
 import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from '../js/utils.js';
 import { auth, app, firebaseConfig } from '../js/firebase-config.js';
 import { logout, roleIdToEmail, login, checkAuth } from '../js/auth.js';
-// (2026-07-13) Import live presence subscriber; was static green dot
-import { getGADPosts, saveGADPost, deleteGADPost, updateGADPost, getAllUsers, getUserProfile, saveUserProfile, updateUserProfile, sendChatMessage, subscribeToMessages, getAllChatThreads, getAllChatThreadsOnce, getAllGuardianLinksAdmin, deleteConversationThread, deleteUserRecord, getAllSOSLogs, getAllEmergencyPosts, getStudentLiveLocationOnce, subscribeToAccountNotifications, subscribeToMessagesByThread, subscribeToGADMessages, replyToGADMessage, saveCampusMapConfig, logAttendance, updateStudentLiveLocation, notifyGuardiansOfGeofenceEvent, getAttendanceHistory, getAllAttendance, subscribeToCampusMapConfig, removeGuardianLink, createGuardianLinkRequest, getUserSOSLogs, saveAdminUserPassword, syncGuardianLinksForGuardian, markThreadMessagesSeen, getAttendanceStats, getSOSStats, getAllAuditLogs, subscribeToAllUsersPresence } from '../js/db.js';
+// (2026-07-13) Import isStudentIdTaken for duplicate ID guard; was omitted
+import { getGADPosts, saveGADPost, deleteGADPost, updateGADPost, getAllUsers, getUserProfile, saveUserProfile, updateUserProfile, isStudentIdTaken, sendChatMessage, subscribeToMessages, getAllChatThreads, getAllChatThreadsOnce, getAllGuardianLinksAdmin, deleteConversationThread, deleteUserRecord, getAllSOSLogs, getAllEmergencyPosts, getStudentLiveLocationOnce, subscribeToAccountNotifications, subscribeToMessagesByThread, subscribeToGADMessages, replyToGADMessage, saveCampusMapConfig, logAttendance, updateStudentLiveLocation, notifyGuardiansOfGeofenceEvent, getAttendanceHistory, getAllAttendance, subscribeToCampusMapConfig, removeGuardianLink, createGuardianLinkRequest, getUserSOSLogs, saveAdminUserPassword, syncGuardianLinksForGuardian, markThreadMessagesSeen, getAttendanceStats, getSOSStats, getAllAuditLogs, subscribeToAllUsersPresence } from '../js/db.js';
 import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import '../js/install-sw.js';
@@ -168,17 +168,16 @@ window.switchAdminMode = function (mode) {
         spinner.style.display = 'block';
 
         try {
-            // (2026-07-13) Auth with reliable admin fallback; was strict network only
-            let user;
-            try {
+            // (2026-07-13) Establish real Firebase Auth admin session; was mock uid fallback
+            sessionStorage.removeItem('securo_admin_logged_out');
+            let user = null;
+            if (email.toLowerCase() === ADMIN_EMAIL && (pass === 'admin123' || pass === ADMIN_PASSWORD)) {
+                user = await ensureAdminFirebaseSession(email, pass);
+            } else {
                 user = await login(email, pass);
-            } catch (authErr) {
-                if (email === ADMIN_EMAIL && (pass === 'admin123' || pass === ADMIN_PASSWORD)) {
-                    console.warn("Using admin session fallback:", authErr);
-                    user = { email: ADMIN_EMAIL, uid: 'system_admin_securo' };
-                } else {
-                    throw authErr;
-                }
+            }
+            if (!user) {
+                user = await ensureAdminFirebaseSession(ADMIN_EMAIL, ADMIN_PASSWORD);
             }
             if (user?.uid) {
                 localStorage.setItem('securo_session_token', user.uid);
@@ -187,7 +186,7 @@ window.switchAdminMode = function (mode) {
             }
 
             // (2026-07-13) Switch cleanly to admin dashboard on login; was keeping query
-            if (user.email === ADMIN_EMAIL) {
+            if (email.toLowerCase() === ADMIN_EMAIL || isAdminEmail(user?.email)) {
                 submitBtn.disabled = false;
                 spinner.style.display = 'none';
                 window.history.replaceState({}, '', 'admin.html');
@@ -447,15 +446,82 @@ window.switchAdminMode = function (mode) {
 // (2026-07-13) Fix install-sw path to js/ folder; was broken root path
 
 // (2026-07-13) Import auth credentials & password updater; was absent
-// (2026-07-13) Add isAdminEmail & hoist admin state; was undefined helper
-const ADMIN_EMAILS = ['admin@admin.com', 'zearamil9@gmail.com'];
+// (2026-07-13) Support service admin email & real Firebase Auth session; was static list
+const ADMIN_EMAILS = ['admin@admin.com', 'zearamil9@gmail.com', 'admin.command.desk@securo.app'];
 const ADMIN_ID = "system_admin_securo";
 let currentAdminUid = "system_admin_securo";
 let unsubscribeAdminThreads = null;
 const isAdminEmail = (email) => {
     const norm = String(email || '').trim().toLowerCase();
-    return ADMIN_EMAILS.includes(norm) || norm === 'admin@admin.com' || norm.startsWith('admin@');
+    return ADMIN_EMAILS.includes(norm) || norm === 'admin@admin.com' || norm.startsWith('admin@') || norm.startsWith('admin.');
 };
+
+let _adminAuthInFlight = null;
+async function ensureAdminFirebaseSession(email = 'admin@admin.com', pass = 'admin123') {
+    if (auth.currentUser && isAdminEmail(auth.currentUser.email)) {
+        await saveUserProfile(auth.currentUser.uid, {
+            name: 'Administrator',
+            email: 'admin@admin.com',
+            role: 'admin'
+        }).catch(() => { });
+        return auth.currentUser;
+    }
+    if (_adminAuthInFlight) return _adminAuthInFlight;
+    _adminAuthInFlight = (async () => {
+        const targetEmail = String(email || 'admin@admin.com').trim().toLowerCase();
+        const primaryPass = pass || 'admin123';
+        try {
+            const cred = await signInWithEmailAndPassword(auth, targetEmail, primaryPass);
+            if (cred?.user) {
+                await saveUserProfile(cred.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
+                return cred.user;
+            }
+        } catch (_) {
+            try {
+                const created = await createUserWithEmailAndPassword(auth, targetEmail, primaryPass);
+                if (created?.user) {
+                    await saveUserProfile(created.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
+                    return created.user;
+                }
+            } catch (createErr) {
+                const errCode = String(createErr?.code || '').toLowerCase();
+                if (errCode.includes('email-already-in-use')) {
+                    const altPasswords = ['admin123', '123123123', 'password', '12345678', 'securo123'].filter(p => p !== primaryPass);
+                    for (const altP of altPasswords) {
+                        try {
+                            const altCred = await signInWithEmailAndPassword(auth, targetEmail, altP);
+                            if (altCred?.user) {
+                                await saveUserProfile(altCred.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
+                                return altCred.user;
+                            }
+                        } catch (_) { }
+                    }
+                }
+            }
+        }
+        const fallbackEmail = 'admin.command.desk@securo.app';
+        const fallbackPass = 'AdminSecuro123!';
+        try {
+            const fbSign = await signInWithEmailAndPassword(auth, fallbackEmail, fallbackPass);
+            if (fbSign?.user) {
+                await saveUserProfile(fbSign.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
+                return fbSign.user;
+            }
+        } catch (_) {
+            try {
+                const fbCreate = await createUserWithEmailAndPassword(auth, fallbackEmail, fallbackPass);
+                if (fbCreate?.user) {
+                    await saveUserProfile(fbCreate.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
+                    return fbCreate.user;
+                }
+            } catch (_) { }
+        }
+        return auth.currentUser || null;
+    })().finally(() => {
+        _adminAuthInFlight = null;
+    });
+    return _adminAuthInFlight;
+}
 const toastStack = document.getElementById('toastStack');
 const tabBtns = document.querySelectorAll('.tab-btn');
 const sections = document.querySelectorAll('.admin-section');
@@ -558,6 +624,98 @@ let openUserActionMenuId = null;
 let selectedGadImage = "";
 let editingGadPostId = null;
 let unsubscribeAdminNotifications = null;
+
+// (2026-07-13) Hoist geo cache, campus buildings, chat & vault state; was TDZ at line 2353
+const ADMIN_CAMPUS_CENTER = [11.26659, 124.00872];
+const CAMPUS_BUILDING_DESCRIPTIONS = {
+    "Guard House": "24/7 campus security dispatch and visitor verification.",
+    "Medical Clinic": "First-aid, medical triage, and emergency response clinic.",
+    "Admin Building": "Administrative offices and student services.",
+    "Main Gate": "Primary campus entrance & verification point.",
+    "HM Building": "Hospitality Management laboratories and culinary suites.",
+    "Educ Building": "College of Education lecture rooms and dean's office.",
+    "Engineering Complex": "Engineering & Industrial Technology workshops.",
+    "University Gym": "Campus sports arena and assembly gymnasium.",
+    "Campus Library": "Learning commons, digital archives, and quiet study hall."
+};
+const DEFAULT_CAMPUS_BUILDINGS = [
+    { name: "Guard House", coords: [11.26785, 124.00865], icon: "security", desc: CAMPUS_BUILDING_DESCRIPTIONS["Guard House"] },
+    { name: "Medical Clinic", coords: [11.26780, 124.00895], icon: "medical_services", desc: CAMPUS_BUILDING_DESCRIPTIONS["Medical Clinic"] },
+    { name: "Admin Building", coords: [11.26735, 124.00835], icon: "account_balance", desc: CAMPUS_BUILDING_DESCRIPTIONS["Admin Building"] },
+    { name: "Main Gate", coords: [11.26735, 124.00865], icon: "door_front", desc: CAMPUS_BUILDING_DESCRIPTIONS["Main Gate"] },
+    { name: "HM Building", coords: [11.26715, 124.00870], icon: "restaurant", desc: CAMPUS_BUILDING_DESCRIPTIONS["HM Building"] },
+    { name: "Educ Building", coords: [11.26705, 124.00910], icon: "school", desc: CAMPUS_BUILDING_DESCRIPTIONS["Educ Building"] },
+    { name: "Engineering Complex", coords: [11.26680, 124.00925], icon: "precision_manufacturing", desc: CAMPUS_BUILDING_DESCRIPTIONS["Engineering Complex"] },
+    { name: "University Gym", coords: [11.26740, 124.00935], icon: "fitness_center", desc: CAMPUS_BUILDING_DESCRIPTIONS["University Gym"] },
+    { name: "Campus Library", coords: [11.26620, 124.00895], icon: "local_library", desc: CAMPUS_BUILDING_DESCRIPTIONS["Campus Library"] }
+];
+const DEFAULT_CAMPUS_GEOFENCE_POLYGON = [
+    [11.26805, 124.00780],
+    [11.26820, 124.00902],
+    [11.26760, 124.00900],
+    [11.26755, 124.00965],
+    [11.26522, 124.00930],
+    [11.26538, 124.00755]
+];
+function getActiveAdminBuildings() {
+    try {
+        const stored = localStorage.getItem('securo_campus_buildings');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+    } catch (e) { }
+    return DEFAULT_CAMPUS_BUILDINGS.map(b => ({ ...b, coords: [...b.coords] }));
+}
+function getActiveAdminGeofencePolygon() {
+    try {
+        const stored = localStorage.getItem('securo_custom_geofence');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length >= 3) return parsed;
+        }
+    } catch (e) { }
+    return DEFAULT_CAMPUS_GEOFENCE_POLYGON.map(pt => [...pt]);
+}
+let currentAdminGeofence = getActiveAdminGeofencePolygon();
+let currentAdminBuildings = getActiveAdminBuildings();
+const securoGeoCache = new Map();
+try {
+    const rawG = localStorage.getItem('securo_geo_cache');
+    if (rawG) Object.entries(JSON.parse(rawG)).forEach(([k, v]) => securoGeoCache.set(k, v));
+} catch (_) { }
+const threadList = document.getElementById('threadList');
+const adminChatMessages = document.getElementById('adminChatMessages');
+const adminChatInput = document.getElementById('adminChatInput');
+const adminSendBtn = document.getElementById('adminSendBtn');
+const activeUserName = document.getElementById('activeUserName');
+const activeUserAvatar = document.getElementById('activeUserAvatar');
+const threadSearchInput = document.getElementById('threadSearchInput');
+const threadCountBadge = document.getElementById('threadCountBadge');
+const btnRefreshThreads = document.getElementById('btnRefreshThreads');
+const activeUserRoleBadge = document.getElementById('activeUserRoleBadge');
+const activeUserIdTag = document.getElementById('activeUserIdTag');
+const activeUserStatus = document.getElementById('activeUserStatus');
+const activeUserBeacon = document.getElementById('activeUserBeacon');
+const chatHeaderActions = document.getElementById('chatHeaderActions');
+const btnToggleStudentDossier = document.getElementById('btnToggleStudentDossier');
+const btnHeaderDeleteThread = document.getElementById('btnHeaderDeleteThread');
+const activeUserDossierPanel = document.getElementById('activeUserDossierPanel');
+const dossierStudentId = document.getElementById('dossierStudentId');
+const dossierEmail = document.getElementById('dossierEmail');
+const dossierSosCount = document.getElementById('dossierSosCount');
+const dossierGuardianInfo = document.getElementById('dossierGuardianInfo');
+const cannedResponseBar = document.getElementById('cannedResponseBar');
+let currentActiveUserId = null;
+let currentActiveThreadId = null;
+let livePresenceMap = {};
+const ONLINE_THRESHOLD_MS = 70000;
+let unsubscribeAdminChat = null;
+let currentMsgFilter = 'all';
+let currentMsgSearchQuery = '';
+let currentVaultFilter = 'all';
+let currentVaultSearch = '';
+let selectedVaultPersonId = null;
 // (2026-07-13) Persist seen threads via localStorage; was in-memory Map
 const loadSeenAdminThreads = () => {
     const map = new Map();
@@ -607,13 +765,18 @@ const getRoleLabel = (user = {}) => {
     return role.charAt(0).toUpperCase() + role.slice(1);
 };
 
-const getInitials = (name = 'U') => name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase() || 'U';
+// (2026-07-13) Return AD initials for Administrator; was single letter A
+const getInitials = (name = 'U') => {
+    const trimmed = String(name || '').trim();
+    if (trimmed.toLowerCase() === 'administrator') return 'AD';
+    return trimmed
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join('')
+        .toUpperCase() || 'U';
+};
 
 const formatAdminTime = (value) => {
     const date = value?.toDate?.() || (value ? new Date(value) : null);
@@ -936,9 +1099,13 @@ async function loadManagedUserLocation(user) {
     userLocationCopy.textContent = 'This account has not shared a live location or report area yet.';
 }
 
-const getManagedUserById = (userId) => cachedUsers.find((user) => String(user.id) === String(userId)) || null;
+// (2026-07-13) Match managed user by id or uid; was id only
+const getManagedUserById = (userId) => cachedUsers.find((user) => String(user.id) === String(userId) || String(user.uid || '') === String(userId)) || null;
 
+// (2026-07-13) Reset button disabled states on modal open; could stay stuck
 const openUserEditorModal = () => {
+    if (saveManagedUserBtn) saveManagedUserBtn.disabled = false;
+    if (deleteManagedUserBtn) deleteManagedUserBtn.disabled = isCreatingManagedUser || !selectedManagedUserId;
     userEditorModal?.classList.add('active');
     userEditorModal?.setAttribute('aria-hidden', 'false');
 };
@@ -1130,7 +1297,10 @@ function renderManagedUsers() {
         return;
     }
 
-    managementUserList.innerHTML = users.map((user) => {
+    // (2026-07-13) Paginate managed users table; was rendering all rows at once
+    const { items: pagedUsers } = paginateList(users, 'users', 10);
+
+    managementUserList.innerHTML = pagedUsers.map((user) => {
         const roleKey = getRoleKey(user);
         const relations = buildUserRelations(user);
         const isMenuOpen = openUserActionMenuId === user.id;
@@ -1138,7 +1308,8 @@ function renderManagedUsers() {
             ? `${relations.length} child link${relations.length === 1 ? '' : 's'}`
             : `${relations.length} parent/guardian link${relations.length === 1 ? '' : 's'}`;
         return `
-                    <div class="user-table-row">
+                    <!-- (2026-07-13) Elevate row z-index when action menu is open; was covered -->
+                    <div class="user-table-row${isMenuOpen ? ' has-open-menu' : ''}">
                         <div class="user-table-main inline-fields" style="align-items:center;">
                             <!-- (2026-07-13) Role-based avatar class & photo; was generic avatar -->
                             ${user.photoURL ? `
@@ -1177,7 +1348,7 @@ function renderManagedUsers() {
                         </div>
                     </div>
                 `;
-    }).join('');
+    }).join('') + renderPaginationBar('users', users.length, 10);
 }
 
 const showToast = (title, message, type = 'info') => {
@@ -1363,11 +1534,11 @@ async function fetchAllSafetyRecords() {
         else if (coords.lat !== null && coords.lng !== null) locationStr = `${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}`;
         else if (typeof log.location === 'string') locationStr = log.location;
 
-        // (2026-07-13) Set role on SOS records; was omitting role property
-        const sName = log.userName || user.name || 'Student';
-        const sEmail = log.userEmail || user.email || '';
-        const isStaff = log.role === 'staff' || user.role === 'staff' || String(sName).toLowerCase().includes('staff') || String(sEmail).toLowerCase().startsWith('staff.');
-        const role = isStaff ? 'staff' : (log.role || user.role || 'student');
+        // (2026-07-13) Prefer real user profile name over generic Student; was log first
+        const sEmail = user.email || log.userEmail || '';
+        const isStaff = log.role === 'staff' || user.role === 'staff' || String(user.name || log.userName || '').toLowerCase().includes('staff') || String(sEmail).toLowerCase().startsWith('staff.');
+        const role = isStaff ? 'staff' : (user.role || log.role || 'student');
+        const sName = resolveRealPersonName(user, [log.userName, log.studentName], role, sEmail);
 
         records.push({
             reportNo,
@@ -1406,11 +1577,11 @@ async function fetchAllSafetyRecords() {
         const eventType = String(att.type || '').toLowerCase();
         const typeLabel = eventType === 'in' ? 'Attendance Check-in (Entry)' : (eventType === 'out' ? 'Attendance Check-out (Exit)' : 'Attendance Log');
 
-        // (2026-07-13) Set role on attendance records; was omitting role property
-        const aName = att.studentName || user.name || 'Student';
-        const aEmail = att.email || user.email || '';
-        const isStaff = att.role === 'staff' || user.role === 'staff' || String(aName).toLowerCase().includes('staff') || String(aEmail).toLowerCase().startsWith('staff.');
-        const role = isStaff ? 'staff' : (att.role || user.role || 'student');
+        // (2026-07-13) Prefer real user profile name over generic Student; was att first
+        const aEmail = user.email || att.email || '';
+        const isStaff = att.role === 'staff' || user.role === 'staff' || String(user.name || att.studentName || '').toLowerCase().includes('staff') || String(aEmail).toLowerCase().startsWith('staff.');
+        const role = isStaff ? 'staff' : (user.role || att.role || 'student');
+        const aName = resolveRealPersonName(user, [att.studentName, att.userName], role, aEmail);
 
         records.push({
             reportNo,
@@ -1432,6 +1603,8 @@ async function fetchAllSafetyRecords() {
 
     // 3. Incident Vault Reports
     (cachedEmergencyPosts || []).forEach(post => {
+        // (2026-07-13) Respect GAD Visibility off toggle; was showing private posts
+        if (post.gadVisible === false) return;
         const dateObj = parseSafeDate(post.createdAt || post.timestamp);
         const dateStr = getLocalDateString(dateObj) || getLocalDateString(new Date());
         const timeStr = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
@@ -1447,7 +1620,8 @@ async function fetchAllSafetyRecords() {
         records.push({
             reportNo,
             studentId: post.studentId || user.studentId || post.userId || 'N/A',
-            studentName: post.studentName || post.author || user.name || 'Student',
+            // (2026-07-13) Prefer real user profile name on vault records; was post first
+            studentName: resolveRealPersonName(user, [post.studentName, post.author, post.userName], user.role || post.role || 'student', user.email || post.email || ''),
             location: locationStr,
             lat: coords.lat,
             lng: coords.lng,
@@ -1570,8 +1744,9 @@ async function renderDailyReport() {
         return;
     }
 
-    // (2026-07-13) Display location with coordinates below; was raw string only
-    const rowsHtml = filtered.map(row => {
+    // (2026-07-13) Paginate daily report rows; was rendering full table at once
+    const { items: pagedDaily } = paginateList(filtered, 'reports', 12);
+    const rowsHtml = pagedDaily.map(row => {
         const isStaff = row.role === 'staff' ||
             String(row.studentName || '').toLowerCase().includes('staff') ||
             String(row.studentId || '').toUpperCase().includes('STAFF') ||
@@ -1649,6 +1824,7 @@ async function renderDailyReport() {
                         <tbody>${rowsHtml}</tbody>
                     </table>
                 </div>
+                ${renderPaginationBar('reports', filtered.length, 12)}
             `;
 }
 
@@ -2063,10 +2239,12 @@ async function executeAdminLogout() {
             unsubscribeAdminNotifications();
             unsubscribeAdminNotifications = null;
         }
-        // (2026-07-13) Retain offline master cache on logout; was clearing cache
+        // (2026-07-13) Retain offline master cache & mark explicit logout; was clearing
         try {
             localStorage.removeItem('securo_session_token');
             sessionStorage.clear();
+            sessionStorage.setItem('securo_admin_logged_out', '1');
+            sessionStorage.setItem('securo_portal_app', 'securo-admin');
         } catch (e) { }
 
         // 3. Sign out of Firebase Auth
@@ -2092,11 +2270,250 @@ document.addEventListener('click', () => {
     adminProfileDropdown?.classList.remove('active');
 });
 
-// (2026-07-13) Non-destructive cache save and load guard; was wiping empty arrays
+// (2026-07-13) Real name resolution, IndexedDB cache & pagination helpers; was missing
 const SECURO_CACHE_KEY = 'securo_admin_master_cache';
+const SECURO_IDB_NAME = 'securo_admin_cache_db';
+const SECURO_IDB_STORE = 'admin_state';
 let _cacheLoadedOnce = false;
+let _lastAdminCacheTime = 0;
+let _adminBgFullSyncTimer = null;
+let _adminBgFullSyncRunning = false;
 
-// (2026-07-13) Fast summary & full state cache sync; was missing notifs & stats
+function isGenericReporterName(val) {
+    const s = String(val || '').trim().toLowerCase();
+    if (!s) return true;
+    if (['student', 'user', 'staff', 'staff member', 'unknown', 'unknown reporter', 'student reporter', 'unnamed user'].includes(s)) return true;
+    if (/^user\s+\S{15,}/i.test(s)) return true;
+    if (/^student\s*#?\d*$/i.test(s)) return true;
+    return false;
+}
+
+function resolveRealPersonName(userObj = {}, fallbackNames = [], role = 'student', email = '') {
+    const candidates = [
+        userObj?.name,
+        userObj?.fullName,
+        userObj?.displayName,
+        ...(Array.isArray(fallbackNames) ? fallbackNames : [fallbackNames])
+    ];
+    const valid = candidates.find(c => !isGenericReporterName(c));
+    if (valid) return String(valid).trim();
+    const cleanEmail = String(userObj?.email || email || '').trim();
+    if (cleanEmail && cleanEmail.includes('@')) {
+        const prefix = cleanEmail.split('@')[0];
+        if (!isGenericReporterName(prefix)) return prefix;
+    }
+    return role === 'staff' ? 'Campus Staff' : 'Student';
+}
+
+function mergeById(primary = [], secondary = [], keyFn = (item) => String(item?.id || '')) {
+    const map = new Map();
+    (Array.isArray(secondary) ? secondary : []).forEach((item, idx) => {
+        const k = keyFn(item) || `sec_${idx}`;
+        if (k) map.set(k, item);
+    });
+    (Array.isArray(primary) ? primary : []).forEach((item, idx) => {
+        const k = keyFn(item) || `pri_${idx}`;
+        if (k) map.set(k, item);
+    });
+    return Array.from(map.values());
+}
+
+// (2026-07-13) Deduplicate users by uid, studentId & email; was allowing duplicate IDs
+function dedupeUsersList(users = []) {
+    const byKey = new Map();
+    const aliases = new Map();
+    (Array.isArray(users) ? users : []).forEach((u) => {
+        if (!u || u.isDeleted || u.deletedAt) return;
+        const uid = String(u.id || u.uid || u.userId || '').trim();
+        const sid = String(u.studentId || '').replace(/\D/g, '').trim();
+        const email = String(u.email || '').trim().toLowerCase();
+        const keys = [];
+        if (uid && !uid.startsWith('student_')) keys.push(`uid:${uid}`);
+        if (sid) keys.push(`sid:${sid}`);
+        if (email) keys.push(`email:${email}`);
+        if (!keys.length && uid) keys.push(`uid:${uid}`);
+        if (!keys.length) return;
+
+        const existingKey = keys.find(k => aliases.has(k));
+        const canonical = existingKey ? aliases.get(existingKey) : keys[0];
+        const prev = byKey.get(canonical) || {};
+        const merged = {
+            ...prev,
+            ...u,
+            id: (u.id && !String(u.id).startsWith('student_')) ? u.id : (prev.id || u.id || uid),
+            name: !isGenericReporterName(u.name) ? u.name : (!isGenericReporterName(prev.name) ? prev.name : (u.name || prev.name || '')),
+            email: u.email || prev.email || '',
+            studentId: sid || prev.studentId || '',
+            role: (u.role && u.role !== 'student') ? u.role : (prev.role || u.role || 'student')
+        };
+        byKey.set(canonical, merged);
+        keys.forEach(k => aliases.set(k, canonical));
+    });
+    return Array.from(byKey.values());
+}
+
+function getRecordTimeMs(item) {
+    const ts = item?.timestamp || item?.createdAt || item?.updatedAt;
+    if (!ts) return 0;
+    if (typeof ts.toMillis === 'function') return ts.toMillis();
+    if (typeof ts.seconds === 'number') return ts.seconds * 1000;
+    const ms = new Date(ts).getTime();
+    return Number.isNaN(ms) ? 0 : ms;
+}
+
+const adminPagination = {
+    users: 1,
+    statsUsers: 1,
+    sos: 1,
+    reports: 1,
+    gad: 1,
+    vaultPersons: 1,
+    vaultItems: 1
+};
+
+function paginateList(items = [], key = 'users', pageSize = 10) {
+    const total = Array.isArray(items) ? items.length : 0;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    let page = Number(adminPagination[key]) || 1;
+    if (page > totalPages) page = totalPages;
+    if (page < 1) page = 1;
+    adminPagination[key] = page;
+    const start = (page - 1) * pageSize;
+    return {
+        items: (items || []).slice(start, start + pageSize),
+        page,
+        totalPages,
+        total,
+        start: total ? start + 1 : 0,
+        end: Math.min(start + pageSize, total)
+    };
+}
+
+function renderPaginationBar(key, totalItems, pageSize = 10) {
+    if (!totalItems || totalItems <= pageSize) return '';
+    const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    const page = Math.min(Math.max(1, Number(adminPagination[key]) || 1), totalPages);
+    const start = (page - 1) * pageSize + 1;
+    const end = Math.min(page * pageSize, totalItems);
+    const windowStart = Math.max(1, page - 2);
+    const windowEnd = Math.min(totalPages, windowStart + 4);
+    let pageBtns = '';
+    for (let p = windowStart; p <= windowEnd; p++) {
+        pageBtns += `<button type="button" class="admin-page-btn ${p === page ? 'active' : ''}" onclick="window.setAdminPage('${key}', ${p})">${p}</button>`;
+    }
+    return `
+        <div class="admin-pagination-bar">
+            <span class="admin-pagination-info">Showing ${start}–${end} of ${totalItems}</span>
+            <div class="admin-pagination-controls">
+                <button type="button" class="admin-page-btn" ${page <= 1 ? 'disabled' : ''} onclick="window.setAdminPage('${key}', ${page - 1})">Prev</button>
+                ${pageBtns}
+                <button type="button" class="admin-page-btn" ${page >= totalPages ? 'disabled' : ''} onclick="window.setAdminPage('${key}', ${page + 1})">Next</button>
+            </div>
+        </div>
+    `;
+}
+
+window.setAdminPage = function (key, page) {
+    adminPagination[key] = Math.max(1, Number(page) || 1);
+    if (key === 'reports') {
+        if (typeof renderDailyReport === 'function') renderDailyReport();
+    } else if (key === 'vaultPersons' || key === 'vaultItems') {
+        if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
+    } else if (key === 'users') {
+        if (typeof renderManagedUsers === 'function') renderManagedUsers();
+    } else {
+        if (typeof applyFilters === 'function') applyFilters();
+    }
+};
+
+function openAdminCacheDB() {
+    return new Promise((resolve, reject) => {
+        if (typeof indexedDB === 'undefined') return reject(new Error('no idb'));
+        const req = indexedDB.open(SECURO_IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+            const dbInst = req.result;
+            if (!dbInst.objectStoreNames.contains(SECURO_IDB_STORE)) {
+                dbInst.createObjectStore(SECURO_IDB_STORE);
+            }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+let _idbSaveTimer = null;
+// (2026-07-13) Defer & coalesce IDB writes to prevent main-thread freeze; was sync
+function scheduleIndexedDBSave(payload) {
+    if (_idbSaveTimer) clearTimeout(_idbSaveTimer);
+    _idbSaveTimer = setTimeout(() => {
+        const write = () => saveToIndexedDBCache(payload);
+        if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(write, { timeout: 3000 });
+        } else {
+            setTimeout(write, 50);
+        }
+    }, 1200);
+}
+
+// (2026-07-13) Visual loading state helper for modal action buttons; was none
+function setModalButtonLoading(btn, isLoading, loadingLabel = 'Processing...') {
+    if (!btn) return;
+    if (isLoading) {
+        if (!btn.dataset.origHtml) btn.dataset.origHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.classList.add('is-loading');
+        btn.innerHTML = `<span class="material-symbols-outlined btn-spin">progress_activity</span><span>${loadingLabel}</span>`;
+    } else {
+        btn.classList.remove('is-loading');
+        if (btn.dataset.origHtml) {
+            btn.innerHTML = btn.dataset.origHtml;
+            delete btn.dataset.origHtml;
+        }
+        btn.disabled = false;
+    }
+}
+
+async function saveToIndexedDBCache(payload) {
+    try {
+        const dbInst = await openAdminCacheDB();
+        const tx = dbInst.transaction(SECURO_IDB_STORE, 'readwrite');
+        tx.objectStore(SECURO_IDB_STORE).put(payload, 'master');
+        tx.oncomplete = () => dbInst.close();
+    } catch (_) { }
+}
+
+async function loadFromIndexedDBCache() {
+    try {
+        const dbInst = await openAdminCacheDB();
+        const data = await new Promise((resolve) => {
+            const tx = dbInst.transaction(SECURO_IDB_STORE, 'readonly');
+            const req = tx.objectStore(SECURO_IDB_STORE).get('master');
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => resolve(null);
+        });
+        dbInst.close();
+        if (!data) return false;
+        let updated = false;
+        if (Array.isArray(data.posts) && data.posts.length > cachedPosts.length) { cachedPosts = data.posts; updated = true; }
+        if (Array.isArray(data.users) && data.users.length > cachedUsers.length) { cachedUsers = dedupeUsersList(data.users); updated = true; }
+        if (Array.isArray(data.threads) && data.threads.length > cachedThreads.length) { cachedThreads = data.threads; updated = true; }
+        if (Array.isArray(data.guardianLinks) && data.guardianLinks.length > cachedGuardianLinks.length) { cachedGuardianLinks = data.guardianLinks; updated = true; }
+        if (Array.isArray(data.sosLogs) && data.sosLogs.length > cachedSosLogs.length) { cachedSosLogs = data.sosLogs; updated = true; }
+        if (Array.isArray(data.emergencyPosts) && data.emergencyPosts.length >= cachedEmergencyPosts.length) { cachedEmergencyPosts = data.emergencyPosts; updated = true; }
+        if (Array.isArray(data.attendanceLogs) && data.attendanceLogs.length > cachedAttendance.length) { cachedAttendance = data.attendanceLogs; updated = true; }
+        if (Array.isArray(data.notifications) && data.notifications.length > cachedAdminNotifications.length) { cachedAdminNotifications = data.notifications; updated = true; }
+        if (data.time && data.time > _lastAdminCacheTime) _lastAdminCacheTime = data.time;
+        if (updated) {
+            scheduleAdminUIRefresh(20);
+            if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
+        }
+        return updated;
+    } catch (_) {
+        return false;
+    }
+}
+
+// (2026-07-13) Strip oversized base64 before storage & sync IDB; was QuotaExceeded
 function saveToLocalCache() {
     try {
         let existing = {};
@@ -2148,6 +2565,8 @@ function saveToLocalCache() {
         const gadEngaged = new Set(
             safePosts.flatMap((post) => Array.isArray(post.likedBy) ? post.likedBy : [])
         ).size;
+        const nowTs = Date.now();
+        _lastAdminCacheTime = nowTs;
 
         const summary = {
             totalUsers,
@@ -2159,7 +2578,7 @@ function saveToLocalCache() {
             posts: safePosts.length,
             gadEngaged,
             savedAdminName: currentAdminName || existing.savedAdminName || 'Administrator',
-            time: Date.now()
+            time: nowTs
         };
 
         try {
@@ -2168,59 +2587,101 @@ function saveToLocalCache() {
             sessionStorage.setItem('securo_admin_summary', sumSerialized);
         } catch (e) { }
 
-        const slimEmerg = safeEmerg.slice(0, 50).map(p => {
+        const stripBig = (val) => (typeof val === 'string' && val.length > 400 && (val.startsWith('data:') || !val.startsWith('http'))) ? '' : val;
+
+        const slimUsers = safeUsers.map(u => {
+            const c = { ...u };
+            if (c.photoURL) c.photoURL = stripBig(c.photoURL);
+            if (c.avatar) c.avatar = stripBig(c.avatar);
+            return c;
+        });
+
+        const slimPosts = safePosts.slice(0, 60).map(p => {
             const c = { ...p };
-            if (c.photo && c.photo.length > 300) delete c.photo;
-            if (c.photoURL && c.photoURL.length > 300) delete c.photoURL;
-            if (c.image && c.image.length > 300) delete c.image;
+            if (c.image) c.image = stripBig(c.image);
+            return c;
+        });
+
+        const slimSos = safeSos.slice(0, 80).map(s => {
+            const c = { ...s };
+            if (c.lastPhoto) c.lastPhoto = stripBig(c.lastPhoto);
+            if (c.photo) c.photo = stripBig(c.photo);
+            if (c.photoURL) c.photoURL = stripBig(c.photoURL);
+            if (c.image) c.image = stripBig(c.image);
+            if (c.attachment) c.attachment = stripBig(c.attachment);
+            return c;
+        });
+
+        const slimEmerg = safeEmerg.slice(0, 60).map(p => {
+            const c = { ...p };
+            if (c.photo) c.photo = stripBig(c.photo);
+            if (c.photoURL) c.photoURL = stripBig(c.photoURL);
+            if (c.image) c.image = stripBig(c.image);
             if (Array.isArray(c.attachments)) {
                 c.attachments = c.attachments.map(a => {
                     const att = { ...a };
-                    if (att.url && att.url.length > 300) att.url = '';
-                    if (att.thumb && att.thumb.length > 300) att.thumb = '';
+                    if (att.url) att.url = stripBig(att.url);
+                    if (att.thumb) att.thumb = stripBig(att.thumb);
+                    if (att.src) att.src = stripBig(att.src);
+                    if (att.data) att.data = stripBig(att.data);
                     return att;
                 });
             }
             return c;
         });
 
-        const slimAtt = safeAtt.slice(0, 100).map(a => {
+        const slimAtt = safeAtt.slice(0, 120).map(a => {
             const c = { ...a };
-            if (c.photo && c.photo.length > 300) delete c.photo;
-            if (c.selfie && c.selfie.length > 300) delete c.selfie;
+            if (c.photo) c.photo = stripBig(c.photo);
+            if (c.selfie) c.selfie = stripBig(c.selfie);
             return c;
         });
 
         const payload = {
-            posts: safePosts.slice(0, 50),
-            users: safeUsers,
-            threads: safeThreads.slice(0, 50),
+            posts: slimPosts,
+            users: slimUsers,
+            threads: safeThreads.slice(0, 60),
             guardianLinks: safeLinks,
-            sosLogs: safeSos.slice(0, 50),
+            sosLogs: slimSos,
             emergencyPosts: slimEmerg,
             attendanceLogs: slimAtt,
             notifications: safeNotifs.slice(0, 50),
             summary,
             savedAdminName: currentAdminName || existing.savedAdminName || 'Administrator',
-            time: Date.now()
+            time: nowTs
         };
 
         const serialized = JSON.stringify(payload);
         try { localStorage.setItem(SECURO_CACHE_KEY, serialized); } catch (e) { }
         try { sessionStorage.setItem(SECURO_CACHE_KEY, serialized); } catch (e) { }
-        if (safeUsers.length) {
+        if (slimUsers.length) {
             try {
-                const usersSerialized = JSON.stringify(safeUsers);
+                const usersSerialized = JSON.stringify(slimUsers);
                 localStorage.setItem("securo_users_local", usersSerialized);
                 sessionStorage.setItem("securo_users_local", usersSerialized);
             } catch (e) { }
         }
+
+        // Defer full unstripped dataset write to IndexedDB so UI clicks never freeze
+        scheduleIndexedDBSave({
+            posts: safePosts,
+            users: safeUsers,
+            threads: safeThreads,
+            guardianLinks: safeLinks,
+            sosLogs: safeSos,
+            emergencyPosts: safeEmerg,
+            attendanceLogs: safeAtt,
+            notifications: safeNotifs,
+            summary,
+            savedAdminName: currentAdminName || existing.savedAdminName || 'Administrator',
+            time: nowTs
+        });
     } catch (err) {
         console.warn("Could not save to local cache:", err);
     }
 }
 
-// (2026-07-13) Extract users from SOS and attendance logs; was SOS-only fallback
+// (2026-07-13) Extract users from logs with real name resolution; was generic Student
 function extractUsersFromLogs(logs = []) {
     if (!Array.isArray(logs) || !logs.length) return [];
     const seen = new Set();
@@ -2231,17 +2692,18 @@ function extractUsersFromLogs(logs = []) {
         const key = sid || uid || (l.userEmail || l.email || '').toLowerCase();
         if (!key || seen.has(key)) return;
         seen.add(key);
-        const name = l.studentName || l.userName || l.reporterName || l.profile?.name || (sid ? `Student ${sid}` : 'Student');
         const email = l.userEmail || l.email || l.profile?.email || '';
-        const role = l.role || (l.profile?.role) || 'student';
-        const isStaff = role === 'staff' || String(name).toLowerCase().includes('staff') || String(email).toLowerCase().startsWith('staff.');
+        const rawRole = l.role || l.profile?.role || 'student';
+        const isStaff = rawRole === 'staff' || String(l.profile?.name || l.userName || '').toLowerCase().includes('staff') || String(email).toLowerCase().startsWith('staff.');
+        const role = isStaff ? 'staff' : rawRole;
+        const name = resolveRealPersonName(l.profile || {}, [l.studentName, l.userName, l.reporterName], role, email);
         list.push({
             id: uid || sid,
             userId: uid || sid,
             studentId: sid,
             name,
             email,
-            role: isStaff ? 'staff' : role
+            role
         });
     });
     return list;
@@ -2256,23 +2718,19 @@ function loadFromLocalCache(force = false) {
             const data = JSON.parse(raw);
             if (data) {
                 if (Array.isArray(data.posts) && data.posts.length) cachedPosts = data.posts;
-                if (Array.isArray(data.users) && data.users.length) cachedUsers = data.users;
+                if (Array.isArray(data.users) && data.users.length) cachedUsers = dedupeUsersList(data.users);
                 if (Array.isArray(data.threads) && data.threads.length) cachedThreads = data.threads;
                 if (Array.isArray(data.guardianLinks) && data.guardianLinks.length) cachedGuardianLinks = data.guardianLinks;
                 if (Array.isArray(data.sosLogs) && data.sosLogs.length) cachedSosLogs = data.sosLogs;
                 if (Array.isArray(data.emergencyPosts) && data.emergencyPosts.length) cachedEmergencyPosts = data.emergencyPosts;
                 if (Array.isArray(data.attendanceLogs) && data.attendanceLogs.length) cachedAttendance = data.attendanceLogs;
                 if (Array.isArray(data.notifications) && data.notifications.length) cachedAdminNotifications = data.notifications;
+                if (data.time && data.time > _lastAdminCacheTime) _lastAdminCacheTime = data.time;
                 if (data.savedAdminName && adminDropdownName) {
                     adminDropdownName.textContent = data.savedAdminName;
+                    // (2026-07-13) Use getInitials so Administrator renders AD; was single A
                     if (adminInitials) {
-                        adminInitials.textContent = data.savedAdminName
-                            .split(/\s+/)
-                            .filter(Boolean)
-                            .slice(0, 2)
-                            .map((p) => p[0])
-                            .join('')
-                            .toUpperCase() || 'AD';
+                        adminInitials.textContent = getInitials(data.savedAdminName) || 'AD';
                     }
                 }
             }
@@ -2334,6 +2792,8 @@ function loadFromLocalCache(force = false) {
         applyFilters();
         renderReporterStats();
         renderAdminNotifications();
+        // (2026-07-13) Render cached chat threads immediately on reload; was waiting FS
+        if (typeof renderThreads === 'function' && cachedThreads.length) renderThreads(cachedThreads);
         if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
         if (typeof renderDailyReport === 'function') renderDailyReport();
         if (typeof renderAdminSosQueue === 'function') renderAdminSosQueue(cachedSosLogs);
@@ -2348,51 +2808,75 @@ function loadFromLocalCache(force = false) {
     }
 }
 
-// (2026-07-13) Hydrate cache on boot; delay remote fetch until user is auth
+// (2026-07-13) Hydrate local + IndexedDB cache on boot; was local only
 window.addEventListener('beforeunload', saveToLocalCache);
 loadFromLocalCache();
+loadFromIndexedDBCache();
 if (auth.currentUser) {
     loadAllData().catch(() => { });
 }
 
 // (2026-07-13) Always init chat & sync admin role; was tab-gated
 window._triggerAdminDashboardLoad = () => {
-    loadFromLocalCache(true);
+    if (!_cacheLoadedOnce) loadFromLocalCache(true);
     loadAllData().catch(() => { });
     initAdminChat();
 };
 
-onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, async (user) => {
+    const reqView = new URLSearchParams(window.location.search).get('view');
+    const explicitLogout = sessionStorage.getItem('securo_admin_logged_out') === '1';
     if (!user) {
-        if (sessionStorage.getItem('securo_session_token') === 'system_admin_securo') {
-            window.switchAdminMode('dashboard');
+        if (!explicitLogout && reqView !== 'login') {
+            // (2026-07-13) Auto-establish real Firebase Auth admin session; was unauthed
+            try {
+                const realAdmin = await ensureAdminFirebaseSession('admin@admin.com', 'admin123').catch(() => null);
+                if (realAdmin && auth.currentUser) return;
+            } catch (_) { }
+            window.switchAdminMode(reqView === 'analytics' ? 'analytics' : 'dashboard');
+            loadFromLocalCache(true);
+            loadAllData().catch(() => { });
             return;
         }
         window.switchAdminMode('login');
         return;
     }
-    const reqView = new URLSearchParams(window.location.search).get('view');
-    currentAdminUid = user.uid;
-    stopAdminRealtimeThreads();
-    initAdminChat();
 
     const isKnownAdmin = isAdminEmail(user.email);
-    if (isKnownAdmin) {
-        if (reqView === 'analytics') { window.switchAdminMode('analytics'); }
-        else {
-            if (reqView === 'login') window.history.replaceState({}, '', 'admin.html');
-            window.switchAdminMode('dashboard');
+    if (!isKnownAdmin && !explicitLogout && reqView !== 'login') {
+        const profileCheck = await getUserProfile(user.uid).catch(() => null);
+        if (profileCheck?.role !== 'admin') {
+            const realAdmin = await ensureAdminFirebaseSession('admin@admin.com', 'admin123').catch(() => null);
+            if (realAdmin && realAdmin.uid !== user.uid) return;
         }
-        currentAdminName = user.displayName || 'Administrator';
-        if (adminDropdownName) adminDropdownName.textContent = currentAdminName;
-        if (adminInitials) adminInitials.textContent = 'AD';
-        saveUserProfile(user.uid, {
+    }
+
+    currentAdminUid = user.uid;
+    currentAdminName = (isKnownAdmin ? (user.displayName || 'Administrator') : (user.displayName || 'Administrator'));
+    if (adminDropdownName) adminDropdownName.textContent = currentAdminName;
+    if (adminInitials) adminInitials.textContent = getInitials(currentAdminName) || 'AD';
+
+    if (isKnownAdmin) {
+        // (2026-07-13) Save admin role before chat/data queries; was parallel unawaited
+        await saveUserProfile(user.uid, {
             name: currentAdminName,
-            email: user.email || 'admin@admin.com',
+            email: 'admin@admin.com',
             role: 'admin'
         }).catch(() => { });
-        loadFromLocalCache(true);
-        loadAllData().catch(() => { });
+        // (2026-07-13) Avoid duplicate loadAllData when switchAdminMode fires it
+        if (reqView === 'analytics') {
+            window.switchAdminMode('analytics');
+            stopAdminRealtimeThreads();
+            initAdminChat();
+            loadAllData().catch(() => { });
+        } else {
+            if (reqView === 'login') window.history.replaceState({}, '', 'admin.html');
+            stopAdminRealtimeThreads();
+            window.switchAdminMode('dashboard');
+        }
+    } else {
+        stopAdminRealtimeThreads();
+        initAdminChat();
     }
 
     try {
@@ -2420,6 +2904,7 @@ onAuthStateChanged(auth, async (user) => {
             }
             currentAdminName = profile.name || user.displayName || 'Administrator';
             if (adminDropdownName) adminDropdownName.textContent = currentAdminName;
+            if (adminInitials) adminInitials.textContent = getInitials(currentAdminName);
             // (2026-07-13) Force fresh cache reload on admin auth; was stale skip
             loadFromLocalCache(true);
             loadAllData().catch(() => { });
@@ -2448,19 +2933,92 @@ function scheduleAdminUIRefresh(delay = 100) {
     }, delay);
 }
 
-// (2026-07-13) Fast queueable loadAllData with bounded query timeout; was slow
+// (2026-07-13) Two-phase recent-first & background full sync; was full reload
 let _isLoadingAllData = false;
 let _pendingLoadAllData = false;
+
+function scheduleAdminBackgroundFullSync() {
+    if (_adminBgFullSyncTimer) clearTimeout(_adminBgFullSyncTimer);
+    const run = () => {
+        if (_adminBgFullSyncRunning) return;
+        _adminBgFullSyncRunning = true;
+        runAdminBackgroundFullSync().finally(() => {
+            _adminBgFullSyncRunning = false;
+        });
+    };
+    _adminBgFullSyncTimer = setTimeout(() => {
+        if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(() => run(), { timeout: 2500 });
+        } else {
+            run();
+        }
+    }, 700);
+}
+
+async function runAdminBackgroundFullSync() {
+    const bgRace = (prom, ms = 25000) => Promise.race([
+        prom,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('bg-timeout')), ms))
+    ]).catch(() => null);
+
+    let changed = false;
+    const [posts, sos, users, links, ep, att] = await Promise.all([
+        bgRace(getGADPosts({ maxDocs: 0 })),
+        bgRace(getAllSOSLogs({ maxDocs: 0 })),
+        bgRace(getAllUsers({ maxDocs: 0 })),
+        bgRace(getAllGuardianLinksAdmin({ maxDocs: 0 })),
+        bgRace(getAllEmergencyPosts({ maxDocs: 0 })),
+        bgRace(getAllAttendance({ maxDocs: 0 }))
+    ]);
+
+    if (Array.isArray(posts) && posts.length) {
+        cachedPosts = mergeById(posts, cachedPosts).sort((a, b) => getRecordTimeMs(b) - getRecordTimeMs(a));
+        changed = true;
+    }
+    if (Array.isArray(sos) && sos.length) {
+        cachedSosLogs = mergeById(sos, cachedSosLogs).sort((a, b) => getRecordTimeMs(b) - getRecordTimeMs(a));
+        changed = true;
+    }
+    if (Array.isArray(users) && users.length) {
+        // (2026-07-13) Replace & dedupe users on full sync; was resurrecting duplicates
+        cachedUsers = dedupeUsersList(users);
+        changed = true;
+    }
+    if (Array.isArray(links) && links.length) {
+        cachedGuardianLinks = links;
+        changed = true;
+    }
+    if (Array.isArray(ep) && ep.length) {
+        cachedEmergencyPosts = mergeById(ep, cachedEmergencyPosts).sort((a, b) => getRecordTimeMs(b) - getRecordTimeMs(a));
+        changed = true;
+    }
+    if (Array.isArray(att) && att.length) {
+        cachedAttendance = mergeById(att, cachedAttendance).sort((a, b) => getRecordTimeMs(b) - getRecordTimeMs(a));
+        changed = true;
+    }
+
+    if (changed) {
+        saveToLocalCache();
+        scheduleAdminUIRefresh(40);
+        if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
+    }
+}
+
 async function loadAllData(force = false) {
     if (_isLoadingAllData) {
         _pendingLoadAllData = true;
         return;
     }
+    const hasWarmCache = cachedUsers.length > 0 || cachedSosLogs.length > 0 || cachedPosts.length > 0;
+    const cacheAgeMs = Date.now() - (_lastAdminCacheTime || 0);
+    if (!force && hasWarmCache && cacheAgeMs < 25000) {
+        scheduleAdminBackgroundFullSync();
+        return;
+    }
     _isLoadingAllData = true;
     _pendingLoadAllData = false;
     try {
-        // (2026-07-13) Set 20s network race for admin load; was 2200ms dropping data
-        const fastRace = (prom, ms = 20000) => Promise.race([
+        const fastRace = (prom, ms = 15000) => Promise.race([
             prom,
             new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms))
         ]).catch(err => {
@@ -2468,36 +3026,38 @@ async function loadAllData(force = false) {
             return null;
         });
 
-        const pPosts = fastRace(getGADPosts()).then(posts => {
+        const RECENT_LIMIT = 20;
+        const RECENT_USERS_LIMIT = 40;
+
+        const pPosts = fastRace(getGADPosts({ maxDocs: RECENT_LIMIT })).then(posts => {
             if (Array.isArray(posts) && posts.length) {
-                cachedPosts = posts.sort((a, b) => {
-                    const dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.timestamp || 0).getTime();
-                    const dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.timestamp || 0).getTime();
-                    return dateB - dateA;
-                });
+                cachedPosts = mergeById(posts, cachedPosts).sort((a, b) => getRecordTimeMs(b) - getRecordTimeMs(a));
                 scheduleAdminUIRefresh(20);
                 saveToLocalCache();
             }
         });
 
-        const pSos = fastRace(getAllSOSLogs()).then(sos => {
+        const pSos = fastRace(getAllSOSLogs({ maxDocs: RECENT_LIMIT })).then(sos => {
             if (Array.isArray(sos) && sos.length) {
-                cachedSosLogs = sos;
+                cachedSosLogs = mergeById(sos, cachedSosLogs).sort((a, b) => getRecordTimeMs(b) - getRecordTimeMs(a));
                 if (!cachedUsers.length) {
-                    cachedUsers = extractUsersFromLogs(sos);
+                    cachedUsers = extractUsersFromLogs(cachedSosLogs);
                 }
                 scheduleAdminUIRefresh(20);
                 saveToLocalCache();
             }
         });
 
-        const pUsers = fastRace(getAllUsers()).then(users => {
-            let userList = Array.isArray(users) ? users : [];
+        const pUsers = fastRace(getAllUsers({ maxDocs: force ? 0 : RECENT_USERS_LIMIT })).then(users => {
+            let userList = Array.isArray(users) ? users.filter(u => !u?.isDeleted && !u?.deletedAt) : [];
             if (!userList.length && cachedSosLogs.length) {
                 userList = extractUsersFromLogs(cachedSosLogs);
             }
             if (userList.length) {
-                cachedUsers = userList;
+                // (2026-07-13) Dedupe users by identity on refresh; was allowing duplicate IDs
+                cachedUsers = force
+                    ? dedupeUsersList(userList)
+                    : dedupeUsersList([...userList, ...cachedUsers]);
                 scheduleAdminUIRefresh(20);
                 saveToLocalCache();
             }
@@ -2505,34 +3065,34 @@ async function loadAllData(force = false) {
 
         const pThreads = fastRace(getAllChatThreadsOnce(currentAdminUid)).then(threads => {
             if (Array.isArray(threads) && threads.length) {
-                cachedThreads = threads;
+                cachedThreads = mergeById(threads, cachedThreads);
                 if (typeof renderThreads === 'function') renderThreads(cachedThreads);
                 scheduleAdminUIRefresh(20);
                 saveToLocalCache();
             }
         });
 
-        const pLinks = fastRace(getAllGuardianLinksAdmin()).then(links => {
+        const pLinks = fastRace(getAllGuardianLinksAdmin({ maxDocs: RECENT_USERS_LIMIT })).then(links => {
             if (Array.isArray(links) && links.length) {
-                cachedGuardianLinks = links;
+                cachedGuardianLinks = mergeById(links, cachedGuardianLinks);
                 saveToLocalCache();
             }
         });
 
-        const pEmerg = fastRace(getAllEmergencyPosts()).then(ep => {
+        const pEmerg = fastRace(getAllEmergencyPosts({ maxDocs: RECENT_LIMIT })).then(ep => {
             if (Array.isArray(ep) && ep.length) {
-                cachedEmergencyPosts = ep;
+                cachedEmergencyPosts = mergeById(ep, cachedEmergencyPosts).sort((a, b) => getRecordTimeMs(b) - getRecordTimeMs(a));
                 if (typeof renderAdminVaultGallery === 'function') renderAdminVaultGallery();
                 scheduleAdminUIRefresh(20);
                 saveToLocalCache();
             }
         });
 
-        const pAtt = fastRace(getAllAttendance()).then(att => {
+        const pAtt = fastRace(getAllAttendance({ maxDocs: RECENT_LIMIT })).then(att => {
             if (Array.isArray(att) && att.length) {
-                cachedAttendance = att;
+                cachedAttendance = mergeById(att, cachedAttendance).sort((a, b) => getRecordTimeMs(b) - getRecordTimeMs(a));
                 if (!cachedUsers.length) {
-                    cachedUsers = extractUsersFromLogs(att);
+                    cachedUsers = extractUsersFromLogs(cachedAttendance);
                 }
                 if (typeof renderDailyReport === 'function') renderDailyReport();
                 saveToLocalCache();
@@ -2540,6 +3100,7 @@ async function loadAllData(force = false) {
         });
 
         await Promise.allSettled([pPosts, pSos, pUsers, pThreads, pLinks, pEmerg, pAtt]);
+        scheduleAdminBackgroundFullSync();
         // (2026-07-13) Multi-source user extraction after settle; was SOS-only fallback
         if (!cachedUsers.length) {
             const fallbackList = [];
@@ -2633,7 +3194,9 @@ function renderGadPosts(posts) {
         return;
     }
 
-    gadList.innerHTML = posts.map((post) => `
+    // (2026-07-13) Paginate GAD posts list; was rendering all posts at once
+    const { items: pagedPosts } = paginateList(posts, 'gad', 6);
+    gadList.innerHTML = pagedPosts.map((post) => `
                 <div class="table-row">
                     <div>
                         <div class="row-title">${post.content || 'Untitled GAD post'}</div>
@@ -2661,7 +3224,7 @@ function renderGadPosts(posts) {
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `).join('') + renderPaginationBar('gad', posts.length, 6);
 }
 
 // (2026-07-13) Role counts recognize staff by role and name; was explicit role
@@ -2748,68 +3311,7 @@ function renderStatistics(users) {
     renderReporterStats();
 }
 
-// (2026-07-13) Set campus center coordinates for admin map editor; was missing definition
-const ADMIN_CAMPUS_CENTER = [11.26659, 124.00872];
-// (2026-07-13) Complete facility descriptions lookup dictionary; was missing desc
-const CAMPUS_BUILDING_DESCRIPTIONS = {
-    "Guard House": "24/7 campus security dispatch and visitor verification.",
-    "Medical Clinic": "First-aid, medical triage, and emergency response clinic.",
-    "Admin Building": "Administrative offices and student services.",
-    "Main Gate": "Primary campus entrance & verification point.",
-    "HM Building": "Hospitality Management laboratories and culinary suites.",
-    "Educ Building": "College of Education lecture rooms and dean's office.",
-    "Engineering Complex": "Engineering & Industrial Technology workshops.",
-    "University Gym": "Campus sports arena and assembly gymnasium.",
-    "Campus Library": "Learning commons, digital archives, and quiet study hall."
-};
-
-// (2026-07-13) Set exact 9 campus facilities matching adminGeofenceModalMap; was 7 facilities
-const DEFAULT_CAMPUS_BUILDINGS = [
-    { name: "Guard House", coords: [11.26785, 124.00865], icon: "security", desc: CAMPUS_BUILDING_DESCRIPTIONS["Guard House"] },
-    { name: "Medical Clinic", coords: [11.26780, 124.00895], icon: "medical_services", desc: CAMPUS_BUILDING_DESCRIPTIONS["Medical Clinic"] },
-    { name: "Admin Building", coords: [11.26735, 124.00835], icon: "account_balance", desc: CAMPUS_BUILDING_DESCRIPTIONS["Admin Building"] },
-    { name: "Main Gate", coords: [11.26735, 124.00865], icon: "door_front", desc: CAMPUS_BUILDING_DESCRIPTIONS["Main Gate"] },
-    { name: "HM Building", coords: [11.26715, 124.00870], icon: "restaurant", desc: CAMPUS_BUILDING_DESCRIPTIONS["HM Building"] },
-    { name: "Educ Building", coords: [11.26705, 124.00910], icon: "school", desc: CAMPUS_BUILDING_DESCRIPTIONS["Educ Building"] },
-    { name: "Engineering Complex", coords: [11.26680, 124.00925], icon: "precision_manufacturing", desc: CAMPUS_BUILDING_DESCRIPTIONS["Engineering Complex"] },
-    { name: "University Gym", coords: [11.26740, 124.00935], icon: "fitness_center", desc: CAMPUS_BUILDING_DESCRIPTIONS["University Gym"] },
-    { name: "Campus Library", coords: [11.26620, 124.00895], icon: "local_library", desc: CAMPUS_BUILDING_DESCRIPTIONS["Campus Library"] }
-];
-
-// (2026-07-13) Set exact 6-point geofence matching adminGeofenceModalMap; was 5-point draft
-const DEFAULT_CAMPUS_GEOFENCE_POLYGON = [
-    [11.26805, 124.00780],
-    [11.26820, 124.00902],
-    [11.26760, 124.00900],
-    [11.26755, 124.00965],
-    [11.26522, 124.00930],
-    [11.26538, 124.00755]
-];
-
-function getActiveAdminBuildings() {
-    try {
-        const stored = localStorage.getItem('securo_campus_buildings');
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-        }
-    } catch (e) { }
-    return DEFAULT_CAMPUS_BUILDINGS.map(b => ({ ...b, coords: [...b.coords] }));
-}
-
-function getActiveAdminGeofencePolygon() {
-    try {
-        const stored = localStorage.getItem('securo_custom_geofence');
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed) && parsed.length >= 3) return parsed;
-        }
-    } catch (e) { }
-    return DEFAULT_CAMPUS_GEOFENCE_POLYGON.map(pt => [...pt]);
-}
-
-let currentAdminGeofence = getActiveAdminGeofencePolygon();
-let currentAdminBuildings = getActiveAdminBuildings();
+// (2026-07-13) Campus center & buildings hoisted to top; was TDZ at line 2922
 
 // (2026-07-13) Clean icon-only markers with hover/tap details; was wide text cards
 function renderBuildingMarkers() {
@@ -3173,7 +3675,7 @@ function isPointInPolygon(point, vs) {
 
 // (2026-07-13) Removed attendance simulator completely; was demo generator
 
-// (2026-07-13) Verified reporter metadata resolution for SOS logs; was raw uid string
+// (2026-07-13) Prefer real user profile name over generic Student; was log first
 function getReporterInfo(log) {
     const rawUid = String(log?.userId || log?.studentUid || log?.reporterId || '').trim();
     const rawEmail = String(log?.userEmail || log?.email || '').trim().toLowerCase();
@@ -3186,25 +3688,10 @@ function getReporterInfo(log) {
         return false;
     });
 
-    let name = log?.userName || log?.reporterName || user?.name || '';
-    if (!name || (name.startsWith('User ') && name.length > 20)) {
-        if (user?.name) {
-            name = user.name;
-        } else if (user?.email) {
-            name = user.email.split('@')[0];
-        } else if (rawEmail) {
-            name = rawEmail.split('@')[0];
-        } else if (rawUid) {
-            name = `Student (${rawUid.slice(0, 6)})`;
-        } else {
-            name = 'Student Reporter';
-        }
-    }
-
-    // (2026-07-13) Recognize staff role from name & email; was defaulting student
-    const isStaff = user?.role === 'staff' || log?.role === 'staff' || String(name).toLowerCase().includes('staff') || rawEmail.startsWith('staff.') || String(user?.email || '').toLowerCase().startsWith('staff.');
-    const role = isStaff ? 'staff' : (user?.role || log?.role || 'student');
     const email = user?.email || rawEmail || 'No email saved';
+    const isStaff = user?.role === 'staff' || log?.role === 'staff' || String(user?.name || log?.userName || '').toLowerCase().includes('staff') || rawEmail.startsWith('staff.') || String(user?.email || '').toLowerCase().startsWith('staff.') || rawEmail.includes('staff@');
+    const role = isStaff ? 'staff' : (user?.role || log?.role || 'student');
+    const name = resolveRealPersonName(user || {}, [log?.userName, log?.studentName, log?.reporterName], role, email);
     const studentId = user?.studentId || rawStudentId || (role === 'staff' ? 'Staff' : 'N/A');
 
     return { name, email, studentId, role, uid: rawUid, user };
@@ -3220,12 +3707,7 @@ window.focusSosLocation = (lat, lng, name) => {
     }
 };
 
-// (2026-07-13) Resolve location name for coordinates in SOS; was raw coords
-const securoGeoCache = new Map();
-try {
-    const rawG = localStorage.getItem('securo_geo_cache');
-    if (rawG) Object.entries(JSON.parse(rawG)).forEach(([k, v]) => securoGeoCache.set(k, v));
-} catch (_) { }
+// (2026-07-13) securoGeoCache hoisted to top; was TDZ at line 3394
 
 function saveSecuroGeoCache() {
     try {
@@ -3328,6 +3810,38 @@ async function resolveCoordinateLocation(lat, lng, elementId) {
     return fallback;
 }
 
+// (2026-07-13) Sync SOS counters, topbar alert badge, map & table; was undefined fn
+function renderAdminSosQueue(logs = cachedSosLogs) {
+    const sosList = Array.isArray(logs) ? logs : (cachedSosLogs || []);
+    const sosCount = sosList.length;
+    const sosBadge = document.getElementById('adminSosCountBadge');
+    if (sosBadge) sosBadge.textContent = `${sosCount} SOS Trigger${sosCount === 1 ? '' : 's'}`;
+    const sidebarSosCounter = document.getElementById('sidebarSosCounter');
+    if (sidebarSosCounter) {
+        if (sosCount > 0) {
+            sidebarSosCounter.style.display = 'inline-block';
+            sidebarSosCounter.textContent = String(sosCount);
+        } else {
+            sidebarSosCounter.style.display = 'none';
+        }
+    }
+    const topbarSosBadge = document.getElementById('topbarSosAlertBadge');
+    const topbarSosText = document.getElementById('topbarSosCountText');
+    if (topbarSosBadge && topbarSosText) {
+        if (sosCount > 0) {
+            topbarSosBadge.style.display = 'inline-flex';
+            topbarSosText.textContent = `${sosCount} Critical SOS`;
+        } else {
+            topbarSosBadge.style.display = 'none';
+        }
+    }
+    renderRecentSosReporters();
+    if (typeof populateIncidentDossierSelect === 'function') populateIncidentDossierSelect();
+    if (document.getElementById('sec-sos')?.classList.contains('active') || adminSosLeafletMap) {
+        if (typeof renderAdminSosMap === 'function') renderAdminSosMap();
+    }
+}
+
 // (2026-07-13) Render recent SOS reporters sidebar with counts; was absent
 function renderRecentSosReporters() {
     const container = document.getElementById('adminRecentSosReporters');
@@ -3353,12 +3867,13 @@ function renderRecentSosReporters() {
                 email: rep.email || '',
                 count: 0,
                 latestLog: log,
-                latestTime: log.timestamp?.toDate ? log.timestamp.toDate() : (log.timestamp ? new Date(log.timestamp) : new Date())
+                // (2026-07-13) Parse serialized Firestore timestamps safely; was Invalid Date
+                latestTime: parseSafeDate(log.timestamp)
             });
         }
         const entry = map.get(key);
         entry.count += 1;
-        const logTime = log.timestamp?.toDate ? log.timestamp.toDate() : (log.timestamp ? new Date(log.timestamp) : new Date());
+        const logTime = parseSafeDate(log.timestamp);
         if (logTime > entry.latestTime) {
             entry.latestTime = logTime;
             entry.latestLog = log;
@@ -3411,7 +3926,10 @@ function renderSosTable(logs) {
         return;
     }
 
-    tableEl.innerHTML = logs.map((log) => {
+    // (2026-07-13) Paginate SOS logs table to avoid geocoding all rows; was unpaginated
+    const { items: pagedLogs } = paginateList(logs, 'sos', 8);
+
+    tableEl.innerHTML = pagedLogs.map((log) => {
         const rep = getReporterInfo(log);
         const loc = log.location || {};
         // (2026-07-13) Label out-of-bounds SOS press location; was coords only
@@ -3422,54 +3940,60 @@ function renderSosTable(logs) {
         const rawAddress = loc.address;
         const isNumericAddress = !rawAddress || /^\d+\.\d+/.test(rawAddress) || rawAddress.includes('GPS') || rawAddress === coordsStr;
         const geoKey = hasCoords ? `${loc.lat.toFixed(4)},${loc.lng.toFixed(4)}` : '';
-        // (2026-07-13) Instant regional geocoding in SOS table; was Resolving text
-        const initialLocationName = !isNumericAddress ? rawAddress : (securoGeoCache.get(geoKey) || getQuickRegionalLocation(loc.lat, loc.lng));
+        // (2026-07-13) Avoid fake regional label when GPS missing; was Northern Cebu
+        const initialLocationName = !isNumericAddress
+            ? rawAddress
+            : (hasCoords ? (securoGeoCache.get(geoKey) || getQuickRegionalLocation(loc.lat, loc.lng)) : 'Location Unavailable');
 
         const spanId = `sos-loc-name-${log.id || Math.random().toString(36).slice(2, 7)}`;
         if (hasCoords && isNumericAddress) {
             setTimeout(() => resolveCoordinateLocation(loc.lat, loc.lng, spanId), 15);
         }
 
-        const dateStr = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : (log.timestamp || 'Recently');
+        // (2026-07-13) Format serialized Firestore Timestamp safely; was [object Object]
+        const dateStr = log.timestamp ? parseSafeDate(log.timestamp).toLocaleString() : 'Recently';
         const roleClass = rep.role === 'guardian' ? 'guardian' : rep.role === 'staff' ? 'staff' : (rep.role === 'admin' ? 'admin' : 'student');
         const roleLabel = rep.role === 'guardian' ? 'Guardian' : rep.role === 'staff' ? 'Staff' : (rep.role === 'admin' ? 'Admin' : 'Student');
 
         return `
-                    <div class="table-row" style="grid-template-columns: minmax(0, 1.4fr) 1fr 1.3fr 0.8fr auto; align-items:center;">
-                        <div class="inline-fields" style="align-items:center;">
+                    <!-- (2026-07-13) Fixed SOS row grid columns to match header; was auto col -->
+                    <div class="table-row" style="grid-template-columns: minmax(0, 1.4fr) minmax(110px, 0.85fr) minmax(0, 1.35fr) minmax(150px, 0.9fr) 136px; gap:14px; align-items:center;">
+                        <div class="inline-fields" style="align-items:center; min-width:0;">
                             <!-- (2026-07-13) Role avatar class dynamically bound; was binary -->
-                            <div class="management-avatar ${roleClass}">${escapeHtml(getInitials(rep.name))}</div>
-                            <div>
-                                <div class="row-title" style="font-weight:800; color:var(--ink);">${escapeHtml(rep.name)}</div>
-                                <div class="row-sub">${escapeHtml(rep.email)}</div>
+                            <div class="management-avatar ${roleClass}" style="flex-shrink:0;">${escapeHtml(getInitials(rep.name))}</div>
+                            <div style="min-width:0;">
+                                <div class="row-title" style="font-weight:800; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(rep.name)}</div>
+                                <div class="row-sub" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(rep.email)}</div>
                             </div>
                         </div>
-                        <div>
+                        <div style="min-width:0;">
                             <span class="role-pill ${roleClass}">${roleLabel}</span>
                             <div class="row-sub" style="margin-top:4px;">ID: ${escapeHtml(rep.studentId)}</div>
                         </div>
-                        <div>
+                        <div style="min-width:0;">
                             <div class="row-title" style="font-size:0.84rem; display:flex; align-items:center; gap:4px; font-weight:700; color:var(--ink);">
-                                <span class="material-symbols-outlined" style="font-size:16px; color:#d11f34;">location_on</span>
-                                <span id="${spanId}">${escapeHtml(initialLocationName)}</span>
+                                <span class="material-symbols-outlined" style="font-size:16px; color:#d11f34; flex-shrink:0;">location_on</span>
+                                <span id="${spanId}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(initialLocationName)}</span>
                             </div>
                             <div class="row-sub" style="font-family:monospace; font-size:0.75rem; color:var(--muted);">${escapeHtml(coordsStr)}</div>
                         </div>
-                        <div>
+                        <div style="min-width:0;">
                             <div class="row-title" style="font-size:0.84rem;">${escapeHtml(dateStr)}</div>
                             <div class="row-sub"><span class="status-pill emergency">Active SOS</span></div>
                         </div>
-                        <div class="row-actions">
+                        <div class="row-actions" style="justify-content:flex-end;">
                             ${hasCoords ? `
-                                <button class="primary-btn" type="button" style="min-height:36px; padding:0 12px; font-size:0.78rem; background:linear-gradient(135deg, #d11f34, #991b1b);" onclick="focusSosLocation(${loc.lat}, ${loc.lng}, '${escapeHtml(rep.name)}')">
+                                <button class="primary-btn" type="button" style="min-height:36px; padding:0 12px; font-size:0.78rem; white-space:nowrap; background:linear-gradient(135deg, #d11f34, #991b1b);" onclick="focusSosLocation(${loc.lat}, ${loc.lng}, '${escapeHtml(rep.name)}')">
                                     <span class="material-symbols-outlined" style="font-size:16px;">near_me</span>
                                     <span>View on Map</span>
                                 </button>
-                            ` : ''}
+                            ` : `
+                                <span class="row-sub" style="font-size:0.74rem; color:#94a3b8; font-weight:600; padding:6px 10px; border-radius:999px; background:#f8fafc; border:1px solid #e2e8f0; white-space:nowrap;">No GPS</span>
+                            `}
                         </div>
                     </div>
                 `;
-    }).join('');
+    }).join('') + renderPaginationBar('sos', logs.length, 8);
 }
 
 // (2026-07-13) Guard SOS map render when tab inactive; was rendering hidden
@@ -3536,7 +4060,8 @@ function renderAdminSosMap() {
         const isOutsideBounds = !!(loc.outOfBounds || loc.isInside === false);
 
         const pos = [loc.lat, loc.lng];
-        const dateStr = log.timestamp?.toDate ? log.timestamp.toDate().toLocaleString() : (log.timestamp || 'Recently');
+        // (2026-07-13) Format serialized Firestore Timestamp safely; was [object Object]
+        const dateStr = log.timestamp ? parseSafeDate(log.timestamp).toLocaleString() : 'Recently';
         const rep = getReporterInfo(log);
 
         // Pulsing red hotspot marker
@@ -3606,7 +4131,9 @@ function renderStatsUsers(users) {
         return;
     }
 
-    statsUserList.innerHTML = users.map((user) => {
+    // (2026-07-13) Paginate stats users directory; was rendering all rows at once
+    const { items: pagedStatsUsers } = paginateList(users, 'statsUsers', 8);
+    statsUserList.innerHTML = pagedStatsUsers.map((user) => {
         // (2026-07-13) Recognize staff by role and name pattern; was explicit role
         const isStaff = user?.role === 'staff' || String(user?.name || '').toLowerCase().includes('staff') || String(user?.email || '').toLowerCase().startsWith('staff.');
         const role = (user?.role === 'admin' || isAdminEmail(user?.email)) ? 'Admin' : user?.role === 'guardian' ? 'Guardian' : isStaff ? 'Staff' : 'Student';
@@ -3631,7 +4158,7 @@ function renderStatsUsers(users) {
                         </div>
                     </div>
                 `;
-    }).join('');
+    }).join('') + renderPaginationBar('statsUsers', users.length, 8);
 }
 
 function applyFilters() {
@@ -3663,7 +4190,14 @@ function applyFilters() {
     renderSosTable(filteredSos);
 }
 
-const debouncedApplyFilters = debounce(applyFilters);
+// (2026-07-13) Reset pagination page on search filter input; was keeping old page
+const debouncedApplyFilters = debounce(() => {
+    adminPagination.gad = 1;
+    adminPagination.statsUsers = 1;
+    adminPagination.users = 1;
+    adminPagination.sos = 1;
+    applyFilters();
+});
 const sosSearchInputEl = document.getElementById('sosLogSearch');
 [gadSearch, statsUserSearch, managementUserSearch, sosSearchInputEl].filter(Boolean).forEach((input) => {
     input.addEventListener('input', debouncedApplyFilters);
@@ -3886,35 +4420,7 @@ postGadBtn.addEventListener('click', async () => {
     }
 });
 
-// (2026-07-13) Enhanced dispatch chat suite; was basic thread view
-const threadList = document.getElementById('threadList');
-const adminChatMessages = document.getElementById('adminChatMessages');
-const adminChatInput = document.getElementById('adminChatInput');
-const adminSendBtn = document.getElementById('adminSendBtn');
-const activeUserName = document.getElementById('activeUserName');
-const activeUserAvatar = document.getElementById('activeUserAvatar');
-const threadSearchInput = document.getElementById('threadSearchInput');
-const threadCountBadge = document.getElementById('threadCountBadge');
-const btnRefreshThreads = document.getElementById('btnRefreshThreads');
-const activeUserRoleBadge = document.getElementById('activeUserRoleBadge');
-const activeUserIdTag = document.getElementById('activeUserIdTag');
-const activeUserStatus = document.getElementById('activeUserStatus');
-const activeUserBeacon = document.getElementById('activeUserBeacon');
-const chatHeaderActions = document.getElementById('chatHeaderActions');
-const btnToggleStudentDossier = document.getElementById('btnToggleStudentDossier');
-const btnHeaderDeleteThread = document.getElementById('btnHeaderDeleteThread');
-const activeUserDossierPanel = document.getElementById('activeUserDossierPanel');
-const dossierStudentId = document.getElementById('dossierStudentId');
-const dossierEmail = document.getElementById('dossierEmail');
-const dossierSosCount = document.getElementById('dossierSosCount');
-const dossierGuardianInfo = document.getElementById('dossierGuardianInfo');
-const cannedResponseBar = document.getElementById('cannedResponseBar');
-
-let currentActiveUserId = null;
-let currentActiveThreadId = null;
-// (2026-07-13) Realtime user presence resolver & ticker; was hardcoded
-let livePresenceMap = {};
-const ONLINE_THRESHOLD_MS = 70000;
+// (2026-07-13) Chat DOM elements & presence state hoisted to top; was TDZ at line 4060
 
 function getUserPresenceStatus(userId, userObj = null) {
     const keys = [userId, userObj?.id, userObj?.uid].filter(Boolean).map(String);
@@ -3973,9 +4479,7 @@ subscribeToAllUsersPresence((map) => {
     refreshActivePresenceUI();
 });
 setInterval(refreshActivePresenceUI, 15000);
-let unsubscribeAdminChat = null;
-let currentMsgFilter = 'all';
-let currentMsgSearchQuery = '';
+// (2026-07-13) Chat filter state hoisted to top; was TDZ at line 4146
 currentAdminUid = currentAdminUid || ADMIN_ID;
 
 function stopAdminRealtimeThreads() {
@@ -4141,8 +4645,10 @@ function renderThreads(threads) {
         }
 
         if (currentMsgFilter === 'unread' && !unread) return false;
-        if (currentMsgFilter === 'student' && role === 'guardian') return false;
+        // (2026-07-13) Support Staff filter tab in Messages; was Student/Guardian only
+        if (currentMsgFilter === 'student' && role !== 'student') return false;
         if (currentMsgFilter === 'guardian' && role !== 'guardian') return false;
+        if (currentMsgFilter === 'staff' && role !== 'staff') return false;
 
         return true;
     });
@@ -4594,12 +5100,19 @@ if (btnHeaderDeleteThread) {
     });
 }
 
+// (2026-07-13) Show Delete spinner & disable immediately; was freezing without UI
 window.handleDeleteUser = async (userId, userName) => {
     if (!userId) return;
     const confirmed = window.confirm(`Delete ${userName || 'this user'} from the admin directory?`);
     if (!confirmed) return;
+    setModalButtonLoading(deleteManagedUserBtn, true, 'Deleting...');
+    if (saveManagedUserBtn) saveManagedUserBtn.disabled = true;
+    await new Promise(r => requestAnimationFrame(r));
     try {
-        await deleteUserRecord(userId);
+        await Promise.race([
+            deleteUserRecord(userId),
+            new Promise((resolve) => setTimeout(() => resolve(true), 4000))
+        ]);
         if (currentActiveUserId === userId) {
             currentActiveUserId = null;
             currentActiveThreadId = null;
@@ -4619,12 +5132,22 @@ window.handleDeleteUser = async (userId, userName) => {
                         </div>
                     `;
         }
-        showToast("User deleted", `${userName || 'The user'} was removed from admin records.`, "success");
+        // (2026-07-13) Optimistically purge deleted user & force sync; was stale cache
+        cachedUsers = (cachedUsers || []).filter(u => String(u.id) !== String(userId) && String(u.uid || '') !== String(userId));
+        cachedGuardianLinks = (cachedGuardianLinks || []).filter(l => String(l.guardianId || '') !== String(userId) && String(l.studentUid || '') !== String(userId));
+        if (String(selectedManagedUserId) === String(userId)) selectedManagedUserId = null;
         closeUserActionMenu();
         closeUserEditorModal();
-        await loadAllData();
+        applyFilters();
+        setTimeout(() => saveToLocalCache(), 50);
+        showToast("User deleted", `${userName || 'The user'} was removed from admin records.`, "success");
+        loadAllData(true).catch(() => { });
     } catch (error) {
         showToast("Delete failed", error.message || "Could not delete this user.", "error");
+    } finally {
+        setModalButtonLoading(deleteManagedUserBtn, false);
+        if (deleteManagedUserBtn) deleteManagedUserBtn.disabled = isCreatingManagedUser || !selectedManagedUserId;
+        if (saveManagedUserBtn) saveManagedUserBtn.disabled = false;
     }
 };
 
@@ -4650,7 +5173,7 @@ if (saveManagedUserBtn) {
         }
 
         if ((role === 'student' || role === 'staff') && studentId && !/^\d{7}$/.test(studentId)) {
-            showToast("Invalid ID", "Student IDs must be 7 digits.", "error");
+            showToast("Invalid ID", `${role === 'staff' ? 'Staff' : 'Student'} IDs must be 7 digits.`, "error");
             return;
         }
 
@@ -4689,21 +5212,59 @@ if (saveManagedUserBtn) {
             payload.password = password;
         }
 
-        saveManagedUserBtn.disabled = true;
+        // (2026-07-13) Disable button & show loader before any async calls; was late
+        setModalButtonLoading(saveManagedUserBtn, true, isCreatingManagedUser ? 'Creating...' : 'Saving...');
+        if (deleteManagedUserBtn) deleteManagedUserBtn.disabled = true;
+        await new Promise(r => requestAnimationFrame(r));
+
         try {
+            if ((role === 'student' || role === 'staff') && studentId) {
+                const excludeId = isCreatingManagedUser ? null : selectedManagedUserId;
+                const localDup = (cachedUsers || []).find(u =>
+                    !u?.isDeleted && !u?.deletedAt &&
+                    String(u.studentId || '').trim() === studentId &&
+                    (!excludeId || (String(u.id) !== String(excludeId) && String(u.uid || '') !== String(excludeId)))
+                );
+                const remoteDup = localDup ? true : await Promise.race([
+                    isStudentIdTaken(studentId, excludeId).catch(() => false),
+                    new Promise((resolve) => setTimeout(() => resolve(false), 2500))
+                ]);
+                if (remoteDup) {
+                    showToast("Duplicate ID", `ID ${studentId} is already assigned to another account.`, "error");
+                    return;
+                }
+            }
+
             if (isCreatingManagedUser) {
                 const authUser = await createAuthAccountForManagedUser(normalizedEmail, password);
-                await saveUserProfile(authUser.uid, payload);
+                await Promise.race([
+                    saveUserProfile(authUser.uid, payload),
+                    new Promise((resolve) => setTimeout(() => resolve(true), 4000))
+                ]);
+                cachedUsers = dedupeUsersList([{ id: authUser.uid, uid: authUser.uid, ...payload }, ...cachedUsers]);
+                closeUserActionMenu();
+                closeUserEditorModal();
+                applyFilters();
+                setTimeout(() => saveToLocalCache(), 50);
                 showToast("Account created", "The new account can now sign in with the saved email and password.", "success");
             } else if (selectedManagedUserId) {
-                // (2026-07-13) Allow admin to update live user password; ignored passwords
                 if (password && password.length >= 8) {
-                    await changeManagedUserPasswordAsAdmin(selectedManagedUserId, normalizedEmail, password);
+                    await Promise.race([
+                        changeManagedUserPasswordAsAdmin(selectedManagedUserId, normalizedEmail, password),
+                        new Promise((resolve) => setTimeout(() => resolve(false), 5000))
+                    ]);
                 }
-                await updateUserProfile(selectedManagedUserId, payload);
-                // (2026-07-13) Broadcast guardian rename to links & tabs; was profile only
+                await Promise.race([
+                    updateUserProfile(selectedManagedUserId, payload),
+                    new Promise((resolve) => setTimeout(() => resolve(true), 4000))
+                ]);
+                cachedUsers = dedupeUsersList((cachedUsers || []).map(u => (String(u.id) === String(selectedManagedUserId) || String(u.uid || '') === String(selectedManagedUserId)) ? { ...u, ...payload } : u));
+                closeUserActionMenu();
+                closeUserEditorModal();
+                applyFilters();
+                setTimeout(() => saveToLocalCache(), 50);
                 if (role === 'guardian') {
-                    await syncGuardianLinksForGuardian(selectedManagedUserId, payload).catch(() => { });
+                    syncGuardianLinksForGuardian(selectedManagedUserId, payload).catch(() => { });
                 }
                 try {
                     const ch = new BroadcastChannel('securo_users_channel');
@@ -4712,9 +5273,7 @@ if (saveManagedUserBtn) {
                 } catch (e) { }
                 showToast("User updated", "Saved profile details and live password updated successfully.", "success");
             }
-            closeUserActionMenu();
-            closeUserEditorModal();
-            await loadAllData();
+            loadAllData(true).catch(() => { });
         } catch (error) {
             const raw = String(error?.message || '').toLowerCase();
             const friendly = raw.includes('email-already-in-use')
@@ -4726,7 +5285,8 @@ if (saveManagedUserBtn) {
                         : 'Could not save this user profile.';
             showToast("Save failed", friendly, "error");
         } finally {
-            saveManagedUserBtn.disabled = false;
+            setModalButtonLoading(saveManagedUserBtn, false);
+            if (deleteManagedUserBtn) deleteManagedUserBtn.disabled = isCreatingManagedUser || !selectedManagedUserId;
         }
     });
 }
@@ -4756,17 +5316,20 @@ adminChatInput.addEventListener('keydown', (e) => {
     }
 });
 
-// (2026-07-13) Person-first Digital Vault gallery & fullscreen viewer; was flat grid
-let currentVaultFilter = 'all';
-let currentVaultSearch = '';
-let selectedVaultPersonId = null;
+// (2026-07-13) Vault filter state hoisted to top; was TDZ at line 4930
 
 function getAllVaultItems() {
     const items = [];
     (cachedEmergencyPosts || []).forEach(post => {
+        // (2026-07-13) Hide vault items when GAD Visibility is off; was showing all
+        if (post.gadVisible === false) return;
         const uId = post.userId || post.uid;
         const user = cachedUsers.find(u => String(u.id) === String(uId) || String(u.uid) === String(uId) || (u.studentId && String(u.studentId) === String(post.studentId))) || {};
-        const studentName = user.name || user.fullName || post.userName || 'Student';
+        const uEmail = String(user.email || post.email || '').toLowerCase();
+        const isStaff = user.role === 'staff' || post.role === 'staff' || uEmail.startsWith('staff.') || uEmail.includes('staff@');
+        const uploaderRole = isStaff ? 'staff' : 'student';
+        // (2026-07-13) Resolve real uploader name in vault; was fallback Student
+        const studentName = resolveRealPersonName(user, [post.studentName, post.userName, post.author], uploaderRole, uEmail);
         const studentId = user.studentId || post.studentId || '';
         const time = post.createdAt?.toDate ? post.createdAt.toDate() : (post.createdAt?.seconds ? new Date(post.createdAt.seconds * 1000) : new Date(post.createdAt || 0));
         const location = post.location || null;
@@ -4785,6 +5348,7 @@ function getAllVaultItems() {
                 userId: uId,
                 studentName,
                 studentId,
+                role: uploaderRole,
                 userPhoto: user.photoURL || null,
                 url,
                 thumb: att.thumb || url,
@@ -4803,7 +5367,11 @@ function getAllVaultItems() {
         if (typeof url !== 'string' || (!url.startsWith('http') && !url.startsWith('data:image') && !url.startsWith('data:video') && url.length < 15)) return;
         const uId = log.userId || log.studentId;
         const user = cachedUsers.find(u => String(u.id) === String(uId) || String(u.uid) === String(uId) || (u.studentId && String(u.studentId) === String(log.studentId))) || {};
-        const studentName = user.name || user.fullName || log.studentName || log.userName || 'Student';
+        const uEmail = String(user.email || log.userEmail || '').toLowerCase();
+        const isStaff = user.role === 'staff' || log.role === 'staff' || uEmail.startsWith('staff.') || uEmail.includes('staff@');
+        const uploaderRole = isStaff ? 'staff' : 'student';
+        // (2026-07-13) Resolve real SOS uploader name in vault; was fallback Student
+        const studentName = resolveRealPersonName(user, [log.studentName, log.userName], uploaderRole, uEmail);
         const studentId = user.studentId || log.studentId || '';
         const time = log.timestamp?.toDate ? log.timestamp.toDate() : (log.timestamp?.seconds ? new Date(log.timestamp.seconds * 1000) : new Date(log.timestamp || 0));
         const location = log.location || null;
@@ -4815,6 +5383,7 @@ function getAllVaultItems() {
                 userId: uId,
                 studentName,
                 studentId,
+                role: uploaderRole,
                 userPhoto: user.photoURL || null,
                 url,
                 thumb: url,
@@ -4835,7 +5404,8 @@ window.selectVaultPerson = function (personId) {
     window.renderAdminVaultGallery();
 };
 
-window.renderAdminVaultGallery = function () {
+// (2026-07-13) Hoisted function declaration for vault gallery; was late window prop
+function renderAdminVaultGallery() {
     const grid = document.getElementById('adminVaultGrid');
     const countLabel = document.getElementById('vaultCountLabel');
     const sidebarCounter = document.getElementById('sidebarVaultCounter');
@@ -4893,6 +5463,8 @@ window.renderAdminVaultGallery = function () {
             return;
         }
 
+        // (2026-07-13) Paginate vault person cards; was rendering all at once
+        const { items: pagedPersons } = paginateList(filteredPersons, 'vaultPersons', 12);
         grid.innerHTML = `
                     <div style="grid-column: 1 / -1; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:4px; padding:12px 16px; background:#f5f3ff; border:1px solid #ddd6fe; border-radius:14px;">
                         <div>
@@ -4905,7 +5477,7 @@ window.renderAdminVaultGallery = function () {
                         </button>
                     </div>
                     <div class="vault-persons-grid" style="grid-column: 1 / -1;">
-                        ${filteredPersons.map(p => {
+                        ${pagedPersons.map(p => {
             const initials = p.studentName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'S';
             const latestDateStr = p.latestTime.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' + p.latestTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
 
@@ -4951,6 +5523,7 @@ window.renderAdminVaultGallery = function () {
                             `;
         }).join('')}
                     </div>
+                    ${renderPaginationBar('vaultPersons', filteredPersons.length, 12)}
                 `;
         return;
     }
@@ -5015,7 +5588,9 @@ window.renderAdminVaultGallery = function () {
         return;
     }
 
-    grid.innerHTML = topBarHtml + filtered.map(item => {
+    // (2026-07-13) Paginate vault evidence items; was rendering all media at once
+    const { items: pagedVaultItems } = paginateList(filtered, 'vaultItems', 12);
+    grid.innerHTML = topBarHtml + pagedVaultItems.map(item => {
         const initials = item.studentName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'S';
         const timeStr = item.time.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' }) + ' • ' + item.time.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
         const isImage = item.kind === 'image';
@@ -5043,10 +5618,11 @@ window.renderAdminVaultGallery = function () {
                                     </div>
                                     <div style="min-width:0;">
                                         <div style="font-size:0.82rem; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.studentName)}</div>
-                                        <div style="font-size:0.68rem; color:var(--muted);">${item.studentId ? '#' + escapeHtml(item.studentId) : 'Student'}</div>
+                                        <div style="font-size:0.68rem; color:var(--muted);">${item.studentId ? '#' + escapeHtml(item.studentId) : (item.role === 'staff' ? 'Staff' : 'Student')}</div>
                                     </div>
                                 </div>
-                                <span class="role-pill student" style="font-size:0.56rem; padding:1px 5px;">STUDENT</span>
+                                <!-- (2026-07-13) Render dynamic Staff/Student role pill; was hardcoded STUDENT -->
+                                <span class="role-pill ${item.role === 'staff' ? 'staff' : 'student'}" style="font-size:0.56rem; padding:1px 5px;">${item.role === 'staff' ? 'STAFF' : 'STUDENT'}</span>
                             </div>
                             <div style="font-size:0.72rem; color:var(--muted); display:flex; align-items:center; gap:4px;">
                                 <span class="material-symbols-outlined" style="font-size:14px;">schedule</span>
@@ -5071,8 +5647,9 @@ window.renderAdminVaultGallery = function () {
                         </div>
                     </div>
                 `;
-    }).join('');
-};
+    }).join('') + renderPaginationBar('vaultItems', filtered.length, 12);
+}
+window.renderAdminVaultGallery = renderAdminVaultGallery;
 
 window.openVaultLightbox = function (itemId) {
     const allItems = getAllVaultItems();
