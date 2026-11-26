@@ -5859,3 +5859,158 @@
 .stu-u193 { width: 100%; height: 48px; border-radius: 16px; background: #f8fafc; border: 1.5px solid #e2e8f0; font-weight: 700; font-size: 0.92rem; color: var(--ink); display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s ease; opacity: 0.6; }
 .stu-u194 { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; color: var(--muted); font-size: 0.75rem; font-weight: 600; }
 .stu-u195 { font-size: 17px; color: #5a1fe0; }
+
+/* (2026-07-13) Unread badge, GAD mode chooser, alias & msg delete; was missing */
+.gad-header-msg-btn { position: relative; }
+.msg-unread-badge {
+    display: none;
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.35);
+    pointer-events: none;
+}
+.msg-unread-badge.has-unread { display: inline-flex; align-items: center; justify-content: center; }
+.gad-header-actions { display: inline-flex; align-items: center; gap: 6px; }
+.gad-switch-mode-btn {
+    display: none;
+    border: 1px solid rgba(255, 255, 255, 0.32);
+    background: rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+}
+.gad-switch-mode-btn.visible { display: inline-flex; align-items: center; }
+.gad-mode-chip {
+    display: none;
+    margin-left: 6px;
+    font-size: 0.66rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.22);
+    color: #ffffff;
+    vertical-align: middle;
+}
+.gad-mode-chip.visible { display: inline-block; }
+.gad-presence-dot {
+    display: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.28);
+}
+.gad-presence-dot.is-online { display: inline-block; }
+.gad-mode-chooser {
+    display: none;
+    flex: 1;
+    padding: 22px 18px;
+    flex-direction: column;
+    gap: 12px;
+    background: #faf9ff;
+    overflow-y: auto;
+}
+.gad-mode-chooser.active { display: flex; }
+.gad-mode-title { font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.05rem; color: #181428; }
+.gad-mode-sub { font-size: 0.82rem; color: #64748b; margin-top: -6px; margin-bottom: 4px; }
+.gad-mode-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    text-align: left;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1.5px solid rgba(90, 31, 224, 0.16);
+    background: #ffffff;
+    cursor: pointer;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+.gad-mode-option:hover { border-color: #5a1fe0; box-shadow: 0 6px 18px rgba(90, 31, 224, 0.12); }
+.gad-mode-option .material-symbols-outlined { font-size: 24px; color: #5a1fe0; flex-shrink: 0; }
+.gad-mode-option-copy { flex: 1; min-width: 0; }
+.gad-mode-option-copy strong { display: block; font-size: 0.92rem; color: #181428; }
+.gad-mode-option-copy span { display: block; font-size: 0.78rem; color: #64748b; margin-top: 2px; }
+.gad-mode-unread {
+    display: none;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #dc2626;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 800;
+    align-items: center;
+    justify-content: center;
+}
+.gad-mode-unread.has-unread { display: inline-flex; }
+.gad-alias-setup {
+    display: none;
+    padding: 14px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1.5px solid rgba(90, 31, 224, 0.22);
+}
+.gad-alias-setup.active { display: block; }
+.gad-alias-label { display: block; font-size: 0.8rem; font-weight: 700; color: #181428; margin-bottom: 8px; }
+.gad-alias-row { display: flex; gap: 8px; }
+.gad-alias-row input {
+    flex: 1;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1.5px solid #cbd5e1;
+    font-size: 0.88rem;
+}
+.gad-alias-save-btn {
+    height: 40px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 10px;
+    background: #5a1fe0;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.84rem;
+    cursor: pointer;
+}
+.gad-alias-error { color: #dc2626; font-size: 0.76rem; font-weight: 600; margin-top: 6px; min-height: 16px; }
+.gad-me-row { display: flex; align-items: center; justify-content: flex-end; gap: 6px; width: 100%; }
+.gad-msg-del-btn {
+    opacity: 0.35;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.gad-me-row:hover .gad-msg-del-btn,
+.gad-msg-del-btn:focus-visible { opacity: 1; color: #dc2626; }
+.gad-msg-del-btn .material-symbols-outlined { font-size: 15px; }
+/* (2026-07-13) Student invite & onboarding classes; was inline HTML style */
+.student-invite-code-lg { font-size: 22px; letter-spacing: 3px; font-weight: 800; }
+.student-invite-code-center { font-size: 22px; letter-spacing: 3px; font-weight: 800; text-align: center; }
+.student-parent-email-input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(90, 31, 224, 0.25); font-size: 14px; outline: none; }
+.student-proceed-ready { opacity: 1; border-color: #5a1fe0; color: #5a1fe0; }
+.student-swipe-hint-icon { color: #0f9b67; }

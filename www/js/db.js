@@ -1561,18 +1561,37 @@ export const getEmergencyPostById = async (postId) => {
         } catch (_) { }
     };
 
+    // (2026-07-13) Track deleted message IDs & preserve thread alias metadata; was raw
+    const LOCAL_DELETED_MSG_IDS_KEY = "securo_deleted_msg_ids";
+    const readDeletedMsgIds = () => {
+        try {
+            const raw = localStorage.getItem(LOCAL_DELETED_MSG_IDS_KEY);
+            const arr = raw ? JSON.parse(raw) : [];
+            return new Set(Array.isArray(arr) ? arr.map(String) : []);
+        } catch (_) { return new Set(); }
+    };
+    const addDeletedMsgId = (id) => {
+        if (!id) return;
+        const set = readDeletedMsgIds();
+        set.add(String(id));
+        try { localStorage.setItem(LOCAL_DELETED_MSG_IDS_KEY, JSON.stringify(Array.from(set).slice(-500))); } catch (_) { }
+    };
+
     const mergeChatMessagesList = (remoteList, localList) => {
+        const deletedIds = readDeletedMsgIds();
+        const isDeleted = (m) => !m || m.deleted === true || (m.id && deletedIds.has(String(m.id)));
         const map = new Map();
         const put = (m) => {
-            if (!m) return;
+            if (isDeleted(m)) return;
             const key = m.id || `${m.threadId}_${m.senderId}_${m.text || m.message}_${Math.floor(getMsgSec(m))}`;
             if (!map.has(key)) map.set(key, m);
         };
         (remoteList || []).forEach(put);
         (localList || []).forEach((lm) => {
+            if (isDeleted(lm)) return;
             const dup = (remoteList || []).some(rm =>
                 rm.id === lm.id ||
-                (rm.threadId === lm.threadId && rm.senderId === lm.senderId && (rm.text || rm.message) === (lm.text || lm.message) && Math.abs(getMsgSec(rm) - getMsgSec(lm)) < 15)
+                (!isDeleted(rm) && rm.threadId === lm.threadId && rm.senderId === lm.senderId && (rm.text || rm.message) === (lm.text || lm.message) && Math.abs(getMsgSec(rm) - getMsgSec(lm)) < 15)
             );
             if (!dup) put(lm);
         });
@@ -1581,14 +1600,38 @@ export const getEmergencyPostById = async (postId) => {
 
     const buildThreadsFromMessages = (allMessages) => {
         const threadsMap = new Map();
+        const metaMap = new Map();
         (allMessages || []).forEach((msg) => {
-            if (!msg || !msg.threadId) return;
-            const existing = threadsMap.get(msg.threadId);
+            if (!msg || !msg.threadId || msg.deleted === true) return;
+            const tid = msg.threadId;
+            const isAnon = Boolean(msg.isAnonymous || tid.includes('__anon') || msg.anonymousAlias);
+            const isFromAdmin = msg.senderRole === 'admin' || msg.senderId === 'system_admin_securo';
+            const prevMeta = metaMap.get(tid) || {};
+            const nextMeta = {
+                isAnonymous: prevMeta.isAnonymous || isAnon,
+                anonymousAlias: prevMeta.anonymousAlias || msg.anonymousAlias || (isAnon && !isFromAdmin ? (msg.senderLabel || msg.senderName || '') : ''),
+                clientRole: prevMeta.clientRole || (!isFromAdmin && msg.senderRole ? msg.senderRole : (msg.recipientRole && msg.recipientRole !== 'admin' ? msg.recipientRole : '')),
+                clientOwnerId: prevMeta.clientOwnerId || msg.ownerId || (!isFromAdmin ? msg.senderId : (msg.receiverId !== 'system_admin_securo' ? msg.receiverId : '')),
+                clientDisplayName: prevMeta.clientDisplayName || (!isFromAdmin ? (msg.senderLabel || msg.senderName || '') : (msg.clientName || msg.targetUserName || ''))
+            };
+            metaMap.set(tid, nextMeta);
+
+            const existing = threadsMap.get(tid);
             if (!existing || getMsgSec(msg) >= getMsgSec(existing)) {
-                threadsMap.set(msg.threadId, msg);
+                threadsMap.set(tid, msg);
             }
         });
-        return Array.from(threadsMap.values()).sort((a, b) => getMsgSec(b) - getMsgSec(a));
+        return Array.from(threadsMap.entries()).map(([tid, latest]) => {
+            const meta = metaMap.get(tid) || {};
+            return {
+                ...latest,
+                isAnonymous: Boolean(latest.isAnonymous || meta.isAnonymous),
+                anonymousAlias: latest.anonymousAlias || meta.anonymousAlias || '',
+                ownerId: latest.ownerId || meta.clientOwnerId || '',
+                clientRole: meta.clientRole || (latest.senderRole !== 'admin' ? latest.senderRole : latest.recipientRole) || '',
+                clientName: latest.clientName || meta.clientDisplayName || ''
+            };
+        }).sort((a, b) => getMsgSec(b) - getMsgSec(a));
     };
 
     export const getAllChatThreadsOnce = async (adminUid = "system_admin_securo") => {
@@ -1711,6 +1754,9 @@ export const getEmergencyPostById = async (postId) => {
             recipientRole,
             supportMode: options.supportMode || "",
             isAnonymous: !!options.isAnonymous,
+            // (2026-07-13) Persist custom alias & client metadata; was missing alias
+            anonymousAlias: options.anonymousAlias || "",
+            clientName: options.clientName || "",
             senderLabel: options.senderLabel || "",
             ownerId: options.ownerId || "",
             anonymousSessionId: options.anonymousSessionId || "",
@@ -1866,6 +1912,67 @@ export const getEmergencyPostById = async (postId) => {
             if (ch) ch.close();
             if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage);
         };
+    };
+
+    /**
+     * Messaging: Delete a single chat message (hard delete or soft-delete fallback)
+     * @param {string} messageId
+     * @param {string} threadId
+     */
+    // (2026-07-13) Allow user or admin single-message deletion; was thread delete only
+    export const deleteChatMessage = async (messageId, threadId = "") => {
+        if (!messageId) return false;
+        const mid = String(messageId);
+        addDeletedMsgId(mid);
+        try {
+            const list = readLocalChatMessages().filter(m => String(m.id) !== mid);
+            _memChatCache = list;
+            try { localStorage.setItem(LOCAL_CHAT_MESSAGES_KEY, JSON.stringify(list.slice(-1500))); } catch (_) { }
+            scheduleMsgIdbPut("chat_messages", list);
+            const ch = new BroadcastChannel('securo_chat_channel');
+            ch.postMessage({ type: 'delete_message', messageId: mid, threadId });
+            ch.close();
+        } catch (_) { }
+
+        if (mid.startsWith('local_msg_')) return true;
+
+        try {
+            await deleteDoc(doc(db, "messages", mid));
+            return true;
+        } catch (err) {
+            try {
+                await updateDoc(doc(db, "messages", mid), {
+                    deleted: true,
+                    text: "",
+                    message: "",
+                    deletedAt: serverTimestamp()
+                });
+                return true;
+            } catch (err2) {
+                console.warn("deleteChatMessage fallback error:", err2);
+                return true;
+            }
+        }
+    };
+
+    // (2026-07-13) Allow deleting individual GAD inquiry entry; was undeletable
+    export const deleteGADMessage = async (inquiryId) => {
+        if (!inquiryId) return false;
+        const idStr = String(inquiryId);
+        try {
+            const local = readLocalGADMessages().filter(m => String(m.id) !== idStr);
+            writeLocalGADMessages(local);
+        } catch (_) { }
+        if (idStr.startsWith('gad_')) return true;
+        try {
+            await deleteDoc(doc(db, "gad_messages", idStr));
+            return true;
+        } catch (_) {
+            try {
+                await updateDoc(doc(db, "gad_messages", idStr), { deleted: true, message: "" });
+            } catch (__) { }
+            return true;
+        }
     };
 
     /**
@@ -4015,19 +4122,22 @@ export const getEmergencyPostById = async (postId) => {
         localMessages.unshift({ id: localId, ...payload });
         writeLocalGADMessages(localMessages);
 
-        // (2026-07-13) Always send unified chat message even if gad_messages fails; was after
+        // (2026-07-13) Separate anon thread & preserve custom alias; was shared thread
         const senderRole = String(messageData.role || 'student').toLowerCase();
-        const defaultRoleName = senderRole === 'staff' ? 'Campus Staff' : 'Student';
+        const defaultRoleName = senderRole === 'staff' ? 'Campus Staff' : (senderRole === 'guardian' ? 'Parent' : 'Student');
         const displaySenderName = isAnon
-            ? (senderRole === 'staff' ? 'Anonymous Staff' : 'Anonymous Student')
+            ? (alias || (senderRole === 'staff' ? 'Anonymous Staff' : 'Anonymous Student'))
             : (messageData.studentName || defaultRoleName);
         if (messageData.studentUid) {
+            const threadParticipant = isAnon ? `${messageData.studentUid}__anon` : messageData.studentUid;
             await sendChatMessage(messageData.studentUid, "system_admin_securo", messageData.message || "", displaySenderName, {
-                threadId: [messageData.studentUid, "system_admin_securo"].sort().join("_"),
+                threadId: [threadParticipant, "system_admin_securo"].sort().join("_"),
                 senderRole,
                 recipientRole: "admin",
                 supportMode: "gad_support",
                 isAnonymous: isAnon,
+                anonymousAlias: isAnon ? displaySenderName : "",
+                clientName: displaySenderName,
                 senderLabel: displaySenderName,
                 ownerId: messageData.studentUid
             }).catch((err) => console.warn("Unified GAD chat sync warning:", err));
@@ -4061,8 +4171,9 @@ export const getEmergencyPostById = async (postId) => {
         }
     };
 
+    // (2026-07-13) Filter deleted GAD messages from subscription; was returning all
     export const subscribeToGADMessages = (studentUid, callback) => {
-        const local = readLocalGADMessages().filter(m => !studentUid || m.studentUid === studentUid);
+        const local = readLocalGADMessages().filter(m => !m.deleted && (!studentUid || m.studentUid === studentUid));
         callback(local);
 
         try {
@@ -4071,10 +4182,10 @@ export const getEmergencyPostById = async (postId) => {
                 : query(collection(db, "gad_messages"));
 
             return onSnapshot(q, (snapshot) => {
-                const remote = snapshot.docs.map(doc => normalizeMsgForCache({ id: doc.id, ...doc.data() }));
+                const remote = snapshot.docs.map(doc => normalizeMsgForCache({ id: doc.id, ...doc.data() })).filter(m => !m.deleted);
                 const merged = [...remote];
                 local.forEach(l => {
-                    if (!merged.some(r => r.id === l.id)) merged.push(l);
+                    if (!l.deleted && !merged.some(r => r.id === l.id)) merged.push(l);
                 });
                 merged.sort((a, b) => {
                     const aT = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime();
@@ -4140,19 +4251,21 @@ export const getEmergencyPostById = async (postId) => {
             const cleanGeofence = Array.isArray(config?.geofence)
                 ? config.geofence.map(pt => [Number(pt[0] ?? pt.lat), Number(pt[1] ?? pt.lng)])
                 : [];
+            // (2026-07-13) Cap persisted marker zone radius at 50m max; was unbounded
             const cleanBuildings = Array.isArray(config?.buildings)
                 ? config.buildings.map(b => ({
                     name: String(b.name || ""),
                     icon: String(b.icon || "location_on"),
                     coords: [Number(b.coords?.[0] ?? b.lat ?? b.coords?.lat), Number(b.coords?.[1] ?? b.lng ?? b.coords?.lng)],
-                    desc: String(b.desc || "")
+                    desc: String(b.desc || ""),
+                    radius: Math.min(50, Math.max(5, Number(b.radius || 25)))
                 }))
                 : [];
 
             if (cleanGeofence.length >= 3) {
                 localStorage.setItem("securo_custom_geofence", JSON.stringify(cleanGeofence));
             }
-            if (cleanBuildings.length > 0) {
+            if (Array.isArray(config?.buildings)) {
                 localStorage.setItem("securo_campus_buildings", JSON.stringify(cleanBuildings));
             }
             if (campusMapBroadcast) {
@@ -4169,7 +4282,8 @@ export const getEmergencyPostById = async (postId) => {
                 icon: String(b.icon || "location_on"),
                 lat: Number(b.coords?.[0] ?? b.lat),
                 lng: Number(b.coords?.[1] ?? b.lng),
-                desc: String(b.desc || "")
+                desc: String(b.desc || ""),
+                radius: Math.min(50, Math.max(5, Number(b.radius || 25)))
             }));
 
             const payload = {
@@ -4243,6 +4357,7 @@ export const getEmergencyPostById = async (postId) => {
                     localStorage.setItem("securo_custom_geofence", JSON.stringify(geofence));
                 }
 
+                // (2026-07-13) Clamp hydrated marker radius to 50m max; was unbounded
                 let buildings = null;
                 if (data.buildingsJson) {
                     try { buildings = JSON.parse(data.buildingsJson); } catch (e) { }
@@ -4252,10 +4367,16 @@ export const getEmergencyPostById = async (postId) => {
                         name: b.name,
                         icon: b.icon,
                         desc: b.desc,
-                        coords: [Number(b.coords?.[0] ?? b.lat), Number(b.coords?.[1] ?? b.lng)]
+                        coords: [Number(b.coords?.[0] ?? b.lat), Number(b.coords?.[1] ?? b.lng)],
+                        radius: Math.min(50, Math.max(5, Number(b.radius || 25)))
+                    }));
+                } else if (Array.isArray(buildings)) {
+                    buildings = buildings.map(b => ({
+                        ...b,
+                        radius: Math.min(50, Math.max(5, Number(b.radius || 25)))
                     }));
                 }
-                if (Array.isArray(buildings) && buildings.length > 0) {
+                if (Array.isArray(buildings)) {
                     localStorage.setItem("securo_campus_buildings", JSON.stringify(buildings));
                 }
 
@@ -4304,6 +4425,7 @@ export const getEmergencyPostById = async (postId) => {
                         localStorage.setItem("securo_custom_geofence", JSON.stringify(geofence));
                     }
 
+                    // (2026-07-13) Clamp fetched marker radius to 50m max; was unbounded
                     let buildings = null;
                     if (data.buildingsJson) {
                         try { buildings = JSON.parse(data.buildingsJson); } catch (e) { }
@@ -4313,10 +4435,16 @@ export const getEmergencyPostById = async (postId) => {
                             name: b.name,
                             icon: b.icon,
                             desc: b.desc,
-                            coords: [Number(b.coords?.[0] ?? b.lat), Number(b.coords?.[1] ?? b.lng)]
+                            coords: [Number(b.coords?.[0] ?? b.lat), Number(b.coords?.[1] ?? b.lng)],
+                            radius: Math.min(50, Math.max(5, Number(b.radius || 25)))
+                        }));
+                    } else if (Array.isArray(buildings)) {
+                        buildings = buildings.map(b => ({
+                            ...b,
+                            radius: Math.min(50, Math.max(5, Number(b.radius || 25)))
                         }));
                     }
-                    if (Array.isArray(buildings) && buildings.length > 0) {
+                    if (Array.isArray(buildings)) {
                         localStorage.setItem("securo_campus_buildings", JSON.stringify(buildings));
                     }
 
@@ -4812,24 +4940,32 @@ export const getEmergencyPostById = async (postId) => {
         } catch (_) { }
     };
 
-    export const startUserPresenceHeartbeat = (userId) => {
+    // (2026-07-13) Mirror admin presence & tighten heartbeat; was user uid only
+    export const startUserPresenceHeartbeat = (userId, role = null) => {
         if (!userId) return () => { };
         if (typeof _activePresenceStopFn === 'function') {
             _activePresenceStopFn();
         }
         const uid = String(userId);
+        const isAdminRole = String(role || '').toLowerCase() === 'admin';
+        const syncPresence = (online) => {
+            updateUserPresence(uid, online);
+            if (isAdminRole && uid !== 'system_admin_securo') {
+                updateUserPresence('system_admin_securo', online);
+            }
+        };
         const beat = () => {
             const visible = typeof document === 'undefined' ? true : document.visibilityState === 'visible';
-            updateUserPresence(uid, visible);
+            syncPresence(visible);
         };
         beat();
         const timer = setInterval(() => {
             if (typeof document === 'undefined' || document.visibilityState === 'visible') {
-                updateUserPresence(uid, true);
+                syncPresence(true);
             }
-        }, 25000);
+        }, 20000);
         const onVis = () => beat();
-        const onOffline = () => updateUserPresence(uid, false);
+        const onOffline = () => syncPresence(false);
         if (typeof document !== 'undefined') document.addEventListener('visibilitychange', onVis);
         if (typeof window !== 'undefined') {
             window.addEventListener('pagehide', onOffline);
@@ -4842,11 +4978,76 @@ export const getEmergencyPostById = async (postId) => {
                 window.removeEventListener('pagehide', onOffline);
                 window.removeEventListener('beforeunload', onOffline);
             }
-            updateUserPresence(uid, false);
+            syncPresence(false);
             if (_activePresenceStopFn === stop) _activePresenceStopFn = null;
         };
         _activePresenceStopFn = stop;
         return stop;
+    };
+
+    // (2026-07-13) Subscribe to live GAD Admin online/offline status; was static
+    export const subscribeToAdminPresence = (callback) => {
+        const THRESHOLD_MS = 65000;
+        let state = { isOnline: false, lastActiveMs: 0 };
+
+        const readLocal = () => {
+            const map = readLocalPresenceMap();
+            const entry = map['system_admin_securo'];
+            if (entry && Number(entry.lastActiveMs || 0) >= state.lastActiveMs) {
+                state = { isOnline: Boolean(entry.isOnline), lastActiveMs: Number(entry.lastActiveMs || 0) };
+            }
+        };
+        const emit = () => {
+            const age = state.lastActiveMs > 0 ? (Date.now() - state.lastActiveMs) : Infinity;
+            const online = state.isOnline === true && age <= THRESHOLD_MS;
+            try { callback(online); } catch (_) { }
+        };
+
+        readLocal();
+        emit();
+
+        let unsubDoc = null;
+        try {
+            unsubDoc = onSnapshot(doc(db, "users", "system_admin_securo"), (snap) => {
+                if (snap.exists()) {
+                    const data = snap.data() || {};
+                    const tsMs = data.lastActiveAt?.toMillis
+                        ? data.lastActiveAt.toMillis()
+                        : (data.lastActiveAt?.seconds ? data.lastActiveAt.seconds * 1000 : Number(data.lastActiveMs || 0));
+                    state = { isOnline: data.isOnline === true, lastActiveMs: tsMs || 0 };
+                } else {
+                    state = { isOnline: false, lastActiveMs: 0 };
+                }
+                emit();
+            }, () => emit());
+        } catch (_) { }
+
+        let channel = null;
+        try {
+            channel = new BroadcastChannel('securo_presence_channel');
+            channel.onmessage = (e) => {
+                if (e.data?.userId === 'system_admin_securo') {
+                    state = { isOnline: Boolean(e.data.isOnline), lastActiveMs: Number(e.data.lastActiveMs || Date.now()) };
+                    emit();
+                }
+            };
+        } catch (_) { }
+
+        const onStorage = (e) => {
+            if (e.key === PRESENCE_STORAGE_KEY) {
+                readLocal();
+                emit();
+            }
+        };
+        if (typeof window !== 'undefined') window.addEventListener('storage', onStorage);
+        const timer = setInterval(emit, 15000);
+
+        return () => {
+            clearInterval(timer);
+            if (unsubDoc) unsubDoc();
+            if (channel) channel.close();
+            if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage);
+        };
     };
 
     export const subscribeToAllUsersPresence = (callback) => {

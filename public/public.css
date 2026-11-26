@@ -7015,3 +7015,6 @@ html.role-staff body.page-login .photo-action-btn:not(.secondary) {
     border-color: #bfdbfe !important;
     background: #eff6ff !important;
 }
+/* (2026-07-13) Login onboarding department classes; was inline HTML style */
+.login-dept-group-hidden { display: none; }
+.login-optional-hint { opacity: 0.6; font-weight: 500; }

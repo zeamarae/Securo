@@ -1,0 +1,299 @@
+@startuml Securo_Clean_Monochrome_ERD
+' Securo Campus Safety System - Clean Monochrome PlantUML ERD
+' Pure Black & White Academic Style | Balanced Left-Center-Right Flow (Zero Overlapping)
+
+left to right direction
+skinparam dpi 180
+skinparam monochrome true
+skinparam shadowing false
+skinparam backgroundColor #FFFFFF
+skinparam roundcorner 4
+' (2026-07-13) Use straight 90-degree ortho lines with wide label spacing; was cramped
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 145
+skinparam padding 6
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 11
+
+skinparam entity {
+  BackgroundColor #FFFFFF
+  BorderColor #111111
+  BorderThickness 1.3
+  HeaderBackgroundColor #F2F2F2
+  FontColor #111111
+}
+
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #BBBBBB
+  FontColor #222222
+  FontStyle bold
+}
+
+skinparam arrow {
+  Color #111111
+  Thickness 1.5
+  FontColor #111111
+  FontSize 10
+  FontStyle bold
+}
+
+title SECURO — Unified Entity-Relationship Diagram (Clean Monochrome Layout)
+
+' ==============================================================================
+' FAR-LEFT: ADMIN MAP & GUARDIAN LINKS
+' ==============================================================================
+package "Campus Map & Geofence" {
+  entity "MARKERS\n(markers)" as markers {
+    * markerId : String <<PK>>
+    --
+    name : String
+    icon : String
+    lat : Number
+    lng : Number
+    radius : Number (5-50m)
+    desc : String
+  }
+
+  entity "CAMPUS_MAP_CONFIG\n(campus_config / system_settings)" as campus_map_config {
+    * docId : String <<PK>>
+    --
+    geofence : Array<Map>
+    geofenceJson : String
+    buildings : Array<Map>
+    buildingsJson : String
+    updatedAt : Timestamp
+  }
+}
+
+' ==============================================================================
+' LEFT-TOP: SEPARATED USER ROLES (STAFF HAS NO PARENT LINK)
+' ==============================================================================
+package "User Roles (Separated)" {
+  entity "GUARDIAN_LINKS\n(guardian_links)" as guardian_links {
+    * linkId : String <<PK>>
+    --
+    * guardianId : String <<FK>>
+    * studentUid : String <<FK>>
+    studentId : String
+    status : String
+    permissions : Map
+    expiresAt : Number
+    createdAt : Timestamp
+  }
+
+  entity "STUDENT_USER\n(users: student)" as student {
+    * uid : String <<PK, FK>>
+    --
+    * studentId : String(7) <<UK>>
+    * authEmail : String <<UK>>
+    course : String
+    yearLevel : String
+    section : String
+  }
+
+  entity "GUARDIAN_USER\n(users: guardian)" as guardian {
+    * uid : String <<PK, FK>>
+    --
+    * email : String <<UK>>
+    name : String
+    isWatching : Boolean
+  }
+
+  entity "STAFF_USER\n(users: staff | No Parent)" as staff {
+    * uid : String <<PK, FK>>
+    --
+    * studentId : String(7) <<UK>>
+    * authEmail : String <<UK>>
+    department : String
+  }
+
+  entity "ADMIN_USER\n(users: admin / GAD)" as admin {
+    * uid : String <<PK, FK>>
+    --
+    * email : String <<UK>>
+    name : String
+  }
+}
+
+' ==============================================================================
+' LEFT-BOTTOM: GAD SUPPORT, BULLETINS & NOTIFICATIONS
+' ==============================================================================
+package "GAD Support, Bulletins & Alerts" {
+  entity "GAD_MESSAGES\n(gad_messages)" as gad_messages {
+    * inquiryId : String <<PK>>
+    --
+    * studentUid : String <<FK>>
+    isAnonymous : Boolean
+    anonymousAlias : String
+    category : String
+    subject : String
+    message : String
+    status : String
+    reply : String
+  }
+
+  entity "MESSAGES\n(messages [GAD Chat])" as messages {
+    * messageId : String <<PK>>
+    --
+    * threadId : String
+    * senderId : String <<FK>>
+    * receiverId : String <<FK>>
+    senderRole : String
+    isAnonymous : Boolean
+    text : String
+    timestamp : Timestamp
+  }
+
+  entity "GAD_POSTS\n(gad_posts)" as gad_posts {
+    * postId : String <<PK>>
+    --
+    authorEmail : String <<FK>>
+    author : String
+    content : String
+    image : String
+    likes : Number
+    likedBy : Array<String> <<FK>>
+    createdAt : Timestamp
+  }
+
+  entity "NOTIFICATIONS\n(notifications)" as notifications {
+    * notificationId : String <<PK>>
+    --
+    * recipientUid : String <<FK>>
+    sourceUserId : String <<FK>>
+    requestId : String <<FK>>
+    type : String
+    title : String
+    message : String
+    isRead : Boolean
+    createdAt : Timestamp
+  }
+}
+
+' ==============================================================================
+' CENTER HUB: CORE USER ACCOUNT
+' ==============================================================================
+entity "USERS\n(users [All 4 Roles])" as users {
+  * uid : String <<PK>>
+  --
+  * role : String
+  * name : String
+  email : String
+  recoveryEmail : String
+  photoURL : String
+  anonAlias : String
+  likedGadPosts : Array<String>
+  isOnline : Boolean
+  lastActiveAt : Timestamp
+  updatedAt : Timestamp
+}
+
+' ==============================================================================
+' RIGHT: SAFETY, TELEMETRY, VAULT & SECURITY
+' ==============================================================================
+package "Safety, Attendance & Telemetry" {
+  entity "STUDENT_LOCATIONS\n(student_locations)" as student_locations {
+    * studentUid : String <<PK, FK>>
+    --
+    lat : Number
+    lng : Number
+    isInside : Boolean
+    sharingEnabled : Boolean
+    sharingState : String
+    updatedAt : Timestamp
+  }
+
+  entity "ATTENDANCE\n(attendance)" as attendance {
+    * recordId : String <<PK>>
+    --
+    * userId : String <<FK>>
+    role : String
+    type : String
+    location : Map
+    timestamp : Timestamp
+  }
+
+  entity "SOS_LOGS\n(sos_logs)" as sos_logs {
+    * sosId : String <<PK>>
+    --
+    * userId : String <<FK>>
+    guardianUids : Array<String> <<FK>>
+    role : String
+    location : Map
+    status : String
+    hasPhoto : Boolean
+    timestamp : Timestamp
+  }
+
+  entity "EMERGENCY_POSTS\n(emergency_posts)" as emergency_posts {
+    * postId : String <<PK>>
+    --
+    * userId : String <<FK>>
+    attachments : Array<Map>
+    location : Map
+    gadVisible : Boolean
+    guardianVisible : Boolean
+    createdAt : Timestamp
+  }
+}
+
+package "Security & Audit" {
+  entity "USER_PASSWORDS\n(user_passwords)" as user_passwords {
+    * email : String <<PK, FK>>
+    --
+    * password : String
+    updatedAt : Timestamp
+  }
+
+  entity "AUDIT_LOGS\n(audit_logs)" as audit_logs {
+    * logId : String <<PK>>
+    --
+    * userId : String <<FK>>
+    action : String
+    details : Map
+    sessionId : String
+    userAgent : String
+    timestamp : Timestamp
+  }
+}
+
+' ==============================================================================
+' CLEAN LEFT-TO-RIGHT RELATIONSHIPS (NO DIRECTION OVERRIDES = ZERO OVERLAP)
+' ==============================================================================
+
+' --- 1. Campus Map -> Admin ---
+markers }o--|| campus_map_config : "places\n(0..* : 1)"
+campus_map_config }o--|| admin : "managed by\n(0..* : 1)"
+
+' --- 2. Guardian <-> Student Link ONLY (Staff excluded) ---
+guardian_links }o--|| student : "student link\n(0..* : 1)"
+guardian_links }o--|| guardian : "guardian link\n(0..* : 1)"
+
+' --- 3. Separated Roles -> Central USERS Hub ---
+student ||--|| users : "is-a\n(1 : 1)"
+guardian ||--|| users : "is-a\n(1 : 1)"
+staff ||--|| users : "is-a\n(1 : 1)"
+admin ||--|| users : "is-a\n(1 : 1)"
+
+' --- 4. GAD Support, Bulletins & Alerts -> Central USERS Hub ---
+gad_messages }o..|| messages : "mirrors\nthread"
+messages }o--|| users : "GAD chat\n(0..* : 1)"
+gad_messages }o--|| users : "submits inquiry\n(0..* : 1)"
+gad_posts ||..o{ notifications : "broadcasts"
+gad_posts }o--|| users : "posts & likes\n(M : N)"
+notifications }o--|| users : "receives / sends\n(0..* : 1)"
+
+' --- 5. Central USERS Hub -> Safety, Attendance & Telemetry ---
+users ||--o| student_locations : "live GPS\n(1 : 0..1)"
+users ||--o{ attendance : "time in / out\n(1 : 0..*)"
+users ||--o{ sos_logs : "triggers SOS\n(1 : 0..*)"
+users ||--o{ emergency_posts : "vault posts\n(1 : 0..*)"
+sos_logs ||..o{ emergency_posts : "attaches\nevidence"
+
+' --- 6. Central USERS Hub -> Security & Audit ---
+users ||..o| user_passwords : "pwd sync\n(1 : 0..1)"
+users ||--o{ audit_logs : "logs actions\n(1 : 0..*)"
+
+@enduml

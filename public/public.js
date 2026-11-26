@@ -475,8 +475,20 @@ const PAGE_CONTROLLERS = {
             }
         }
 
-        // Quick check: if already logged in, index.html will handle it.
-        // But if someone manually comes here, we let them pick.
+        // (2026-07-13) Keep logged-in users out of role-selection on Back; was open
+        const bounceIfAlreadySignedIn = () => {
+            const hasSession = Boolean(auth?.currentUser || localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated') === '1');
+            if (hasSession) {
+                window.location.replace(getRoleDashboardUrl());
+                return true;
+            }
+            return false;
+        };
+        if (bounceIfAlreadySignedIn()) return;
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) bounceIfAlreadySignedIn();
+        });
+        checkAuth(false);
 
         // (2026-07-13) Prevent image drag across entire application; was draggable
         window.addEventListener('dragstart', (e) => {
@@ -490,8 +502,23 @@ const PAGE_CONTROLLERS = {
         // (2026-07-13) Import student password reset helpers from db; was basic
         // (2026-07-13) Fix install-sw path to js/ folder; was broken root path
 
-        // (2026-07-13) Keep session active on entry; was auto signOut on role select
+        // (2026-07-13) Bounce logged-in users back to portal on Back; was showing login
         sessionStorage.removeItem('securo_from_role_selection');
+        const bounceLoggedInFromLogin = () => {
+            const inOnboarding = document.getElementById('onboardingModal')?.classList.contains('active');
+            const isRegistering = sessionStorage.getItem('securo_signup_in_progress') === '1';
+            if (inOnboarding || isRegistering) return false;
+            const hasSession = Boolean(auth?.currentUser || localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated') === '1');
+            if (hasSession && sessionStorage.getItem('securo_login_pending') !== '1' && sessionStorage.getItem('securo_just_registered') !== '1') {
+                window.location.replace(getRoleDashboardUrl());
+                return true;
+            }
+            return false;
+        };
+        if (bounceLoggedInFromLogin()) return;
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) bounceLoggedInFromLogin();
+        });
         checkAuth(false);
 
         // (2026-07-13) Always start on login first; prev: auto-redirect permissions
@@ -990,7 +1017,8 @@ const PAGE_CONTROLLERS = {
                 }
                 closeStudentResetModal();
                 showToast('Password Updated', 'Signing you in with your new password...', 'success');
-                setTimeout(() => { window.location.href = getRoleDashboardUrl('student'); }, 500);
+                // (2026-07-13) Replace history on password reset login; was href push
+                setTimeout(() => { window.location.replace(getRoleDashboardUrl('student')); }, 500);
             } catch (err) {
                 console.warn('Student password update failed:', err);
                 if (studentResetNewPwdError) studentResetNewPwdError.textContent = err?.message || 'Could not update password. Please try again.';
@@ -1389,7 +1417,8 @@ const PAGE_CONTROLLERS = {
                         sessionStorage.removeItem('securo_login_in_progress');
                         try { localStorage.setItem('securo_user_role', activeRole); } catch (_) { }
                         sessionStorage.setItem('securo_authenticated', '1');
-                        window.location.href = getRoleDashboardUrl(activeRole);
+                        // (2026-07-13) Replace history entry on login redirect; was href push
+                        window.location.replace(getRoleDashboardUrl(activeRole));
                         return;
                     }
 
@@ -1420,7 +1449,8 @@ const PAGE_CONTROLLERS = {
                     const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
                     const camOk = localStorage.getItem('securo_camera_granted') === 'true';
                     const locOk = localStorage.getItem('securo_location_granted') === 'true';
-                    window.location.href = (isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl(activeRole);
+                    // (2026-07-13) Replace history entry on login redirect; was href push
+                    window.location.replace((isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl(activeRole));
                 } else {
                     const studentId = signupIdInput.value.trim();
                     const studentEmail = document.getElementById('studentEmailSignup')?.value?.trim();
@@ -1500,7 +1530,8 @@ const PAGE_CONTROLLERS = {
                     const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
                     const camOk = localStorage.getItem('securo_camera_granted') === 'true';
                     const locOk = localStorage.getItem('securo_location_granted') === 'true';
-                    window.location.href = (isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl(activeRole);
+                    // (2026-07-13) Replace history entry on login redirect; was href push
+                    window.location.replace((isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl(activeRole));
                     return;
                 }
             } catch (error) {
@@ -1638,7 +1669,8 @@ const PAGE_CONTROLLERS = {
                         const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));
                         const camOk = localStorage.getItem('securo_camera_granted') === 'true';
                         const locOk = localStorage.getItem('securo_location_granted') === 'true';
-                        window.location.href = (isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl(activeRole);
+                        // (2026-07-13) Replace history entry on login redirect; was href push
+                    window.location.replace((isNativeApk && (!camOk || !locOk)) ? '../public/permissions-onboarding.html' : getRoleDashboardUrl(activeRole));
                     } catch (error) {
                         const friendlyMessage = getFriendlyAuthMessage(error, "signup", roleLabel);
                         errorMsg.textContent = friendlyMessage;

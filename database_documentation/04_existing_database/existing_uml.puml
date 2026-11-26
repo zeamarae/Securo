@@ -1,0 +1,309 @@
+@startuml Securo_Existing_Database_UML
+' Securo Campus Safety System - Existing Cloud Firestore UML Class Diagram
+' Project: securo-a3c9c | Database Engine: Google Cloud Firestore (Document Store)
+' Generated from verified project source code inspection (Zero invented entities)
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam linetype ortho
+skinparam nodesep 55
+skinparam ranksep 65
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 11
+
+skinparam package {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontColor #1E293B
+  FontStyle bold
+}
+
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #475569
+  HeaderBackgroundColor #EEF2FF
+  FontColor #0F172A
+  AttributeFontColor #334155
+}
+
+title Securo Existing Database — UML Class Diagram (Actual Cloud Firestore Implementation)
+
+package "1. Identity & Access Management" {
+  class users <<Collection>> {
+    + userId : String <<PK>> {Auth UID / system_admin_securo}
+    + role : String {NOT NULL: student|staff|guardian|admin}
+    + studentId : String|Number <<UK-partial>> {7-digit}
+    + firstName : String {nullable}
+    + lastName : String {nullable}
+    + name : String {NOT NULL}
+    + initials : String {nullable}
+    + email : String {nullable}
+    + recoveryEmail : String {nullable}
+    + personalEmail : String {nullable}
+    + authEmail : String {nullable}
+    + course : String {nullable, student-only}
+    + yearLevel : String {nullable, student-only}
+    + section : String {nullable, student-only}
+    + department : String {nullable, staff-only}
+    + photoURL : String {nullable}
+    + avatar : String {nullable, duplicate}
+    + guardianName : String {nullable, legacy}
+    + guardianPhone : String {nullable, legacy}
+    + anonAlias : String {nullable}
+    + likedGadPosts : Array<String> {multi-valued}
+    + password : String {nullable, plaintext cache}
+    + passwordUpdatedAt : Timestamp {nullable}
+    + onboardingCompleted : Boolean {default: false}
+    + isOnline : Boolean {default: false}
+    + isWatching : Boolean {nullable, guardian-only}
+    + lastActiveMs : Number {nullable}
+    + lastActiveAt : Timestamp {nullable}
+    + isDeleted : Boolean {default: false}
+    + deletedAt : String {nullable}
+    + createdAt : Timestamp|String {nullable}
+    + updatedAt : Timestamp|String {nullable}
+  }
+
+  class user_passwords <<Collection>> {
+    + email : String <<PK, FK-logical>> {normalized email}
+    + password : String {NOT NULL, plaintext}
+    + updatedAt : Timestamp {NOT NULL}
+  }
+
+  class audit_logs <<Collection, AppendOnly>> {
+    + logId : String <<PK>>
+    + userId : String <<FK>> {NOT NULL}
+    + action : String {NOT NULL: login|signup|logout|password_change}
+    + details : Map {polymorphic}
+    + ipAddress : String {nullable, currently null}
+    + userAgent : String {NOT NULL}
+    + sessionId : String {NOT NULL}
+    + timestamp : Timestamp {NOT NULL}
+  }
+}
+
+package "2. Guardian Linking & Safety Telemetry" {
+  class guardian_links <<Collection>> {
+    + linkId : String <<PK>>
+    + guardianId : String <<FK>> {nullable if email invite}
+    + guardianUid : String <<FK-dup>> {nullable}
+    + guardianEmail : String {denormalized}
+    + guardianName : String {denormalized}
+    + studentUid : String <<FK>> {NOT NULL}
+    + studentId : String {denormalized}
+    + studentName : String {denormalized}
+    + relationshipType : String {default: parent}
+    + status : String {NOT NULL: pending|accepted|rejected|removed}
+    + requestedBy : String {guardian|student}
+    + permissions : Map {sosAlerts, attendanceAlerts, liveLocation}
+    + expiresAt : Number {nullable, epoch ms}
+    + createdAt : Timestamp {NOT NULL}
+    + approvedAt : Timestamp {nullable}
+    + respondedAt : Timestamp {nullable}
+    + lastSyncedAt : Timestamp {nullable}
+    + updatedAt : Timestamp {nullable}
+    + locationReminderRequestedAt : Timestamp {nullable}
+    + locationReminderRequestedBy : String <<FK>> {nullable}
+    + locationReminderRequestedByName : String {nullable}
+    + locationReminderMessage : String {nullable}
+    + locationReminderStudentId : String {nullable}
+  }
+
+  class student_locations <<Collection>> {
+    + studentUid : String <<PK, FK>>
+    + lat : Number {nullable, masked outside campus}
+    + lng : Number {nullable, masked outside campus}
+    + isInside : Boolean {default: false}
+    + sharingEnabled : Boolean {default: false}
+    + sharingState : String {live|outside_campus|off|permission_denied|error}
+    + sharingMessage : String {default: ""}
+    + updatedAt : Timestamp {NOT NULL}
+  }
+
+  class attendance <<Collection, Overloaded>> {
+    + recordId : String <<PK>>
+    + userId : String <<FK>> {NOT NULL}
+    + studentUid : String <<FK-dup>> {nullable}
+    + studentName : String {nullable, sos only}
+    + studentId : String {nullable, sos only}
+    + role : String {nullable, sos only}
+    + type : String {NOT NULL: in|out|sos|profile_bootstrap}
+    + location : Map {lat, lng, address, auto}
+    + profile : Map {studentId, name, email}
+    + timestamp : Timestamp {NOT NULL}
+  }
+}
+
+package "3. Emergency Dispatch & Digital Vault" {
+  class sos_logs <<Collection>> {
+    + logId : String <<PK>>
+    + userId : String <<FK>> {NOT NULL}
+    + studentUid : String <<FK-dup>> {NOT NULL}
+    + guardianUids : Array<String> {multi-valued FK list}
+    + userName : String {denormalized}
+    + userEmail : String {denormalized}
+    + studentId : String {denormalized}
+    + role : String {default: student}
+    + location : Map {lat, lng, address, accuracy, outOfBounds}
+    + accuracy : Number {nullable}
+    + battery : Number {nullable}
+    + emergencyType : String {default: sos}
+    + status : String {default: active}
+    + hasPhoto : Boolean {nullable}
+    + lastPhoto : String {nullable, DataURI}
+    + lastPhotoAt : Timestamp {nullable}
+    + timestamp : Timestamp {NOT NULL}
+  }
+
+  class emergency_posts <<Collection, Overloaded>> {
+    + postId : String <<PK>> {also singleton campus_map_config}
+    + userId : String <<FK>> {NOT NULL}
+    + userName : String {denormalized}
+    + studentId : String {denormalized}
+    + attachments : Array<Map> {multi-valued media items}
+    + location : Map {lat, lng, address}
+    + gadVisible : Boolean {default: true}
+    + guardianVisible : Boolean {default: true}
+    + status : String {default: posted}
+    + createdAt : Timestamp {NOT NULL}
+  }
+}
+
+package "4. GAD Bulletins, Messaging & Notifications" {
+  class gad_posts <<Collection>> {
+    + postId : String <<PK>>
+    + author : String {default: GAD Office}
+    + email : String <<FK-logical>> {publisher email}
+    + content : String {NOT NULL}
+    + image : String {nullable, DataURI}
+    + timestamp : String {formatted locale string}
+    + likes : Number {derived count}
+    + likedBy : Array<String> {multi-valued userId list}
+    + createdAt : Timestamp {NOT NULL}
+    + updatedAt : Timestamp {nullable}
+  }
+
+  class messages <<Collection>> {
+    + messageId : String <<PK>>
+    + threadId : String {NOT NULL, composite string}
+    + senderId : String <<FK>> {NOT NULL}
+    + senderUid : String <<FK-dup>> {NOT NULL}
+    + receiverId : String <<FK>> {NOT NULL}
+    + recipientUid : String <<FK-dup>> {NOT NULL}
+    + ownerId : String <<FK>> {nullable, real UID if anon}
+    + text : String {NOT NULL}
+    + message : String {duplicate of text}
+    + senderName : String {denormalized}
+    + senderLabel : String {duplicate}
+    + clientName : String {denormalized}
+    + targetUserName : String {nullable}
+    + senderRole : String {NOT NULL}
+    + recipientRole : String {NOT NULL}
+    + supportMode : String {nullable}
+    + isAnonymous : Boolean {default: false}
+    + anonymousAlias : String {nullable}
+    + anonymousSessionId : String {nullable}
+    + read : Boolean {default: false}
+    + seen : Boolean {duplicate of read}
+    + seenAt : Timestamp {nullable}
+    + status : String {delivered|seen|replied}
+    + repliedAt : Timestamp {nullable}
+    + repliedBy : String {nullable}
+    + deleted : Boolean {nullable}
+    + deletedAt : Timestamp {nullable}
+    + timestamp : Timestamp {NOT NULL}
+  }
+
+  class gad_messages <<Collection, UnmappedInRules>> {
+    + messageId : String <<PK>>
+    + studentUid : String <<FK>> {NOT NULL}
+    + studentName : String {real name or alias}
+    + studentId : String {nullable}
+    + role : String {default: student}
+    + isAnonymous : Boolean {default: false}
+    + anonymousAlias : String {nullable}
+    + subject : String {default: General Inquiry}
+    + category : String {default: counseling}
+    + message : String {NOT NULL}
+    + location : Map {nullable}
+    + status : String {open|answered}
+    + reply : String {nullable}
+    + repliedAt : Timestamp {nullable}
+    + repliedBy : String {nullable}
+    + deleted : Boolean {nullable}
+    + createdAt : Timestamp {NOT NULL}
+  }
+
+  class notifications <<Collection>> {
+    + notificationId : String <<PK>>
+    + userId : String <<FK>> {recipient UID/admin/email}
+    + recipientUid : String <<FK-dup>>
+    + recipientEmail : String {nullable}
+    + sourceUserId : String <<FK>> {nullable}
+    + sourceName : String {denormalized}
+    + type : String {NOT NULL}
+    + title : String {NOT NULL}
+    + message : String {NOT NULL}
+    + priority : String {normal|high|urgent}
+    + status : String {default: active}
+    + relatedId : String {polymorphic ref}
+    + requestId : String <<FK>> {nullable -> guardian_links}
+    + studentId : String {denormalized}
+    + metadata : Map {polymorphic}
+    + actionUrl : String {nullable}
+    + resolvedStatus : String {nullable}
+    + expiresAt : Number {nullable, epoch ms}
+    + isRead : Boolean {default: false}
+    + read : Boolean {duplicate of isRead}
+    + readAt : Timestamp {nullable}
+    + createdAt : Timestamp {NOT NULL}
+  }
+}
+
+package "5. Campus Map & Geofence Configuration" {
+  class system_settings <<Singleton: campus_map>> {
+    + configId : String <<PK>> {= "campus_map"}
+    + geofence : Array<Map> {lat, lng vertices}
+    + geofenceJson : String {JSON duplicate}
+    + buildings : Array<Map> {name, icon, lat, lng, desc, radius}
+    + buildingsJson : String {JSON duplicate}
+    + updatedAt : Timestamp {NOT NULL}
+  }
+
+  class campus_config <<Singleton: map>> {
+    + configId : String <<PK>> {= "map", mirror}
+    + geofence : Array<Map> {lat, lng vertices}
+    + geofenceJson : String {JSON duplicate}
+    + buildings : Array<Map> {name, icon, lat, lng, desc, radius}
+    + buildingsJson : String {JSON duplicate}
+    + updatedAt : Timestamp {NOT NULL}
+  }
+
+  class markers <<Collection, LegacyReadOnly>> {
+    + markerId : String <<PK>>
+    + (schemaless) : Dynamic {no write path in codebase}
+  }
+}
+
+' === VERIFIED RELATIONSHIPS ===
+users "1" ..> "0..1" user_passwords : email sync (logical)
+users "1" --> "0..*" audit_logs : userId
+users "1" --> "0..1" student_locations : studentUid (PK=FK)
+users "1" --> "0..*" attendance : userId
+users "1" --> "0..*" guardian_links : studentUid (student role)
+users "0..1" --> "0..*" guardian_links : guardianId (guardian role)
+users "1" --> "0..*" sos_logs : userId (triggered by)
+users "0..*" ..> "0..*" sos_logs : guardianUids[] (notified)
+users "1" --> "0..*" emergency_posts : userId
+users "1" ..> "0..*" gad_posts : email (published by)
+users "0..*" ..> "0..*" gad_posts : likedBy[] / likedGadPosts[]
+users "1" --> "0..*" messages : senderId / receiverId / ownerId
+users "1" --> "0..*" gad_messages : studentUid
+users "1" --> "0..*" notifications : userId / sourceUserId
+guardian_links "0..1" ..> "0..*" notifications : requestId
+system_settings "1" .. "1" campus_config : mirrored payload
+system_settings "1" .. "0..1" emergency_posts : mirror doc campus_map_config
+
+@enduml

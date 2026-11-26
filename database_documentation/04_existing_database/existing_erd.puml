@@ -1,0 +1,322 @@
+@startuml Securo_Existing_Database_ERD
+' Securo Campus Safety System - Existing Cloud Firestore ERD (Crow's Foot)
+' Project: securo-a3c9c | Database Engine: Google Cloud Firestore
+' Represents the actual implemented collections, fields, and application-level references
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 60
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 11
+
+skinparam package {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontColor #1E293B
+  FontStyle bold
+}
+
+skinparam entity {
+  BackgroundColor #FFFFFF
+  BorderColor #475569
+  HeaderBackgroundColor #EDE9FE
+  FontColor #0F172A
+}
+
+title Securo Existing Database — Entity Relationship Diagram (Crow's Foot Notation)
+
+package "Identity & Access" {
+  entity "users" as users {
+    * userId : String <<PK>>
+    --
+    * role : String
+    studentId : String|Number <<UK>>
+    firstName : String
+    lastName : String
+    * name : String
+    initials : String
+    email : String
+    recoveryEmail : String
+    personalEmail : String
+    authEmail : String
+    course : String
+    yearLevel : String
+    section : String
+    department : String
+    photoURL : String
+    avatar : String
+    guardianName : String
+    guardianPhone : String
+    anonAlias : String
+    likedGadPosts : Array<String>
+    password : String
+    passwordUpdatedAt : Timestamp
+    onboardingCompleted : Boolean
+    isOnline : Boolean
+    isWatching : Boolean
+    lastActiveMs : Number
+    lastActiveAt : Timestamp
+    isDeleted : Boolean
+    deletedAt : String
+    createdAt : Timestamp|String
+    updatedAt : Timestamp|String
+  }
+
+  entity "user_passwords" as user_passwords {
+    * email : String <<PK, FK>>
+    --
+    * password : String
+    * updatedAt : Timestamp
+  }
+
+  entity "audit_logs" as audit_logs {
+    * logId : String <<PK>>
+    --
+    * userId : String <<FK>>
+    * action : String
+    details : Map
+    ipAddress : String
+    * userAgent : String
+    * sessionId : String
+    * timestamp : Timestamp
+  }
+}
+
+package "Guardian Linking & Tracking" {
+  entity "guardian_links" as guardian_links {
+    * linkId : String <<PK>>
+    --
+    guardianId : String <<FK>>
+    guardianUid : String <<FK>>
+    guardianEmail : String
+    guardianName : String
+    * studentUid : String <<FK>>
+    studentId : String
+    studentName : String
+    relationshipType : String
+    * status : String
+    requestedBy : String
+    permissions : Map
+    expiresAt : Number
+    * createdAt : Timestamp
+    approvedAt : Timestamp
+    respondedAt : Timestamp
+    lastSyncedAt : Timestamp
+    updatedAt : Timestamp
+    locationReminderRequestedAt : Timestamp
+    locationReminderRequestedBy : String <<FK>>
+    locationReminderRequestedByName : String
+    locationReminderMessage : String
+    locationReminderStudentId : String
+  }
+
+  entity "student_locations" as student_locations {
+    * studentUid : String <<PK, FK>>
+    --
+    lat : Number
+    lng : Number
+    isInside : Boolean
+    sharingEnabled : Boolean
+    sharingState : String
+    sharingMessage : String
+    * updatedAt : Timestamp
+  }
+
+  entity "attendance" as attendance {
+    * recordId : String <<PK>>
+    --
+    * userId : String <<FK>>
+    studentUid : String <<FK>>
+    studentName : String
+    studentId : String
+    role : String
+    * type : String
+    location : Map
+    profile : Map
+    * timestamp : Timestamp
+  }
+}
+
+package "Emergency & Digital Vault" {
+  entity "sos_logs" as sos_logs {
+    * logId : String <<PK>>
+    --
+    * userId : String <<FK>>
+    * studentUid : String <<FK>>
+    guardianUids : Array<String>
+    userName : String
+    userEmail : String
+    studentId : String
+    role : String
+    location : Map
+    accuracy : Number
+    battery : Number
+    emergencyType : String
+    status : String
+    hasPhoto : Boolean
+    lastPhoto : String
+    lastPhotoAt : Timestamp
+    * timestamp : Timestamp
+  }
+
+  entity "emergency_posts" as emergency_posts {
+    * postId : String <<PK>>
+    --
+    * userId : String <<FK>>
+    userName : String
+    studentId : String
+    attachments : Array<Map>
+    location : Map
+    gadVisible : Boolean
+    guardianVisible : Boolean
+    status : String
+    * createdAt : Timestamp
+  }
+}
+
+package "GAD, Messaging & Notifications" {
+  entity "gad_posts" as gad_posts {
+    * postId : String <<PK>>
+    --
+    author : String
+    email : String <<FK>>
+    * content : String
+    image : String
+    timestamp : String
+    likes : Number
+    likedBy : Array<String>
+    * createdAt : Timestamp
+    updatedAt : Timestamp
+  }
+
+  entity "messages" as messages {
+    * messageId : String <<PK>>
+    --
+    * threadId : String
+    * senderId : String <<FK>>
+    * senderUid : String <<FK>>
+    * receiverId : String <<FK>>
+    * recipientUid : String <<FK>>
+    ownerId : String <<FK>>
+    * text : String
+    message : String
+    senderName : String
+    senderLabel : String
+    clientName : String
+    targetUserName : String
+    * senderRole : String
+    * recipientRole : String
+    supportMode : String
+    isAnonymous : Boolean
+    anonymousAlias : String
+    anonymousSessionId : String
+    read : Boolean
+    seen : Boolean
+    seenAt : Timestamp
+    status : String
+    repliedAt : Timestamp
+    repliedBy : String
+    deleted : Boolean
+    deletedAt : Timestamp
+    * timestamp : Timestamp
+  }
+
+  entity "gad_messages" as gad_messages {
+    * messageId : String <<PK>>
+    --
+    * studentUid : String <<FK>>
+    * studentName : String
+    studentId : String
+    role : String
+    isAnonymous : Boolean
+    anonymousAlias : String
+    subject : String
+    category : String
+    * message : String
+    location : Map
+    status : String
+    reply : String
+    repliedAt : Timestamp
+    repliedBy : String
+    deleted : Boolean
+    * createdAt : Timestamp
+  }
+
+  entity "notifications" as notifications {
+    * notificationId : String <<PK>>
+    --
+    * userId : String <<FK>>
+    * recipientUid : String <<FK>>
+    recipientEmail : String
+    sourceUserId : String <<FK>>
+    sourceName : String
+    * type : String
+    * title : String
+    * message : String
+    priority : String
+    status : String
+    relatedId : String
+    requestId : String <<FK>>
+    studentId : String
+    metadata : Map
+    actionUrl : String
+    resolvedStatus : String
+    expiresAt : Number
+    isRead : Boolean
+    read : Boolean
+    readAt : Timestamp
+    * createdAt : Timestamp
+  }
+}
+
+package "Campus Map & Geofence Config" {
+  entity "system_settings\n(doc: campus_map)" as system_settings {
+    * configId : String <<PK>>
+    --
+    * geofence : Array<Map>
+    geofenceJson : String
+    * buildings : Array<Map>
+    buildingsJson : String
+    * updatedAt : Timestamp
+  }
+
+  entity "campus_config\n(doc: map)" as campus_config {
+    * configId : String <<PK>>
+    --
+    * geofence : Array<Map>
+    geofenceJson : String
+    * buildings : Array<Map>
+    buildingsJson : String
+    * updatedAt : Timestamp
+  }
+
+  entity "markers\n(legacy read-only)" as markers {
+    * markerId : String <<PK>>
+    --
+    untypedFields : Dynamic
+  }
+}
+
+' === CROW'S FOOT RELATIONSHIPS ===
+users ||..o| user_passwords : "email sync"
+users ||--o{ audit_logs : "logs"
+users ||--o| student_locations : "shares live GPS"
+users ||--o{ attendance : "records"
+users ||--o{ guardian_links : "as student"
+users |o--o{ guardian_links : "as guardian"
+users ||--o{ sos_logs : "triggers"
+users }o..o{ sos_logs : "guardianUids[]"
+users ||--o{ emergency_posts : "captures"
+users ||..o{ gad_posts : "publishes (email)"
+users }o..o{ gad_posts : "likes (arrays)"
+users ||--o{ messages : "sends / receives"
+users ||--o{ gad_messages : "submits"
+users ||--o{ notifications : "receives / triggers"
+guardian_links |o..o{ notifications : "requestId"
+system_settings ||..|| campus_config : "mirrors"
+system_settings ||..o| emergency_posts : "fallback doc"
+
+@enduml

@@ -40,11 +40,12 @@
                                 </div>
                             </div>
                             <div class="topbar-right ms-auto sta-u4">
-                                <!-- (2026-07-13) Add GAD message button left of notif bell; was bell only -->
+                                <!-- (2026-07-13) Add unread count badge on GAD msg icon; was plain icon -->
                                 <!-- Header GAD message trigger -->
                                 <button class="surface-icon gad-header-msg-btn" type="button" id="headerGadMsgBtn"
                                     aria-label="GAD Messages" title="GAD Messages">
                                     <span class="material-symbols-outlined">chat</span>
+                                    <span class="msg-unread-badge" id="headerGadMsgBadge"></span>
                                 </button>
                                 <div class="notif-btn">
                                     <button class="surface-icon" type="button" id="notifBell"
@@ -906,25 +907,57 @@
 
     <div class="status-modal" id="gadPmModal">
         <div class="gad-chat-card" id="gadChatCard">
-            <!-- (2026-07-13) Clean GAD header without anon divider; was anon subbar -->
+            <!-- (2026-07-13) Live admin presence, mode chooser & alias setup; was static -->
             <div class="gad-chat-header">
                 <div class="sta-u158">
                     <div class="sta-u159">
                         <span class="material-symbols-outlined sta-u160">support_agent</span>
                     </div>
                     <div>
-                        <div class="sta-u161">GAD Support</div>
-                        <div class="sta-u162">
-                            <span class="sta-u163"></span>
-                            <span>Active now • Confidential</span>
+                        <div class="sta-u161">GAD Support <span class="gad-mode-chip" id="gadActiveModeBadge"></span></div>
+                        <div class="sta-u162" id="gadAdminPresenceRow">
+                            <span class="gad-presence-dot" id="gadAdminPresenceDot"></span>
+                            <span id="gadAdminPresenceText">Offline</span>
                         </div>
                     </div>
                 </div>
-                <button type="button" id="closeGadPmModalBtn" class="gad-chat-close" aria-label="Close chat">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+                <div class="gad-header-actions">
+                    <button type="button" id="gadSwitchModeBtn" class="gad-switch-mode-btn" title="Switch Identity Mode">Switch</button>
+                    <button type="button" id="closeGadPmModalBtn" class="gad-chat-close" aria-label="Close chat">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
             </div>
-            <input type="checkbox" id="gadAnonToggle" checked aria-hidden="true" class="sta-u3">
+            <!-- Identity mode selector panel -->
+            <div class="gad-mode-chooser" id="gadModeChooser">
+                <div class="gad-mode-title">How would you like to message GAD?</div>
+                <div class="gad-mode-sub">Your named and anonymous conversations are kept completely separate.</div>
+                <button type="button" class="gad-mode-option" id="gadChooseNamedBtn">
+                    <span class="material-symbols-outlined">badge</span>
+                    <div class="gad-mode-option-copy">
+                        <strong>Message with My Name</strong>
+                        <span id="gadNamedPreviewLabel">Show your staff name to GAD</span>
+                    </div>
+                    <span class="gad-mode-unread" id="gadNamedUnreadBadge"></span>
+                </button>
+                <button type="button" class="gad-mode-option" id="gadChooseAnonBtn">
+                    <span class="material-symbols-outlined">visibility_off</span>
+                    <div class="gad-mode-option-copy">
+                        <strong>Message Anonymously</strong>
+                        <span id="gadAnonPreviewLabel">Choose a custom alias name</span>
+                    </div>
+                    <span class="gad-mode-unread" id="gadAnonUnreadBadge"></span>
+                </button>
+                <div class="gad-alias-setup" id="gadAliasSetupPanel">
+                    <label for="gadAliasInput" class="gad-alias-label">Choose your anonymous display name</label>
+                    <div class="gad-alias-row">
+                        <input type="text" id="gadAliasInput" maxlength="32" placeholder="e.g. Concerned Staff">
+                        <button type="button" id="gadSaveAliasBtn" class="gad-alias-save-btn">Continue</button>
+                    </div>
+                    <div class="gad-alias-error" id="gadAliasError"></div>
+                </div>
+            </div>
+            <input type="checkbox" id="gadAnonToggle" aria-hidden="true" class="sta-u3">
             <div class="gad-chat-thread" id="gadChatThread">
                 <div class="gad-them-row bubble-single">
                     <div class="gad-them-avatar"><span class="material-symbols-outlined sta-u164">support_agent</span>
@@ -1076,8 +1109,9 @@
                             </div>
 
                             <!-- (2026-07-13) Staff Department input for onboarding; was student section -->
-                            <div class="form-group sta-u167" id="fsStaffDepartmentRow" style="display:none; margin-top:12px;">
-                                <label class="form-label sta-u168">Department <span style="opacity:0.65; font-weight:500;">(Optional)</span></label>
+                            <!-- (2026-07-13) Move staff dept inline styles to CSS; was inline -->
+                            <div class="form-group sta-u167 staff-dept-row-hidden" id="fsStaffDepartmentRow">
+                                <label class="form-label sta-u168">Department <span class="optional-field-hint">(Optional)</span></label>
                                 <div class="fs-input-field-wrap">
                                     <span class="material-symbols-outlined input-icon">apartment</span>
                                     <input type="text" id="fsDepartment" placeholder="e.g. Faculty, Admin Office, Security, IT" autocomplete="organization">

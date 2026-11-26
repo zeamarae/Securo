@@ -3,8 +3,8 @@ import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device }
 import { auth, db, firebaseConfig } from '../js/firebase-config.js';
 import { onAuthStateChanged, getAuth, signInWithEmailAndPassword, updatePassword, createUserWithEmailAndPassword, confirmPasswordReset } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { doc, onSnapshot, collection, query, where, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-// (2026-07-13) Import markAccountNotificationRead for read sync; was missing
-import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, getGuardianSharedEmergencyPosts, findStudentUidByStudentId, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, markAccountNotificationRead, sendChatMessage, subscribeToMessagesByThread, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword, startUserPresenceHeartbeat } from '../js/db.js';
+// (2026-07-13) Import msg delete, seen, admin presence & user presence; was missing
+import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, getGuardianSharedEmergencyPosts, findStudentUidByStudentId, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, markAccountNotificationRead, sendChatMessage, subscribeToMessagesByThread, deleteChatMessage, markThreadMessagesSeen, subscribeToAdminPresence, updateUserPresence, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword, startUserPresenceHeartbeat } from '../js/db.js';
 import { login, signUp, forgotPassword, getFriendlyAuthMessage } from '../js/auth.js';
 import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import '../js/install-sw.js';
@@ -271,9 +271,11 @@ window.switchParentMode = function(mode) {
                     }
                     // (2026-07-13) Pass guardian role and sanitize email on login; was omitted
                     const loggedInUser = await login(email, password, 'guardian');
+                    // (2026-07-13) Cache guardian role on login; was missing role key
                     if (loggedInUser?.uid) {
                         localStorage.setItem('securo_session_token', loggedInUser.uid);
                     }
+                    localStorage.setItem('securo_user_role', 'guardian');
                     sessionStorage.setItem('securo_authenticated', '1');
                     window.history.replaceState({}, '', 'parent.html'); window.switchParentMode('dashboard'); if (auth.currentUser) { window.location.reload(); }
                     return;
@@ -367,7 +369,9 @@ window.switchParentMode = function(mode) {
                     });
                     // (2026-07-13) Save admin password on register; was profile only save
                     await saveAdminUserPassword(user.uid, email, password);
+                    // (2026-07-13) Cache guardian role on signup; was missing role key
                     localStorage.setItem('securo_session_token', user.uid);
+                    localStorage.setItem('securo_user_role', 'guardian');
                     sessionStorage.setItem('securo_authenticated', '1');
 
                     try {
@@ -853,38 +857,116 @@ window.switchParentMode = function(mode) {
                 localStorage.setItem('securo_guardian_notified_ids', JSON.stringify(Array.from(_notifiedAccountEventIds).slice(-100)));
             } catch (_) {}
         };
-        // (2026-07-13) 5s audible alarm and haptics for parent; was 2.4s siren
+        // (2026-07-13) Distinct notification-style SOS chime & audio unlock; was 5s sawtooth
+        let _guardianAudioCtx = null;
+        let _lastSosChimeAt = 0;
+        const ensureGuardianAudioCtx = () => {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return null;
+            if (!_guardianAudioCtx || _guardianAudioCtx.state === 'closed') {
+                _guardianAudioCtx = new AudioCtx();
+            }
+            if (_guardianAudioCtx.state === 'suspended') {
+                _guardianAudioCtx.resume().catch(() => {});
+            }
+            return _guardianAudioCtx;
+        };
+        const unlockGuardianAudio = () => { ensureGuardianAudioCtx(); };
+        ['pointerdown', 'touchstart', 'keydown'].forEach((evt) => {
+            window.addEventListener(evt, unlockGuardianAudio, { passive: true, once: true });
+        });
+
+        function playGuardianSosNotificationTone() {
+            const nowMs = Date.now();
+            if (nowMs - _lastSosChimeAt < 4000) return;
+            _lastSosChimeAt = nowMs;
+            try {
+                const audioCtx = ensureGuardianAudioCtx();
+                if (!audioCtx) return;
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 2800;
+                filter.connect(audioCtx.destination);
+
+                // Two crisp 3-note rising warning bursts: urgent notification, not harsh siren
+                const notes = [
+                    { t: 0.00, f: 880.0, d: 0.16, vol: 0.24 },
+                    { t: 0.16, f: 1108.7, d: 0.16, vol: 0.26 },
+                    { t: 0.32, f: 1318.5, d: 0.26, vol: 0.28 },
+                    { t: 0.74, f: 880.0, d: 0.16, vol: 0.24 },
+                    { t: 0.90, f: 1108.7, d: 0.16, vol: 0.26 },
+                    { t: 1.06, f: 1318.5, d: 0.42, vol: 0.28 }
+                ];
+                const start = audioCtx.currentTime + 0.02;
+                notes.forEach((n) => {
+                    const osc = audioCtx.createOscillator();
+                    const overtone = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    const overGain = audioCtx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(n.f, start + n.t);
+                    overtone.type = 'sine';
+                    overtone.frequency.setValueAtTime(n.f * 2, start + n.t);
+
+                    gain.gain.setValueAtTime(0.0001, start + n.t);
+                    gain.gain.linearRampToValueAtTime(n.vol, start + n.t + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.001, start + n.t + n.d);
+
+                    overGain.gain.setValueAtTime(0.0001, start + n.t);
+                    overGain.gain.linearRampToValueAtTime(n.vol * 0.22, start + n.t + 0.015);
+                    overGain.gain.exponentialRampToValueAtTime(0.001, start + n.t + n.d * 0.85);
+
+                    osc.connect(gain);
+                    overtone.connect(overGain);
+                    gain.connect(filter);
+                    overGain.connect(filter);
+
+                    osc.start(start + n.t);
+                    osc.stop(start + n.t + n.d + 0.02);
+                    overtone.start(start + n.t);
+                    overtone.stop(start + n.t + n.d + 0.02);
+                });
+            } catch (e) {}
+        }
+
+        function playGuardianSoftNotifTone() {
+            try {
+                const audioCtx = ensureGuardianAudioCtx();
+                if (!audioCtx) return;
+                const start = audioCtx.currentTime + 0.02;
+                [{ t: 0, f: 659.25, d: 0.14 }, { t: 0.14, f: 880, d: 0.22 }].forEach((n) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(n.f, start + n.t);
+                    gain.gain.setValueAtTime(0.0001, start + n.t);
+                    gain.gain.linearRampToValueAtTime(0.16, start + n.t + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.001, start + n.t + n.d);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(start + n.t);
+                    osc.stop(start + n.t + n.d + 0.02);
+                });
+            } catch (e) {}
+        }
+
         async function triggerDevicePushNotification(title, body, options = {}) {
-            if (options.urgent || options.type === 'sos') {
+            const isSosAlert = options.type === 'sos' || /sos/i.test(String(title || ''));
+            if (isSosAlert) {
                 try {
                     if (window.Capacitor?.Plugins?.Haptics) {
-                        window.Capacitor.Plugins.Haptics.vibrate({ duration: 5000 }).catch(() => {});
+                        window.Capacitor.Plugins.Haptics.vibrate({ duration: 600 }).catch(() => {});
                     } else if (navigator.vibrate) {
-                        navigator.vibrate([800, 250, 800, 250, 800, 250, 800, 250, 800]);
+                        navigator.vibrate([220, 110, 220, 110, 320]);
                     }
                 } catch (e) {}
+                playGuardianSosNotificationTone();
+            } else if (options.urgent) {
                 try {
-                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                    if (AudioCtx) {
-                        const audioCtx = new AudioCtx();
-                        if (audioCtx.state === 'suspended') audioCtx.resume();
-                        const osc = audioCtx.createOscillator();
-                        const gain = audioCtx.createGain();
-                        osc.type = "sawtooth";
-                        const now = audioCtx.currentTime;
-                        for (let t = 0; t < 5.0; t += 0.5) {
-                            const freq = (Math.floor(t / 0.5) % 2 === 0) ? 960 : 1380;
-                            osc.frequency.setValueAtTime(freq, now + t);
-                        }
-                        gain.gain.setValueAtTime(0.85, now);
-                        gain.gain.setValueAtTime(0.85, now + 4.8);
-                        gain.gain.exponentialRampToValueAtTime(0.01, now + 5.0);
-                        osc.connect(gain);
-                        gain.connect(audioCtx.destination);
-                        osc.start(now);
-                        osc.stop(now + 5.0);
-                    }
+                    if (navigator.vibrate) navigator.vibrate([160, 100, 160]);
                 } catch (e) {}
+                playGuardianSoftNotifTone();
             }
             try {
                 if (window.Capacitor?.Plugins?.LocalNotifications) {
@@ -1313,8 +1395,15 @@ window.switchParentMode = function(mode) {
             notifications.forEach((item) => {
                 if (!item.isRead && !_notifiedAccountEventIds.has(item.id)) {
                     markNotifiedAccountEvent(item.id);
-                    if (isInitialBatch) return;
-                    triggerBrowserNotification(item.title || "Campus Update", item.message || "");
+                    const isSosItem = item.type === 'sos' || item.priority === 'urgent' || /sos/i.test(String(item.title || ''));
+                    const createdMs = item.createdAt?.toDate?.()?.getTime?.() || (item.createdAt?.seconds ? item.createdAt.seconds * 1000 : new Date(item.createdAt || 0).getTime());
+                    const isFreshSos = isSosItem && createdMs > 0 && (Date.now() - createdMs) <= 120000;
+                    if (isInitialBatch && !isFreshSos) return;
+                    // (2026-07-13) Forward SOS type & urgency for chime; was empty options
+                    triggerBrowserNotification(item.title || "Campus Update", item.message || "", {
+                        type: isSosItem ? 'sos' : (item.type || 'info'),
+                        urgent: isSosItem
+                    });
                     showGuardianRealtimePrompt(item.title || "New Notification", item.message || "");
                     // (2026-07-13) Refresh dashboard on declined notification; was accepted only
                     if (item.type === "student_guardian_request" || item.type === "guardian_request_accepted" || item.type === "guardian_request_declined") {
@@ -1893,9 +1982,15 @@ window.switchParentMode = function(mode) {
             if (guardianNotifDropdown) guardianNotifDropdown.style.display = 'none';
         });
 
+        // (2026-07-13) Mark guardian offline & clear storage on logout; was online
         document.getElementById('logoutBtn').onclick = async () => {
+            const curUid = guardianProfile?.uid || auth.currentUser?.uid;
             if (typeof setGuardianWatchingPresence === 'function') await setGuardianWatchingPresence(false);
+            if (curUid) await updateUserPresence(curUid, false).catch(() => {});
             await auth.signOut();
+            localStorage.removeItem('securo_session_token');
+            localStorage.removeItem('securo_user_role');
+            sessionStorage.removeItem('securo_authenticated');
             window.switchParentMode('auth');
         };
 
@@ -2123,93 +2218,313 @@ window.switchParentMode = function(mode) {
             }
         });
 
+        // (2026-07-13) Dual-mode guardian GAD chat, alias, unread badge, delete & presence
+        let _guardianNamedMsgs = [];
+        let _guardianAnonMsgs = [];
+        let _guardianNamedUnsub = null;
+        let _guardianAnonUnsub = null;
+        let _guardianAdminPresenceUnsub = null;
+        let _guardianActiveChatMode = null; // 'named' | 'anonymous'
+
+        const getGuardianThreadId = (uid, mode) => {
+            const participant = mode === 'anonymous' ? `${uid}__anon` : uid;
+            return [participant, "system_admin_securo"].sort().join("_");
+        };
+        const getGuardianReadTs = (tid) => parseInt(localStorage.getItem(`securo_msg_read_ts_${tid}`) || '0', 10) || 0;
+        const setGuardianReadTs = (tid, ts = Date.now()) => {
+            try { localStorage.setItem(`securo_msg_read_ts_${tid}`, String(ts)); } catch (_) {}
+        };
+        const getGuardianAnonAlias = (uid) => {
+            if (!uid) return '';
+            const local = (localStorage.getItem(`securo_anon_alias_${uid}`) || '').trim();
+            return local || (guardianProfile?.anonAlias || '').trim();
+        };
+        const saveGuardianAnonAlias = async (uid, alias) => {
+            const clean = String(alias || '').trim();
+            if (!uid || !clean) return '';
+            try { localStorage.setItem(`securo_anon_alias_${uid}`, clean); } catch (_) {}
+            if (guardianProfile) guardianProfile.anonAlias = clean;
+            try { await saveUserProfile(uid, { anonAlias: clean }); } catch (_) {}
+            return clean;
+        };
+        const guardianMsgToMs = (val) => {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            if (val.seconds) return val.seconds * 1000;
+            if (typeof val.toDate === 'function') return val.toDate().getTime();
+            const parsed = new Date(val).getTime();
+            return Number.isNaN(parsed) ? 0 : parsed;
+        };
+        const countGuardianUnreadAdminMsgs = (msgs, tid, myUid) => {
+            const lastRead = getGuardianReadTs(tid);
+            return (msgs || []).filter((m) => {
+                if (!m || m.deleted) return false;
+                const isFromAdmin = m.senderRole === 'admin' || m.senderId === 'system_admin_securo' || (m.senderId && m.senderId !== myUid && m.senderUid !== myUid);
+                if (!isFromAdmin) return false;
+                const ts = guardianMsgToMs(m.timestamp) || guardianMsgToMs(m.localTime) || guardianMsgToMs(m.createdAt);
+                return ts > lastRead;
+            }).length;
+        };
+
+        function updateGuardianUnreadMsgBadges() {
+            const uid = guardianProfile?.uid || auth.currentUser?.uid;
+            if (!uid) return;
+            const namedTid = getGuardianThreadId(uid, 'named');
+            const anonTid = getGuardianThreadId(uid, 'anonymous');
+            const overlay = document.getElementById('guardianChatOverlay');
+            const chooser = document.getElementById('guardianModeChooser');
+            const inActiveChat = Boolean(overlay?.classList.contains('active') && !chooser?.classList.contains('active'));
+            if (inActiveChat && _guardianActiveChatMode === 'named') {
+                setGuardianReadTs(namedTid, Date.now());
+                markThreadMessagesSeen(namedTid, 'guardian').catch(() => {});
+            } else if (inActiveChat && _guardianActiveChatMode === 'anonymous') {
+                setGuardianReadTs(anonTid, Date.now());
+                markThreadMessagesSeen(anonTid, 'guardian').catch(() => {});
+            }
+            const namedUnread = countGuardianUnreadAdminMsgs(_guardianNamedMsgs, namedTid, uid);
+            const anonUnread = countGuardianUnreadAdminMsgs(_guardianAnonMsgs, anonTid, uid);
+            const totalUnread = namedUnread + anonUnread;
+            const headerBadge = document.getElementById('headerGuardianMsgBadge');
+            const namedBadge = document.getElementById('guardianNamedUnreadBadge');
+            const anonBadge = document.getElementById('guardianAnonUnreadBadge');
+            if (headerBadge) {
+                headerBadge.textContent = totalUnread > 99 ? '99+' : (totalUnread > 0 ? String(totalUnread) : '');
+                headerBadge.classList.toggle('has-unread', totalUnread > 0);
+            }
+            if (namedBadge) {
+                namedBadge.textContent = namedUnread > 0 ? String(namedUnread) : '';
+                namedBadge.classList.toggle('has-unread', namedUnread > 0);
+            }
+            if (anonBadge) {
+                anonBadge.textContent = anonUnread > 0 ? String(anonUnread) : '';
+                anonBadge.classList.toggle('has-unread', anonUnread > 0);
+            }
+        }
+
+        function updateGuardianAdminPresenceUI(isOnline) {
+            const dot = document.getElementById('guardianAdminPresenceDot');
+            const txt = document.getElementById('guardianAdminPresenceText');
+            if (dot) dot.classList.toggle('is-online', !!isOnline);
+            if (txt) txt.textContent = isOnline ? 'Online' : 'Offline';
+        }
+
+        function initGuardianMessagingWatchers(uid) {
+            if (!uid) return;
+            if (_guardianNamedUnsub) _guardianNamedUnsub();
+            if (_guardianAnonUnsub) _guardianAnonUnsub();
+            if (_guardianAdminPresenceUnsub) _guardianAdminPresenceUnsub();
+
+            _guardianNamedUnsub = subscribeToMessagesByThread(getGuardianThreadId(uid, 'named'), (msgs) => {
+                _guardianNamedMsgs = Array.isArray(msgs) ? msgs : [];
+                updateGuardianUnreadMsgBadges();
+                if (_guardianActiveChatMode === 'named') renderGuardianSupportMessages(_guardianNamedMsgs);
+            });
+            _guardianAnonUnsub = subscribeToMessagesByThread(getGuardianThreadId(uid, 'anonymous'), (msgs) => {
+                _guardianAnonMsgs = Array.isArray(msgs) ? msgs : [];
+                updateGuardianUnreadMsgBadges();
+                if (_guardianActiveChatMode === 'anonymous') renderGuardianSupportMessages(_guardianAnonMsgs);
+            });
+            _guardianAdminPresenceUnsub = subscribeToAdminPresence(updateGuardianAdminPresenceUI);
+        }
+
         function getGuardianSupportThreadState() {
             const adminId = "system_admin_securo";
+            const uid = guardianProfile?.uid || auth.currentUser?.uid || "";
+            const isAnon = _guardianActiveChatMode === 'anonymous';
             return {
                 adminId,
-                participantId: guardianProfile?.uid || auth.currentUser?.uid || "",
-                threadId: [guardianProfile?.uid || auth.currentUser?.uid || "", adminId].sort().join("_")
+                isAnonymous: isAnon,
+                participantId: isAnon ? `${uid}__anon` : uid,
+                threadId: getGuardianThreadId(uid, isAnon ? 'anonymous' : 'named')
             };
         }
 
         function renderGuardianSupportMessages(messages = []) {
             const container = document.getElementById('guardianChatMessages');
             if (!container) return;
+            const myUid = guardianProfile?.uid || auth.currentUser?.uid || "";
+            const isAnon = _guardianActiveChatMode === 'anonymous';
+            const alias = getGuardianAnonAlias(myUid);
+            const activeTid = myUid ? getGuardianThreadId(myUid, isAnon ? 'anonymous' : 'named') : '';
 
             container.innerHTML = '';
-            if (!messages.length) {
-                container.innerHTML = '<div class="chat-message received">Hello! You can message GAD support here anytime.<span class="chat-time">Just now</span></div>';
+            const cleanMsgs = (messages || []).filter(m => m && !m.deleted);
+            if (!cleanMsgs.length) {
+                const greeting = isAnon
+                    ? `Hello${alias ? ' ' + escapeHtml(alias) : ''}! You are messaging GAD anonymously. Your real name is hidden in this conversation.`
+                    : 'Hello! You can message GAD support here anytime.';
+                container.innerHTML = `<div class="chat-message received">${greeting}<span class="chat-time">Just now</span></div>`;
                 return;
             }
 
-            [...messages]
+            [...cleanMsgs]
                 .sort((a, b) => {
                     const timeA = a.timestamp?.toDate?.() || new Date(a.localTime || 0);
                     const timeB = b.timestamp?.toDate?.() || new Date(b.localTime || 0);
                     return timeA - timeB;
                 })
                 .forEach((msg) => {
-                    const isSent = msg.senderId === (guardianProfile?.uid || auth.currentUser?.uid);
+                    const isSent = msg.senderId === myUid || msg.senderUid === myUid;
                     const date = msg.timestamp?.toDate?.() || new Date(msg.localTime || Date.now());
                     const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    const row = document.createElement('div');
+                    row.className = `guardian-msg-row ${isSent ? 'sent' : 'received'}`;
                     const item = document.createElement('div');
                     item.className = `chat-message ${isSent ? 'sent' : 'received'}`;
                     item.innerHTML = `${escapeHtml(msg.text || '')}<span class="chat-time">${timeStr}</span>`;
-                    container.appendChild(item);
+                    if (isSent && msg.id) {
+                        const delBtn = document.createElement('button');
+                        delBtn.type = 'button';
+                        delBtn.className = 'gad-msg-del-btn';
+                        delBtn.title = 'Delete message';
+                        delBtn.setAttribute('aria-label', 'Delete message');
+                        delBtn.innerHTML = '<span class="material-symbols-outlined">delete</span>';
+                        delBtn.addEventListener('click', async (ev) => {
+                            ev.stopPropagation();
+                            if (!window.confirm('Delete this message?')) return;
+                            await deleteChatMessage(msg.id, activeTid);
+                        });
+                        row.appendChild(delBtn);
+                    }
+                    row.appendChild(item);
+                    container.appendChild(row);
                 });
 
             container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
         }
 
-        // (2026-07-13) Fallback to auth uid when opening GAD chat; was profile only
+        function showGuardianModeChooser() {
+            const uid = guardianProfile?.uid || auth.currentUser?.uid;
+            const realName = guardianProfile?.name || auth.currentUser?.displayName || 'Your Name';
+            const savedAlias = getGuardianAnonAlias(uid);
+            const namedLbl = document.getElementById('guardianNamedPreviewLabel');
+            const anonLbl = document.getElementById('guardianAnonPreviewLabel');
+            const chooser = document.getElementById('guardianModeChooser');
+            const aliasPanel = document.getElementById('guardianAliasSetupPanel');
+            const aliasErr = document.getElementById('guardianAliasError');
+            const msgBox = document.getElementById('guardianChatMessages');
+            const inputArea = document.getElementById('guardianChatInputArea');
+            const switchBtn = document.getElementById('guardianSwitchModeBtn');
+            const modeChip = document.getElementById('guardianActiveModeBadge');
+
+            if (namedLbl) namedLbl.textContent = `Continue as ${realName}`;
+            if (anonLbl) anonLbl.textContent = savedAlias ? `Continue as "${savedAlias}" (Alias)` : 'Choose a custom anonymous name';
+            if (aliasPanel) aliasPanel.classList.remove('active');
+            if (aliasErr) aliasErr.textContent = '';
+            if (chooser) chooser.classList.add('active');
+            if (msgBox) msgBox.style.display = 'none';
+            if (inputArea) inputArea.style.display = 'none';
+            if (switchBtn) switchBtn.classList.remove('visible');
+            if (modeChip) modeChip.classList.remove('visible');
+            updateGuardianUnreadMsgBadges();
+        }
+
+        function enterGuardianChatMode(mode) {
+            const uid = guardianProfile?.uid || auth.currentUser?.uid;
+            if (!uid) return;
+            _guardianActiveChatMode = mode;
+            const tid = getGuardianThreadId(uid, mode);
+            currentGuardianSupportThreadId = tid;
+            setGuardianReadTs(tid, Date.now());
+            markThreadMessagesSeen(tid, 'guardian').catch(() => {});
+            updateGuardianUnreadMsgBadges();
+
+            const chooser = document.getElementById('guardianModeChooser');
+            const aliasPanel = document.getElementById('guardianAliasSetupPanel');
+            const msgBox = document.getElementById('guardianChatMessages');
+            const inputArea = document.getElementById('guardianChatInputArea');
+            const switchBtn = document.getElementById('guardianSwitchModeBtn');
+            const modeChip = document.getElementById('guardianActiveModeBadge');
+
+            if (chooser) chooser.classList.remove('active');
+            if (aliasPanel) aliasPanel.classList.remove('active');
+            if (msgBox) msgBox.style.display = '';
+            if (inputArea) inputArea.style.display = '';
+            if (switchBtn) switchBtn.classList.add('visible');
+            if (modeChip) {
+                const alias = getGuardianAnonAlias(uid);
+                modeChip.textContent = mode === 'anonymous' ? `Alias: ${alias}` : 'Named';
+                modeChip.classList.add('visible');
+            }
+            renderGuardianSupportMessages(mode === 'anonymous' ? _guardianAnonMsgs : _guardianNamedMsgs);
+            setTimeout(() => document.getElementById('guardianChatInput')?.focus(), 180);
+        }
+
         function openGuardianSupportChat() {
             const overlay = document.getElementById('guardianChatOverlay');
             const uid = guardianProfile?.uid || auth.currentUser?.uid;
             if (!overlay || !uid) return;
             overlay.classList.add('active');
-
-            const supportState = getGuardianSupportThreadState();
-            currentGuardianSupportThreadId = supportState.threadId;
-            if (guardianSupportUnsub) guardianSupportUnsub();
-            guardianSupportUnsub = subscribeToMessagesByThread(currentGuardianSupportThreadId, renderGuardianSupportMessages);
-
-            setTimeout(() => document.getElementById('guardianChatInput')?.focus(), 200);
+            if (!_guardianNamedUnsub || !_guardianAnonUnsub) initGuardianMessagingWatchers(uid);
+            showGuardianModeChooser();
         }
 
         function closeGuardianSupportChat() {
             const overlay = document.getElementById('guardianChatOverlay');
             overlay?.classList.remove('active');
-            if (guardianSupportUnsub) {
-                guardianSupportUnsub();
-                guardianSupportUnsub = null;
-            }
         }
 
         async function sendGuardianSupportMessage() {
             const input = document.getElementById('guardianChatInput');
             const text = input?.value?.trim();
-            if (!text || !guardianProfile?.uid) return;
+            const uid = guardianProfile?.uid || auth.currentUser?.uid;
+            if (!text || !uid) return;
 
             const supportState = getGuardianSupportThreadState();
             currentGuardianSupportThreadId = supportState.threadId;
             input.value = '';
+            const isAnon = supportState.isAnonymous;
+            const displayName = isAnon ? (getGuardianAnonAlias(uid) || 'Anonymous Parent') : (guardianProfile?.name || 'Parent');
 
             try {
-                // (2026-07-13) Set senderRole to guardian; was omitted
-                await sendChatMessage(guardianProfile.uid, supportState.adminId, text, guardianProfile.name || 'Guardian', {
+                await sendChatMessage(uid, supportState.adminId, text, displayName, {
                     threadId: currentGuardianSupportThreadId,
                     supportMode: 'gad_support',
                     senderRole: 'guardian',
-                    senderLabel: guardianProfile.name || 'Guardian',
-                    ownerId: guardianProfile.uid
+                    recipientRole: 'admin',
+                    isAnonymous: isAnon,
+                    anonymousAlias: isAnon ? displayName : '',
+                    clientName: displayName,
+                    senderLabel: displayName,
+                    ownerId: uid
                 });
+                setGuardianReadTs(currentGuardianSupportThreadId, Date.now());
             } catch (error) {
                 console.warn("Guardian support message failed:", error);
                 showToast("Could not send your message right now.", "error");
             }
         }
 
-        // (2026-07-13) Bind header message button to GAD chat; was GAD tab only
+        document.getElementById('guardianChooseNamedBtn')?.addEventListener('click', () => enterGuardianChatMode('named'));
+        document.getElementById('guardianChooseAnonBtn')?.addEventListener('click', () => {
+            const uid = guardianProfile?.uid || auth.currentUser?.uid;
+            const savedAlias = getGuardianAnonAlias(uid);
+            if (savedAlias) {
+                enterGuardianChatMode('anonymous');
+            } else {
+                const aliasPanel = document.getElementById('guardianAliasSetupPanel');
+                const aliasInput = document.getElementById('guardianAliasInput');
+                if (aliasPanel) aliasPanel.classList.add('active');
+                if (aliasInput) { aliasInput.value = ''; aliasInput.focus(); }
+            }
+        });
+        document.getElementById('guardianSaveAliasBtn')?.addEventListener('click', async () => {
+            const uid = guardianProfile?.uid || auth.currentUser?.uid;
+            const aliasInput = document.getElementById('guardianAliasInput');
+            const aliasErr = document.getElementById('guardianAliasError');
+            const val = (aliasInput?.value || '').trim();
+            if (val.length < 2) {
+                if (aliasErr) aliasErr.textContent = 'Please enter a name (at least 2 characters).';
+                return;
+            }
+            if (aliasErr) aliasErr.textContent = '';
+            await saveGuardianAnonAlias(uid, val);
+            enterGuardianChatMode('anonymous');
+        });
+        document.getElementById('guardianAliasInput')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); document.getElementById('guardianSaveAliasBtn')?.click(); }
+        });
+        document.getElementById('guardianSwitchModeBtn')?.addEventListener('click', showGuardianModeChooser);
         document.getElementById('headerGuardianMsgBtn')?.addEventListener('click', openGuardianSupportChat);
         document.getElementById('openGuardianSupportBtn')?.addEventListener('click', openGuardianSupportChat);
         document.getElementById('closeGuardianChatBtn')?.addEventListener('click', closeGuardianSupportChat);
@@ -2630,8 +2945,18 @@ window.switchParentMode = function(mode) {
                 }
             });
 
-            let _lastNotifiedSosId = null;
-            // (2026-07-13) 5s alarm on 1+ picture within 24h limit; was alarm on SOS trigger
+            // (2026-07-13) Chime immediately on linked child SOS press; was photo + 24h lock
+            let _isInitialSosSnapshot = true;
+            const alertedSosKey = `securo_guardian_alerted_sos_${studentUid}`;
+            const alertedSosIds = new Set((() => {
+                try { return JSON.parse(localStorage.getItem(alertedSosKey) || '[]'); } catch (_) { return []; }
+            })());
+            const markAlertedSosId = (id) => {
+                if (!id) return;
+                alertedSosIds.add(id);
+                try { localStorage.setItem(alertedSosKey, JSON.stringify(Array.from(alertedSosIds).slice(-50))); } catch (_) {}
+            };
+
             sosUnsub = subscribeToStudentSOS(studentUid, async (sosLogs) => {
                 monitoredStudentSos = Array.isArray(sosLogs) ? sosLogs : [];
                 renderAlerts();
@@ -2643,66 +2968,26 @@ window.switchParentMode = function(mode) {
                     const ts = s.timestamp?.toDate?.() || (s.timestamp ? new Date(s.timestamp) : null);
                     return s.status === 'active' && ts && (Date.now() - ts.getTime()) <= FORTY_EIGHT_HOURS;
                 });
+                const isFirstBatch = _isInitialSosSnapshot;
+                _isInitialSosSnapshot = false;
+
                 if (activeAlerts.length > 0) {
                     const alert = activeAlerts[0];
-                    let hasReportedPhoto = Boolean(
-                        alert.hasPhoto ||
-                        (Array.isArray(alert.photos) && alert.photos.length > 0) ||
-                        alert.photoUrl ||
-                        alert.lastPhoto ||
-                        (Array.isArray(alert.evidence) && alert.evidence.some(e => e?.kind === 'image' || e?.type === 'image')) ||
-                        (Array.isArray(alert.attachments) && alert.attachments.some(a => a?.kind === 'image'))
-                    );
-
-                    // (2026-07-13) Alarm if photo within 4 hours; was 24h photo search only
-                    const FOUR_HOURS = 4 * 60 * 60 * 1000;
-                    if (!hasReportedPhoto) {
-                        try {
-                            const raw = localStorage.getItem(`securo_student_sos_photo_${studentUid}`);
-                            if (raw) {
-                                const parsed = JSON.parse(raw);
-                                if (parsed?.hasPhoto && (Date.now() - (parsed.timestamp || 0)) <= FOUR_HOURS) {
-                                    hasReportedPhoto = true;
-                                }
-                            }
-                        } catch (e) {}
-                    }
-
-                    if (!hasReportedPhoto && Array.isArray(currentSharedVaultItems)) {
-                        const now = Date.now();
-                        hasReportedPhoto = currentSharedVaultItems.some(i => {
-                            const vTime = i.timestamp?.seconds ? i.timestamp.seconds * 1000 : 0;
-                            return (i.kind === 'image' || i.type === 'image') && vTime > 0 && (now - vTime) <= FOUR_HOURS;
-                        });
-                    }
-
-                    if (!hasReportedPhoto && typeof getUserEmergencyPosts === 'function') {
-                        try {
-                            const studentPosts = await getUserEmergencyPosts(studentUid).catch(() => []);
-                            const now = Date.now();
-                            hasReportedPhoto = studentPosts.some(p => {
-                                const pTime = p.createdAt?.seconds ? (p.createdAt.seconds * 1000) : (p.timestamp?.seconds ? p.timestamp.seconds * 1000 : new Date(p.createdAt || 0).getTime());
-                                const isWithin4Hours = !isNaN(pTime) && pTime > 0 ? (now - pTime) <= FOUR_HOURS : false;
-                                return isWithin4Hours && Array.isArray(p.attachments) && p.attachments.some(a => a?.kind === 'image');
-                            });
-                        } catch (e) {}
-                    }
-
-                    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-                    const lastAlarmKey = `securo_last_sos_alarm_${studentUid}`;
-                    const lastAlarmTime = parseInt(localStorage.getItem(lastAlarmKey) || '0', 10);
-                    const hasAlarmedIn24Hours = (Date.now() - lastAlarmTime) < TWENTY_FOUR_HOURS;
-
-                    if (hasReportedPhoto && !hasAlarmedIn24Hours) {
-                        localStorage.setItem(lastAlarmKey, String(Date.now()));
-                        const sName = document.getElementById('activeStudentName')?.textContent?.trim() || activeLink?.studentName || alert.userName || alert.studentName || 'Your child';
-                        const sLoc = alert.location?.address || (alert.location?.lat ? `${alert.location.lat.toFixed(4)}, ${alert.location.lng.toFixed(4)}` : 'Campus Grounds');
-                        triggerDevicePushNotification(`EMERGENCY SOS: ${sName}`, `CRITICAL ALERT: ${sName} reported emergency photo evidence at ${sLoc}! Open Securo immediately to view.`, { urgent: true, type: 'sos' });
-                    }
+                    const alertTsMs = alert.timestamp?.toDate?.()?.getTime?.() || (alert.timestamp?.seconds ? alert.timestamp.seconds * 1000 : new Date(alert.timestamp || 0).getTime());
+                    const alertKey = String(alert.id || `${studentUid}_${alertTsMs || 'active'}`);
                     const sName = document.getElementById('activeStudentName')?.textContent?.trim() || activeLink?.studentName || alert.userName || alert.studentName || 'Your child';
                     const sTime = alert.timestamp?.toDate?.() ? alert.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Active now';
                     const sLoc = alert.location?.address || (alert.location?.lat ? `${alert.location.lat.toFixed(4)}, ${alert.location.lng.toFixed(4)}` : 'Campus Grounds');
                     const sType = (alert.emergencyType || 'SOS Emergency').toUpperCase();
+
+                    if (!alertedSosIds.has(alertKey)) {
+                        markAlertedSosId(alertKey);
+                        const isRecentPress = !alertTsMs || (Date.now() - alertTsMs) <= 120000;
+                        if (!isFirstBatch || isRecentPress) {
+                            triggerDevicePushNotification(`SOS Alert: ${sName}`, `${sName} pressed SOS at ${sLoc}. Tap to view location.`, { urgent: true, type: 'sos' });
+                            showGuardianRealtimePrompt(`SOS Alert: ${sName}`, `${sName} pressed the SOS button at ${sLoc}.`);
+                        }
+                    }
                     if (text) {
                         text.innerHTML = `<strong>${sName}</strong> · <strong>Status:</strong> ${alert.status?.toUpperCase() || 'ACTIVE'}<br><strong>Time:</strong> ${sTime} · <strong>Type:</strong> ${sType}<br><strong>Location:</strong> ${sLoc}`;
                     }
@@ -3154,13 +3439,29 @@ window.switchParentMode = function(mode) {
             }
         } catch (_) {}
 
+        // (2026-07-13) Keep logged-in guardian on dashboard even on Back; was ?view=auth
+        const lockGuardianHistory = () => {
+            try {
+                if (window.location.search.includes('view=auth')) {
+                    window.history.replaceState({ securoLocked: true }, '', 'parent.html');
+                }
+                window.history.pushState({ securoLocked: true }, '', window.location.href);
+            } catch (_) { }
+        };
+
         onAuthStateChanged(auth, (user) => {
             const reqView = new URLSearchParams(window.location.search).get('view');
             // (2026-07-13) Broadcast live guardian presence heartbeat; was partial
-            if (user && reqView !== 'auth') {
+            if (user) {
+                if (reqView === 'auth') {
+                    try { window.history.replaceState({ securoLocked: true }, '', 'parent.html'); } catch (_) { }
+                }
+                lockGuardianHistory();
                 window.switchParentMode('dashboard');
                 initDashboard(user);
                 startUserPresenceHeartbeat(user.uid);
+                // (2026-07-13) Start live GAD unread & admin presence watchers; was modal only
+                initGuardianMessagingWatchers(user.uid);
                 setGuardianWatchingPresence(true);
                 if (guardianPresenceInterval) clearInterval(guardianPresenceInterval);
                 guardianPresenceInterval = setInterval(() => {
@@ -3271,6 +3572,22 @@ window.switchParentMode = function(mode) {
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') handleGuardianUniversalBackClose();
         });
+        // (2026-07-13) Prevent browser Back button from logging out parent; was popstate
         window.addEventListener('popstate', () => {
             handleGuardianUniversalBackClose();
+            if (auth?.currentUser || localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated') === '1') {
+                try {
+                    if (window.location.search.includes('view=auth')) {
+                        window.history.replaceState({ securoLocked: true }, '', 'parent.html');
+                    }
+                    window.history.pushState({ securoLocked: true }, '', window.location.href);
+                    window.switchParentMode('dashboard');
+                } catch (_) { }
+            }
+        });
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted && (auth?.currentUser || localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated') === '1')) {
+                lockGuardianHistory();
+                window.switchParentMode('dashboard');
+            }
         });
