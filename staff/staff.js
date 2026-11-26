@@ -3509,7 +3509,8 @@ onAuthStateChanged(auth, async (user) => {
         }).catch(() => { });
     }
 
-    if (cachedProfile && !isJustRegistered && cachedProfile.onboardingCompleted) {
+    // (2026-07-13) Show appView immediately unless fresh signup; was blank white
+    if (!isJustRegistered && appView) {
         appView.classList.add("active");
         if (!appState.initialViewDone) {
             setActiveView("map");

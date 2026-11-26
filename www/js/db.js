@@ -2333,17 +2333,19 @@ export const getEmergencyPostById = async (postId) => {
      * @param {object} linkData { guardianId, guardianName, guardianEmail, studentId }
      */
     // (2026-07-13) Role validation & multiple linking support; was unvalidated IDs
+    // (2026-07-13) Parallelize lookups & reuse existingStudentLinks; was 7 sequential awaits
     export const createGuardianLinkRequest = async (linkData) => {
         try {
             if (!linkData?.guardianId) {
                 throw new Error("Guardian UID is required.");
             }
-            const guardianProfile = await getUserProfile(linkData.guardianId).catch(() => null);
+            const [guardianProfile, studentRecord] = await Promise.all([
+                getUserProfile(linkData.guardianId).catch(() => null),
+                findStudentUidByStudentId(linkData.studentId).catch(() => null)
+            ]);
             if (guardianProfile && guardianProfile.role && guardianProfile.role !== "guardian") {
                 throw new Error("Only registered Parent or Guardian accounts can send link requests.");
             }
-
-            const studentRecord = await findStudentUidByStudentId(linkData.studentId).catch(() => null);
             if (!studentRecord?.uid) {
                 throw new Error("No registered student was found with Student ID " + linkData.studentId + ".");
             }
@@ -2353,15 +2355,14 @@ export const getEmergencyPostById = async (postId) => {
             if (studentRecord.role && studentRecord.role !== "student") {
                 throw new Error("The specified account is not a student account.");
             }
-            // (2026-07-13) Enforce max 1 accepted parent per student; was unlimited
             const existingStudentLinks = await getLinksForStudent(linkData.studentId, studentRecord.uid).catch(() => []);
             const otherAccepted = (existingStudentLinks || []).find(l => l.status === "accepted" && l.guardianId !== linkData.guardianId && l.guardianUid !== linkData.guardianId);
             if (otherAccepted) {
                 throw new Error("This student is already connected to a parent or guardian.");
             }
 
-            // (2026-07-13) Block double/active invites & set expiry; was overwriting
             const expiresAtMs = Date.now() + GUARDIAN_INVITE_TTL_MS;
+            const normGuardianEmail = normalizeEmail(linkData.guardianEmail || guardianProfile?.email || "");
             const enrichedLinkData = {
                 ...linkData,
                 guardianId: linkData.guardianId,
@@ -2378,12 +2379,12 @@ export const getEmergencyPostById = async (postId) => {
                 createdAt: serverTimestamp()
             };
 
-            const existingLink = await findExistingGuardianStudentLink({
-                guardianId: enrichedLinkData.guardianId,
-                guardianEmail: enrichedLinkData.guardianEmail,
-                studentId: enrichedLinkData.studentId,
-                studentUid: enrichedLinkData.studentUid
-            });
+            const existingLink = (existingStudentLinks || []).find(l =>
+                String(l.guardianId || '') === String(enrichedLinkData.guardianId) ||
+                String(l.guardianUid || '') === String(enrichedLinkData.guardianId) ||
+                (normGuardianEmail && normalizeEmail(l.guardianEmail || '') === normGuardianEmail)
+            ) || null;
+
             if (existingLink) {
                 if (existingLink.status === "accepted") {
                     throw new Error("This student is already connected to your account.");
@@ -2392,7 +2393,7 @@ export const getEmergencyPostById = async (postId) => {
                     if (!isInviteExpired(existingLink)) {
                         throw new Error("An invite for this student is already pending.");
                     }
-                    await cleanupInviteNotifications([existingLink.id]);
+                    cleanupInviteNotifications([existingLink.id]).catch(() => { });
                 }
             }
             const activePendingOther = (existingStudentLinks || []).find(l => l.status === "pending" && l.id !== existingLink?.id && !isInviteExpired(l));
@@ -2410,7 +2411,7 @@ export const getEmergencyPostById = async (postId) => {
             }
             upsertLocalGuardianLink({ id: linkId, ...enrichedLinkData });
 
-            await sendAccountNotification({
+            sendAccountNotification({
                 userId: studentRecord.uid,
                 recipientUid: studentRecord.uid,
                 type: "guardian_request",

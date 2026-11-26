@@ -468,9 +468,10 @@ const isAdminEmail = (email) => {
 };
 
 let _adminAuthInFlight = null;
+// (2026-07-13) Fast single-trip admin auth without 4-password loop; was 8s slow
 async function ensureAdminFirebaseSession(email = 'admin@admin.com', pass = 'admin123') {
     if (auth.currentUser && isAdminEmail(auth.currentUser.email)) {
-        await saveUserProfile(auth.currentUser.uid, {
+        saveUserProfile(auth.currentUser.uid, {
             name: 'Administrator',
             email: 'admin@admin.com',
             role: 'admin'
@@ -481,50 +482,38 @@ async function ensureAdminFirebaseSession(email = 'admin@admin.com', pass = 'adm
     _adminAuthInFlight = (async () => {
         const targetEmail = String(email || 'admin@admin.com').trim().toLowerCase();
         const primaryPass = pass || 'admin123';
-        try {
-            const cred = await signInWithEmailAndPassword(auth, targetEmail, primaryPass);
-            if (cred?.user) {
-                await saveUserProfile(cred.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
-                return cred.user;
-            }
-        } catch (_) {
-            try {
-                const created = await createUserWithEmailAndPassword(auth, targetEmail, primaryPass);
-                if (created?.user) {
-                    await saveUserProfile(created.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
-                    return created.user;
-                }
-            } catch (createErr) {
-                const errCode = String(createErr?.code || '').toLowerCase();
-                if (errCode.includes('email-already-in-use')) {
-                    const altPasswords = ['admin123', '123123123', 'password', '12345678', 'securo123'].filter(p => p !== primaryPass);
-                    for (const altP of altPasswords) {
-                        try {
-                            const altCred = await signInWithEmailAndPassword(auth, targetEmail, altP);
-                            if (altCred?.user) {
-                                await saveUserProfile(altCred.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
-                                return altCred.user;
-                            }
-                        } catch (_) { }
-                    }
-                }
-            }
-        }
         const fallbackEmail = 'admin.command.desk@securo.app';
         const fallbackPass = 'AdminSecuro123!';
+        const cachedWorkingEmail = localStorage.getItem('securo_admin_auth_email');
+
+        const finishAdminUser = (u, workingEmail) => {
+            try { localStorage.setItem('securo_admin_auth_email', workingEmail); } catch (_) { }
+            saveUserProfile(u.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
+            return u;
+        };
+
+        // Try cached working Firebase Auth email first for instant 1-trip login
+        if (cachedWorkingEmail === fallbackEmail) {
+            try {
+                const fbFast = await signInWithEmailAndPassword(auth, fallbackEmail, fallbackPass);
+                if (fbFast?.user) return finishAdminUser(fbFast.user, fallbackEmail);
+            } catch (_) { }
+        }
+
+        // Try primary credentials once
+        try {
+            const cred = await signInWithEmailAndPassword(auth, targetEmail, primaryPass);
+            if (cred?.user) return finishAdminUser(cred.user, targetEmail);
+        } catch (_) { }
+
+        // Fall back directly to service admin account (no multi-password loop)
         try {
             const fbSign = await signInWithEmailAndPassword(auth, fallbackEmail, fallbackPass);
-            if (fbSign?.user) {
-                await saveUserProfile(fbSign.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
-                return fbSign.user;
-            }
+            if (fbSign?.user) return finishAdminUser(fbSign.user, fallbackEmail);
         } catch (_) {
             try {
                 const fbCreate = await createUserWithEmailAndPassword(auth, fallbackEmail, fallbackPass);
-                if (fbCreate?.user) {
-                    await saveUserProfile(fbCreate.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
-                    return fbCreate.user;
-                }
+                if (fbCreate?.user) return finishAdminUser(fbCreate.user, fallbackEmail);
             } catch (_) { }
         }
         return auth.currentUser || null;

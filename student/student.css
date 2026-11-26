@@ -6014,3 +6014,82 @@
 .student-parent-email-input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(90, 31, 224, 0.25); font-size: 14px; outline: none; }
 .student-proceed-ready { opacity: 1; border-color: #5a1fe0; color: #5a1fe0; }
 .student-swipe-hint-icon { color: #0f9b67; }
+
+/* (2026-07-13) Polished Invite Parent modal & tap-to-copy ID box; was static div */
+#inviteParentModal .invite-parent-card {
+    padding: 26px 22px 22px;
+    border-radius: 26px;
+}
+#inviteParentModal #sendGuardianInviteEmailBtn {
+    background: linear-gradient(135deg, #7c3aed, #5a1fe0) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 14px;
+    padding: 0 16px;
+    min-height: 44px;
+    font-weight: 700;
+    box-shadow: 0 6px 16px rgba(90, 31, 224, 0.25);
+    transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+#inviteParentModal #sendGuardianInviteEmailBtn:active {
+    transform: scale(0.96);
+}
+#inviteParentModal #guardianInviteEmailInput {
+    min-height: 44px;
+    border-radius: 14px;
+    border: 1.5px solid rgba(90, 31, 224, 0.22);
+    background: #ffffff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+#inviteParentModal #guardianInviteEmailInput:focus {
+    outline: none;
+    border-color: #6d28d9;
+    box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.14);
+}
+.invite-id-copy-btn {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1.5px dashed rgba(90, 31, 224, 0.35);
+    background: linear-gradient(180deg, #faf8ff, #f3efff);
+    cursor: pointer;
+    transition: transform 0.14s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+.invite-id-copy-btn:hover {
+    border-color: #5a1fe0;
+    box-shadow: 0 6px 18px rgba(90, 31, 224, 0.12);
+}
+.invite-id-copy-btn:active {
+    transform: scale(0.98);
+}
+.invite-id-copy-btn.is-copied {
+    border-style: solid;
+    border-color: #10b981;
+    background: linear-gradient(180deg, #ecfdf5, #d1fae5);
+}
+.invite-id-copy-btn.is-copied .student-invite-code-lg {
+    color: #047857 !important;
+}
+.invite-id-copy-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #6d28d9;
+    background: rgba(109, 40, 217, 0.1);
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+.invite-id-copy-pill .material-symbols-outlined {
+    font-size: 14px;
+}
+.invite-id-copy-btn.is-copied .invite-id-copy-pill {
+    color: #047857;
+    background: rgba(16, 185, 129, 0.16);
+}

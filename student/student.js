@@ -3507,7 +3507,8 @@ const initStudentSwipeToClose = () => {
                 }).catch(() => {});
             }
 
-            if (cachedProfile && !isJustRegistered && cachedProfile.onboardingCompleted) {
+            // (2026-07-13) Show appView immediately unless fresh signup; was blank white
+            if (!isJustRegistered && appView) {
                 appView.classList.add("active");
                 if (!appState.initialViewDone) {
                     setActiveView("map");
@@ -3963,9 +3964,50 @@ const initStudentSwipeToClose = () => {
                         return uid && parsed[uid]?.studentId ? parsed[uid].studentId : "";
                     } catch (_) { return ""; }
                 })() || "";
-            // (2026-07-13) Show Student ID instead of invite URL; prev: guardian link
+            // (2026-07-13) Tap Student ID box to copy 7-digit ID; was non-clickable div
             const guardianUrl = getGuardianBaseUrl() + (studentId ? `?ref=${encodeURIComponent(studentId)}` : "");
             if (urlText) urlText.textContent = studentId || "-------";
+            const inviteLinkBox = document.getElementById("inviteLinkBox");
+            const copyIdIcon = document.getElementById("inviteIdCopyIcon");
+            const copyIdHint = document.getElementById("inviteIdCopyHint");
+            if (inviteLinkBox) {
+                inviteLinkBox.classList.remove("is-copied");
+                if (copyIdIcon) copyIdIcon.textContent = "content_copy";
+                if (copyIdHint) copyIdHint.textContent = "Tap to copy";
+                inviteLinkBox.onclick = () => {
+                    if (!studentId) return;
+                    const markCopied = () => {
+                        inviteLinkBox.classList.add("is-copied");
+                        if (copyIdIcon) copyIdIcon.textContent = "check";
+                        if (copyIdHint) copyIdHint.textContent = "Copied!";
+                        clearTimeout(inviteLinkBox._copyTimer);
+                        inviteLinkBox._copyTimer = setTimeout(() => {
+                            inviteLinkBox.classList.remove("is-copied");
+                            if (copyIdIcon) copyIdIcon.textContent = "content_copy";
+                            if (copyIdHint) copyIdHint.textContent = "Tap to copy";
+                        }, 2200);
+                    };
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(studentId).then(markCopied).catch(() => {
+                            const ta = document.createElement("textarea");
+                            ta.value = studentId;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand("copy");
+                            document.body.removeChild(ta);
+                            markCopied();
+                        });
+                    } else {
+                        const ta = document.createElement("textarea");
+                        ta.value = studentId;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(ta);
+                        markCopied();
+                    }
+                };
+            }
             if (copyBtnLabel) copyBtnLabel.textContent = "Copy Invite Link";
             if (shareBtn) {
                 if (navigator.share) {
