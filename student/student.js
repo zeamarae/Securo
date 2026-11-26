@@ -47,8 +47,8 @@ setTimeout(() => {
             document.body.removeAttribute('data-preloader-active');
         }, 1200);
 
-// Meta apps style swipe down to close
-        document.addEventListener('DOMContentLoaded', () => {
+// (2026-07-13) Run swipe-close setup immediately if DOM ready; was DOMContentLoaded only
+const initStudentSwipeToClose = () => {
             // (2026-07-13) Exclude notif & profile dropdowns from swipe-close; was breaking taps
             const modals = document.querySelectorAll('.status-modal, .mandatory-modal');
 
@@ -107,7 +107,9 @@ setTimeout(() => {
                 card.addEventListener('touchend', () => card.classList.remove('anim-pop-up'));
                 card.addEventListener('touchcancel', () => card.classList.remove('anim-pop-up'));
             });
-        });
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initStudentSwipeToClose);
+        else initStudentSwipeToClose();
 
         // (2026-07-13) Handle universal back button to close modals; was exiting app
         function handleUniversalBackClose() {
@@ -3458,11 +3460,13 @@ setTimeout(() => {
                 } catch (e) { }
             }
 
-            // (2026-07-13) Apply staff theme before view switch; was unstyled
-            const earlyIsStaff = cachedProfile?.role === 'staff' || user.email?.startsWith('staff.');
+            // (2026-07-13) Redirect staff users to blue staff portal; was staying in student
+            const userEmailLower = String(user.email || '').toLowerCase();
+            const earlyIsStaff = cachedProfile?.role === 'staff' || userEmailLower.startsWith('staff.') || userEmailLower.includes('staff@');
             if (earlyIsStaff) {
-                applyRoleTheme('staff');
                 try { localStorage.setItem('securo_user_role', 'staff'); } catch (_) {}
+                window.location.replace("../staff/staff.html");
+                return;
             }
 
             if (cachedProfile?.role === 'guardian' || user.email?.startsWith('guardian.')) {
@@ -3503,7 +3507,8 @@ setTimeout(() => {
                 }).catch(() => {});
             }
 
-            if (cachedProfile && !isJustRegistered && cachedProfile.onboardingCompleted) {
+            // (2026-07-13) Show appView immediately unless fresh signup; was blank white
+            if (!isJustRegistered && appView) {
                 appView.classList.add("active");
                 if (!appState.initialViewDone) {
                     setActiveView("map");
@@ -3532,6 +3537,13 @@ setTimeout(() => {
                 }
                 if (profile?.role === 'admin' || user.email === ADMIN_EMAIL) {
                     window.location.replace("../admin/admin.html");
+                    return;
+                }
+                // (2026-07-13) Redirect staff profile to blue staff portal; was staying student
+                const profEmailLower = String(user.email || profile?.email || '').toLowerCase();
+                if (profile?.role === 'staff' || profEmailLower.startsWith('staff.') || profEmailLower.includes('staff@')) {
+                    try { localStorage.setItem('securo_user_role', 'staff'); } catch (_) {}
+                    window.location.replace("../staff/staff.html");
                     return;
                 }
 
@@ -3952,9 +3964,51 @@ setTimeout(() => {
                         return uid && parsed[uid]?.studentId ? parsed[uid].studentId : "";
                     } catch (_) { return ""; }
                 })() || "";
-            // (2026-07-13) Show Student ID instead of invite URL; prev: guardian link
+            // (2026-07-13) Enable tap-to-copy on Student ID card; was static display
             const guardianUrl = getGuardianBaseUrl() + (studentId ? `?ref=${encodeURIComponent(studentId)}` : "");
             if (urlText) urlText.textContent = studentId || "-------";
+            const inviteLinkBox = document.getElementById("inviteLinkBox");
+            const copyHintPill = document.getElementById("inviteIdCopyHint");
+            const copyHintLabel = document.getElementById("inviteIdCopyLabel");
+            if (inviteLinkBox) {
+                inviteLinkBox.classList.remove("copied");
+                if (copyHintLabel) copyHintLabel.textContent = "Tap to copy";
+                const copyHintIcon = copyHintPill?.querySelector(".material-symbols-outlined");
+                if (copyHintIcon) copyHintIcon.textContent = "content_copy";
+                inviteLinkBox.onclick = () => {
+                    if (!studentId) return;
+                    const markCopied = () => {
+                        inviteLinkBox.classList.add("copied");
+                        if (copyHintLabel) copyHintLabel.textContent = "Copied!";
+                        if (copyHintIcon) copyHintIcon.textContent = "check";
+                        clearTimeout(inviteLinkBox._copyTimer);
+                        inviteLinkBox._copyTimer = setTimeout(() => {
+                            inviteLinkBox.classList.remove("copied");
+                            if (copyHintLabel) copyHintLabel.textContent = "Tap to copy";
+                            if (copyHintIcon) copyHintIcon.textContent = "content_copy";
+                        }, 2000);
+                    };
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(studentId).then(markCopied).catch(() => {
+                            const ta = document.createElement("textarea");
+                            ta.value = studentId;
+                            document.body.appendChild(ta);
+                            ta.select();
+                            document.execCommand("copy");
+                            document.body.removeChild(ta);
+                            markCopied();
+                        });
+                    } else {
+                        const ta = document.createElement("textarea");
+                        ta.value = studentId;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(ta);
+                        markCopied();
+                    }
+                };
+            }
             if (copyBtnLabel) copyBtnLabel.textContent = "Copy Invite Link";
             if (shareBtn) {
                 if (navigator.share) {
@@ -4065,7 +4119,8 @@ setTimeout(() => {
         document.addEventListener("click", (e) => {
             const btn = e.target.closest("button");
             if (!btn || btn.disabled || btn.classList.contains("is-busy") || btn.dataset.noTapLock === "1") return;
-            if (btn.id === "captureAction" || btn.classList.contains("capture-action")) return;
+            // (2026-07-13) Exclude navbar buttons from tap-lock disable; was hiding icons
+            if (btn.id === "captureAction" || btn.classList.contains("capture-action") || btn.classList.contains("nav-item") || btn.hasAttribute("data-nav")) return;
             setTimeout(() => {
                 if (btn.disabled || btn.classList.contains("is-busy")) return;
                 btn.disabled = true;

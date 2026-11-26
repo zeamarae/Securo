@@ -47,8 +47,8 @@ setTimeout(() => {
     document.body.removeAttribute('data-preloader-active');
 }, 1200);
 
-// Meta apps style swipe down to close
-document.addEventListener('DOMContentLoaded', () => {
+// (2026-07-13) Run swipe-close setup immediately if DOM ready; was DOMContentLoaded only
+const initStaffSwipeToClose = () => {
     const modals = document.querySelectorAll('.status-modal, .mandatory-modal, .notif-dropdown, .profile-dropdown');
 
     modals.forEach(modal => {
@@ -106,7 +106,9 @@ document.addEventListener('DOMContentLoaded', () => {
         card.addEventListener('touchend', () => card.classList.remove('anim-pop-up'));
         card.addEventListener('touchcancel', () => card.classList.remove('anim-pop-up'));
     });
-});
+};
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initStaffSwipeToClose);
+else initStaffSwipeToClose();
 
 // (2026-07-13) Handle universal back button to close modals; was exiting app
 function handleUniversalBackClose() {
@@ -3507,7 +3509,8 @@ onAuthStateChanged(auth, async (user) => {
         }).catch(() => { });
     }
 
-    if (cachedProfile && !isJustRegistered && cachedProfile.onboardingCompleted) {
+    // (2026-07-13) Show appView immediately unless fresh signup; was blank white
+    if (!isJustRegistered && appView) {
         appView.classList.add("active");
         if (!appState.initialViewDone) {
             setActiveView("map");

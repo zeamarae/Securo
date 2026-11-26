@@ -5,9 +5,10 @@
     function ensureOverlay() {
         let overlay = document.getElementById(OVERLAY_ID);
         if (!overlay && document.body) {
-            // (2026-07-13) Resolve preloader logo from assets/images; was root path
-            const inSubdir = /\/(admin|staff|student|parent|public)\//.test(window.location.pathname);
-            const logoSrc = (inSubdir ? '../' : '') + 'assets/images/logo with text.png';
+            // (2026-07-13) Resolve preloader logo for all clean subroutes; was 5 dirs only
+            const cleanPath = window.location.pathname.replace(/\/+$/, '') || '/';
+            const isRoot = cleanPath === '/' || cleanPath === '/index.html';
+            const logoSrc = (isRoot ? '' : '../') + 'assets/images/logo with text.png';
             overlay = document.createElement('div');
             overlay.id = OVERLAY_ID;
             overlay.innerHTML = `
@@ -44,19 +45,19 @@
         setTimeout(dismissFallback, 1200);
     }
 
-    // (2026-07-13) Clean dismissal with hidden class & node removal; was inline none
+    // (2026-07-13) Dismiss all matching preloader overlays; was single getElementById
     function dismissFallback() {
-        const overlay = document.getElementById(OVERLAY_ID);
-        if (overlay) {
+        const overlays = document.querySelectorAll('#' + OVERLAY_ID);
+        overlays.forEach((overlay) => {
             overlay.classList.add('hidden');
             overlay.style.setProperty('display', 'none', 'important');
             overlay.style.setProperty('visibility', 'hidden', 'important');
             overlay.style.setProperty('pointer-events', 'none', 'important');
-            document.body.removeAttribute('data-preloader-active');
             setTimeout(() => {
                 if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
             }, 250);
-        }
+        });
+        document.body?.removeAttribute('data-preloader-active');
     }
 
     function runAnimation(onCompleteCallback) {

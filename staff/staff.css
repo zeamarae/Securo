@@ -997,8 +997,12 @@
             display: none;
         }
 
-        button:disabled .material-symbols-outlined {
+        /* (2026-07-13) Never hide navbar icons on disabled/tap-lock; was all buttons */
+        button:disabled:not(.nav-item) .material-symbols-outlined {
             display: none;
+        }
+        .nav-item .material-symbols-outlined {
+            display: inline-flex !important;
         }
 
 

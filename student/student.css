@@ -992,8 +992,12 @@
             display: none;
         }
 
-        button:disabled .material-symbols-outlined {
+        /* (2026-07-13) Never hide navbar icons on disabled/tap-lock; was all buttons */
+        button:disabled:not(.nav-item) .material-symbols-outlined {
             display: none;
+        }
+        .nav-item .material-symbols-outlined {
+            display: inline-flex !important;
         }
 
 
@@ -1804,28 +1808,180 @@
             font-size: 15px;
         }
 
-        /* (2026-07-13) Fix parent invite modal styles; prev: unstyled white text */
+        /* (2026-07-13) Polish invite modal, fix ID card scrollbar & Send align; was basic */
         .invite-parent-card {
-            max-width: 400px;
-            width: 90%;
-            padding: 24px 20px !important;
+            max-width: 392px;
+            width: 92%;
+            padding: 28px 22px 22px !important;
+            border-radius: 26px !important;
+            box-shadow: 0 24px 60px rgba(24, 20, 40, 0.22), 0 0 0 1px rgba(90, 31, 224, 0.08) !important;
         }
 
-        .invite-link-box {
-            background: #f8f6fc;
-            border: 1.5px dashed rgba(90, 31, 224, 0.35);
-            border-radius: 14px;
-            padding: 12px 14px;
-            font-size: 0.8rem;
+        .invite-parent-icon-wrap {
+            width: 64px !important;
+            height: 64px !important;
+            border-radius: 20px !important;
+            background: linear-gradient(145deg, rgba(104, 46, 241, 0.14), rgba(90, 31, 224, 0.06)) !important;
+            border: 1px solid rgba(90, 31, 224, 0.14);
+            box-shadow: 0 8px 20px rgba(90, 31, 224, 0.1);
+            margin-bottom: 14px !important;
+        }
+
+        .invite-parent-icon-wrap .material-symbols-outlined {
+            font-size: 30px !important;
+        }
+
+        .invite-parent-title {
+            font-size: 1.3rem !important;
+            letter-spacing: -0.02em;
+            margin-bottom: 6px !important;
+        }
+
+        .invite-parent-subtitle {
+            font-size: 0.84rem !important;
+            line-height: 1.48 !important;
+            color: #64748b !important;
+            margin: 0 auto 18px !important;
+            max-width: 290px;
+        }
+
+        .invite-email-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .invite-email-input {
+            background: #ffffff !important;
+            border: 1.5px solid rgba(90, 31, 224, 0.2) !important;
+            height: 46px !important;
+            border-radius: 13px !important;
+            padding: 0 14px !important;
+            font-size: 0.88rem !important;
+            color: #181428;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .invite-email-input:focus {
+            border-color: #682ef1 !important;
+            box-shadow: 0 0 0 3px rgba(104, 46, 241, 0.12);
+        }
+
+        .invite-send-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            height: 46px !important;
+            padding: 0 18px !important;
+            border-radius: 13px !important;
+            border: none;
+            background: linear-gradient(135deg, #6d35f5, #4f16e5);
+            color: #ffffff !important;
+            font-size: 0.88rem !important;
+            font-weight: 700;
+            line-height: 1;
+            cursor: pointer;
+            box-shadow: 0 8px 18px rgba(90, 31, 224, 0.28);
+            transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+        }
+
+        .invite-send-btn .material-symbols-outlined {
+            font-size: 18px;
+            line-height: 1;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .invite-send-btn:hover {
+            box-shadow: 0 10px 22px rgba(90, 31, 224, 0.34);
+        }
+
+        .invite-send-btn:active {
+            transform: scale(0.96);
+        }
+
+        .invite-divider {
+            margin: 2px 0 14px !important;
+        }
+
+        .invite-link-box,
+        .invite-id-copy-card {
+            width: 100%;
+            background: linear-gradient(180deg, #faf8ff, #f3efff);
+            border: 1.5px dashed rgba(90, 31, 224, 0.32);
+            border-radius: 16px;
+            padding: 16px 16px 14px;
             color: var(--primary);
-            font-weight: 600;
-            word-break: break-all;
-            user-select: all;
             margin-bottom: 16px;
             text-align: center;
-            max-height: 80px;
-            overflow-y: auto;
-            line-height: 1.4;
+            max-height: none;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            box-sizing: border-box;
+            transition: transform 0.16s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .invite-id-copy-card:hover {
+            border-color: rgba(90, 31, 224, 0.55);
+            background: linear-gradient(180deg, #f6f2ff, #ede6ff);
+            box-shadow: 0 6px 18px rgba(90, 31, 224, 0.1);
+        }
+
+        .invite-id-copy-card:active {
+            transform: scale(0.985);
+        }
+
+        .invite-id-copy-card.copied {
+            border-style: solid;
+            border-color: #10b981;
+            background: linear-gradient(180deg, #f0fdf4, #dcfce7);
+        }
+
+        .invite-id-digits {
+            font-family: 'Sora', monospace;
+            font-size: 1.75rem;
+            letter-spacing: 5px;
+            padding-left: 5px;
+            font-weight: 800;
+            color: #5a1fe0;
+            line-height: 1.15;
+            user-select: all;
+        }
+
+        .invite-id-copy-card.copied .invite-id-digits {
+            color: #059669;
+        }
+
+        .invite-id-copy-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            background: rgba(90, 31, 224, 0.1);
+            color: #5a1fe0;
+            font-size: 0.74rem;
+            font-weight: 700;
+            line-height: 1;
+            transition: background 0.18s ease, color 0.18s ease;
+        }
+
+        .invite-id-copy-pill .material-symbols-outlined {
+            font-size: 14px;
+            line-height: 1;
+        }
+
+        .invite-id-copy-card.copied .invite-id-copy-pill {
+            background: rgba(16, 185, 129, 0.16);
+            color: #047857;
         }
 
         .invite-modal-actions {
@@ -6010,3 +6166,82 @@
 .student-parent-email-input { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid rgba(90, 31, 224, 0.25); font-size: 14px; outline: none; }
 .student-proceed-ready { opacity: 1; border-color: #5a1fe0; color: #5a1fe0; }
 .student-swipe-hint-icon { color: #0f9b67; }
+
+/* (2026-07-13) Polished Invite Parent modal & tap-to-copy ID box; was static div */
+#inviteParentModal .invite-parent-card {
+    padding: 26px 22px 22px;
+    border-radius: 26px;
+}
+#inviteParentModal #sendGuardianInviteEmailBtn {
+    background: linear-gradient(135deg, #7c3aed, #5a1fe0) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 14px;
+    padding: 0 16px;
+    min-height: 44px;
+    font-weight: 700;
+    box-shadow: 0 6px 16px rgba(90, 31, 224, 0.25);
+    transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+#inviteParentModal #sendGuardianInviteEmailBtn:active {
+    transform: scale(0.96);
+}
+#inviteParentModal #guardianInviteEmailInput {
+    min-height: 44px;
+    border-radius: 14px;
+    border: 1.5px solid rgba(90, 31, 224, 0.22);
+    background: #ffffff;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+#inviteParentModal #guardianInviteEmailInput:focus {
+    outline: none;
+    border-color: #6d28d9;
+    box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.14);
+}
+.invite-id-copy-btn {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1.5px dashed rgba(90, 31, 224, 0.35);
+    background: linear-gradient(180deg, #faf8ff, #f3efff);
+    cursor: pointer;
+    transition: transform 0.14s ease, border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+.invite-id-copy-btn:hover {
+    border-color: #5a1fe0;
+    box-shadow: 0 6px 18px rgba(90, 31, 224, 0.12);
+}
+.invite-id-copy-btn:active {
+    transform: scale(0.98);
+}
+.invite-id-copy-btn.is-copied {
+    border-style: solid;
+    border-color: #10b981;
+    background: linear-gradient(180deg, #ecfdf5, #d1fae5);
+}
+.invite-id-copy-btn.is-copied .student-invite-code-lg {
+    color: #047857 !important;
+}
+.invite-id-copy-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #6d28d9;
+    background: rgba(109, 40, 217, 0.1);
+    padding: 3px 10px;
+    border-radius: 999px;
+}
+.invite-id-copy-pill .material-symbols-outlined {
+    font-size: 14px;
+}
+.invite-id-copy-btn.is-copied .invite-id-copy-pill {
+    color: #047857;
+    background: rgba(16, 185, 129, 0.16);
+}

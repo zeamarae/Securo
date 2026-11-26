@@ -21,63 +21,58 @@
         ? '/' + window.location.pathname.split('/')[1] + '/'  // e.g. /Securo/
         : '/';
 
-    /**
-     * Get the clean route name from current URL
-     * e.g. /role-selection.html  →  role-selection
-     *      /Securo/login.html    →  login
-     *      /#/login              →  login
-     */
+    // (2026-07-13) Short extensionless route map; was long hash #/.. paths
+    const SHORT_ROUTES = {
+        'index': '/',
+        'landing': '/',
+        'admin': '/admin/',
+        'student': '/student/',
+        'staff': '/staff/',
+        'parent': '/parent/',
+        'login': '/login/',
+        'role-selection': '/role-selection/',
+        'profile': '/profile/',
+        'settings': '/settings/',
+        'about': '/about/',
+        'hotlines': '/hotlines/',
+        'incident-report': '/incident-report/',
+        'permissions-onboarding': '/permissions-onboarding/',
+        'terms': '/terms/'
+    };
+
+    function resolveShortRoute(rawTarget) {
+        const str = String(rawTarget || '').trim();
+        const [pathOnly, queryPart] = str.split('?');
+        const cleanFile = pathOnly.split('#')[0].replace(/\/$/, '').split('/').pop().replace(/\.html$/i, '').toLowerCase();
+        const route = SHORT_ROUTES[cleanFile];
+        if (!route) return null;
+        const prefix = isGitHubPages ? basePath.replace(/\/$/, '') : '';
+        return prefix + route + (queryPart ? `?${queryPart}` : '');
+    }
+
     function getCurrentRoute() {
-        // Check hash first
-        if (window.location.hash && window.location.hash.startsWith('#/')) {
-            return window.location.hash.slice(2);
-        }
-        const path = window.location.pathname;
-        const file = path.split('/').pop().replace('.html', '');
-        // (2026-07-13) Derive route from pathname fallback; was missing file ref
-        return file || 'landing';
+        const clean = window.location.pathname.replace(/\/$/, '').split('/').pop().replace(/\.html$/i, '');
+        return clean || 'landing';
     }
 
-    /**
-     * Rewrite the browser URL to a clean hash route without reloading
-     * e.g. /role-selection.html  →  /role-selection.html#/role-selection  (local)
-     *      /Securo/login.html    →  /Securo/#/login  (GitHub Pages)
-     */
     function cleanURL() {
-        const path = window.location.pathname;
-        const file = path.split('/').pop();
-
-        if (!file.endsWith('.html')) return; // already clean or not an html page
-        if (window.location.hash.startsWith('#/')) return; // already has clean hash
-
-        const route = file.replace('.html', '');
-
-        if (isGitHubPages) {
-            // On GitHub Pages: /Securo/login.html → /Securo/#/login
-            const cleanPath = basePath + '#/' + route;
-            window.history.replaceState(null, '', cleanPath);
-        } else {
-            // On local dev: /login.html → /login.html#/login  (hides .html visually in address bar after #)
-            window.history.replaceState(null, '', path + '#/' + route);
+        if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') return;
+        const target = resolveShortRoute(window.location.pathname + window.location.search);
+        const keepHash = window.location.hash && !window.location.hash.startsWith('#/') ? window.location.hash : '';
+        if (target && (window.location.pathname + window.location.search + window.location.hash) !== (target + keepHash)) {
+            window.history.replaceState(null, '', target + keepHash);
         }
     }
 
-    /**
-     * Navigate to a page — works in all environments
-     */
     function navigate(page) {
-        page = page.replace('.html', '').replace(/^\//, '');
-
-        if (isGitHubPages) {
-            window.location.href = basePath + page + '.html#/' + page;
-        } else {
-            window.location.href = page + '.html#/' + page;
+        const shortUrl = resolveShortRoute(page);
+        if (shortUrl && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
+            window.location.href = shortUrl;
+            return;
         }
+        window.location.href = page;
     }
 
-    /**
-     * Go back or fallback to a page
-     */
     function goBack(fallback = 'login') {
         if (window.history.length > 1) {
             window.history.back();
@@ -86,32 +81,25 @@
         }
     }
 
-    /**
-     * Intercept all link clicks and convert to hash navigation
-     */
     function interceptLinks() {
         document.addEventListener('click', (e) => {
             const link = e.target.closest('a');
             if (!link) return;
-            
             const href = link.getAttribute('href');
-            
-            // Skip external links, anchors, and special links
-            if (!href || 
-                href.startsWith('http') || 
-                href.startsWith('//') || 
-                href === '#' ||
+            if (!href ||
+                href.startsWith('http') ||
+                href.startsWith('//') ||
+                href.startsWith('#') ||
                 href.startsWith('javascript:') ||
                 href.startsWith('mailto:') ||
                 href.startsWith('tel:')) {
                 return;
             }
-            
-            // If it's an internal .html link
-            if (href.endsWith('.html')) {
+            if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') return;
+            const shortUrl = resolveShortRoute(href);
+            if (shortUrl) {
                 e.preventDefault();
-                const pageName = href.replace('.html', '');
-                navigate(pageName);
+                window.location.href = shortUrl;
             }
         }, false);
     }

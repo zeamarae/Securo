@@ -107,8 +107,10 @@ window.switchAdminMode = function (mode) {
 
 // Initial view check based on URL query
 (function () {
+    // (2026-07-13) Require login view first until auth verifies; was showing dashboard
     const view = new URLSearchParams(window.location.search).get('view');
-    if (view === 'login') window.switchAdminMode('login');
+    if (!auth.currentUser) window.switchAdminMode('login');
+    else if (view === 'login') window.switchAdminMode('login');
     else if (view === 'analytics') window.switchAdminMode('analytics');
     const backBtn = document.getElementById('analyticsBackToDashboardBtn');
     if (backBtn) {
@@ -187,12 +189,13 @@ window.switchAdminMode = function (mode) {
                 sessionStorage.setItem('securo_session_token', user.uid);
             }
 
-            // (2026-07-13) Lock browser Back button for logged-in admin; was replace only
+            // (2026-07-13) Keep clean /admin/ route & lock Back button; merged conflict
             if (email.toLowerCase() === ADMIN_EMAIL || isAdminEmail(user?.email)) {
                 submitBtn.disabled = false;
                 spinner.style.display = 'none';
-                window.history.replaceState({ securoAdminLocked: true }, '', 'admin.html');
-                window.history.pushState({ securoAdminLocked: true }, '', 'admin.html');
+                const targetUrl = (window.location.protocol === 'http:' || window.location.protocol === 'https:') ? '/admin/' : 'admin.html';
+                window.history.replaceState({ securoAdminLocked: true }, '', targetUrl);
+                window.history.pushState({ securoAdminLocked: true }, '', targetUrl);
                 window.switchAdminMode('dashboard');
                 return;
             }
@@ -211,8 +214,9 @@ window.switchAdminMode = function (mode) {
 
             submitBtn.disabled = false;
             spinner.style.display = 'none';
-            window.history.replaceState({ securoAdminLocked: true }, '', 'admin.html');
-            window.history.pushState({ securoAdminLocked: true }, '', 'admin.html');
+            const targetUrl = (window.location.protocol === 'http:' || window.location.protocol === 'https:') ? '/admin/' : 'admin.html';
+            window.history.replaceState({ securoAdminLocked: true }, '', targetUrl);
+            window.history.pushState({ securoAdminLocked: true }, '', targetUrl);
             window.switchAdminMode('dashboard');
         } catch (error) {
             console.error("Auth error:", error);
@@ -2839,29 +2843,18 @@ window._triggerAdminDashboardLoad = () => {
 
     onAuthStateChanged(auth, async (user) => {
     const reqView = new URLSearchParams(window.location.search).get('view');
-    const explicitLogout = sessionStorage.getItem('securo_admin_logged_out') === '1';
+    // (2026-07-13) Always require explicit admin login when signed out; was auto-login
     if (!user) {
-        if (!explicitLogout && reqView !== 'login') {
-            // (2026-07-13) Auto-establish real Firebase Auth admin session; was unauthed
-            try {
-                const realAdmin = await ensureAdminFirebaseSession('admin@admin.com', 'admin123').catch(() => null);
-                if (realAdmin && auth.currentUser) return;
-            } catch (_) { }
-            window.switchAdminMode(reqView === 'analytics' ? 'analytics' : 'dashboard');
-            loadFromLocalCache(true);
-            loadAllData().catch(() => { });
-            return;
-        }
         window.switchAdminMode('login');
         return;
     }
 
     const isKnownAdmin = isAdminEmail(user.email);
-    if (!isKnownAdmin && !explicitLogout && reqView !== 'login') {
+    if (!isKnownAdmin) {
         const profileCheck = await getUserProfile(user.uid).catch(() => null);
         if (profileCheck?.role !== 'admin') {
-            const realAdmin = await ensureAdminFirebaseSession('admin@admin.com', 'admin123').catch(() => null);
-            if (realAdmin && realAdmin.uid !== user.uid) return;
+            window.switchAdminMode('login');
+            return;
         }
     }
 
@@ -2886,7 +2879,8 @@ window._triggerAdminDashboardLoad = () => {
             initAdminChat();
             loadAllData().catch(() => { });
         } else {
-            if (reqView === 'login') window.history.replaceState({ securoAdminLocked: true }, '', 'admin.html');
+            const targetUrl = (window.location.protocol === 'http:' || window.location.protocol === 'https:') ? '/admin/' : 'admin.html';
+            if (reqView === 'login') window.history.replaceState({ securoAdminLocked: true }, '', targetUrl);
             try { window.history.pushState({ securoAdminLocked: true }, '', window.location.href); } catch (_) { }
             stopAdminRealtimeThreads();
             window.switchAdminMode('dashboard');

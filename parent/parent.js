@@ -77,7 +77,8 @@ window.switchParentMode = function(mode) {
         // (2026-07-13) Instant tap-lock & auto-reenable for all guardian buttons; was none
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('button');
-            if (!btn || btn.disabled || btn.classList.contains('is-busy') || btn.dataset.noTapLock === '1') return;
+            // (2026-07-13) Exclude navbar buttons from tap-lock disable; was hiding icons
+            if (!btn || btn.disabled || btn.classList.contains('is-busy') || btn.dataset.noTapLock === '1' || btn.classList.contains('nav-item') || btn.hasAttribute('data-nav')) return;
             setTimeout(() => {
                 if (btn.disabled || btn.classList.contains('is-busy')) return;
                 btn.disabled = true;
@@ -1146,11 +1147,24 @@ window.switchParentMode = function(mode) {
                     if (decBtn) decBtn.disabled = true;
                     try {
                         await respondToGuardianLink(linkId, 'accepted', studentUid, { name: studentName });
+                        const acceptedPending = (window._guardianPendingLinks || []).find(l => l.id === linkId);
                         window._guardianPendingLinks = (window._guardianPendingLinks || []).filter(l => l.id !== linkId);
                         localStorage.setItem('securo_guardian_pending_links', JSON.stringify(window._guardianPendingLinks));
+                        // (2026-07-13) Optimistically show newly accepted child chip; was delayed
+                        const optimisticLink = {
+                            ...(acceptedPending || {}),
+                            id: linkId,
+                            studentUid,
+                            studentName: studentName || acceptedPending?.studentName || 'Child',
+                            status: 'accepted'
+                        };
+                        const prevAccepted = (window._guardianAcceptedLinks || []).filter(l => l.id !== linkId && (!studentUid || l.studentUid !== studentUid));
+                        window._guardianAcceptedLinks = [...prevAccepted, optimisticLink];
+                        if (studentSelectorBar) studentSelectorBar.style.display = 'flex';
+                        selectStudent(optimisticLink, optimisticLink.studentName);
+                        renderStudentSelector(window._guardianAcceptedLinks);
                         renderGuardianAllDropdownNotifications();
                         showGuardianRealtimePrompt("Child Connected", `You are now linked to ${studentName}.`);
-                        if (auth.currentUser) initDashboard(auth.currentUser);
                     } catch (err) {
                         setButtonBusy(btn, false);
                         if (decBtn) decBtn.disabled = false;
@@ -1516,9 +1530,15 @@ window.switchParentMode = function(mode) {
                                     await respondToGuardianLink(link.id, 'accepted', link.studentUid, { name: childDisplayName });
                                     window._guardianPendingLinks = (window._guardianPendingLinks || []).filter(l => l.id !== link.id);
                                     try { localStorage.setItem('securo_guardian_pending_links', JSON.stringify(window._guardianPendingLinks)); } catch (_) {}
+                                    // (2026-07-13) Optimistically render accepted child on bar; was delayed
+                                    const optimisticLink = { ...link, studentName: childDisplayName || link.studentName || 'Child', status: 'accepted' };
+                                    const prevAccepted = (window._guardianAcceptedLinks || []).filter(l => l.id !== link.id && (!link.studentUid || l.studentUid !== link.studentUid));
+                                    window._guardianAcceptedLinks = [...prevAccepted, optimisticLink];
+                                    if (studentSelectorBar) studentSelectorBar.style.display = 'flex';
+                                    selectStudent(optimisticLink, optimisticLink.studentName);
+                                    renderStudentSelector(window._guardianAcceptedLinks);
                                     renderGuardianAllDropdownNotifications();
                                     showToast("Child connected successfully");
-                                    initDashboard(auth.currentUser);
                                 } catch (e) {
                                     setButtonBusy(acc, false);
                                     if (dec) dec.disabled = false;
@@ -1711,7 +1731,8 @@ window.switchParentMode = function(mode) {
                     try { localStorage.setItem('securo_guardian_pending_links', JSON.stringify(pending)); } catch (_) {}
                     renderGuardianAllDropdownNotifications();
 
-                    // (2026-07-13) Toast on child invite, accept, or decline; was accept/decline
+                    // (2026-07-13) Focus newly connected child immediately on bar; was accepted[0]
+                    let newlyAcceptedLink = null;
                     allLiveLinks.forEach(l => {
                         if (l.status === 'pending' && l.requestedBy === 'student') {
                             const invKey = 'pending_student_invite_' + l.id;
@@ -1723,6 +1744,7 @@ window.switchParentMode = function(mode) {
                             if (!_notifiedAccountEventIds.has(l.id)) {
                                 markNotifiedAccountEvent(l.id);
                                 if (!_isInitialGuardianLinkSnapshot) {
+                                    newlyAcceptedLink = l;
                                     showGuardianRealtimePrompt("Child Connected", `${l.studentName || "Your child"} has linked to your guardian account.`);
                                 }
                             }
@@ -1739,12 +1761,19 @@ window.switchParentMode = function(mode) {
                         }
                     });
                     _isInitialGuardianLinkSnapshot = false;
-                    renderStudentSelector(accepted);
+                    window._guardianAcceptedLinks = accepted;
                     if (accepted.length > 0) {
                         if (studentSelectorBar) studentSelectorBar.style.display = 'flex';
+                        const addBtn = document.getElementById('addStudentBtn');
+                        if (addBtn) addBtn.style.display = accepted.length < 5 ? 'flex' : 'none';
                         setPendingGuardianState(null);
-                        selectStudent(accepted[0]);
+                        const targetLink = (newlyAcceptedLink && accepted.find(a => a.id === newlyAcceptedLink.id))
+                            || (activeLink && accepted.find(a => a.id === activeLink.id))
+                            || accepted[0];
+                        selectStudent(targetLink);
+                        renderStudentSelector(accepted);
                     } else if (pending.length > 0) {
+                        renderStudentSelector(accepted);
                         // (2026-07-13) Hide child card & reset link when pending; was retained
                         activeLink = null;
                         if (locationUnsub) { locationUnsub(); locationUnsub = null; }
@@ -2541,7 +2570,7 @@ window.switchParentMode = function(mode) {
         });
 
         let _renderStudentSelectorToken = 0;
-        // (2026-07-13) Deduplicate student selector chips by child name; was duplicates
+        // (2026-07-13) Paint child chips synchronously & scroll active; was async wait
         async function renderStudentSelector(links) {
             const currentToken = ++_renderStudentSelectorToken;
             const bar = document.getElementById('studentSelector');
@@ -2565,21 +2594,9 @@ window.switchParentMode = function(mode) {
                 preliminary.push(l);
             }
 
-            const resolvedList = [];
-            const seenResolvedNames = new Set();
-            for (const link of preliminary) {
-                const resolvedName = await resolveChildDisplayName(link);
-                if (currentToken !== _renderStudentSelectorToken) return;
-                const norm = (resolvedName || '').trim().toLowerCase();
-                if (norm && seenResolvedNames.has(norm)) continue;
-                if (norm) seenResolvedNames.add(norm);
-                resolvedList.push({ link, resolvedName });
-            }
-
-            if (currentToken !== _renderStudentSelectorToken) return;
             // (2026-07-13) Show empty dashed chip when no children linked; was blank
             bar.innerHTML = '';
-            if (!resolvedList.length) {
+            if (!preliminary.length) {
                 const emptyChip = document.createElement('div');
                 emptyChip.className = 'selector-chip guardian-empty-child-chip';
                 emptyChip.style.cssText = 'background:rgba(255,255,255,0.88); border:1px dashed rgba(244,63,94,0.32); color:#64748b; font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer;';
@@ -2589,16 +2606,22 @@ window.switchParentMode = function(mode) {
                 bar.appendChild(emptyChip);
                 return;
             }
-            for (const { link, resolvedName } of resolvedList) {
-                const normName = (resolvedName || '').trim().toLowerCase();
-                const existing = [...bar.querySelectorAll('.selector-chip')].some(c => (c.textContent || '').trim().toLowerCase() === normName);
-                if (existing) continue;
-                const chip = document.createElement('div');
-                chip.className = 'selector-chip' + (activeLink?.id === link.id ? ' active' : '');
-                chip.textContent = resolvedName;
-                chip.title = `Hold to remove ${resolvedName}`;
-                chip.style.userSelect = 'none';
 
+            const chipEntries = [];
+            let activeChipEl = null;
+            for (const link of preliminary) {
+                const initialName = (link.studentName && String(link.studentName).trim())
+                    || (link.studentId ? `Student ${link.studentId}` : 'Child');
+                const chip = document.createElement('div');
+                const isActive = activeLink?.id === link.id;
+                chip.className = 'selector-chip' + (isActive ? ' active' : '');
+                chip.dataset.linkId = link.id || '';
+                chip.textContent = initialName;
+                chip.title = `Hold to remove ${initialName}`;
+                chip.style.userSelect = 'none';
+                if (isActive) activeChipEl = chip;
+
+                let displayNameRef = initialName;
                 let holdTimer = null;
                 let isLongPress = false;
 
@@ -2606,7 +2629,7 @@ window.switchParentMode = function(mode) {
                     isLongPress = false;
                     holdTimer = setTimeout(async () => {
                         isLongPress = true;
-                        if (confirm(`Remove child ${resolvedName}? You can link or invite them again anytime.`)) {
+                        if (confirm(`Remove child ${displayNameRef}? You can link or invite them again anytime.`)) {
                             try {
                                 // (2026-07-13) Pass guardian & student pair to remove all matching links
                                 await removeGuardianLink(link.id, {
@@ -2643,10 +2666,32 @@ window.switchParentMode = function(mode) {
                         isLongPress = false;
                         return;
                     }
-                    selectStudent(link, resolvedName);
+                    selectStudent(link, displayNameRef);
                 };
                 bar.appendChild(chip);
+                chipEntries.push({
+                    link,
+                    chip,
+                    setName: (n) => {
+                        displayNameRef = n;
+                        chip.textContent = n;
+                        chip.title = `Hold to remove ${n}`;
+                    }
+                });
             }
+
+            if (activeChipEl && typeof activeChipEl.scrollIntoView === 'function') {
+                activeChipEl.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+            }
+
+            // Resolve generic/missing names in parallel without blocking initial paint
+            Promise.all(chipEntries.map(async (entry) => {
+                const raw = (entry.link.studentName || '').trim().toLowerCase();
+                if (raw && !raw.startsWith('student') && raw !== 'child') return;
+                const resolved = await resolveChildDisplayName(entry.link).catch(() => null);
+                if (currentToken !== _renderStudentSelectorToken || !resolved) return;
+                entry.setName(resolved);
+            })).catch(() => {});
         }
 
         // (2026-07-13) Fast child switch with shimmer skeletons; was slow multi-fetch

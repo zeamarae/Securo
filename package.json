@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "main": "js/auth.js",
   "scripts": {
-    "dev": "npx serve -p 5508 .",
-    "build": "node -e \"const fs=require('fs'); if(fs.existsSync('www')) fs.readdirSync('www').forEach(f=>{if(f!=='.nojekyll') fs.rmSync('www/'+f,{recursive:true,force:true});}); else fs.mkdirSync('www'); const copyDir=(src,dst)=>{fs.mkdirSync(dst,{recursive:true}); fs.readdirSync(src).forEach(f=>{const s=src+'/'+f,d=dst+'/'+f; if(fs.statSync(s).isDirectory()) copyDir(s,d); else fs.copyFileSync(s,d);});}; ['js','css','public','admin','staff','student','parent','assets'].forEach(dir=>{if(fs.existsSync(dir)) copyDir(dir,'www/'+dir);}); ['index.html','service-worker.js','CNAME','.htaccess'].forEach(f=>{if(fs.existsSync(f)) fs.copyFileSync(f,'www/'+f);}); console.log('Assets synced cleanly to www');\"",
+    "dev": "vite --port 5508 --host",
+    "build": "vite build && node scripts/sync-www.mjs",
+    "preview": "vite preview --port 5508 --host",
     "apk:sync": "npm run build && npx cap sync android",
     "apk:build": "npm run build && npx cap sync android && cd android && .\\gradlew.bat assembleDebug",
     "test": "npx playwright test",
@@ -23,6 +24,12 @@
     "@capacitor/core": "^6.2.1",
     "@capacitor/geolocation": "^6.1.1",
     "@capacitor/local-notifications": "^6.1.3",
-    "puppeteer": "^24.42.0"
+    "puppeteer": "^24.42.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.3.0",
+    "vite": "^8.4.0"
   }
 }

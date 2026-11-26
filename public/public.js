@@ -39,30 +39,31 @@ const PAGE_CONTROLLERS = {
             }
         })();
 
-        // (2026-07-13) Update map preview label to Mommy Mafe Ramil; was John Paul
+        // (2026-07-13) Use Vite-resolved landing image URLs; was relative strings
+        const _landingImgs = (typeof window !== 'undefined' && window.__SECURO_LANDING_IMAGES) || {};
         const PREVIEWS = {
             map: {
-                src: 'assets/images/student_map.png',
+                src: _landingImgs.map || '/assets/images/student_map.png',
                 text: 'Parent Watching Active: Mommy Mafe Ramil'
             },
             sos: {
-                src: 'assets/images/student_sos.png',
+                src: _landingImgs.sos || '/assets/images/student_sos.png',
                 text: 'SOS Armed: 5-Second Cancel Countdown'
             },
             vault: {
-                src: 'assets/images/student_vault.png',
+                src: _landingImgs.vault || '/assets/images/student_vault.png',
                 text: 'Evidence Vault: Encrypted Locker'
             },
             attendance: {
-                src: 'assets/images/student_attendance.png',
+                src: _landingImgs.attendance || '/assets/images/student_attendance.png',
                 text: 'Campus Geofence: Ingress / Egress Logged'
             },
             gad: {
-                src: 'assets/images/student_gad.png',
+                src: _landingImgs.gad || '/assets/images/student_gad.png',
                 text: 'GAD Desk: Real-Time Confidential Chat'
             },
             guardian: {
-                src: 'assets/images/guardian_dashboard.png',
+                src: _landingImgs.guardian || '/assets/images/guardian_dashboard.png',
                 text: 'Guardian View: Real-Time Child Radar'
             }
         };
@@ -1389,9 +1390,18 @@ const PAGE_CONTROLLERS = {
                     if (!password) {
                         throw new Error("Please enter your password.");
                     }
-                    // (2026-07-13) Resolve user and store session token; was conflict
-                    const userCredential = await login(identifier, password, preferredRole);
+                    // (2026-07-13) Lock role & login flag before signIn; was racing to student
+                    try { localStorage.setItem('securo_user_role', preferredRole); } catch (_) { }
+                    sessionStorage.setItem('securo_login_in_progress', '1');
+                    let userCredential;
+                    try {
+                        userCredential = await login(identifier, password, preferredRole);
+                    } catch (loginErr) {
+                        sessionStorage.removeItem('securo_login_in_progress');
+                        throw loginErr;
+                    }
                     const loggedInUser = userCredential?.user || userCredential;
+                    const loggedEmailLower = String(loggedInUser?.email || '').toLowerCase();
                     if (loggedInUser?.uid) {
                         localStorage.setItem('securo_session_token', loggedInUser.uid);
                         sessionStorage.setItem('securo_login_pending', '1');
@@ -1404,8 +1414,8 @@ const PAGE_CONTROLLERS = {
                         profile = await getUserProfile(loggedInUser.uid);
                     } catch (_) {
                         // Profile fetch failed — proceed to dashboard anyway
-                        // (2026-07-13) Route login to active role dashboard; was unparameterized
-                        const activeRole = profile?.role || preferredRole;
+                        const activeRole = (preferredRole === 'staff' || loggedEmailLower.startsWith('staff.') || loggedEmailLower.includes('staff@')) ? 'staff' : (profile?.role || preferredRole);
+                        sessionStorage.removeItem('securo_login_in_progress');
                         try { localStorage.setItem('securo_user_role', activeRole); } catch (_) { }
                         sessionStorage.setItem('securo_authenticated', '1');
                         // (2026-07-13) Replace history entry on login redirect; was href push
@@ -1414,11 +1424,12 @@ const PAGE_CONTROLLERS = {
                     }
 
                     // (2026-07-13) Skip onboarding if profile has name/section; was strict
-                    const isStaffLogin = (profile?.role || preferredRole) === 'staff';
+                    const isStaffLogin = preferredRole === 'staff' || profile?.role === 'staff' || loggedEmailLower.startsWith('staff.') || loggedEmailLower.includes('staff@');
                     const hasValidName = Boolean(profile?.name && profile.name !== 'Student' && profile.name !== 'Staff Member');
                     const hasRequiredProfile = isStaffLogin ? hasValidName : (hasValidName && Boolean(profile?.section));
                     // (2026-07-13) Never block existing login with onboarding; was strict
                     if (profile && profile.onboardingCompleted === false && !hasRequiredProfile) {
+                        sessionStorage.removeItem('securo_login_in_progress');
                         setButtonBusy(submitBtn, false);
                         // (2026-07-13) Preserve recovery email on onboarding; was auth email
                         const recoveryEmail = (profile?.email && !profile.email.endsWith('@securo.app')) ? profile.email : (profile?.recoveryEmail || '');
@@ -1426,13 +1437,14 @@ const PAGE_CONTROLLERS = {
                             uid: loggedInUser.uid,
                             studentId: profile?.studentId || identifier,
                             email: recoveryEmail,
-                            role: preferredRole
+                            role: isStaffLogin ? 'staff' : preferredRole
                         });
                         return;
                     }
 
-                    // (2026-07-13) Cache user role upon login; was not setting role key
-                    const activeRole = profile?.role || preferredRole;
+                    // (2026-07-13) Route staff logins directly to staff hub; was falling to student
+                    const activeRole = isStaffLogin ? 'staff' : (profile?.role || preferredRole);
+                    sessionStorage.removeItem('securo_login_in_progress');
                     try { localStorage.setItem('securo_user_role', activeRole); } catch (_) { }
                     sessionStorage.setItem('securo_authenticated', '1');
                     const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web'));

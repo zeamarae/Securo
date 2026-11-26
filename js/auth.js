@@ -402,10 +402,10 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
                     localStorage.setItem('securo_session_token', user.uid);
                     const inSubdir = /\/(admin|staff|student|parent|public)\//.test(window.location.pathname);
                     const prefix = inSubdir ? '../' : '';
-                    // (2026-07-13) Respect staff email & skip during signup; was stale student
-                    if (sessionStorage.getItem('securo_signup_in_progress') === '1') return;
+                    // (2026-07-13) Respect staff emails & skip during auth; was stale student
+                    if (sessionStorage.getItem('securo_signup_in_progress') === '1' || sessionStorage.getItem('securo_login_in_progress') === '1') return;
                     const emailStr = String(user?.email || '').toLowerCase();
-                    const role = emailStr.startsWith('staff.')
+                    const role = (emailStr.startsWith('staff.') || emailStr.includes('staff@'))
                         ? 'staff'
                         : (localStorage.getItem('securo_user_role') || localStorage.getItem('securo_preferred_role') || 'student').toLowerCase();
                     const target = role === 'staff' ? 'staff/staff.html' : (role === 'admin' ? 'admin/admin.html' : (role === 'guardian' || role === 'parent' ? 'parent/parent.html' : 'student/student.html'));
