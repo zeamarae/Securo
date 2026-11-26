@@ -17,86 +17,11 @@
     <script src="../js/preloader.js"></script>
     
     <!-- (2026-07-13) Link consolidated public styles; was inline style tag -->
-    <link rel="stylesheet" href="public.css">
+    <!-- (2026-07-13) Use ../public/public.css for clean routes; was public.css -->
+    <link rel="stylesheet" href="../public/public.css">
 </head>
 <body class="page-role-selection" data-page="role-selection">
-
-    <!-- (2026-07-13) Dramatic intro preloader with logo; was immediate page view -->
-    <div id="securo-preloader-overlay">
-        <div class="securo-preloader-bg"></div>
-        <div class="securo-preloader-content">
-            <div class="securo-preloader-logo-wrap">
-                <img src="../assets/images/logo with text.png" alt="Securo" class="securo-preloader-logo">
-                <div class="securo-preloader-shimmer"></div>
-            </div>
-            <!-- (2026-07-13) Move indicator below logo in preloader; was above logo -->
-            <div class="securo-preloader-indicator">
-                <span class="securo-preloader-status-text">INITIALIZING SECURE SYSTEMS</span>
-                <div class="securo-preloader-progress-track">
-                    <div class="securo-preloader-progress-bar"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="selection-card">
-        <div class="logo-area">
-            <div class="logo-icon">
-                <span class="material-symbols-outlined">shield_person</span>
-            </div>
-            <h1>Welcome to Securo</h1>
-            <p class="subtitle">Please select your primary role to continue</p>
-        </div>
-
-        <div class="role-grid">
-            <button class="role-btn student" onclick="selectRole('student')">
-                <div class="icon-circle">
-                    <span class="material-symbols-outlined">school</span>
-                </div>
-                <div class="role-info">
-                    <h2>I am a Student</h2>
-                    <p>Access campus map, SOS tools, and attendance.</p>
-                </div>
-                <span class="material-symbols-outlined arrow">arrow_forward_ios</span>
-            </button>
-
-            <button class="role-btn staff" onclick="selectRole('staff')">
-                <div class="icon-circle">
-                    <span class="material-symbols-outlined">badge</span>
-                </div>
-                <div class="role-info">
-                    <h2>I am a Staff Member</h2>
-                    <!-- (2026-07-13) Concise staff description; was verbose & uneven in height -->
-                    <p>Access campus map, SOS tools, attendance, and support.</p>
-                </div>
-                <span class="material-symbols-outlined arrow">arrow_forward_ios</span>
-            </button>
-
-            <button class="role-btn guardian" onclick="selectRole('guardian')">
-                <div class="icon-circle">
-                    <span class="material-symbols-outlined">family_restroom</span>
-                </div>
-                <div class="role-info">
-                    <h2>I am a Parent / Guardian</h2>
-                    <p>Monitor ward's safety and receive alerts.</p>
-                </div>
-                <span class="material-symbols-outlined arrow">arrow_forward_ios</span>
-            </button>
-        </div>
-
-        <div class="footer-note">
-            <p>&copy; 2026 Securo Campus Safety Systems</p>
-            <div class="pub-roleselection-u1">
-                <!-- (2026-07-13) Remove app trailer link; was trailer link -->
-                <a href="../public/about.html" class="pub-roleselection-u2">About Us</a>
-                <span class="pub-roleselection-u3">•</span>
-                <a href="../admin/admin.html?view=login" class="pub-roleselection-u4">Admin Terminal</a>
-            </div>
-        </div>
-    </div>
-
-    
-    <!-- (2026-07-13) Link consolidated public module; was inline script -->
-    <script type="module" src="public.js"></script>
+    <div id="root"></div>
+    <script type="module" src="../src/entries/role-selection.jsx"></script>
 </body>
 </html>

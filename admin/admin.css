@@ -1606,12 +1606,7 @@
             font-size: 0.72rem;
             font-weight: 600;
         }
-            border-radius: 999px;
-            background: rgba(90,31,224,0.08);
-            color: var(--primary);
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
+        /* (2026-07-13) Remove orphan CSS declarations after brace; broke Vite minify */
 
         .status-pill {
             display: inline-flex;

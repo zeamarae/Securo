@@ -47,8 +47,8 @@ setTimeout(() => {
             document.body.removeAttribute('data-preloader-active');
         }, 1200);
 
-// Meta apps style swipe down to close
-        document.addEventListener('DOMContentLoaded', () => {
+// (2026-07-13) Run swipe-close setup immediately if DOM ready; was DOMContentLoaded only
+const initStudentSwipeToClose = () => {
             // (2026-07-13) Exclude notif & profile dropdowns from swipe-close; was breaking taps
             const modals = document.querySelectorAll('.status-modal, .mandatory-modal');
 
@@ -107,7 +107,9 @@ setTimeout(() => {
                 card.addEventListener('touchend', () => card.classList.remove('anim-pop-up'));
                 card.addEventListener('touchcancel', () => card.classList.remove('anim-pop-up'));
             });
-        });
+        };
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initStudentSwipeToClose);
+        else initStudentSwipeToClose();
 
         // (2026-07-13) Handle universal back button to close modals; was exiting app
         function handleUniversalBackClose() {
@@ -3441,11 +3443,13 @@ setTimeout(() => {
                 } catch (e) { }
             }
 
-            // (2026-07-13) Apply staff theme before view switch; was unstyled
-            const earlyIsStaff = cachedProfile?.role === 'staff' || user.email?.startsWith('staff.');
+            // (2026-07-13) Redirect staff users to blue staff portal; was staying in student
+            const userEmailLower = String(user.email || '').toLowerCase();
+            const earlyIsStaff = cachedProfile?.role === 'staff' || userEmailLower.startsWith('staff.') || userEmailLower.includes('staff@');
             if (earlyIsStaff) {
-                applyRoleTheme('staff');
                 try { localStorage.setItem('securo_user_role', 'staff'); } catch (_) {}
+                window.location.replace("../staff/staff.html");
+                return;
             }
 
             if (cachedProfile?.role === 'guardian' || user.email?.startsWith('guardian.')) {
@@ -3515,6 +3519,13 @@ setTimeout(() => {
                 }
                 if (profile?.role === 'admin' || user.email === ADMIN_EMAIL) {
                     window.location.replace("../admin/admin.html");
+                    return;
+                }
+                // (2026-07-13) Redirect staff profile to blue staff portal; was staying student
+                const profEmailLower = String(user.email || profile?.email || '').toLowerCase();
+                if (profile?.role === 'staff' || profEmailLower.startsWith('staff.') || profEmailLower.includes('staff@')) {
+                    try { localStorage.setItem('securo_user_role', 'staff'); } catch (_) {}
+                    window.location.replace("../staff/staff.html");
                     return;
                 }
 
@@ -4048,7 +4059,8 @@ setTimeout(() => {
         document.addEventListener("click", (e) => {
             const btn = e.target.closest("button");
             if (!btn || btn.disabled || btn.classList.contains("is-busy") || btn.dataset.noTapLock === "1") return;
-            if (btn.id === "captureAction" || btn.classList.contains("capture-action")) return;
+            // (2026-07-13) Exclude navbar buttons from tap-lock disable; was hiding icons
+            if (btn.id === "captureAction" || btn.classList.contains("capture-action") || btn.classList.contains("nav-item") || btn.hasAttribute("data-nav")) return;
             setTimeout(() => {
                 if (btn.disabled || btn.classList.contains("is-busy")) return;
                 btn.disabled = true;

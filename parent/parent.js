@@ -77,7 +77,8 @@ window.switchParentMode = function(mode) {
         // (2026-07-13) Instant tap-lock & auto-reenable for all guardian buttons; was none
         document.addEventListener('click', (e) => {
             const btn = e.target.closest('button');
-            if (!btn || btn.disabled || btn.classList.contains('is-busy') || btn.dataset.noTapLock === '1') return;
+            // (2026-07-13) Exclude navbar buttons from tap-lock disable; was hiding icons
+            if (!btn || btn.disabled || btn.classList.contains('is-busy') || btn.dataset.noTapLock === '1' || btn.classList.contains('nav-item') || btn.hasAttribute('data-nav')) return;
             setTimeout(() => {
                 if (btn.disabled || btn.classList.contains('is-busy')) return;
                 btn.disabled = true;
