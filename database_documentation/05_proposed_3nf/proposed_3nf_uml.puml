@@ -1,0 +1,340 @@
+@startuml Securo_Proposed_3NF_UML
+' Securo Campus Safety System - Proposed 3NF Relational UML Class Diagram
+' Strictly normalized to 1NF, 2NF, and 3NF while preserving 100% of verified business logic
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam linetype ortho
+skinparam nodesep 50
+skinparam ranksep 60
+skinparam classAttributeIconSize 0
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 11
+
+skinparam package {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontColor #1E293B
+  FontStyle bold
+}
+
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #3B0764
+  HeaderBackgroundColor #F3E8FF
+  FontColor #0F172A
+  AttributeFontColor #334155
+}
+
+title Securo Proposed 3NF Database — UML Class Diagram (Normalized Relational Model)
+
+package "1. Identity, Roles & Credentials" {
+  class users <<Table>> {
+    + user_id : VARCHAR(128) <<PK>>
+    + role : VARCHAR(20) {NOT NULL: student|staff|guardian|admin}
+    + first_name : VARCHAR(100) {nullable}
+    + last_name : VARCHAR(100) {nullable}
+    + display_name : VARCHAR(200) {NOT NULL}
+    + email : VARCHAR(255) <<UK>> {nullable}
+    + recovery_email : VARCHAR(255) {nullable}
+    + auth_email : VARCHAR(255) <<UK>> {NOT NULL}
+    + photo_url : TEXT {nullable}
+    + anon_alias : VARCHAR(80) {nullable}
+    + onboarding_completed : BOOLEAN {NOT NULL, default: false}
+    + is_online : BOOLEAN {NOT NULL, default: false}
+    + last_active_at : TIMESTAMP {nullable}
+    + is_deleted : BOOLEAN {NOT NULL, default: false}
+    + deleted_at : TIMESTAMP {nullable}
+    + created_at : TIMESTAMP {NOT NULL}
+    + updated_at : TIMESTAMP {NOT NULL}
+  }
+
+  class student_profiles <<Table>> {
+    + user_id : VARCHAR(128) <<PK, FK>>
+    + student_number : CHAR(7) <<UK>> {NOT NULL}
+    + course : VARCHAR(50) {nullable}
+    + year_level : SMALLINT {nullable, 1..5}
+    + section_code : VARCHAR(20) {nullable}
+    + emergency_contact_name : VARCHAR(150) {nullable}
+    + emergency_contact_phone : VARCHAR(30) {nullable}
+  }
+
+  class staff_profiles <<Table>> {
+    + user_id : VARCHAR(128) <<PK, FK>>
+    + staff_number : CHAR(7) <<UK>> {NOT NULL}
+    + department : VARCHAR(120) {nullable}
+  }
+
+  class guardian_profiles <<Table>> {
+    + user_id : VARCHAR(128) <<PK, FK>>
+    + is_watching : BOOLEAN {NOT NULL, default: false}
+  }
+
+  class user_credentials <<Table>> {
+    + user_id : VARCHAR(128) <<PK, FK>>
+    + password_hash : VARCHAR(255) {NOT NULL}
+    + password_updated_at : TIMESTAMP {NOT NULL}
+  }
+}
+
+package "2. Guardian Linking & Campus Tracking" {
+  class guardian_links <<Table>> {
+    + link_id : VARCHAR(64) <<PK>>
+    + student_user_id : VARCHAR(128) <<FK>> {NOT NULL}
+    + guardian_user_id : VARCHAR(128) <<FK>> {nullable until registered}
+    + invited_guardian_email : VARCHAR(255) {nullable}
+    + relationship_type : VARCHAR(40) {NOT NULL, default: parent}
+    + status : VARCHAR(20) {NOT NULL: pending|accepted|rejected|removed}
+    + requested_by : VARCHAR(20) {NOT NULL: guardian|student}
+    + perm_sos_alerts : BOOLEAN {NOT NULL, default: true}
+    + perm_attendance_alerts : BOOLEAN {NOT NULL, default: true}
+    + perm_live_location : BOOLEAN {NOT NULL, default: true}
+    + expires_at : TIMESTAMP {nullable}
+    + created_at : TIMESTAMP {NOT NULL}
+    + responded_at : TIMESTAMP {nullable}
+    + approved_at : TIMESTAMP {nullable}
+    + updated_at : TIMESTAMP {NOT NULL}
+  }
+
+  class location_reminders <<Table>> {
+    + reminder_id : VARCHAR(64) <<PK>>
+    + link_id : VARCHAR(64) <<FK>> {NOT NULL}
+    + requested_by_user_id : VARCHAR(128) <<FK>> {NOT NULL}
+    + message : VARCHAR(255) {NOT NULL}
+    + requested_at : TIMESTAMP {NOT NULL}
+  }
+
+  class user_live_locations <<Table>> {
+    + user_id : VARCHAR(128) <<PK, FK>>
+    + latitude : DECIMAL(9,6) {nullable}
+    + longitude : DECIMAL(9,6) {nullable}
+    + is_inside_campus : BOOLEAN {NOT NULL, default: false}
+    + sharing_enabled : BOOLEAN {NOT NULL, default: false}
+    + sharing_state : VARCHAR(30) {NOT NULL, default: off}
+    + sharing_message : VARCHAR(255) {nullable}
+    + updated_at : TIMESTAMP {NOT NULL}
+  }
+
+  class attendance_logs <<Table>> {
+    + attendance_id : VARCHAR(64) <<PK>>
+    + user_id : VARCHAR(128) <<FK>> {NOT NULL}
+    + event_type : VARCHAR(10) {NOT NULL: in|out}
+    + latitude : DECIMAL(9,6) {nullable}
+    + longitude : DECIMAL(9,6) {nullable}
+    + location_address : VARCHAR(255) {nullable}
+    + is_auto_logged : BOOLEAN {NOT NULL, default: false}
+    + recorded_at : TIMESTAMP {NOT NULL}
+  }
+}
+
+package "3. Emergency SOS & Digital Vault" {
+  class sos_logs <<Table>> {
+    + sos_log_id : VARCHAR(64) <<PK>>
+    + user_id : VARCHAR(128) <<FK>> {NOT NULL}
+    + emergency_type : VARCHAR(30) {NOT NULL, default: sos}
+    + status : VARCHAR(20) {NOT NULL, default: active}
+    + latitude : DECIMAL(9,6) {nullable}
+    + longitude : DECIMAL(9,6) {nullable}
+    + location_address : VARCHAR(255) {nullable}
+    + is_out_of_bounds : BOOLEAN {NOT NULL, default: false}
+    + accuracy_meters : DECIMAL(8,2) {nullable}
+    + battery_percent : SMALLINT {nullable}
+    + has_photo : BOOLEAN {NOT NULL, default: false}
+    + last_photo_url : TEXT {nullable}
+    + last_photo_at : TIMESTAMP {nullable}
+    + triggered_at : TIMESTAMP {NOT NULL}
+  }
+
+  class sos_log_recipients <<Associative>> {
+    + sos_log_id : VARCHAR(64) <<PK, FK>>
+    + guardian_user_id : VARCHAR(128) <<PK, FK>>
+    + notified_at : TIMESTAMP {NOT NULL}
+  }
+
+  class emergency_posts <<Table>> {
+    + post_id : VARCHAR(64) <<PK>>
+    + user_id : VARCHAR(128) <<FK>> {NOT NULL}
+    + latitude : DECIMAL(9,6) {nullable}
+    + longitude : DECIMAL(9,6) {nullable}
+    + location_address : VARCHAR(255) {nullable}
+    + gad_visible : BOOLEAN {NOT NULL, default: true}
+    + guardian_visible : BOOLEAN {NOT NULL, default: true}
+    + status : VARCHAR(20) {NOT NULL, default: posted}
+    + created_at : TIMESTAMP {NOT NULL}
+  }
+
+  class emergency_post_attachments <<Table>> {
+    + attachment_id : VARCHAR(64) <<PK>>
+    + post_id : VARCHAR(64) <<FK>> {NOT NULL}
+    + media_kind : VARCHAR(20) {NOT NULL: image|video|audio}
+    + media_url : TEXT {NOT NULL}
+    + file_name : VARCHAR(255) {nullable}
+    + captured_at : TIMESTAMP {NOT NULL}
+  }
+}
+
+package "4. GAD Bulletins & Support Messaging" {
+  class gad_posts <<Table>> {
+    + post_id : VARCHAR(64) <<PK>>
+    + author_user_id : VARCHAR(128) <<FK>> {NOT NULL}
+    + content : TEXT {NOT NULL}
+    + image_url : TEXT {nullable}
+    + created_at : TIMESTAMP {NOT NULL}
+    + updated_at : TIMESTAMP {nullable}
+  }
+
+  class gad_post_likes <<Associative>> {
+    + post_id : VARCHAR(64) <<PK, FK>>
+    + user_id : VARCHAR(128) <<PK, FK>>
+    + liked_at : TIMESTAMP {NOT NULL}
+  }
+
+  class chat_threads <<Table>> {
+    + thread_id : VARCHAR(160) <<PK>>
+    + initiator_user_id : VARCHAR(128) <<FK>> {NOT NULL}
+    + assigned_admin_id : VARCHAR(128) <<FK>> {nullable}
+    + support_mode : VARCHAR(30) {NOT NULL, default: gad_support}
+    + is_anonymous : BOOLEAN {NOT NULL, default: false}
+    + anonymous_alias : VARCHAR(80) {nullable}
+    + created_at : TIMESTAMP {NOT NULL}
+    + updated_at : TIMESTAMP {NOT NULL}
+  }
+
+  class chat_messages <<Table>> {
+    + message_id : VARCHAR(64) <<PK>>
+    + thread_id : VARCHAR(160) <<FK>> {NOT NULL}
+    + sender_user_id : VARCHAR(128) <<FK>> {NOT NULL}
+    + receiver_user_id : VARCHAR(128) <<FK>> {NOT NULL}
+    + body : TEXT {NOT NULL}
+    + status : VARCHAR(20) {NOT NULL: delivered|seen|replied}
+    + is_read : BOOLEAN {NOT NULL, default: false}
+    + seen_at : TIMESTAMP {nullable}
+    + replied_at : TIMESTAMP {nullable}
+    + replied_by_user_id : VARCHAR(128) <<FK>> {nullable}
+    + is_deleted : BOOLEAN {NOT NULL, default: false}
+    + deleted_at : TIMESTAMP {nullable}
+    + sent_at : TIMESTAMP {NOT NULL}
+  }
+
+  class gad_inquiries <<Table>> {
+    + inquiry_id : VARCHAR(64) <<PK>>
+    + submitter_user_id : VARCHAR(128) <<FK>> {NOT NULL}
+    + thread_id : VARCHAR(160) <<FK>> {nullable}
+    + is_anonymous : BOOLEAN {NOT NULL, default: false}
+    + subject : VARCHAR(160) {NOT NULL}
+    + category : VARCHAR(60) {NOT NULL}
+    + message : TEXT {NOT NULL}
+    + latitude : DECIMAL(9,6) {nullable}
+    + longitude : DECIMAL(9,6) {nullable}
+    + status : VARCHAR(20) {NOT NULL: open|answered}
+    + reply_text : TEXT {nullable}
+    + replied_at : TIMESTAMP {nullable}
+    + replied_by_user_id : VARCHAR(128) <<FK>> {nullable}
+    + is_deleted : BOOLEAN {NOT NULL, default: false}
+    + created_at : TIMESTAMP {NOT NULL}
+  }
+}
+
+package "5. Notifications, Audit & Campus Geofence" {
+  class notifications <<Table>> {
+    + notification_id : VARCHAR(64) <<PK>>
+    + recipient_user_id : VARCHAR(128) <<FK>> {nullable if email invite}
+    + recipient_email : VARCHAR(255) {nullable}
+    + source_user_id : VARCHAR(128) <<FK>> {nullable}
+    + guardian_link_id : VARCHAR(64) <<FK>> {nullable}
+    + notification_type : VARCHAR(50) {NOT NULL}
+    + title : VARCHAR(160) {NOT NULL}
+    + message : TEXT {NOT NULL}
+    + priority : VARCHAR(15) {NOT NULL: normal|high|urgent}
+    + status : VARCHAR(20) {NOT NULL, default: active}
+    + resolved_status : VARCHAR(20) {nullable}
+    + related_entity_type : VARCHAR(40) {nullable}
+    + related_entity_id : VARCHAR(128) {nullable}
+    + action_url : VARCHAR(255) {nullable}
+    + expires_at : TIMESTAMP {nullable}
+    + is_read : BOOLEAN {NOT NULL, default: false}
+    + read_at : TIMESTAMP {nullable}
+    + created_at : TIMESTAMP {NOT NULL}
+  }
+
+  class audit_logs <<Table, AppendOnly>> {
+    + log_id : VARCHAR(64) <<PK>>
+    + user_id : VARCHAR(128) <<FK>> {NOT NULL}
+    + action : VARCHAR(50) {NOT NULL}
+    + auth_method : VARCHAR(30) {nullable}
+    + details_json : JSON {nullable}
+    + ip_address : VARCHAR(45) {nullable}
+    + user_agent : VARCHAR(512) {NOT NULL}
+    + session_id : VARCHAR(128) {NOT NULL}
+    + occurred_at : TIMESTAMP {NOT NULL}
+  }
+
+  class campus_map_configs <<Table>> {
+    + config_id : VARCHAR(64) <<PK>>
+    + config_name : VARCHAR(100) {NOT NULL}
+    + updated_by_user_id : VARCHAR(128) <<FK>> {nullable}
+    + updated_at : TIMESTAMP {NOT NULL}
+  }
+
+  class campus_geofence_vertices <<Table>> {
+    + vertex_id : VARCHAR(64) <<PK>>
+    + config_id : VARCHAR(64) <<FK, UK>> {NOT NULL}
+    + sequence_order : INT <<UK>> {NOT NULL}
+    + latitude : DECIMAL(9,6) {NOT NULL}
+    + longitude : DECIMAL(9,6) {NOT NULL}
+  }
+
+  class campus_places <<Table>> {
+    + place_id : VARCHAR(64) <<PK>>
+    + config_id : VARCHAR(64) <<FK>> {NOT NULL}
+    + name : VARCHAR(100) {NOT NULL}
+    + icon : VARCHAR(50) {NOT NULL}
+    + description : VARCHAR(255) {nullable}
+    + latitude : DECIMAL(9,6) {NOT NULL}
+    + longitude : DECIMAL(9,6) {NOT NULL}
+    + zone_radius_meters : INT {NOT NULL, default: 35}
+    + updated_at : TIMESTAMP {NOT NULL}
+  }
+}
+
+' === SUBTYPE SPECIALIZATION (1:0..1) ===
+users "1" <|-- "0..1" student_profiles
+users "1" <|-- "0..1" staff_profiles
+users "1" <|-- "0..1" guardian_profiles
+users "1" -- "0..1" user_credentials
+
+' === GUARDIAN LINKING & TRACKING ===
+student_profiles "1" -- "0..*" guardian_links : linked to (max 1 accepted)
+guardian_profiles "0..1" -- "0..*" guardian_links : monitors (max 5 active)
+guardian_links "1" *-- "0..*" location_reminders : link_id
+guardian_profiles "1" -- "0..*" location_reminders : requested_by
+users "1" -- "0..1" user_live_locations : live GPS
+users "1" -- "0..*" attendance_logs : time in/out
+
+' === EMERGENCY & VAULT ===
+users "1" -- "0..*" sos_logs : triggers
+sos_logs "1" *-- "0..*" sos_log_recipients : notifies
+guardian_profiles "1" -- "0..*" sos_log_recipients : receives SOS
+users "1" -- "0..*" emergency_posts : creates
+emergency_posts "1" *-- "0..*" emergency_post_attachments : contains
+
+' === GAD & MESSAGING ===
+users "1" -- "0..*" gad_posts : authors
+gad_posts "1" *-- "0..*" gad_post_likes : liked
+users "1" -- "0..*" gad_post_likes : likes
+users "1" -- "0..*" chat_threads : initiates / assigned
+chat_threads "1" *-- "0..*" chat_messages : contains
+users "1" -- "0..*" chat_messages : sends / receives / replies
+users "1" -- "0..*" gad_inquiries : submits / replies
+chat_threads "0..1" -- "0..*" gad_inquiries : linked thread
+
+' === NOTIFICATIONS, AUDIT & CAMPUS CONFIG ===
+users "0..1" -- "0..*" notifications : recipient / source
+guardian_links "0..1" -- "0..*" notifications : invite ref
+users "1" -- "0..*" audit_logs : audited actions
+users "0..1" -- "0..*" campus_map_configs : updates
+campus_map_configs "1" *-- "3..*" campus_geofence_vertices : perimeter
+campus_map_configs "1" *-- "0..*" campus_places : landmarks & zones
+
+@enduml

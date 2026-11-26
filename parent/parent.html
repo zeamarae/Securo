@@ -379,11 +379,12 @@
                     </div>
                 </div>
                 <div class="topbar-right par-u43">
-                    <!-- (2026-07-13) Add GAD message button left of notif bell; was bell only -->
+                    <!-- (2026-07-13) Add unread count badge on GAD msg icon; was plain icon -->
                     <!-- Header GAD message trigger -->
                     <button class="surface-icon par-u48 gad-header-msg-btn" type="button" id="headerGuardianMsgBtn"
                         aria-label="GAD Messages" title="GAD Messages">
                         <span class="material-symbols-outlined">chat</span>
+                        <span class="msg-unread-badge" id="headerGuardianMsgBadge"></span>
                     </button>
                     <!-- (2026-07-13) Move emergency & location modals to dropdown; was map overlay -->
                     <div class="notif-btn par-u47">
@@ -746,19 +747,58 @@
         </div>
     </div>
 
+    <!-- (2026-07-13) Live admin presence, mode chooser & alias setup; was named only -->
     <div class="chat-overlay" id="guardianChatOverlay">
         <div class="chat-box">
             <div class="chat-header">
                 <div class="par-u105">
                     <span class="material-symbols-outlined">support_agent</span>
-                    <strong class="par-u106">GAD Support</strong>
+                    <div class="guardian-chat-title-wrap">
+                        <strong class="par-u106">GAD Support <span class="gad-mode-chip" id="guardianActiveModeBadge"></span></strong>
+                        <div class="guardian-presence-row" id="guardianAdminPresenceRow">
+                            <span class="gad-presence-dot" id="guardianAdminPresenceDot"></span>
+                            <span id="guardianAdminPresenceText">Offline</span>
+                        </div>
+                    </div>
                 </div>
-                <button id="closeGuardianChatBtn" type="button" aria-label="Close chat">
-                    <span class="material-symbols-outlined">close</span>
+                <div class="gad-header-actions">
+                    <button type="button" id="guardianSwitchModeBtn" class="gad-switch-mode-btn" title="Switch Identity Mode">Switch</button>
+                    <button id="closeGuardianChatBtn" type="button" aria-label="Close chat">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Identity mode selector panel -->
+            <div class="gad-mode-chooser" id="guardianModeChooser">
+                <div class="gad-mode-title">How would you like to message GAD?</div>
+                <div class="gad-mode-sub">Your named and anonymous conversations are kept completely separate.</div>
+                <button type="button" class="gad-mode-option" id="guardianChooseNamedBtn">
+                    <span class="material-symbols-outlined">badge</span>
+                    <div class="gad-mode-option-copy">
+                        <strong>Message with My Name</strong>
+                        <span id="guardianNamedPreviewLabel">Show your parent name to GAD</span>
+                    </div>
+                    <span class="gad-mode-unread" id="guardianNamedUnreadBadge"></span>
                 </button>
+                <button type="button" class="gad-mode-option" id="guardianChooseAnonBtn">
+                    <span class="material-symbols-outlined">visibility_off</span>
+                    <div class="gad-mode-option-copy">
+                        <strong>Message Anonymously</strong>
+                        <span id="guardianAnonPreviewLabel">Choose a custom alias name</span>
+                    </div>
+                    <span class="gad-mode-unread" id="guardianAnonUnreadBadge"></span>
+                </button>
+                <div class="gad-alias-setup" id="guardianAliasSetupPanel">
+                    <label for="guardianAliasInput" class="gad-alias-label">Choose your anonymous display name</label>
+                    <div class="gad-alias-row">
+                        <input type="text" id="guardianAliasInput" maxlength="32" placeholder="e.g. Concerned Parent">
+                        <button type="button" id="guardianSaveAliasBtn" class="gad-alias-save-btn">Continue</button>
+                    </div>
+                    <div class="gad-alias-error" id="guardianAliasError"></div>
+                </div>
             </div>
             <div class="chat-messages" id="guardianChatMessages"></div>
-            <div class="chat-input-area">
+            <div class="chat-input-area" id="guardianChatInputArea">
                 <input type="text" class="chat-input" id="guardianChatInput" placeholder="Type your message...">
                 <button class="chat-send-btn" id="guardianSendChatBtn" type="button">
                     <span class="material-symbols-outlined">send</span>

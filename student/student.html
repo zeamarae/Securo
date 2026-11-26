@@ -79,11 +79,12 @@
                                 </div>
                             </div>
                             <div class="topbar-right ms-auto stu-u4">
-                                <!-- (2026-07-13) Add GAD message button left of notif bell; was bell only -->
+                                <!-- (2026-07-13) Add unread count badge on GAD msg icon; was plain icon -->
                                 <!-- Header GAD message trigger -->
                                 <button class="surface-icon gad-header-msg-btn" type="button" id="headerGadMsgBtn"
                                     aria-label="GAD Messages" title="GAD Messages">
                                     <span class="material-symbols-outlined">chat</span>
+                                    <span class="msg-unread-badge" id="headerGadMsgBadge"></span>
                                 </button>
                                 <div class="notif-btn">
                                     <button class="surface-icon" type="button" id="notifBell"
@@ -774,7 +775,8 @@
             </div>
 
             <div class="invite-link-box" id="inviteLinkBox">
-                <span id="guardianInviteUrlText" class="invite-url-text" style="font-size:22px;letter-spacing:3px;font-weight:800;">-------</span>
+                <!-- (2026-07-13) Move invite code inline style to CSS; was inline -->
+                <span id="guardianInviteUrlText" class="invite-url-text student-invite-code-lg">-------</span>
             </div>
             <div class="invite-modal-actions">
                 <button type="button" class="invite-btn-done" id="closeInviteParentBtn">Later</button>
@@ -951,25 +953,57 @@
 
     <div class="status-modal" id="gadPmModal">
         <div class="gad-chat-card" id="gadChatCard">
-            <!-- (2026-07-13) Clean GAD header without anon divider; was anon subbar -->
+            <!-- (2026-07-13) Live admin presence, mode chooser & alias setup; was static -->
             <div class="gad-chat-header">
                 <div class="stu-u158">
                     <div class="stu-u159">
                         <span class="material-symbols-outlined stu-u160">support_agent</span>
                     </div>
                     <div>
-                        <div class="stu-u161">GAD Support</div>
-                        <div class="stu-u162">
-                            <span class="stu-u163"></span>
-                            <span>Active now • Confidential</span>
+                        <div class="stu-u161">GAD Support <span class="gad-mode-chip" id="gadActiveModeBadge"></span></div>
+                        <div class="stu-u162" id="gadAdminPresenceRow">
+                            <span class="gad-presence-dot" id="gadAdminPresenceDot"></span>
+                            <span id="gadAdminPresenceText">Offline</span>
                         </div>
                     </div>
                 </div>
-                <button type="button" id="closeGadPmModalBtn" class="gad-chat-close" aria-label="Close chat">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
+                <div class="gad-header-actions">
+                    <button type="button" id="gadSwitchModeBtn" class="gad-switch-mode-btn" title="Switch Identity Mode">Switch</button>
+                    <button type="button" id="closeGadPmModalBtn" class="gad-chat-close" aria-label="Close chat">
+                        <span class="material-symbols-outlined">close</span>
+                    </button>
+                </div>
             </div>
-            <input type="checkbox" id="gadAnonToggle" checked aria-hidden="true" class="stu-u3">
+            <!-- Identity mode selector panel -->
+            <div class="gad-mode-chooser" id="gadModeChooser">
+                <div class="gad-mode-title">How would you like to message GAD?</div>
+                <div class="gad-mode-sub">Your named and anonymous conversations are kept completely separate.</div>
+                <button type="button" class="gad-mode-option" id="gadChooseNamedBtn">
+                    <span class="material-symbols-outlined">badge</span>
+                    <div class="gad-mode-option-copy">
+                        <strong>Message with My Name</strong>
+                        <span id="gadNamedPreviewLabel">Show your student name to GAD</span>
+                    </div>
+                    <span class="gad-mode-unread" id="gadNamedUnreadBadge"></span>
+                </button>
+                <button type="button" class="gad-mode-option" id="gadChooseAnonBtn">
+                    <span class="material-symbols-outlined">visibility_off</span>
+                    <div class="gad-mode-option-copy">
+                        <strong>Message Anonymously</strong>
+                        <span id="gadAnonPreviewLabel">Choose a custom alias name</span>
+                    </div>
+                    <span class="gad-mode-unread" id="gadAnonUnreadBadge"></span>
+                </button>
+                <div class="gad-alias-setup" id="gadAliasSetupPanel">
+                    <label for="gadAliasInput" class="gad-alias-label">Choose your anonymous display name</label>
+                    <div class="gad-alias-row">
+                        <input type="text" id="gadAliasInput" maxlength="32" placeholder="e.g. Silent Owl, Concerned Student">
+                        <button type="button" id="gadSaveAliasBtn" class="gad-alias-save-btn">Continue</button>
+                    </div>
+                    <div class="gad-alias-error" id="gadAliasError"></div>
+                </div>
+            </div>
+            <input type="checkbox" id="gadAnonToggle" aria-hidden="true" class="stu-u3">
             <div class="gad-chat-thread" id="gadChatThread">
                 <div class="gad-them-row bubble-single">
                     <div class="gad-them-avatar"><span class="material-symbols-outlined stu-u164">support_agent</span>
@@ -1153,7 +1187,8 @@
                                     <span class="stu-u187">Your Student ID</span>
                                     <span class="material-symbols-outlined stu-u188">badge</span>
                                 </div>
-                                <div id="fsGuardianInviteLink" class="stu-u189" style="font-size:22px;letter-spacing:3px;font-weight:800;text-align:center;">
+                                <!-- (2026-07-13) Move onboarding inline styles to CSS; was inline -->
+                                <div id="fsGuardianInviteLink" class="stu-u189 student-invite-code-center">
                                     -------
                                 </div>
                             </div>
@@ -1161,14 +1196,13 @@
                             <!-- Action buttons -->
                             <div class="stu-u190">
                                 <!-- Parent email invite field -->
-                                <input type="email" id="fsGuardianEmailInput" placeholder="Parent email e.g. parent@gmail.com"
-                                    style="width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(90,31,224,0.25);font-size:14px;outline:none;">
+                                <input type="email" id="fsGuardianEmailInput" class="student-parent-email-input" placeholder="Parent email e.g. parent@gmail.com">
                                 <button type="button" class="btn-action stu-u191" id="fsSendGuardianInviteBtn">
                                     <span class="material-symbols-outlined">send</span>
                                     <span id="fsSendInviteText">Send Link Request</span>
                                 </button>
 
-                                <button type="button" id="fsProceedToAppBtn" class="stu-u193" style="opacity:1;border-color:#5a1fe0;color:#5a1fe0;">
+                                <button type="button" id="fsProceedToAppBtn" class="stu-u193 student-proceed-ready">
                                     <span>Proceed to App</span>
                                     <span class="material-symbols-outlined">arrow_forward</span>
                                 </button>
@@ -1176,7 +1210,7 @@
 
                             <!-- Swipe hint -->
                             <div id="fsSwipeHintBox" class="stu-u194">
-                                <span class="material-symbols-outlined stu-u195" id="fsSwipeHintIcon" style="color:#0f9b67;">swipe_left</span>
+                                <span class="material-symbols-outlined stu-u195 student-swipe-hint-icon" id="fsSwipeHintIcon">swipe_left</span>
                                 <span id="fsSwipeHintText">Swipe left or tap to open app</span>
                             </div>
                         </div>

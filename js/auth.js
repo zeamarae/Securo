@@ -18,7 +18,8 @@ import {
     EmailAuthProvider
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-import { getEmailByStudentId, logAuditEvent, saveUserProfile, getAdminUserPassword } from './db.js';
+// (2026-07-13) Import updateUserPresence for instant offline on logout; was missing
+import { getEmailByStudentId, logAuditEvent, saveUserProfile, getAdminUserPassword, updateUserPresence } from './db.js';
 import { Validation, Logger } from './utils.js';
 
 const googleProvider = new GoogleAuthProvider();
@@ -334,6 +335,14 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
                 const user = auth.currentUser;
                 const userId = user?.uid;
 
+                // (2026-07-13) Mark user offline before signOut; was staying online
+                if (userId) {
+                    const savedRole = String(localStorage.getItem('securo_user_role') || '').toLowerCase();
+                    await updateUserPresence(userId, false).catch(() => {});
+                    if (savedRole === 'admin' || String(user?.email || '').toLowerCase() === 'admin@admin.com') {
+                        await updateUserPresence('system_admin_securo', false).catch(() => {});
+                    }
+                }
                 await signOut(auth);
 
                 // Log logout
@@ -347,7 +356,12 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
                 }
 
                 // Clear sensitive data from storage
+                // (2026-07-13) Clear all auth session flags on logout; was token only
                 localStorage.removeItem('securo_session_token');
+                localStorage.removeItem('securo_user_role');
+                sessionStorage.removeItem('securo_authenticated');
+                sessionStorage.removeItem('securo_login_pending');
+                sessionStorage.removeItem('securo_just_registered');
 
                 Logger.info('Auth', 'User logged out successfully');
             } catch (error) {
@@ -395,7 +409,8 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
                         ? 'staff'
                         : (localStorage.getItem('securo_user_role') || localStorage.getItem('securo_preferred_role') || 'student').toLowerCase();
                     const target = role === 'staff' ? 'staff/staff.html' : (role === 'admin' ? 'admin/admin.html' : (role === 'guardian' || role === 'parent' ? 'parent/parent.html' : 'student/student.html'));
-                    window.location.href = prefix + target;
+                    // (2026-07-13) Replace auth history entry when logged in; was href push
+                    window.location.replace(prefix + target);
                 }
             });
         };

@@ -2,8 +2,8 @@
 import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from '../js/utils.js';
 import { auth, app, firebaseConfig } from '../js/firebase-config.js';
 import { logout, roleIdToEmail, login, checkAuth } from '../js/auth.js';
-// (2026-07-13) Import isStudentIdTaken for duplicate ID guard; was omitted
-import { getGADPosts, saveGADPost, deleteGADPost, updateGADPost, getAllUsers, getUserProfile, saveUserProfile, updateUserProfile, isStudentIdTaken, sendChatMessage, subscribeToMessages, getAllChatThreads, getAllChatThreadsOnce, getAllGuardianLinksAdmin, deleteConversationThread, deleteUserRecord, getAllSOSLogs, getAllEmergencyPosts, getStudentLiveLocationOnce, subscribeToAccountNotifications, subscribeToMessagesByThread, subscribeToGADMessages, replyToGADMessage, saveCampusMapConfig, logAttendance, updateStudentLiveLocation, notifyGuardiansOfGeofenceEvent, getAttendanceHistory, getAllAttendance, subscribeToCampusMapConfig, removeGuardianLink, createGuardianLinkRequest, getUserSOSLogs, saveAdminUserPassword, syncGuardianLinksForGuardian, markThreadMessagesSeen, getAttendanceStats, getSOSStats, getAllAuditLogs, subscribeToAllUsersPresence } from '../js/db.js';
+// (2026-07-13) Import message deletion & admin presence heartbeat; was missing
+import { getGADPosts, saveGADPost, deleteGADPost, updateGADPost, getAllUsers, getUserProfile, saveUserProfile, updateUserProfile, isStudentIdTaken, sendChatMessage, subscribeToMessages, getAllChatThreads, getAllChatThreadsOnce, getAllGuardianLinksAdmin, deleteConversationThread, deleteChatMessage, deleteUserRecord, getAllSOSLogs, getAllEmergencyPosts, getStudentLiveLocationOnce, subscribeToAccountNotifications, subscribeToMessagesByThread, subscribeToGADMessages, replyToGADMessage, saveCampusMapConfig, logAttendance, updateStudentLiveLocation, notifyGuardiansOfGeofenceEvent, getAttendanceHistory, getAllAttendance, subscribeToCampusMapConfig, removeGuardianLink, createGuardianLinkRequest, getUserSOSLogs, saveAdminUserPassword, syncGuardianLinksForGuardian, markThreadMessagesSeen, getAttendanceStats, getSOSStats, getAllAuditLogs, subscribeToAllUsersPresence, startUserPresenceHeartbeat, updateUserPresence } from '../js/db.js';
 import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import '../js/install-sw.js';
@@ -179,17 +179,20 @@ window.switchAdminMode = function (mode) {
             if (!user) {
                 user = await ensureAdminFirebaseSession(ADMIN_EMAIL, ADMIN_PASSWORD);
             }
+            // (2026-07-13) Cache admin role on login for Back guard; was missing role
             if (user?.uid) {
                 localStorage.setItem('securo_session_token', user.uid);
+                localStorage.setItem('securo_user_role', 'admin');
                 sessionStorage.setItem('securo_authenticated', '1');
                 sessionStorage.setItem('securo_session_token', user.uid);
             }
 
-            // (2026-07-13) Switch cleanly to admin dashboard on login; was keeping query
+            // (2026-07-13) Lock browser Back button for logged-in admin; was replace only
             if (email.toLowerCase() === ADMIN_EMAIL || isAdminEmail(user?.email)) {
                 submitBtn.disabled = false;
                 spinner.style.display = 'none';
-                window.history.replaceState({}, '', 'admin.html');
+                window.history.replaceState({ securoAdminLocked: true }, '', 'admin.html');
+                window.history.pushState({ securoAdminLocked: true }, '', 'admin.html');
                 window.switchAdminMode('dashboard');
                 return;
             }
@@ -197,6 +200,9 @@ window.switchAdminMode = function (mode) {
             const profile = await getUserProfile(user.uid);
             if (profile?.role !== 'admin') {
                 await signOut(auth);
+                localStorage.removeItem('securo_session_token');
+                localStorage.removeItem('securo_user_role');
+                sessionStorage.removeItem('securo_authenticated');
                 showError("Access restricted. This account does not have administrator privileges.");
                 submitBtn.disabled = false;
                 spinner.style.display = 'none';
@@ -205,7 +211,8 @@ window.switchAdminMode = function (mode) {
 
             submitBtn.disabled = false;
             spinner.style.display = 'none';
-            window.history.replaceState({}, '', 'admin.html');
+            window.history.replaceState({ securoAdminLocked: true }, '', 'admin.html');
+            window.history.pushState({ securoAdminLocked: true }, '', 'admin.html');
             window.switchAdminMode('dashboard');
         } catch (error) {
             console.error("Auth error:", error);
@@ -657,15 +664,22 @@ const DEFAULT_CAMPUS_GEOFENCE_POLYGON = [
     [11.26522, 124.00930],
     [11.26538, 124.00755]
 ];
+// (2026-07-13) Clamp saved building marker radii to 50m max; was unbounded
 function getActiveAdminBuildings() {
     try {
         const stored = localStorage.getItem('securo_campus_buildings');
         if (stored) {
             const parsed = JSON.parse(stored);
-            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+            if (Array.isArray(parsed)) {
+                return parsed.map(b => ({
+                    ...b,
+                    coords: [Number(b.coords?.[0] ?? b.lat ?? ADMIN_CAMPUS_CENTER[0]), Number(b.coords?.[1] ?? b.lng ?? ADMIN_CAMPUS_CENTER[1])],
+                    radius: Math.min(50, Math.max(5, Number(b.radius || 25)))
+                }));
+            }
         }
     } catch (e) { }
-    return DEFAULT_CAMPUS_BUILDINGS.map(b => ({ ...b, coords: [...b.coords] }));
+    return DEFAULT_CAMPUS_BUILDINGS.map(b => ({ ...b, coords: [...b.coords], radius: Math.min(50, Math.max(5, Number(b.radius || 25))) }));
 }
 function getActiveAdminGeofencePolygon() {
     try {
@@ -2857,6 +2871,8 @@ window._triggerAdminDashboardLoad = () => {
     if (adminInitials) adminInitials.textContent = getInitials(currentAdminName) || 'AD';
 
     if (isKnownAdmin) {
+        // (2026-07-13) Broadcast live admin presence heartbeat; was missing for admin
+        startUserPresenceHeartbeat(user.uid, 'admin');
         // (2026-07-13) Save admin role before chat/data queries; was parallel unawaited
         await saveUserProfile(user.uid, {
             name: currentAdminName,
@@ -2870,7 +2886,8 @@ window._triggerAdminDashboardLoad = () => {
             initAdminChat();
             loadAllData().catch(() => { });
         } else {
-            if (reqView === 'login') window.history.replaceState({}, '', 'admin.html');
+            if (reqView === 'login') window.history.replaceState({ securoAdminLocked: true }, '', 'admin.html');
+            try { window.history.pushState({ securoAdminLocked: true }, '', window.location.href); } catch (_) { }
             stopAdminRealtimeThreads();
             window.switchAdminMode('dashboard');
         }
@@ -2897,9 +2914,12 @@ window._triggerAdminDashboardLoad = () => {
                 window.switchAdminMode('login');
                 return;
             }
+            // (2026-07-13) Broadcast presence for role-verified admins too; was static only
+            startUserPresenceHeartbeat(user.uid, 'admin');
             if (reqView === 'analytics') { window.switchAdminMode('analytics'); }
             else {
-                if (reqView === 'login') window.history.replaceState({}, '', 'admin.html');
+                if (reqView === 'login') window.history.replaceState({ securoAdminLocked: true }, '', 'admin.html');
+                try { window.history.pushState({ securoAdminLocked: true }, '', window.location.href); } catch (_) { }
                 window.switchAdminMode('dashboard');
             }
             currentAdminName = profile.name || user.displayName || 'Administrator';
@@ -3313,42 +3333,317 @@ function renderStatistics(users) {
 
 // (2026-07-13) Campus center & buildings hoisted to top; was TDZ at line 2922
 
-// (2026-07-13) Clean icon-only markers with hover/tap details; was wide text cards
+// (2026-07-13) Render building markers with saved zone radius; was fixed 22m
+function escapePlaceHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function renderBuildingMarkers() {
     if (!adminSosLeafletMap) return;
     adminBuildingMarkers.forEach(m => adminSosLeafletMap.removeLayer(m));
     adminBuildingMarkers = [];
 
     currentAdminBuildings.forEach((b) => {
-        // (2026-07-13) Life360 circular landmark radius & marker; was pin only
+        // (2026-07-13) Cap rendered marker zone at 50m max; was unbounded
+        const zoneRadius = Math.min(50, Math.max(5, Number(b.radius || 25)));
         const landmarkCircle = L.circle(b.coords, {
-            radius: b.radius || 22,
+            radius: zoneRadius,
             color: '#7c3aed',
             weight: 1.5,
             opacity: 0.65,
             fillColor: '#8b5cf6',
-            fillOpacity: 0.12
+            fillOpacity: 0.14
         }).addTo(adminSosLeafletMap);
         adminBuildingMarkers.push(landmarkCircle);
 
         const bIcon = L.divIcon({
             className: 'campus-facility-icon-marker',
-            html: `<div style="background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 3px 10px rgba(24,20,40,0.16); border:2px solid #5a1fe0; display:flex; align-items:center; justify-content:center; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:16px; color:#5a1fe0;">${b.icon || 'location_on'}</span></div>`,
+            html: `<div style="background:white; border-radius:50%; width:30px; height:30px; box-shadow:0 3px 10px rgba(24,20,40,0.16); border:2px solid #5a1fe0; display:flex; align-items:center; justify-content:center; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:16px; color:#5a1fe0;">${escapePlaceHtml(b.icon || 'location_on')}</span></div>`,
             iconSize: [30, 30],
             iconAnchor: [15, 15]
         });
         const marker = L.marker(b.coords, { icon: bIcon }).addTo(adminSosLeafletMap);
         marker.bindPopup(`
-                    <div style="padding:4px 2px; min-width:140px;">
+                    <div style="padding:4px 2px; min-width:150px;">
                         <strong style="display:flex; align-items:center; gap:5px; font-size:0.85rem; color:#181428;">
-                            <span class="material-symbols-outlined" style="font-size:16px; color:#5a1fe0;">${b.icon || 'location_on'}</span>
-                            ${b.name}
+                            <span class="material-symbols-outlined" style="font-size:16px; color:#5a1fe0;">${escapePlaceHtml(b.icon || 'location_on')}</span>
+                            ${escapePlaceHtml(b.name)}
                         </strong>
-                        <p style="margin:4px 0 0; font-size:0.75rem; color:#64748b; line-height:1.3;">${b.desc || 'Campus facility'}</p>
+                        <p style="margin:4px 0 0; font-size:0.75rem; color:#64748b; line-height:1.3;">${escapePlaceHtml(b.desc || 'Campus facility')}</p>
+                        <p style="margin:4px 0 0; font-size:0.72rem; font-weight:700; color:#7c3aed;">${zoneRadius.toLocaleString()} m zone</p>
                     </div>
                 `);
         adminBuildingMarkers.push(marker);
     });
+}
+
+// (2026-07-13) Render Place CRUD sidebar list in geofence editor; was none
+function renderModalMarkersList() {
+    const listEl = document.getElementById('geofenceMarkersList');
+    const badgeEl = document.getElementById('geofenceMarkerCountBadge');
+    if (badgeEl) badgeEl.textContent = String(currentAdminBuildings.length);
+    if (!listEl) return;
+
+    if (!currentAdminBuildings.length) {
+        listEl.innerHTML = `<div class="campus-markers-empty">No campus places yet. Click <strong>New</strong> or <strong>Add Marker</strong> to place one on the map.</div>`;
+        return;
+    }
+
+    listEl.innerHTML = currentAdminBuildings.map((b, idx) => {
+        const radius = Math.min(50, Math.max(5, Number(b.radius || 25)));
+        return `
+            <div class="campus-marker-row" data-marker-idx="${idx}">
+                <span class="campus-marker-row-icon">
+                    <span class="material-symbols-outlined">${escapePlaceHtml(b.icon || 'location_on')}</span>
+                </span>
+                <div class="campus-marker-row-info">
+                    <div class="campus-marker-row-name">${escapePlaceHtml(b.name || 'Unnamed Place')}</div>
+                    <div class="campus-marker-row-meta">${radius.toLocaleString()} m zone</div>
+                </div>
+                <div class="campus-marker-row-actions">
+                    <button type="button" class="campus-marker-icon-btn edit" data-action="edit" data-marker-idx="${idx}" title="Edit Place">
+                        <span class="material-symbols-outlined">edit</span>
+                    </button>
+                    <button type="button" class="campus-marker-icon-btn delete" data-action="delete" data-marker-idx="${idx}" title="Delete Place">
+                        <span class="material-symbols-outlined">delete</span>
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// (2026-07-13) Add Place Editor modal state & CRUD controller; was prompt()
+let placeEditorLeafletMap = null;
+let placeEditorMarker = null;
+let placeEditorCircle = null;
+let placeEditorTileLayers = null;
+let placeEditorLayerOrder = ['Hybrid', 'Streets', 'Satellite'];
+let placeEditorLayerIdx = 0;
+let placeEditorActiveLayer = null;
+let placeEditorEditingIdx = -1;
+let placeEditorCoords = [...ADMIN_CAMPUS_CENTER];
+let placeEditorRadius = 25;
+
+function createPlaceEditorPinIcon(iconName) {
+    return L.divIcon({
+        className: 'place-editor-pin-wrapper',
+        html: `<div class="place-editor-pin-bubble"><span class="material-symbols-outlined">${escapePlaceHtml(iconName || 'location_on')}</span></div>`,
+        iconSize: [50, 50],
+        iconAnchor: [25, 25]
+    });
+}
+
+// (2026-07-13) Cap Place Editor zone slider to 50m max; was 1000m max
+function syncPlaceEditorSliderUI(radiusVal) {
+    const slider = document.getElementById('placeEditorRadiusSlider');
+    const label = document.getElementById('placeEditorRadiusLabel');
+    const clamped = Math.min(50, Math.max(5, Math.round(Number(radiusVal) || 25)));
+    placeEditorRadius = clamped;
+    if (slider) {
+        slider.value = String(clamped);
+        const min = Number(slider.min || 5);
+        const max = Number(slider.max || 50);
+        const pct = ((clamped - min) / Math.max(1, max - min)) * 100;
+        slider.style.setProperty('--slider-pct', `${pct.toFixed(2)}%`);
+    }
+    if (label) {
+        label.textContent = `${clamped.toLocaleString()} m zone`;
+    }
+    if (placeEditorCircle) {
+        placeEditorCircle.setRadius(clamped);
+    }
+}
+
+function setPlaceEditorPosition(lat, lng, recenter = false) {
+    placeEditorCoords = [Number(lat), Number(lng)];
+    if (placeEditorMarker) placeEditorMarker.setLatLng(placeEditorCoords);
+    if (placeEditorCircle) placeEditorCircle.setLatLng(placeEditorCoords);
+    if (recenter && placeEditorLeafletMap) {
+        placeEditorLeafletMap.panTo(placeEditorCoords, { animate: true });
+    }
+}
+
+function resetAddMarkerToggleUI() {
+    isModalAddingMarker = false;
+    const btnAddMarkerLabel = document.getElementById('btnAddMarkerLabel');
+    const btnAddMarker = document.getElementById('btnAddMarkerModal');
+    if (btnAddMarkerLabel) btnAddMarkerLabel.textContent = 'Add Marker';
+    if (btnAddMarker) {
+        btnAddMarker.style.background = '#eff6ff';
+        btnAddMarker.style.color = '#1d4ed8';
+        btnAddMarker.style.borderColor = '#bfdbfe';
+    }
+}
+
+function openPlaceEditorModal({ mode = 'create', index = -1, lat = null, lng = null } = {}) {
+    const overlay = document.getElementById('adminPlaceEditorModal');
+    const titleEl = document.getElementById('placeEditorTitle');
+    const nameInput = document.getElementById('placeEditorName');
+    const iconSelect = document.getElementById('placeEditorIcon');
+    const descInput = document.getElementById('placeEditorDesc');
+    const deleteBtn = document.getElementById('placeEditorDeleteBtn');
+    if (!overlay) return;
+
+    const isEdit = mode === 'edit' && index >= 0 && currentAdminBuildings[index];
+    placeEditorEditingIdx = isEdit ? index : -1;
+
+    const existing = isEdit ? currentAdminBuildings[index] : null;
+    const startLat = existing ? Number(existing.coords[0]) : (lat !== null ? Number(lat) : ADMIN_CAMPUS_CENTER[0]);
+    const startLng = existing ? Number(existing.coords[1]) : (lng !== null ? Number(lng) : ADMIN_CAMPUS_CENTER[1]);
+    const startRadius = existing ? Math.min(50, Math.max(5, Number(existing.radius || 25))) : 25;
+    const startIcon = existing ? (existing.icon || 'location_on') : 'location_on';
+
+    placeEditorCoords = [startLat, startLng];
+    if (titleEl) titleEl.textContent = isEdit ? 'Edit Place' : 'Add Place';
+    if (nameInput) nameInput.value = existing ? (existing.name || '') : '';
+    if (descInput) descInput.value = existing ? (existing.desc || '') : '';
+    if (iconSelect) {
+        const hasOption = Array.from(iconSelect.options).some(opt => opt.value === startIcon);
+        iconSelect.value = hasOption ? startIcon : 'location_on';
+    }
+    if (deleteBtn) {
+        deleteBtn.classList.toggle('is-hidden', !isEdit);
+    }
+
+    overlay.classList.add('is-open');
+    overlay.setAttribute('aria-hidden', 'false');
+    syncPlaceEditorSliderUI(startRadius);
+
+    setTimeout(() => {
+        if (!placeEditorLeafletMap) {
+            placeEditorLeafletMap = L.map('placeEditorMap', {
+                zoomControl: true,
+                attributionControl: false,
+                zoomSnap: 0.25,
+                zoomDelta: 0.5
+            }).setView(placeEditorCoords, 17);
+
+            placeEditorTileLayers = {
+                Hybrid: L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20 }),
+                Streets: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }),
+                Satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 })
+            };
+            placeEditorLayerIdx = 0;
+            placeEditorActiveLayer = placeEditorTileLayers[placeEditorLayerOrder[placeEditorLayerIdx]].addTo(placeEditorLeafletMap);
+
+            placeEditorCircle = L.circle(placeEditorCoords, {
+                radius: placeEditorRadius,
+                color: '#8b5cf6',
+                weight: 1.5,
+                opacity: 0.55,
+                fillColor: '#7c3aed',
+                fillOpacity: 0.28
+            }).addTo(placeEditorLeafletMap);
+
+            placeEditorMarker = L.marker(placeEditorCoords, {
+                icon: createPlaceEditorPinIcon(startIcon),
+                draggable: true
+            }).addTo(placeEditorLeafletMap);
+
+            placeEditorMarker.on('drag', (ev) => {
+                const pos = ev.target.getLatLng();
+                setPlaceEditorPosition(pos.lat, pos.lng, false);
+            });
+
+            placeEditorLeafletMap.on('click', (ev) => {
+                setPlaceEditorPosition(ev.latlng.lat, ev.latlng.lng, true);
+            });
+        } else {
+            placeEditorMarker.setIcon(createPlaceEditorPinIcon(startIcon));
+            setPlaceEditorPosition(startLat, startLng, false);
+            placeEditorCircle.setRadius(placeEditorRadius);
+        }
+
+        placeEditorLeafletMap.invalidateSize();
+        placeEditorLeafletMap.setView(placeEditorCoords, 18, { animate: false });
+        if (nameInput && !isEdit) nameInput.focus();
+    }, 60);
+}
+
+function closePlaceEditorModal() {
+    const overlay = document.getElementById('adminPlaceEditorModal');
+    if (overlay) {
+        overlay.classList.remove('is-open');
+        overlay.setAttribute('aria-hidden', 'true');
+    }
+    placeEditorEditingIdx = -1;
+}
+
+async function persistAdminCampusMarkers(toastTitle, toastMessage) {
+    renderModalEditorMarkers();
+    renderBuildingMarkers();
+    try {
+        await saveCampusMapConfig({
+            geofence: currentAdminGeofence,
+            buildings: currentAdminBuildings
+        });
+        if (typeof showToast === 'function' && toastTitle) {
+            showToast(toastTitle, toastMessage, 'success');
+        }
+    } catch (e) {
+        console.warn('Campus marker persistence error:', e);
+        if (typeof showToast === 'function') {
+            showToast('Saved Locally', 'Marker updated locally; cloud sync will retry.', 'warning');
+        }
+    }
+}
+
+async function deleteCampusMarkerByIndex(targetIdx) {
+    const target = currentAdminBuildings[targetIdx];
+    if (!target) return;
+    if (!confirm(`Delete campus place "${target.name || 'Unnamed Place'}"?`)) return;
+    currentAdminBuildings.splice(targetIdx, 1);
+    closePlaceEditorModal();
+    await persistAdminCampusMarkers('Place Deleted', `"${target.name || 'Campus place'}" removed from campus map.`);
+}
+
+async function savePlaceEditorMarker() {
+    const nameInput = document.getElementById('placeEditorName');
+    const iconSelect = document.getElementById('placeEditorIcon');
+    const descInput = document.getElementById('placeEditorDesc');
+    const saveBtn = document.getElementById('placeEditorSaveBtn');
+
+    const name = (nameInput?.value || '').trim();
+    if (!name) {
+        if (typeof showToast === 'function') {
+            showToast('Name Required', 'Enter a name for this campus place before saving.', 'warning');
+        }
+        if (nameInput) nameInput.focus();
+        return;
+    }
+
+    const markerPayload = {
+        name,
+        icon: iconSelect?.value || 'location_on',
+        desc: (descInput?.value || '').trim() || 'Campus facility',
+        coords: [Number(placeEditorCoords[0]), Number(placeEditorCoords[1])],
+        radius: Math.min(50, Math.max(5, Math.round(Number(placeEditorRadius) || 25)))
+    };
+
+    const isUpdating = placeEditorEditingIdx >= 0 && currentAdminBuildings[placeEditorEditingIdx];
+    if (saveBtn) saveBtn.disabled = true;
+
+    try {
+        if (isUpdating) {
+            currentAdminBuildings[placeEditorEditingIdx] = markerPayload;
+        } else {
+            currentAdminBuildings.push(markerPayload);
+        }
+        resetAddMarkerToggleUI();
+        closePlaceEditorModal();
+        await persistAdminCampusMarkers(
+            isUpdating ? 'Place Updated' : 'Place Created',
+            `${markerPayload.name} (${markerPayload.radius.toLocaleString()} m zone) synced.`
+        );
+    } finally {
+        if (saveBtn) saveBtn.disabled = false;
+    }
 }
 
 function renderModalEditorMarkers() {
@@ -3389,77 +3684,44 @@ function renderModalEditorMarkers() {
         modalGeofenceVertexMarkers.push(marker);
     });
 
-    // (2026-07-13) Enable marker name & icon editing in modal; was delete only
-    window._deleteAdminFacilityMarker = (targetIdx) => {
-        currentAdminBuildings.splice(targetIdx, 1);
-        renderModalEditorMarkers();
-    };
-
-    window._saveAdminFacilityMarker = (targetIdx) => {
-        const nameEl = document.getElementById(`facilityMarkerName_${targetIdx}`);
-        const iconEl = document.getElementById(`facilityMarkerIcon_${targetIdx}`);
-        if (nameEl && nameEl.value.trim() && currentAdminBuildings[targetIdx]) {
-            currentAdminBuildings[targetIdx].name = nameEl.value.trim();
-            if (iconEl && iconEl.value) {
-                currentAdminBuildings[targetIdx].icon = iconEl.value;
-            }
-            renderModalEditorMarkers();
-        }
-    };
-
+    // (2026-07-13) Draw marker zone circles capped at 50m max; was unbounded
     currentAdminBuildings.forEach((b, idx) => {
+        const zoneRadius = Math.min(50, Math.max(5, Number(b.radius || 25)));
+        const zoneCircle = L.circle(b.coords, {
+            radius: zoneRadius,
+            color: '#7c3aed',
+            weight: 1.5,
+            opacity: 0.65,
+            fillColor: '#8b5cf6',
+            fillOpacity: 0.16
+        }).addTo(adminModalLeafletMap);
+        modalBuildingMarkers.push(zoneCircle);
+
         const bIcon = L.divIcon({
             className: 'modal-bldg-marker',
-            html: `<div style="background:#f5f3ff; border-radius:10px; padding:4px 10px; box-shadow:0 4px 14px rgba(0,0,0,0.18); font-size:11px; font-weight:800; color:#181428; border:2px solid #5a1fe0; display:flex; align-items:center; gap:6px; cursor:pointer;"><span class="material-symbols-outlined" style="font-size:15px; color:#5a1fe0;">${b.icon || 'location_on'}</span>${b.name}</div>`,
-            iconSize: [110, 28],
-            iconAnchor: [55, 14]
+            html: `<div style="background:#f5f3ff; border-radius:10px; padding:4px 10px; box-shadow:0 4px 14px rgba(0,0,0,0.18); font-size:11px; font-weight:800; color:#181428; border:2px solid #5a1fe0; display:flex; align-items:center; gap:6px; cursor:pointer; white-space:nowrap;"><span class="material-symbols-outlined" style="font-size:15px; color:#5a1fe0;">${escapePlaceHtml(b.icon || 'location_on')}</span>${escapePlaceHtml(b.name)}</div>`,
+            iconSize: [120, 28],
+            iconAnchor: [60, 14]
         });
         const marker = L.marker(b.coords, { icon: bIcon, draggable: true }).addTo(adminModalLeafletMap);
+        let wasDragged = false;
+        marker.on('dragstart', () => { wasDragged = true; });
         marker.on('drag', (e) => {
             const newPos = e.target.getLatLng();
             currentAdminBuildings[idx].coords = [Number(newPos.lat), Number(newPos.lng)];
+            zoneCircle.setLatLng(newPos);
         });
-        /* Facility marker edit card */
-        marker.bindPopup(`
-                    <div class="facility-marker-editor-card" style="padding:8px 4px; min-width:180px; display:flex; flex-direction:column; gap:8px;">
-                        <div style="font-weight:800; font-size:0.85rem; color:#181428; display:flex; align-items:center; gap:6px;">
-                            <span class="material-symbols-outlined" style="font-size:18px; color:#5a1fe0;">${b.icon || 'location_on'}</span>
-                            <span>Edit Facility Marker</span>
-                        </div>
-                        <div>
-                            <label style="font-size:0.7rem; font-weight:700; color:#64748b; display:block; margin-bottom:2px;">Marker Name</label>
-                            <input type="text" id="facilityMarkerName_${idx}" value="${b.name.replace(/"/g, '&quot;')}" style="width:100%; box-sizing:border-box; padding:5px 8px; font-size:0.8rem; border-radius:8px; border:1px solid #cbd5e1; outline:none;" />
-                        </div>
-                        <div>
-                            <label style="font-size:0.7rem; font-weight:700; color:#64748b; display:block; margin-bottom:2px;">Facility Icon</label>
-                            <select id="facilityMarkerIcon_${idx}" style="width:100%; box-sizing:border-box; padding:5px 8px; font-size:0.8rem; border-radius:8px; border:1px solid #cbd5e1; outline:none; background:white;">
-                                <option value="school" ${b.icon === 'school' ? 'selected' : ''}>school (Classrooms / Academics)</option>
-                                <option value="apartment" ${b.icon === 'apartment' ? 'selected' : ''}>apartment (Admin Building)</option>
-                                <option value="local_library" ${b.icon === 'local_library' ? 'selected' : ''}>local_library (Library)</option>
-                                <option value="science" ${b.icon === 'science' ? 'selected' : ''}>science (Laboratory)</option>
-                                <option value="restaurant" ${b.icon === 'restaurant' ? 'selected' : ''}>restaurant (Canteen)</option>
-                                <option value="sports_soccer" ${b.icon === 'sports_soccer' ? 'selected' : ''}>sports_soccer (Gym / Oval)</option>
-                                <option value="local_hospital" ${b.icon === 'local_hospital' ? 'selected' : ''}>local_hospital (Clinic)</option>
-                                <option value="security" ${b.icon === 'security' ? 'selected' : ''}>security (Guardhouse)</option>
-                                <option value="local_parking" ${b.icon === 'local_parking' ? 'selected' : ''}>local_parking (Parking)</option>
-                                <option value="location_city" ${b.icon === 'location_city' ? 'selected' : ''}>location_city (Facility)</option>
-                                <option value="place" ${b.icon === 'place' ? 'selected' : ''}>place (General Landmark)</option>
-                            </select>
-                        </div>
-                        <div style="display:flex; gap:6px; justify-content:space-between; margin-top:4px;">
-                            <button type="button" class="action-btn" style="flex:1; padding:6px 10px; font-size:0.75rem; border-radius:8px; background:#5a1fe0; color:white; border:none; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;" onclick="window._saveAdminFacilityMarker(${idx})">
-                                <span class="material-symbols-outlined" style="font-size:15px;">check</span>
-                                <span>Save</span>
-                            </button>
-                            <button type="button" class="action-btn" style="padding:6px 10px; font-size:0.75rem; border-radius:8px; background:#fee2e2; color:#b91c1c; border:none; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:4px;" onclick="window._deleteAdminFacilityMarker(${idx})">
-                                <span class="material-symbols-outlined" style="font-size:15px;">delete</span>
-                                <span>Delete</span>
-                            </button>
-                        </div>
-                    </div>
-                `);
+        marker.on('dragend', () => {
+            setTimeout(() => { wasDragged = false; }, 120);
+        });
+        marker.on('click', () => {
+            if (wasDragged) return;
+            openPlaceEditorModal({ mode: 'edit', index: idx });
+        });
         modalBuildingMarkers.push(marker);
     });
+
+    renderModalMarkersList();
 
     const vertexCounter = document.getElementById('geofenceModalVertexCount');
     if (vertexCounter) {
@@ -3497,27 +3759,15 @@ function openGeofenceEditorModal() {
             modalBaseMaps["Streets"].addTo(adminModalLeafletMap);
             L.control.layers(modalBaseMaps, null, { position: 'topright' }).addTo(adminModalLeafletMap);
 
+            // (2026-07-13) Open custom Place Editor on map click; was window.prompt
             adminModalLeafletMap.on('click', (e) => {
                 if (!isModalAddingMarker) return;
-                const markerName = prompt('Enter name for the new campus facility/building marker:');
-                if (markerName && markerName.trim()) {
-                    currentAdminBuildings.push({
-                        name: markerName.trim(),
-                        coords: [Number(e.latlng.lat), Number(e.latlng.lng)],
-                        icon: 'location_city',
-                        desc: 'Campus facility'
-                    });
-                    isModalAddingMarker = false;
-                    const btnAddMarkerLabel = document.getElementById('btnAddMarkerLabel');
-                    const btnAddMarker = document.getElementById('btnAddMarkerModal');
-                    if (btnAddMarkerLabel) btnAddMarkerLabel.textContent = 'Add Marker';
-                    if (btnAddMarker) {
-                        btnAddMarker.style.background = '#eff6ff';
-                        btnAddMarker.style.color = '#1d4ed8';
-                        btnAddMarker.style.borderColor = '#bfdbfe';
-                    }
-                    renderModalEditorMarkers();
-                }
+                resetAddMarkerToggleUI();
+                openPlaceEditorModal({
+                    mode: 'create',
+                    lat: Number(e.latlng.lat),
+                    lng: Number(e.latlng.lng)
+                });
             });
         }
         adminModalLeafletMap.invalidateSize();
@@ -3530,6 +3780,8 @@ function openGeofenceEditorModal() {
 
 // (2026-07-13) Close modal cleanly without uncommitted auto-save; was saving on close
 function closeGeofenceEditorModal() {
+    resetAddMarkerToggleUI();
+    closePlaceEditorModal();
     const modal = document.getElementById('adminGeofenceModal');
     if (modal) modal.style.display = 'none';
 }
@@ -3600,17 +3852,20 @@ function setupGeofenceEditorControls() {
             localStorage.removeItem('securo_custom_geofence');
             localStorage.removeItem('securo_campus_buildings');
             currentAdminGeofence = DEFAULT_CAMPUS_GEOFENCE_POLYGON.map(pt => [...pt]);
-            currentAdminBuildings = DEFAULT_CAMPUS_BUILDINGS.map(b => ({ ...b, coords: [...b.coords] }));
+            currentAdminBuildings = DEFAULT_CAMPUS_BUILDINGS.map(b => ({ ...b, coords: [...b.coords], radius: 25 }));
             await saveCampusMapConfig({
                 geofence: currentAdminGeofence,
                 buildings: currentAdminBuildings
             });
             renderModalEditorMarkers();
-            alert('Geofence & building markers reset to default coordinates.');
+            renderBuildingMarkers();
+            if (typeof showToast === 'function') {
+                showToast('Defaults Restored', 'Geofence and campus places reset to default coordinates.', 'success');
+            }
         });
     }
 
-    // (2026-07-13) Add marker click mode toggle handler; was missing add control
+    // (2026-07-13) Bind Place Editor CRUD controls & slider; was toggle only
     const btnAddMarker = document.getElementById('btnAddMarkerModal');
     if (btnAddMarker && !btnAddMarker.dataset.bound) {
         btnAddMarker.dataset.bound = 'true';
@@ -3623,10 +3878,101 @@ function setupGeofenceEditorControls() {
                 btnAddMarker.style.borderColor = '#86efac';
                 if (btnAddMarkerLabel) btnAddMarkerLabel.textContent = 'Click Map to Place';
             } else {
-                btnAddMarker.style.background = '#eff6ff';
-                btnAddMarker.style.color = '#1d4ed8';
-                btnAddMarker.style.borderColor = '#bfdbfe';
-                if (btnAddMarkerLabel) btnAddMarkerLabel.textContent = 'Add Marker';
+                resetAddMarkerToggleUI();
+            }
+        });
+    }
+
+    const btnNewSidebar = document.getElementById('btnOpenCreatePlaceSidebar');
+    if (btnNewSidebar && !btnNewSidebar.dataset.bound) {
+        btnNewSidebar.dataset.bound = 'true';
+        btnNewSidebar.addEventListener('click', () => {
+            const center = adminModalLeafletMap ? adminModalLeafletMap.getCenter() : { lat: ADMIN_CAMPUS_CENTER[0], lng: ADMIN_CAMPUS_CENTER[1] };
+            openPlaceEditorModal({ mode: 'create', lat: center.lat, lng: center.lng });
+        });
+    }
+
+    const markersListEl = document.getElementById('geofenceMarkersList');
+    if (markersListEl && !markersListEl.dataset.bound) {
+        markersListEl.dataset.bound = 'true';
+        markersListEl.addEventListener('click', (e) => {
+            const actionBtn = e.target.closest('button[data-action]');
+            if (actionBtn) {
+                e.stopPropagation();
+                const idx = Number(actionBtn.dataset.markerIdx);
+                if (actionBtn.dataset.action === 'edit') {
+                    openPlaceEditorModal({ mode: 'edit', index: idx });
+                } else if (actionBtn.dataset.action === 'delete') {
+                    deleteCampusMarkerByIndex(idx);
+                }
+                return;
+            }
+            const row = e.target.closest('.campus-marker-row');
+            if (row && adminModalLeafletMap) {
+                const idx = Number(row.dataset.markerIdx);
+                const target = currentAdminBuildings[idx];
+                if (target?.coords) {
+                    adminModalLeafletMap.setView(target.coords, 18, { animate: true });
+                }
+            }
+        });
+    }
+
+    const placeCancelBtn = document.getElementById('placeEditorCancelBtn');
+    const placeSaveBtn = document.getElementById('placeEditorSaveBtn');
+    const placeDeleteBtn = document.getElementById('placeEditorDeleteBtn');
+    const placeSlider = document.getElementById('placeEditorRadiusSlider');
+    const placeIconSelect = document.getElementById('placeEditorIcon');
+    const placeLayerBtn = document.getElementById('placeEditorLayerBtn');
+    const placeOverlay = document.getElementById('adminPlaceEditorModal');
+
+    if (placeCancelBtn && !placeCancelBtn.dataset.bound) {
+        placeCancelBtn.dataset.bound = 'true';
+        placeCancelBtn.addEventListener('click', closePlaceEditorModal);
+    }
+    if (placeSaveBtn && !placeSaveBtn.dataset.bound) {
+        placeSaveBtn.dataset.bound = 'true';
+        placeSaveBtn.addEventListener('click', savePlaceEditorMarker);
+    }
+    if (placeDeleteBtn && !placeDeleteBtn.dataset.bound) {
+        placeDeleteBtn.dataset.bound = 'true';
+        placeDeleteBtn.addEventListener('click', () => {
+            if (placeEditorEditingIdx >= 0) deleteCampusMarkerByIndex(placeEditorEditingIdx);
+        });
+    }
+    if (placeSlider && !placeSlider.dataset.bound) {
+        placeSlider.dataset.bound = 'true';
+        placeSlider.addEventListener('input', (e) => {
+            syncPlaceEditorSliderUI(e.target.value);
+        });
+    }
+    if (placeIconSelect && !placeIconSelect.dataset.bound) {
+        placeIconSelect.dataset.bound = 'true';
+        placeIconSelect.addEventListener('change', (e) => {
+            if (placeEditorMarker) {
+                placeEditorMarker.setIcon(createPlaceEditorPinIcon(e.target.value));
+            }
+        });
+    }
+    if (placeLayerBtn && !placeLayerBtn.dataset.bound) {
+        placeLayerBtn.dataset.bound = 'true';
+        placeLayerBtn.addEventListener('click', () => {
+            if (!placeEditorLeafletMap || !placeEditorTileLayers) return;
+            if (placeEditorActiveLayer) placeEditorLeafletMap.removeLayer(placeEditorActiveLayer);
+            placeEditorLayerIdx = (placeEditorLayerIdx + 1) % placeEditorLayerOrder.length;
+            const nextName = placeEditorLayerOrder[placeEditorLayerIdx];
+            placeEditorActiveLayer = placeEditorTileLayers[nextName].addTo(placeEditorLeafletMap);
+            placeLayerBtn.title = `Map view: ${nextName} (click to switch)`;
+        });
+    }
+    if (placeOverlay && !placeOverlay.dataset.bound) {
+        placeOverlay.dataset.bound = 'true';
+        placeOverlay.addEventListener('click', (e) => {
+            if (e.target === placeOverlay) closePlaceEditorModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && placeOverlay.classList.contains('is-open')) {
+                closePlaceEditorModal();
             }
         });
     }
@@ -3654,8 +4000,15 @@ subscribeToCampusMapConfig((config) => {
         }
     }
     if (config?.buildings && Array.isArray(config.buildings)) {
-        currentAdminBuildings = config.buildings;
+        currentAdminBuildings = config.buildings.map(b => ({
+            ...b,
+            radius: Math.min(50, Math.max(5, Number(b.radius || 25)))
+        }));
         renderBuildingMarkers();
+        const modal = document.getElementById('adminGeofenceModal');
+        if (modal && modal.style.display === 'flex' && adminModalLeafletMap) {
+            renderModalEditorMarkers();
+        }
     }
 });
 
@@ -4422,8 +4775,10 @@ postGadBtn.addEventListener('click', async () => {
 
 // (2026-07-13) Chat DOM elements & presence state hoisted to top; was TDZ at line 4060
 
+// (2026-07-13) Strict Online/Offline presence with hidden dot offline; was gray dot
 function getUserPresenceStatus(userId, userObj = null) {
-    const keys = [userId, userObj?.id, userObj?.uid].filter(Boolean).map(String);
+    const cleanUid = String(userId || '').replace(/__anon$/, '');
+    const keys = [cleanUid, userId, userObj?.id, userObj?.uid].filter(Boolean).map(String);
     let live = null;
     for (const k of keys) {
         if (livePresenceMap[k]) {
@@ -4435,21 +4790,14 @@ function getUserPresenceStatus(userId, userObj = null) {
         ? userObj.lastActiveAt.toMillis()
         : (userObj?.lastActiveAt?.seconds ? userObj.lastActiveAt.seconds * 1000 : Number(userObj?.lastActiveMs || 0));
     const lastActiveMs = Math.max(Number(live?.lastActiveMs || 0), fallbackTs);
-    const explicitOnline = live ? live.isOnline === true : (userObj?.isOnline === true || userObj?.isWatching === true);
+    const explicitOnline = live ? live.isOnline === true : (userObj?.isOnline === true);
     const ageMs = lastActiveMs > 0 ? (Date.now() - lastActiveMs) : Infinity;
-    const isOnline = explicitOnline && ageMs <= ONLINE_THRESHOLD_MS;
+    const isOnline = explicitOnline && ageMs <= 65000;
 
     if (isOnline) {
-        return { online: true, dotColor: '#22c55e', statusColor: '#10b981', label: 'Active now' };
+        return { online: true, dotColor: '#22c55e', statusColor: '#10b981', label: 'Online' };
     }
-    if (lastActiveMs > 0) {
-        const mins = Math.max(1, Math.floor(ageMs / 60000));
-        let rel = `${mins}m ago`;
-        if (mins >= 60 && mins < 1440) rel = `${Math.floor(mins / 60)}h ago`;
-        else if (mins >= 1440) rel = `${Math.floor(mins / 1440)}d ago`;
-        return { online: false, dotColor: '#94a3b8', statusColor: '#94a3b8', label: `Active ${rel}` };
-    }
-    return { online: false, dotColor: '#94a3b8', statusColor: '#94a3b8', label: 'Offline' };
+    return { online: false, dotColor: 'transparent', statusColor: '#94a3b8', label: 'Offline' };
 }
 
 function refreshActivePresenceUI() {
@@ -4457,19 +4805,24 @@ function refreshActivePresenceUI() {
         const uid = dot.getAttribute('data-presence-uid');
         const uObj = (typeof cachedUsers !== 'undefined' ? cachedUsers : []).find(u => String(u.id) === uid || String(u.uid) === uid) || null;
         const p = getUserPresenceStatus(uid, uObj);
+        dot.style.display = p.online ? 'block' : 'none';
         dot.style.background = p.dotColor;
         dot.title = p.label;
     });
     if (currentActiveUserId) {
-        const uObj = (typeof cachedUsers !== 'undefined' ? cachedUsers : []).find(u => String(u.id) === String(currentActiveUserId) || String(u.uid) === String(currentActiveUserId)) || null;
-        const p = getUserPresenceStatus(currentActiveUserId, uObj);
+        const cleanUid = String(currentActiveUserId).replace(/__anon$/, '');
+        const uObj = (typeof cachedUsers !== 'undefined' ? cachedUsers : []).find(u => String(u.id) === cleanUid || String(u.uid) === cleanUid) || null;
+        const p = getUserPresenceStatus(cleanUid, uObj);
         const liveBeacon = document.getElementById('activeUserBeacon');
         if (liveBeacon) {
+            liveBeacon.style.display = p.online ? 'block' : 'none';
             liveBeacon.style.background = p.statusColor;
             liveBeacon.title = p.label;
         }
         if (activeUserStatus) {
-            activeUserStatus.innerHTML = `<span class="signal-dot" style="width:6px; height:6px; background:${p.statusColor};"></span><span>${p.label}</span>`;
+            activeUserStatus.innerHTML = p.online
+                ? `<span class="signal-dot" style="width:6px; height:6px; background:#22c55e;"></span><span style="color:#0f9b67; font-weight:700;">Online</span>`
+                : `<span style="color:#64748b; font-weight:600;">Offline</span>`;
         }
     }
 }
@@ -4560,9 +4913,12 @@ function isAdminName(name) {
 }
 
 // (2026-07-13) Client name resolution and deduplication; was senderName override
+// (2026-07-13) Keep anon alias threads separate & preserve role colors; was merged
 function getThreadClientInfo(thread) {
-    if (!thread) return { userId: '', name: 'Student', role: 'student', isGuardian: false, userObj: null };
-    const otherUserId = getOtherUserIdFromThread(thread);
+    if (!thread) return { userId: '', name: 'Student', role: 'student', isGuardian: false, isAnonymous: false, userObj: null };
+    const rawOtherId = getOtherUserIdFromThread(thread);
+    const otherUserId = String(rawOtherId || '').replace(/__anon$/, '');
+    const isAnonymous = Boolean(thread.isAnonymous || String(thread.threadId || '').includes('__anon') || thread.anonymousAlias);
     const userObj = cachedUsers.find(u => {
         if (!u) return false;
         if (otherUserId && (u.id === otherUserId || u.uid === otherUserId || String(u.studentId || '') === String(otherUserId))) return true;
@@ -4576,50 +4932,64 @@ function getThreadClientInfo(thread) {
         return false;
     });
 
-    const role = getThreadParticipantRole(thread, userObj);
-    const isGuardian = role === 'guardian';
+    const explicitRole = (thread.clientRole && thread.clientRole !== 'admin') ? thread.clientRole : null;
+    const role = explicitRole || getThreadParticipantRole(thread, userObj);
+    const isGuardian = role === 'guardian' || role === 'parent';
     const isSentByAdmin = thread.senderRole === 'admin' || thread.senderId === ADMIN_ID || thread.senderId === currentAdminUid;
 
-    let name = userObj?.name || userObj?.fullName || '';
-    if (!name || isAdminName(name)) {
-        const candidates = [
+    let name = '';
+    if (isAnonymous) {
+        const aliasCandidates = [
+            thread.anonymousAlias,
+            !isSentByAdmin ? (thread.senderLabel || thread.senderName) : null,
             thread.clientName,
-            thread.targetUserName,
-            thread.recipientName,
-            thread.ownerName,
-            thread.otherUserName,
-            thread.userName,
-            !isSentByAdmin ? (thread.senderLabel || thread.senderName) : null
+            thread.targetUserName
         ];
-        for (const c of candidates) {
-            if (c && !isAdminName(c)) {
-                name = c;
-                break;
+        for (const c of aliasCandidates) {
+            if (c && !isAdminName(c)) { name = c; break; }
+        }
+        if (!name) name = isGuardian ? 'Anonymous Parent' : (role === 'staff' ? 'Anonymous Staff' : 'Anonymous Student');
+    } else {
+        name = userObj?.name || userObj?.fullName || '';
+        if (!name || isAdminName(name)) {
+            const candidates = [
+                thread.clientName,
+                thread.targetUserName,
+                thread.recipientName,
+                thread.ownerName,
+                thread.otherUserName,
+                thread.userName,
+                !isSentByAdmin ? (thread.senderLabel || thread.senderName) : null
+            ];
+            for (const c of candidates) {
+                if (c && !isAdminName(c)) {
+                    name = c;
+                    break;
+                }
             }
         }
+        if (!name && userObj?.studentId) name = `Student #${userObj.studentId}`;
+        if (!name && otherUserId && /^\d{7}$/.test(otherUserId)) name = `Student #${otherUserId}`;
+        if (!name) name = isGuardian ? 'Parent' : (role === 'staff' ? 'Staff' : 'Student');
     }
-    if (!name && userObj?.studentId) name = `Student #${userObj.studentId}`;
-    if (!name && otherUserId && /^\d{7}$/.test(otherUserId)) name = `Student #${otherUserId}`;
-    if (!name) name = isGuardian ? 'Guardian' : 'Student';
 
-    return { userId: otherUserId, name, role, isGuardian, userObj };
+    return { userId: otherUserId, name, role: isGuardian ? 'guardian' : (role === 'staff' ? 'staff' : 'student'), isGuardian, isAnonymous, userObj };
 }
 
 function renderThreads(threads) {
     const rawThreads = Array.isArray(threads) ? threads : [];
     const query = currentMsgSearchQuery.trim().toLowerCase();
 
-    // (2026-07-13) Deduplicate threads by user identity; was thread ID only
+    // (2026-07-13) Keep named and anonymous conversations separate; was merged by uid
     const dedupedMap = new Map();
     rawThreads.forEach(t => {
         const client = getThreadClientInfo(t);
-        let dedupKey = client.userObj?.uid || client.userObj?.id || client.userObj?.studentId;
-        if (!dedupKey) {
-            if (client.name && !isAdminName(client.name)) {
-                dedupKey = `${client.role}_${client.name.toLowerCase().trim()}`;
-            } else {
-                dedupKey = client.userId || t.threadId;
-            }
+        let dedupKey;
+        if (client.isAnonymous) {
+            dedupKey = `anon_${t.threadId}`;
+        } else {
+            const baseId = client.userObj?.uid || client.userObj?.id || client.userObj?.studentId || client.userId || t.threadId;
+            dedupKey = `named_${baseId}`;
         }
 
         const existing = dedupedMap.get(dedupKey);
@@ -4667,7 +5037,7 @@ function renderThreads(threads) {
         return;
     }
 
-    // (2026-07-13) Messenger thread previews, online beacon & unread dots; was plain
+    // (2026-07-13) Show Anonymous/Alias badge & hide green dot when offline; was always dot
     threadList.innerHTML = filteredThreads.map(thread => {
         const client = getThreadClientInfo(thread);
         const otherUserId = client.userId;
@@ -4678,25 +5048,29 @@ function renderThreads(threads) {
         const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || 'U';
         const role = client.role;
         const isGuardian = client.isGuardian;
+        const isAnon = client.isAnonymous;
         // (2026-07-13) Dynamic role themes: purple student, red parent, blue staff
         const roleClass = (role === 'guardian' || isGuardian) ? 'guardian' : (role === 'staff' ? 'staff' : 'student');
-        const roleLabel = (role === 'guardian' || isGuardian) ? 'Guardian' : (role === 'staff' ? 'Staff' : 'Student');
+        const roleLabel = (role === 'guardian' || isGuardian) ? 'Parent' : (role === 'staff' ? 'Staff' : 'Student');
         const timeStr = formatThreadTimestamp(thread.updatedAt || thread.timestamp || thread.lastMessageAt);
         const isSentByAdmin = thread.senderRole === 'admin' || thread.senderId === ADMIN_ID || thread.senderId === currentAdminUid;
         const statusPrefix = isSentByAdmin ? (thread.status === 'replied' ? 'You: Replied · ' : 'You: ') : '';
         const previewSnippet = escapeHtml(statusPrefix + (thread.text || thread.message || 'Direct message'));
-        // (2026-07-13) Render live presence dot per user; was hardcoded green
         const presence = getUserPresenceStatus(otherUserId, userObj);
+        const showPhoto = !isAnon && userObj?.photoURL;
         return `
                     <div class="thread-item ${isActive ? 'active' : ''} ${unread ? 'unread' : ''}" data-thread-id="${escapeHtml(thread.threadId)}" data-other-user-id="${escapeHtml(otherUserId)}" data-other-user-name="${escapeHtml(displayName)}">
                         <div class="thread-avatar ${roleClass}">
-                            ${userObj?.photoURL ? `<img src="${escapeHtml(userObj.photoURL)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : initials}
-                            <span class="thread-presence-dot" data-presence-uid="${escapeHtml(otherUserId)}" title="${escapeHtml(presence.label)}" style="position:absolute; bottom:0; right:0; width:11px; height:11px; border-radius:50%; background:${presence.dotColor}; border:2px solid #fff;"></span>
+                            ${showPhoto ? `<img src="${escapeHtml(userObj.photoURL)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : initials}
+                            <span class="thread-presence-dot" data-presence-uid="${escapeHtml(otherUserId)}" title="${escapeHtml(presence.label)}" style="position:absolute; bottom:0; right:0; width:11px; height:11px; border-radius:50%; background:${presence.dotColor}; border:2px solid #fff; display:${presence.online ? 'block' : 'none'};"></span>
                         </div>
                         <div class="thread-info">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-                                <div class="thread-name">${escapeHtml(displayName)}</div>
-                                <span style="font-size:0.67rem; color:var(--muted); font-weight:600;">${timeStr}</span>
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:4px; margin-bottom:2px;">
+                                <div class="thread-name" style="display:flex; align-items:center; gap:5px; min-width:0;">
+                                    <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(displayName)}</span>
+                                    ${isAnon ? '<span class="anon-alias-pill">Alias</span>' : ''}
+                                </div>
+                                <span style="font-size:0.67rem; color:var(--muted); font-weight:600; flex-shrink:0;">${timeStr}</span>
                             </div>
                             <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
                                 <div class="thread-preview">${previewSnippet}</div>
@@ -4768,38 +5142,44 @@ window.openAdminThread = function (threadId, userId, userName) {
     const userObj = client.userObj;
     const displayName = (!userName || isAdminName(userName)) ? client.name : userName;
     activeUserName.textContent = displayName;
+    // (2026-07-13) Show Anonymous/Alias indicator & hide green dot offline; was static
     const role = client.role;
     const isGuardian = client.isGuardian;
-    // (2026-07-13) Set active chat role style dynamically; was binary
+    const isAnon = client.isAnonymous;
     const roleClass = (role === 'guardian' || isGuardian) ? 'guardian' : (role === 'staff' ? 'staff' : 'student');
-    const roleLabel = (role === 'guardian' || isGuardian) ? 'Guardian' : (role === 'staff' ? 'Staff' : 'Student');
+    const roleLabel = (role === 'guardian' || isGuardian) ? 'Parent' : (role === 'staff' ? 'Staff' : 'Student');
     const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || 'U';
-    // (2026-07-13) Dynamic user beacon & status from live presence; was static
     const activePresence = getUserPresenceStatus(resolvedUserId, userObj);
     activeUserAvatar.className = 'thread-avatar ' + roleClass;
-    if (userObj?.photoURL) {
-        activeUserAvatar.innerHTML = `<img src="${escapeHtml(userObj.photoURL)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"><span id="activeUserBeacon" title="${escapeHtml(activePresence.label)}" style="position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%; background:${activePresence.statusColor}; border:2px solid #fff;"></span>`;
+    const showPhoto = !isAnon && userObj?.photoURL;
+    if (showPhoto) {
+        activeUserAvatar.innerHTML = `<img src="${escapeHtml(userObj.photoURL)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"><span id="activeUserBeacon" title="${escapeHtml(activePresence.label)}" style="position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%; background:${activePresence.statusColor}; border:2px solid #fff; display:${activePresence.online ? 'block' : 'none'};"></span>`;
     } else {
-        activeUserAvatar.innerHTML = `${initials}<span id="activeUserBeacon" title="${escapeHtml(activePresence.label)}" style="position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%; background:${activePresence.statusColor}; border:2px solid #fff;"></span>`;
+        activeUserAvatar.innerHTML = `${initials}<span id="activeUserBeacon" title="${escapeHtml(activePresence.label)}" style="position:absolute; bottom:-1px; right:-1px; width:10px; height:10px; border-radius:50%; background:${activePresence.statusColor}; border:2px solid #fff; display:${activePresence.online ? 'block' : 'none'};"></span>`;
     }
 
     if (activeUserRoleBadge) {
         activeUserRoleBadge.style.display = 'inline-block';
         activeUserRoleBadge.className = 'role-pill ' + roleClass;
-        activeUserRoleBadge.textContent = roleLabel;
+        activeUserRoleBadge.textContent = isAnon ? `${roleLabel} · Anonymous / Alias` : roleLabel;
     }
 
     if (activeUserIdTag) {
-        if (userObj?.studentId) {
+        if (!isAnon && userObj?.studentId) {
             activeUserIdTag.style.display = 'inline';
             activeUserIdTag.textContent = '#' + userObj.studentId;
+        } else if (isAnon) {
+            activeUserIdTag.style.display = 'inline';
+            activeUserIdTag.textContent = 'Alias Identity';
         } else {
             activeUserIdTag.style.display = 'none';
         }
     }
 
     if (activeUserStatus) {
-        activeUserStatus.innerHTML = `<span class="signal-dot" style="width:6px; height:6px; background:${activePresence.statusColor};"></span><span>${escapeHtml(activePresence.label)}</span>`;
+        activeUserStatus.innerHTML = activePresence.online
+            ? `<span class="signal-dot" style="width:6px; height:6px; background:#22c55e;"></span><span style="color:#0f9b67; font-weight:700;">Online</span>`
+            : `<span style="color:#64748b; font-weight:600;">Offline</span>`;
     }
 
     if (chatHeaderActions) chatHeaderActions.style.display = 'flex';
@@ -4910,6 +5290,7 @@ function renderAdminMessages(messages) {
             rowEl.appendChild(avatarEl);
         }
 
+        // (2026-07-13) Add admin per-message delete control; was thread delete only
         const msgEl = document.createElement("div");
         msgEl.className = `admin-msg ${isSent ? 'sent' : 'received'} bubble-${groupPos}`;
         if (msg.isPending) msgEl.style.opacity = "0.7";
@@ -4917,7 +5298,28 @@ function renderAdminMessages(messages) {
                     <div>${escapeHtml(msg.text || msg.message || '')}</div>
                     ${(groupPos === 'last' || groupPos === 'single') ? `<span class="msg-time">${timeStr}</span>` : ''}
                 `;
-        rowEl.appendChild(msgEl);
+        if (msg.id) {
+            const delBtn = document.createElement("button");
+            delBtn.type = "button";
+            delBtn.className = "admin-msg-del-btn";
+            delBtn.title = "Delete message";
+            delBtn.setAttribute("aria-label", "Delete message");
+            delBtn.innerHTML = '<span class="material-symbols-outlined">delete</span>';
+            delBtn.addEventListener("click", async (ev) => {
+                ev.stopPropagation();
+                if (!window.confirm("Delete this message?")) return;
+                await deleteChatMessage(msg.id, currentActiveThreadId);
+            });
+            if (isSent) {
+                rowEl.appendChild(delBtn);
+                rowEl.appendChild(msgEl);
+            } else {
+                rowEl.appendChild(msgEl);
+                rowEl.appendChild(delBtn);
+            }
+        } else {
+            rowEl.appendChild(msgEl);
+        }
         adminChatMessages.appendChild(rowEl);
 
         const isLastMsg = idx === messages.length - 1;
@@ -4978,14 +5380,19 @@ async function handleAdminSendMessage() {
     adminChatInput.value = "";
 
     try {
-        // (2026-07-13) Persist client name on admin reply; was missing clientName
+        // (2026-07-13) Preserve anon alias & role on admin reply; was losing alias meta
+        const activeThreadObj = cachedThreads.find(t => t.threadId === currentActiveThreadId);
+        const activeClient = getThreadClientInfo(activeThreadObj);
         await sendChatMessage(adminSenderId, targetUserId, text, "GAD Office", {
             threadId: currentActiveThreadId,
             supportMode: "gad_support",
             senderRole: "admin",
+            recipientRole: activeClient.role || "student",
+            isAnonymous: !!activeClient.isAnonymous,
+            anonymousAlias: activeClient.isAnonymous ? activeClient.name : "",
             ownerId: targetUserId,
-            clientName: activeUserName.textContent,
-            targetUserName: activeUserName.textContent
+            clientName: activeClient.name || activeUserName.textContent,
+            targetUserName: activeClient.name || activeUserName.textContent
         });
     } catch (err) {
         console.warn("Failed to send admin message:", err);
@@ -5010,7 +5417,9 @@ window.handleDeleteThread = async (threadId, userName) => {
             activeUserName.textContent = 'Select a conversation';
             activeUserAvatar.textContent = '?';
             activeUserAvatar.className = 'thread-avatar';
-            if (activeUserBeacon) activeUserBeacon.style.display = 'none';
+            // (2026-07-13) Re-query live activeUserBeacon DOM node; was detached ref
+            const curBeacon = document.getElementById('activeUserBeacon');
+            if (curBeacon) curBeacon.style.display = 'none';
             if (activeUserRoleBadge) activeUserRoleBadge.style.display = 'none';
             if (activeUserIdTag) activeUserIdTag.style.display = 'none';
             if (chatHeaderActions) chatHeaderActions.style.display = 'none';
@@ -5790,3 +6199,27 @@ window.addEventListener('dragstart', (e) => {
         e.preventDefault();
     }
 }, false);
+
+// (2026-07-13) Lock browser Back button while admin is logged in; was exiting
+const isAdminSessionActive = () => Boolean(
+    auth?.currentUser ||
+    localStorage.getItem('securo_session_token') ||
+    sessionStorage.getItem('securo_authenticated') === '1'
+);
+window.addEventListener('popstate', () => {
+    if (!isAdminSessionActive()) return;
+    try {
+        if (window.location.search.includes('view=login')) {
+            window.history.replaceState({ securoAdminLocked: true }, '', 'admin.html');
+        }
+        window.history.pushState({ securoAdminLocked: true }, '', window.location.href);
+        if (typeof window.switchAdminMode === 'function') {
+            window.switchAdminMode('dashboard');
+        }
+    } catch (_) { }
+});
+window.addEventListener('pageshow', (e) => {
+    if (e.persisted && isAdminSessionActive()) {
+        try { window.history.pushState({ securoAdminLocked: true }, '', window.location.href); } catch (_) { }
+    }
+});

@@ -1,0 +1,357 @@
+@startuml Securo_Proposed_3NF_ERD
+' Securo Campus Safety System - Proposed 3NF Relational ERD (Crow's Foot)
+' Corresponds 1:1 with proposed_3nf_uml.puml (23 normalized 3NF tables)
+
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam roundcorner 6
+skinparam linetype ortho
+skinparam nodesep 48
+skinparam ranksep 58
+skinparam defaultFontName "Segoe UI"
+skinparam defaultFontSize 11
+
+skinparam package {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontColor #1E293B
+  FontStyle bold
+}
+
+skinparam entity {
+  BackgroundColor #FFFFFF
+  BorderColor #3B0764
+  HeaderBackgroundColor #EDE9FE
+  FontColor #0F172A
+}
+
+title Securo Proposed 3NF Database — Entity Relationship Diagram (Crow's Foot Notation)
+
+package "Identity, Roles & Credentials" {
+  entity "users" as users {
+    * user_id : VARCHAR(128) <<PK>>
+    --
+    * role : VARCHAR(20)
+    first_name : VARCHAR(100)
+    last_name : VARCHAR(100)
+    * display_name : VARCHAR(200)
+    email : VARCHAR(255) <<UK>>
+    recovery_email : VARCHAR(255)
+    * auth_email : VARCHAR(255) <<UK>>
+    photo_url : TEXT
+    anon_alias : VARCHAR(80)
+    * onboarding_completed : BOOLEAN
+    * is_online : BOOLEAN
+    last_active_at : TIMESTAMP
+    * is_deleted : BOOLEAN
+    deleted_at : TIMESTAMP
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+  }
+
+  entity "student_profiles" as student_profiles {
+    * user_id : VARCHAR(128) <<PK, FK>>
+    --
+    * student_number : CHAR(7) <<UK>>
+    course : VARCHAR(50)
+    year_level : SMALLINT
+    section_code : VARCHAR(20)
+    emergency_contact_name : VARCHAR(150)
+    emergency_contact_phone : VARCHAR(30)
+  }
+
+  entity "staff_profiles" as staff_profiles {
+    * user_id : VARCHAR(128) <<PK, FK>>
+    --
+    * staff_number : CHAR(7) <<UK>>
+    department : VARCHAR(120)
+  }
+
+  entity "guardian_profiles" as guardian_profiles {
+    * user_id : VARCHAR(128) <<PK, FK>>
+    --
+    * is_watching : BOOLEAN
+  }
+
+  entity "user_credentials" as user_credentials {
+    * user_id : VARCHAR(128) <<PK, FK>>
+    --
+    * password_hash : VARCHAR(255)
+    * password_updated_at : TIMESTAMP
+  }
+}
+
+package "Guardian Linking & Campus Tracking" {
+  entity "guardian_links" as guardian_links {
+    * link_id : VARCHAR(64) <<PK>>
+    --
+    * student_user_id : VARCHAR(128) <<FK>>
+    guardian_user_id : VARCHAR(128) <<FK>>
+    invited_guardian_email : VARCHAR(255)
+    * relationship_type : VARCHAR(40)
+    * status : VARCHAR(20)
+    * requested_by : VARCHAR(20)
+    * perm_sos_alerts : BOOLEAN
+    * perm_attendance_alerts : BOOLEAN
+    * perm_live_location : BOOLEAN
+    expires_at : TIMESTAMP
+    * created_at : TIMESTAMP
+    responded_at : TIMESTAMP
+    approved_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+  }
+
+  entity "location_reminders" as location_reminders {
+    * reminder_id : VARCHAR(64) <<PK>>
+    --
+    * link_id : VARCHAR(64) <<FK>>
+    * requested_by_user_id : VARCHAR(128) <<FK>>
+    * message : VARCHAR(255)
+    * requested_at : TIMESTAMP
+  }
+
+  entity "user_live_locations" as user_live_locations {
+    * user_id : VARCHAR(128) <<PK, FK>>
+    --
+    latitude : DECIMAL(9,6)
+    longitude : DECIMAL(9,6)
+    * is_inside_campus : BOOLEAN
+    * sharing_enabled : BOOLEAN
+    * sharing_state : VARCHAR(30)
+    sharing_message : VARCHAR(255)
+    * updated_at : TIMESTAMP
+  }
+
+  entity "attendance_logs" as attendance_logs {
+    * attendance_id : VARCHAR(64) <<PK>>
+    --
+    * user_id : VARCHAR(128) <<FK>>
+    * event_type : VARCHAR(10)
+    latitude : DECIMAL(9,6)
+    longitude : DECIMAL(9,6)
+    location_address : VARCHAR(255)
+    * is_auto_logged : BOOLEAN
+    * recorded_at : TIMESTAMP
+  }
+}
+
+package "Emergency SOS & Digital Vault" {
+  entity "sos_logs" as sos_logs {
+    * sos_log_id : VARCHAR(64) <<PK>>
+    --
+    * user_id : VARCHAR(128) <<FK>>
+    * emergency_type : VARCHAR(30)
+    * status : VARCHAR(20)
+    latitude : DECIMAL(9,6)
+    longitude : DECIMAL(9,6)
+    location_address : VARCHAR(255)
+    * is_out_of_bounds : BOOLEAN
+    accuracy_meters : DECIMAL(8,2)
+    battery_percent : SMALLINT
+    * has_photo : BOOLEAN
+    last_photo_url : TEXT
+    last_photo_at : TIMESTAMP
+    * triggered_at : TIMESTAMP
+  }
+
+  entity "sos_log_recipients" as sos_log_recipients {
+    * sos_log_id : VARCHAR(64) <<PK, FK>>
+    * guardian_user_id : VARCHAR(128) <<PK, FK>>
+    --
+    * notified_at : TIMESTAMP
+  }
+
+  entity "emergency_posts" as emergency_posts {
+    * post_id : VARCHAR(64) <<PK>>
+    --
+    * user_id : VARCHAR(128) <<FK>>
+    latitude : DECIMAL(9,6)
+    longitude : DECIMAL(9,6)
+    location_address : VARCHAR(255)
+    * gad_visible : BOOLEAN
+    * guardian_visible : BOOLEAN
+    * status : VARCHAR(20)
+    * created_at : TIMESTAMP
+  }
+
+  entity "emergency_post_attachments" as emergency_post_attachments {
+    * attachment_id : VARCHAR(64) <<PK>>
+    --
+    * post_id : VARCHAR(64) <<FK>>
+    * media_kind : VARCHAR(20)
+    * media_url : TEXT
+    file_name : VARCHAR(255)
+    * captured_at : TIMESTAMP
+  }
+}
+
+package "GAD Bulletins & Support Messaging" {
+  entity "gad_posts" as gad_posts {
+    * post_id : VARCHAR(64) <<PK>>
+    --
+    * author_user_id : VARCHAR(128) <<FK>>
+    * content : TEXT
+    image_url : TEXT
+    * created_at : TIMESTAMP
+    updated_at : TIMESTAMP
+  }
+
+  entity "gad_post_likes" as gad_post_likes {
+    * post_id : VARCHAR(64) <<PK, FK>>
+    * user_id : VARCHAR(128) <<PK, FK>>
+    --
+    * liked_at : TIMESTAMP
+  }
+
+  entity "chat_threads" as chat_threads {
+    * thread_id : VARCHAR(160) <<PK>>
+    --
+    * initiator_user_id : VARCHAR(128) <<FK>>
+    assigned_admin_id : VARCHAR(128) <<FK>>
+    * support_mode : VARCHAR(30)
+    * is_anonymous : BOOLEAN
+    anonymous_alias : VARCHAR(80)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+  }
+
+  entity "chat_messages" as chat_messages {
+    * message_id : VARCHAR(64) <<PK>>
+    --
+    * thread_id : VARCHAR(160) <<FK>>
+    * sender_user_id : VARCHAR(128) <<FK>>
+    * receiver_user_id : VARCHAR(128) <<FK>>
+    * body : TEXT
+    * status : VARCHAR(20)
+    * is_read : BOOLEAN
+    seen_at : TIMESTAMP
+    replied_at : TIMESTAMP
+    replied_by_user_id : VARCHAR(128) <<FK>>
+    * is_deleted : BOOLEAN
+    deleted_at : TIMESTAMP
+    * sent_at : TIMESTAMP
+  }
+
+  entity "gad_inquiries" as gad_inquiries {
+    * inquiry_id : VARCHAR(64) <<PK>>
+    --
+    * submitter_user_id : VARCHAR(128) <<FK>>
+    thread_id : VARCHAR(160) <<FK>>
+    * is_anonymous : BOOLEAN
+    * subject : VARCHAR(160)
+    * category : VARCHAR(60)
+    * message : TEXT
+    latitude : DECIMAL(9,6)
+    longitude : DECIMAL(9,6)
+    * status : VARCHAR(20)
+    reply_text : TEXT
+    replied_at : TIMESTAMP
+    replied_by_user_id : VARCHAR(128) <<FK>>
+    * is_deleted : BOOLEAN
+    * created_at : TIMESTAMP
+  }
+}
+
+package "Notifications, Audit & Campus Geofence" {
+  entity "notifications" as notifications {
+    * notification_id : VARCHAR(64) <<PK>>
+    --
+    recipient_user_id : VARCHAR(128) <<FK>>
+    recipient_email : VARCHAR(255)
+    source_user_id : VARCHAR(128) <<FK>>
+    guardian_link_id : VARCHAR(64) <<FK>>
+    * notification_type : VARCHAR(50)
+    * title : VARCHAR(160)
+    * message : TEXT
+    * priority : VARCHAR(15)
+    * status : VARCHAR(20)
+    resolved_status : VARCHAR(20)
+    related_entity_type : VARCHAR(40)
+    related_entity_id : VARCHAR(128)
+    action_url : VARCHAR(255)
+    expires_at : TIMESTAMP
+    * is_read : BOOLEAN
+    read_at : TIMESTAMP
+    * created_at : TIMESTAMP
+  }
+
+  entity "audit_logs" as audit_logs {
+    * log_id : VARCHAR(64) <<PK>>
+    --
+    * user_id : VARCHAR(128) <<FK>>
+    * action : VARCHAR(50)
+    auth_method : VARCHAR(30)
+    details_json : JSON
+    ip_address : VARCHAR(45)
+    * user_agent : VARCHAR(512)
+    * session_id : VARCHAR(128)
+    * occurred_at : TIMESTAMP
+  }
+
+  entity "campus_map_configs" as campus_map_configs {
+    * config_id : VARCHAR(64) <<PK>>
+    --
+    * config_name : VARCHAR(100)
+    updated_by_user_id : VARCHAR(128) <<FK>>
+    * updated_at : TIMESTAMP
+  }
+
+  entity "campus_geofence_vertices" as campus_geofence_vertices {
+    * vertex_id : VARCHAR(64) <<PK>>
+    --
+    * config_id : VARCHAR(64) <<FK, UK>>
+    * sequence_order : INT <<UK>>
+    * latitude : DECIMAL(9,6)
+    * longitude : DECIMAL(9,6)
+  }
+
+  entity "campus_places" as campus_places {
+    * place_id : VARCHAR(64) <<PK>>
+    --
+    * config_id : VARCHAR(64) <<FK>>
+    * name : VARCHAR(100)
+    * icon : VARCHAR(50)
+    description : VARCHAR(255)
+    * latitude : DECIMAL(9,6)
+    * longitude : DECIMAL(9,6)
+    * zone_radius_meters : INT
+    * updated_at : TIMESTAMP
+  }
+}
+
+' === CROW'S FOOT RELATIONSHIPS ===
+users ||--o| student_profiles : "is-a student"
+users ||--o| staff_profiles : "is-a staff"
+users ||--o| guardian_profiles : "is-a guardian"
+users ||--o| user_credentials : "has credential"
+
+student_profiles ||--o{ guardian_links : "linked to"
+guardian_profiles |o--o{ guardian_links : "monitors"
+guardian_links ||--o{ location_reminders : "triggers"
+guardian_profiles ||--o{ location_reminders : "requests"
+users ||--o| user_live_locations : "shares GPS"
+users ||--o{ attendance_logs : "records"
+
+users ||--o{ sos_logs : "triggers"
+sos_logs ||--o{ sos_log_recipients : "dispatches to"
+guardian_profiles ||--o{ sos_log_recipients : "notified via"
+users ||--o{ emergency_posts : "uploads"
+emergency_posts ||--o{ emergency_post_attachments : "contains"
+
+users ||--o{ gad_posts : "authors"
+gad_posts ||--o{ gad_post_likes : "liked by"
+users ||--o{ gad_post_likes : "likes"
+users ||--o{ chat_threads : "initiates / handles"
+chat_threads ||--o{ chat_messages : "contains"
+users ||--o{ chat_messages : "sends / receives"
+users ||--o{ gad_inquiries : "submits / replies"
+chat_threads |o--o{ gad_inquiries : "mirrors into"
+
+users |o--o{ notifications : "receives / triggers"
+guardian_links |o--o{ notifications : "invite ref"
+users ||--o{ audit_logs : "records"
+users |o--o{ campus_map_configs : "updates"
+campus_map_configs ||--|{ campus_geofence_vertices : "defines boundary"
+campus_map_configs ||--o{ campus_places : "contains places"
+
+@enduml

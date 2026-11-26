@@ -248,8 +248,9 @@
                 </div>
 
                 <!-- (2026-07-13) Staff Department field for onboarding; was absent -->
-                <div class="form-group pub-login-u13" id="onboardingDepartmentGroup" style="display:none;">
-                    <label class="form-label pub-login-u14">Department <span style="opacity:0.6; font-weight:500;">(Optional)</span></label>
+                <!-- (2026-07-13) Move onboarding dept inline styles to CSS; was inline -->
+                <div class="form-group pub-login-u13 login-dept-group-hidden" id="onboardingDepartmentGroup">
+                    <label class="form-label pub-login-u14">Department <span class="login-optional-hint">(Optional)</span></label>
                     <div class="input-wrapper">
                         <span class="material-symbols-outlined input-icon">apartment</span>
                         <input type="text" id="onboardingDepartment" placeholder="e.g. Faculty, Admin Office, Security" autocomplete="organization">

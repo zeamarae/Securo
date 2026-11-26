@@ -1,0 +1,344 @@
+@startuml Securo_3NF_Database_UML
+!theme plain
+hide empty methods
+skinparam linetype ortho
+skinparam roundcorner 8
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam packageStyle rectangle
+
+title Securo Campus Safety System — 3NF Normalized UML Class / Data Model\n(Derived from Connected Firebase Firestore: securo-a3c9c)
+
+package "1. Identity, Roles & Authentication (3NF)" #F5F3FF {
+  class Role <<lookup>> {
+    + role_id : VARCHAR(20) <<PK>>
+    --
+    + role_name : VARCHAR(30) <<UK>>
+    + badge_color_hex : VARCHAR(7)
+  }
+
+  class User {
+    + user_uid : VARCHAR(128) <<PK>>
+    + role_id : VARCHAR(20) <<FK>>
+    --
+    + auth_email : VARCHAR(255) <<UK>>
+    + recovery_email : VARCHAR(255)
+    + first_name : VARCHAR(80)
+    + last_name : VARCHAR(80)
+    + photo_url : TEXT
+    + created_at : TIMESTAMP
+    + updated_at : TIMESTAMP
+  }
+
+  class UserCredential {
+    + user_uid : VARCHAR(128) <<PK,FK>>
+    --
+    + password_hash : VARCHAR(255)
+    + password_updated_at : TIMESTAMP
+  }
+
+  class UserPresence {
+    + user_uid : VARCHAR(128) <<PK,FK>>
+    --
+    + is_online : BOOLEAN
+    + last_active_at : TIMESTAMP
+  }
+
+  class StudentProfile <<subtype>> {
+    + user_uid : VARCHAR(128) <<PK,FK>>
+    --
+    + student_id : CHAR(7) <<UK>>
+    + section : VARCHAR(60)
+    + onboarding_completed : BOOLEAN
+    + anon_alias : VARCHAR(32)
+  }
+
+  class StaffProfile <<subtype>> {
+    + user_uid : VARCHAR(128) <<PK,FK>>
+    --
+    + staff_id : CHAR(7) <<UK>>
+    + department : VARCHAR(80)
+    + anon_alias : VARCHAR(32)
+  }
+
+  class GuardianProfile <<subtype>> {
+    + user_uid : VARCHAR(128) <<PK,FK>>
+    --
+    + anon_alias : VARCHAR(32)
+  }
+
+  class AdminProfile <<subtype>> {
+    + user_uid : VARCHAR(128) <<PK,FK>>
+    --
+    + office_title : VARCHAR(80)
+  }
+}
+
+package "2. Parent-Student Linking & Privacy Tracking (3NF)" #FDF2F8 {
+  class GuardianLink <<junction>> {
+    + link_id : VARCHAR(64) <<PK>>
+    + guardian_uid : VARCHAR(128) <<FK>>
+    + student_uid : VARCHAR(128) <<FK>>
+    --
+    + requested_by : ENUM(guardian, student)
+    + status : ENUM(pending, accepted, declined)
+    + expires_at : TIMESTAMP
+    + created_at : TIMESTAMP
+  }
+
+  class StudentLocation {
+    + student_uid : VARCHAR(128) <<PK,FK>>
+    --
+    + lat : DECIMAL(10,7)
+    + lng : DECIMAL(10,7)
+    + is_inside : BOOLEAN
+    + sharing_enabled : BOOLEAN
+    + sharing_state : ENUM(active, outside_campus, stopped, logged_out)
+    + sharing_message : VARCHAR(255)
+    + updated_at : TIMESTAMP
+  }
+}
+
+package "3. Emergency SOS, Vault & Attendance (3NF)" #FEF2F2 {
+  class LocationSnapshot {
+    + location_id : VARCHAR(64) <<PK>>
+    --
+    + lat : DECIMAL(10,7)
+    + lng : DECIMAL(10,7)
+    + address : VARCHAR(255)
+    + is_inside : BOOLEAN
+    + out_of_bounds : BOOLEAN
+    + captured_at : TIMESTAMP
+  }
+
+  class SosLog {
+    + sos_id : VARCHAR(64) <<PK>>
+    + user_uid : VARCHAR(128) <<FK>>
+    + location_id : VARCHAR(64) <<FK>>
+    --
+    + emergency_type : VARCHAR(40)
+    + accuracy_m : FLOAT
+    + battery_pct : SMALLINT
+    + status : ENUM(active, resolved)
+    + timestamp : TIMESTAMP
+  }
+
+  class SosGuardianAlert <<junction>> {
+    + sos_id : VARCHAR(64) <<PK,FK>>
+    + guardian_uid : VARCHAR(128) <<PK,FK>>
+    --
+    + notified_at : TIMESTAMP
+  }
+
+  class EmergencyPost {
+    + post_id : VARCHAR(64) <<PK>>
+    + user_uid : VARCHAR(128) <<FK>>
+    + sos_id : VARCHAR(64) <<FK>>
+    + location_id : VARCHAR(64) <<FK>>
+    --
+    + gad_visible : BOOLEAN
+    + guardian_visible : BOOLEAN
+    + status : VARCHAR(30)
+    + created_at : TIMESTAMP
+  }
+
+  class EmergencyAttachment {
+    + attachment_id : VARCHAR(64) <<PK>>
+    + post_id : VARCHAR(64) <<FK>>
+    --
+    + media_kind : ENUM(image, video, audio)
+    + media_url : TEXT
+    + created_at : TIMESTAMP
+  }
+
+  class AttendanceRecord {
+    + record_id : VARCHAR(64) <<PK>>
+    + user_uid : VARCHAR(128) <<FK>>
+    + location_id : VARCHAR(64) <<FK>>
+    --
+    + record_type : ENUM(in, out, sos, profile_bootstrap)
+    + is_auto : BOOLEAN
+    + timestamp : TIMESTAMP
+  }
+}
+
+package "4. GAD Messaging, Bulletin & Notifications (3NF)" #EFF6FF {
+  class ChatThread {
+    + thread_id : VARCHAR(160) <<PK>>
+    + owner_uid : VARCHAR(128) <<FK>>
+    + admin_uid : VARCHAR(128) <<FK>>
+    --
+    + is_anonymous : BOOLEAN
+    + anonymous_alias : VARCHAR(32)
+    + support_mode : VARCHAR(40)
+    + created_at : TIMESTAMP
+  }
+
+  class ChatMessage {
+    + message_id : VARCHAR(64) <<PK>>
+    + thread_id : VARCHAR(160) <<FK>>
+    + sender_uid : VARCHAR(128) <<FK>>
+    + receiver_uid : VARCHAR(128) <<FK>>
+    --
+    + text_body : TEXT
+    + status : ENUM(delivered, seen, replied)
+    + is_seen : BOOLEAN
+    + seen_at : TIMESTAMP
+    + is_deleted : BOOLEAN
+    + deleted_at : TIMESTAMP
+    + timestamp : TIMESTAMP
+  }
+
+  class GadInquiry {
+    + inquiry_id : VARCHAR(64) <<PK>>
+    + user_uid : VARCHAR(128) <<FK>>
+    + thread_id : VARCHAR(160) <<FK>>
+    + location_id : VARCHAR(64) <<FK>>
+    + replied_by_uid : VARCHAR(128) <<FK>>
+    --
+    + is_anonymous : BOOLEAN
+    + category : VARCHAR(40)
+    + subject : VARCHAR(120)
+    + message_body : TEXT
+    + status : ENUM(open, answered)
+    + reply_body : TEXT
+    + is_deleted : BOOLEAN
+    + replied_at : TIMESTAMP
+    + created_at : TIMESTAMP
+  }
+
+  class GadPost {
+    + post_id : VARCHAR(64) <<PK>>
+    + author_uid : VARCHAR(128) <<FK>>
+    --
+    + content : TEXT
+    + image_url : TEXT
+    + created_at : TIMESTAMP
+    + updated_at : TIMESTAMP
+  }
+
+  class GadPostLike <<junction>> {
+    + post_id : VARCHAR(64) <<PK,FK>>
+    + user_uid : VARCHAR(128) <<PK,FK>>
+    --
+    + liked_at : TIMESTAMP
+  }
+
+  class Notification {
+    + notification_id : VARCHAR(64) <<PK>>
+    + recipient_uid : VARCHAR(128) <<FK>>
+    + source_uid : VARCHAR(128) <<FK>>
+    --
+    + notif_type : VARCHAR(40)
+    + title : VARCHAR(120)
+    + message : TEXT
+    + priority : ENUM(normal, urgent)
+    + related_id : VARCHAR(128)
+    + is_read : BOOLEAN
+    + read_at : TIMESTAMP
+    + created_at : TIMESTAMP
+  }
+}
+
+package "5. Campus Map Configuration & Audit (3NF)" #ECFDF5 {
+  class CampusMapConfig {
+    + config_id : VARCHAR(64) <<PK>>
+    + updated_by_uid : VARCHAR(128) <<FK>>
+    --
+    + updated_at : TIMESTAMP
+  }
+
+  class GeofenceVertex {
+    + vertex_id : VARCHAR(64) <<PK>>
+    + config_id : VARCHAR(64) <<FK>>
+    --
+    + vertex_order : INT
+    + lat : DECIMAL(10,7)
+    + lng : DECIMAL(10,7)
+  }
+
+  class CampusMarker {
+    + marker_id : VARCHAR(64) <<PK>>
+    + config_id : VARCHAR(64) <<FK>>
+    --
+    + name : VARCHAR(100)
+    + icon : VARCHAR(40)
+    + lat : DECIMAL(10,7)
+    + lng : DECIMAL(10,7)
+    + description : TEXT
+  }
+
+  class AuditLog {
+    + log_id : VARCHAR(64) <<PK>>
+    + user_uid : VARCHAR(128) <<FK>>
+    --
+    + action : VARCHAR(60)
+    + details_json : TEXT
+    + user_agent : VARCHAR(255)
+    + session_id : VARCHAR(128)
+    + timestamp : TIMESTAMP
+  }
+}
+
+' ==================== RELATIONSHIPS & EXACT MULTIPLICITIES ====================
+Role "1" -- "0..*" User : classifies >
+User "1" -- "1" UserCredential : authenticates >
+User "1" -- "0..1" UserPresence : tracks_status >
+
+User "1" -- "0..1" StudentProfile : specializes >
+User "1" -- "0..1" StaffProfile : specializes >
+User "1" -- "0..1" GuardianProfile : specializes >
+User "1" -- "0..1" AdminProfile : specializes >
+
+GuardianProfile "1" -- "0..*" GuardianLink : initiates_holds >
+StudentProfile "1" -- "0..*" GuardianLink : approves_links >
+StudentProfile "1" -- "0..1" StudentLocation : broadcasts_inside_only >
+
+User "1" -- "0..*" SosLog : triggers >
+LocationSnapshot "1" -- "0..*" SosLog : captures_press_point >
+SosLog "1" -- "0..*" SosGuardianAlert : notifies >
+GuardianProfile "1" -- "0..*" SosGuardianAlert : receives_alert >
+
+User "1" -- "0..*" EmergencyPost : owns >
+SosLog "0..1" -- "0..*" EmergencyPost : linked_evidence >
+LocationSnapshot "0..1" -- "0..*" EmergencyPost : geotags >
+EmergencyPost "1" *-- "1..*" EmergencyAttachment : contains >
+
+User "1" -- "0..*" AttendanceRecord : logs >
+LocationSnapshot "0..1" -- "0..*" AttendanceRecord : records_point >
+
+User "1" -- "0..*" ChatThread : owns_named_or_anon >
+AdminProfile "1" -- "0..*" ChatThread : responds_on >
+ChatThread "1" *-- "0..*" ChatMessage : contains >
+User "1" -- "0..*" ChatMessage : sends_receives >
+
+User "1" -- "0..*" GadInquiry : submits >
+ChatThread "0..1" -- "0..*" GadInquiry : syncs_with >
+LocationSnapshot "0..1" -- "0..*" GadInquiry : references >
+AdminProfile "0..1" -- "0..*" GadInquiry : answers >
+
+User "1" -- "0..*" GadPost : publishes (admin/staff) >
+GadPost "1" -- "0..*" GadPostLike : liked_in >
+User "1" -- "0..*" GadPostLike : toggles_like >
+
+User "1" -- "0..*" Notification : receives >
+User "0..1" -- "0..*" Notification : triggers >
+
+AdminProfile "1" -- "0..*" CampusMapConfig : configures >
+CampusMapConfig "1" *-- "3..*" GeofenceVertex : defines_polygon >
+CampusMapConfig "1" *-- "0..*" CampusMarker : places_pins >
+
+User "1" -- "0..*" AuditLog : generates >
+
+note bottom of StaffProfile
+  Staff has NO relationship to
+  GuardianProfile or GuardianLink.
+end note
+
+note bottom of ChatThread
+  Named thread: [uid, admin]
+  Anonymous thread: [uid__anon, admin]
+  Kept strictly separate per owner_uid.
+end note
+
+@enduml

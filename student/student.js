@@ -3,8 +3,8 @@ import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device }
 import { renderEmergencyContactWidget } from '../js/emergency-contacts.js';
 import { checkAuth, logout } from '../js/auth.js';
 import { auth } from '../js/firebase-config.js';
-// (2026-07-13) Import deleteAccountNotification for cancelled invites; was missing
-import { getUserProfile, saveUserProfile, saveUserDirectoryMarker, getGADPosts, toggleLikeGADPost, logAttendance, getAttendanceHistory, logSOS, getUserSOSLogs, saveEmergencyPost, getUserEmergencyPosts, deleteEmergencyPost, updateEmergencyPostAttachments, getEmergencyPostById, toggleEmergencyPostAccess, toggleEmergencyPostGuardianAccess, sendChatMessage, subscribeToMessages, subscribeToMessagesByThread, subscribeToGuardianRequests, getLinksForStudent, createGuardianLinkFromStudent, respondToGuardianLink, removeGuardianLink, updateStudentLiveLocation, syncGuardianLinksForStudent, setStudentLocationSharingStatus, subscribeToAccountNotifications, markAccountNotificationRead, deleteAccountNotification, sendAccountNotification, subscribeToStudentLinks, sendGADMessage, subscribeToGADMessages, subscribeToCampusMapConfig, notifyGuardiansOfGeofenceEvent, attachPhotoToActiveSOS, fetchLatestCampusMapConfig, startUserPresenceHeartbeat } from '../js/db.js';
+// (2026-07-13) Import message deletion & admin presence helpers; was missing
+import { getUserProfile, saveUserProfile, saveUserDirectoryMarker, getGADPosts, toggleLikeGADPost, logAttendance, getAttendanceHistory, logSOS, getUserSOSLogs, saveEmergencyPost, getUserEmergencyPosts, deleteEmergencyPost, updateEmergencyPostAttachments, getEmergencyPostById, toggleEmergencyPostAccess, toggleEmergencyPostGuardianAccess, sendChatMessage, subscribeToMessages, subscribeToMessagesByThread, deleteChatMessage, deleteGADMessage, markThreadMessagesSeen, subscribeToAdminPresence, subscribeToGuardianRequests, getLinksForStudent, createGuardianLinkFromStudent, respondToGuardianLink, removeGuardianLink, updateStudentLiveLocation, syncGuardianLinksForStudent, setStudentLocationSharingStatus, subscribeToAccountNotifications, markAccountNotificationRead, deleteAccountNotification, sendAccountNotification, subscribeToStudentLinks, sendGADMessage, subscribeToGADMessages, subscribeToCampusMapConfig, notifyGuardiansOfGeofenceEvent, attachPhotoToActiveSOS, fetchLatestCampusMapConfig, startUserPresenceHeartbeat } from '../js/db.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import '../js/install-sw.js';
 
@@ -197,8 +197,23 @@ setTimeout(() => {
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') handleUniversalBackClose();
         });
+        // (2026-07-13) Lock browser Back button while logged in; was leaving portal
+        try {
+            sessionStorage.removeItem('securo_login_pending');
+            sessionStorage.removeItem('securo_just_registered');
+            window.history.replaceState({ securoLocked: true }, '', window.location.href);
+            window.history.pushState({ securoLocked: true }, '', window.location.href);
+        } catch (_) { }
         window.addEventListener('popstate', () => {
             handleUniversalBackClose();
+            if (auth?.currentUser || localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated') === '1') {
+                try { window.history.pushState({ securoLocked: true }, '', window.location.href); } catch (_) { }
+            }
+        });
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted && (auth?.currentUser || localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated') === '1')) {
+                try { window.history.pushState({ securoLocked: true }, '', window.location.href); } catch (_) { }
+            }
         });
 
 // (2026-07-13) Extracted unified student script; was inline module
@@ -3424,6 +3439,8 @@ setTimeout(() => {
             localStorage.setItem('securo_session_token', user.uid);
             sessionStorage.removeItem('securo_login_pending');
             startUserPresenceHeartbeat(user.uid);
+            // (2026-07-13) Start live GAD unread & admin presence watchers; was modal only
+            if (typeof initGadMessagingWatchers === "function") initGadMessagingWatchers(user.uid);
 
             // (2026-07-13) Role-based auth routing and onboarding gate; was hardcoded
             appState.user.uid = user.uid;
@@ -4623,68 +4640,182 @@ setTimeout(() => {
         };
 
         const openGadPmBtn = document.getElementById("openGadPmBtn");
-        // (2026-07-13) Add header GAD msg button & thread cache; was modal btn only
+        // (2026-07-13) Two-mode GAD chat, custom alias, unread badge, delete & presence
         const headerGadMsgBtn = document.getElementById("headerGadMsgBtn");
+        const headerGadMsgBadge = document.getElementById("headerGadMsgBadge");
         const gadPmModal = document.getElementById("gadPmModal");
         const closeGadPmModalBtn = document.getElementById("closeGadPmModalBtn");
         const cancelGadPmBtn = document.getElementById("cancelGadPmBtn");
         const submitGadPmBtn = document.getElementById("submitGadPmBtn");
         const globalGadFab = document.getElementById("globalGadFab");
+        const gadModeChooser = document.getElementById("gadModeChooser");
+        const gadChooseNamedBtn = document.getElementById("gadChooseNamedBtn");
+        const gadChooseAnonBtn = document.getElementById("gadChooseAnonBtn");
+        const gadAliasSetupPanel = document.getElementById("gadAliasSetupPanel");
+        const gadAliasInput = document.getElementById("gadAliasInput");
+        const gadSaveAliasBtn = document.getElementById("gadSaveAliasBtn");
+        const gadAliasError = document.getElementById("gadAliasError");
+        const gadSwitchModeBtn = document.getElementById("gadSwitchModeBtn");
+        const gadActiveModeBadge = document.getElementById("gadActiveModeBadge");
+        const gadNamedPreviewLabel = document.getElementById("gadNamedPreviewLabel");
+        const gadAnonPreviewLabel = document.getElementById("gadAnonPreviewLabel");
+        const gadNamedUnreadBadge = document.getElementById("gadNamedUnreadBadge");
+        const gadAnonUnreadBadge = document.getElementById("gadAnonUnreadBadge");
+        const gadAdminPresenceDot = document.getElementById("gadAdminPresenceDot");
+        const gadAdminPresenceText = document.getElementById("gadAdminPresenceText");
 
-        // (2026-07-13) Real-time GAD chatbox thread & composer; was form modal
         let _cachedGadMessages = [];
-        let _cachedGadThreadMessages = [];
-        let gadThreadUnsub = null;
+        let _cachedNamedThreadMessages = [];
+        let _cachedAnonThreadMessages = [];
+        let gadNamedThreadUnsub = null;
+        let gadAnonThreadUnsub = null;
+        let gadAdminPresenceUnsub = null;
+        let gadActiveChatMode = null; // 'named' | 'anonymous'
 
-        // (2026-07-13) Merge GAD inquiries & admin replies in thread; was inquiries only
+        const getGadThreadId = (uid, mode) => {
+            const participant = mode === 'anonymous' ? `${uid}__anon` : uid;
+            return [participant, "system_admin_securo"].sort().join("_");
+        };
+        const getGadReadTsKey = (tid) => `securo_msg_read_ts_${tid}`;
+        const getGadReadTs = (tid) => parseInt(localStorage.getItem(getGadReadTsKey(tid)) || '0', 10) || 0;
+        const setGadReadTs = (tid, ts = Date.now()) => {
+            try { localStorage.setItem(getGadReadTsKey(tid), String(ts)); } catch (_) {}
+        };
+        const getSavedAnonAlias = (uid) => {
+            if (!uid) return '';
+            const localAlias = (localStorage.getItem(`securo_anon_alias_${uid}`) || '').trim();
+            return localAlias || (appState.profile?.anonAlias || '').trim();
+        };
+        const saveAnonAlias = async (uid, alias) => {
+            const clean = String(alias || '').trim();
+            if (!uid || !clean) return '';
+            try { localStorage.setItem(`securo_anon_alias_${uid}`, clean); } catch (_) {}
+            if (appState.profile) appState.profile.anonAlias = clean;
+            try { await saveUserProfile(uid, { anonAlias: clean }); } catch (_) {}
+            return clean;
+        };
+        const gadMsgToMs = (val) => {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            if (val.seconds) return val.seconds * 1000;
+            if (typeof val.toDate === 'function') return val.toDate().getTime();
+            const parsed = new Date(val).getTime();
+            return Number.isNaN(parsed) ? 0 : parsed;
+        };
+        const countUnreadAdminMsgs = (msgs, tid, myUid) => {
+            const lastRead = getGadReadTs(tid);
+            return (msgs || []).filter((m) => {
+                if (!m || m.deleted) return false;
+                const isFromAdmin = m.senderRole === 'admin' || m.senderId === 'system_admin_securo' || (m.senderId && m.senderId !== myUid && m.senderUid !== myUid);
+                if (!isFromAdmin) return false;
+                const ts = gadMsgToMs(m.timestamp) || gadMsgToMs(m.localTime) || gadMsgToMs(m.createdAt);
+                return ts > lastRead;
+            }).length;
+        };
+
+        function updateGadUnreadBadges() {
+            const uid = appState.user?.uid || auth.currentUser?.uid;
+            if (!uid) return;
+            const namedTid = getGadThreadId(uid, 'named');
+            const anonTid = getGadThreadId(uid, 'anonymous');
+            const modalOpen = Boolean(gadPmModal?.classList.contains('active') && !gadModeChooser?.classList.contains('active'));
+            if (modalOpen && gadActiveChatMode === 'named') {
+                setGadReadTs(namedTid, Date.now());
+                markThreadMessagesSeen(namedTid, 'student').catch(() => {});
+            } else if (modalOpen && gadActiveChatMode === 'anonymous') {
+                setGadReadTs(anonTid, Date.now());
+                markThreadMessagesSeen(anonTid, 'student').catch(() => {});
+            }
+            const namedUnread = countUnreadAdminMsgs(_cachedNamedThreadMessages, namedTid, uid);
+            const anonUnread = countUnreadAdminMsgs(_cachedAnonThreadMessages, anonTid, uid);
+            const totalUnread = namedUnread + anonUnread;
+            if (headerGadMsgBadge) {
+                headerGadMsgBadge.textContent = totalUnread > 99 ? '99+' : (totalUnread > 0 ? String(totalUnread) : '');
+                headerGadMsgBadge.classList.toggle('has-unread', totalUnread > 0);
+            }
+            if (gadNamedUnreadBadge) {
+                gadNamedUnreadBadge.textContent = namedUnread > 0 ? String(namedUnread) : '';
+                gadNamedUnreadBadge.classList.toggle('has-unread', namedUnread > 0);
+            }
+            if (gadAnonUnreadBadge) {
+                gadAnonUnreadBadge.textContent = anonUnread > 0 ? String(anonUnread) : '';
+                gadAnonUnreadBadge.classList.toggle('has-unread', anonUnread > 0);
+            }
+        }
+
+        function updateGadAdminPresenceUI(isOnline) {
+            if (gadAdminPresenceDot) gadAdminPresenceDot.classList.toggle('is-online', !!isOnline);
+            if (gadAdminPresenceText) gadAdminPresenceText.textContent = isOnline ? 'Online' : 'Offline';
+        }
+
+        function initGadMessagingWatchers(uid) {
+            if (!uid) return;
+            if (gadNamedThreadUnsub) gadNamedThreadUnsub();
+            if (gadAnonThreadUnsub) gadAnonThreadUnsub();
+            if (gadAdminPresenceUnsub) gadAdminPresenceUnsub();
+
+            const namedTid = getGadThreadId(uid, 'named');
+            const anonTid = getGadThreadId(uid, 'anonymous');
+
+            gadNamedThreadUnsub = subscribeToMessagesByThread(namedTid, (msgs) => {
+                _cachedNamedThreadMessages = Array.isArray(msgs) ? msgs : [];
+                updateGadUnreadBadges();
+                if (gadActiveChatMode === 'named') renderGadChatThread();
+            });
+            gadAnonThreadUnsub = subscribeToMessagesByThread(anonTid, (msgs) => {
+                _cachedAnonThreadMessages = Array.isArray(msgs) ? msgs : [];
+                updateGadUnreadBadges();
+                if (gadActiveChatMode === 'anonymous') renderGadChatThread();
+            });
+            gadAdminPresenceUnsub = subscribeToAdminPresence(updateGadAdminPresenceUI);
+        }
+
         function renderGadChatThread(messages) {
             const thread = document.getElementById("gadChatThread");
             if (!thread) return;
-            const msgs = messages || _cachedGadMessages;
-            const items = [
-                { type: 'them', text: "Hi! This is the GAD Desk. Tell us what is on your mind — your message is confidential.", ts: 0 }
-            ];
+            const myUid = appState.user?.uid || auth.currentUser?.uid || "";
+            const isAnonMode = gadActiveChatMode === 'anonymous';
+            const anonAlias = getSavedAnonAlias(myUid);
+            const activeThreadId = myUid ? getGadThreadId(myUid, isAnonMode ? 'anonymous' : 'named') : '';
+            const welcomeText = isAnonMode
+                ? `Hi${anonAlias ? ' ' + anonAlias : ''}! You are messaging GAD anonymously. Your real name is hidden in this conversation.`
+                : "Hi! This is the GAD Desk. Tell us what is on your mind — your conversation is private.";
+            const items = [{ type: 'them', text: welcomeText, ts: 0, id: null, source: 'welcome' }];
             const timeline = [];
-            const myUid = appState.user?.uid || "";
 
-            const toMs = (val) => {
-                if (!val) return 0;
-                if (typeof val === 'number') return val;
-                if (val.seconds) return val.seconds * 1000;
-                if (typeof val.toDate === 'function') return val.toDate().getTime();
-                const parsed = new Date(val).getTime();
-                return Number.isNaN(parsed) ? 0 : parsed;
-            };
-
-            if (msgs && msgs.length) {
+            const threadMsgs = isAnonMode ? _cachedAnonThreadMessages : _cachedNamedThreadMessages;
+            if (!isAnonMode) {
+                const msgs = (messages || _cachedGadMessages || []).filter(m => !m.isAnonymous && !m.deleted);
                 msgs.forEach(m => {
-                    const baseTs = toMs(m.createdAt);
+                    const baseTs = gadMsgToMs(m.createdAt);
                     if (m.message) {
-                        timeline.push({ type: 'me', text: String(m.message).trim(), ts: baseTs });
+                        timeline.push({ type: 'me', text: String(m.message).trim(), ts: baseTs, id: m.id || null, source: 'gad' });
                     }
                     if (m.status === 'answered' && m.reply) {
-                        const repTs = toMs(m.repliedAt) || (baseTs + 1);
-                        timeline.push({ type: 'them', text: String(m.reply).trim(), ts: repTs });
+                        const repTs = gadMsgToMs(m.repliedAt) || (baseTs + 1);
+                        timeline.push({ type: 'them', text: String(m.reply).trim(), ts: repTs, id: null, source: 'gad' });
                     }
                 });
             }
 
-            if (_cachedGadThreadMessages && _cachedGadThreadMessages.length) {
-                _cachedGadThreadMessages.forEach(tm => {
-                    const text = String(tm.text || tm.message || '').trim();
-                    if (!text) return;
-                    const type = (tm.senderId === myUid || tm.senderUid === myUid) ? 'me' : 'them';
-                    const ts = toMs(tm.timestamp) || toMs(tm.localTime) || toMs(tm.createdAt);
-                    const isDup = timeline.some(e => e.type === type && e.text === text && Math.abs(e.ts - ts) < 15000);
-                    if (!isDup) timeline.push({ type, text, ts });
-                });
-            }
+            (threadMsgs || []).forEach(tm => {
+                if (!tm || tm.deleted) return;
+                const text = String(tm.text || tm.message || '').trim();
+                if (!text) return;
+                const type = (tm.senderId === myUid || tm.senderUid === myUid) ? 'me' : 'them';
+                const ts = gadMsgToMs(tm.timestamp) || gadMsgToMs(tm.localTime) || gadMsgToMs(tm.createdAt);
+                const existingIdx = timeline.findIndex(e => e.type === type && e.text === text && Math.abs(e.ts - ts) < 15000);
+                if (existingIdx >= 0) {
+                    timeline[existingIdx].chatId = tm.id || null;
+                } else {
+                    timeline.push({ type, text, ts, id: tm.id || null, chatId: tm.id || null, source: 'chat' });
+                }
+            });
 
             timeline.sort((a, b) => a.ts - b.ts);
             timeline.forEach(entry => items.push(entry));
             const isWaitingReply = timeline.length > 0 && timeline[timeline.length - 1].type === 'me';
 
-            // (2026-07-13) Render avatar alongside incoming GAD messages; was bare bubble
             let html = '';
             for (let i = 0; i < items.length; i++) {
                 const cur = items[i];
@@ -4697,12 +4828,15 @@ setTimeout(() => {
                 else if (prevSame && !nextSame) bubbleClass = 'bubble-last';
 
                 if (cur.type === 'them') {
-                    const avatarHtml = !nextSame 
+                    const avatarHtml = !nextSame
                         ? '<div class="gad-them-avatar"><span class="material-symbols-outlined" style="font-size:16px;">support_agent</span></div>'
                         : '<div class="gad-them-avatar-spacer"></div>';
                     html += `<div class="gad-them-row ${bubbleClass}">${avatarHtml}<div class="gad-bubble them ${bubbleClass}">${escapeHtml(cur.text)}</div></div>`;
                 } else {
-                    html += `<div class="gad-bubble me ${bubbleClass}">${escapeHtml(cur.text)}</div>`;
+                    const delBtnHtml = (cur.chatId || cur.id)
+                        ? `<button type="button" class="gad-msg-del-btn" data-del-chat-id="${escapeHtml(cur.chatId || '')}" data-del-gad-id="${escapeHtml(cur.source === 'gad' ? (cur.id || '') : '')}" data-del-thread-id="${escapeHtml(activeThreadId)}" title="Delete message" aria-label="Delete message"><span class="material-symbols-outlined">delete</span></button>`
+                        : '';
+                    html += `<div class="gad-me-row">${delBtnHtml}<div class="gad-bubble me ${bubbleClass}">${escapeHtml(cur.text)}</div></div>`;
                 }
             }
 
@@ -4720,30 +4854,84 @@ setTimeout(() => {
 
             thread.innerHTML = html;
             thread.scrollTop = thread.scrollHeight;
+            thread.querySelectorAll('.gad-msg-del-btn').forEach((btn) => {
+                btn.addEventListener('click', async (ev) => {
+                    ev.stopPropagation();
+                    if (!window.confirm('Delete this message?')) return;
+                    const chatId = btn.dataset.delChatId;
+                    const gadId = btn.dataset.delGadId;
+                    const tid = btn.dataset.delThreadId;
+                    if (chatId) await deleteChatMessage(chatId, tid);
+                    if (gadId) await deleteGADMessage(gadId);
+                    renderGadChatThread();
+                });
+            });
         }
 
-        // (2026-07-13) Load past GAD history on modal open; was empty until tab switch
-        function openGadPmModal() {
-            if (gadPmModal) {
-                gadPmModal.classList.add("active");
-                if (appState.user?.uid && (!gadInquiriesUnsub || !gadThreadUnsub)) {
-                    loadStudentGADInquiries();
-                }
-                renderGadChatThread();
-                const msgInput = document.getElementById("gadMessageBody");
-                if (msgInput) {
-                    msgInput.focus();
-                    if (!msgInput._enterBound) {
-                        msgInput._enterBound = true;
-                        msgInput.addEventListener("keydown", (e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault();
-                                submitGadPmBtn?.click();
-                            }
-                        });
-                    }
+        function showGadModeChooser() {
+            const uid = appState.user?.uid || auth.currentUser?.uid;
+            const realName = appState.profile?.name || appState.user?.name || 'Your Name';
+            const savedAlias = getSavedAnonAlias(uid);
+            if (gadNamedPreviewLabel) gadNamedPreviewLabel.textContent = `Continue as ${realName}`;
+            if (gadAnonPreviewLabel) gadAnonPreviewLabel.textContent = savedAlias ? `Continue as "${savedAlias}" (Alias)` : 'Choose a custom anonymous name';
+            if (gadAliasSetupPanel) gadAliasSetupPanel.classList.remove('active');
+            if (gadAliasError) gadAliasError.textContent = '';
+            if (gadModeChooser) gadModeChooser.classList.add('active');
+            const threadEl = document.getElementById('gadChatThread');
+            const composerEl = gadPmModal?.querySelector('.gad-chat-composer');
+            if (threadEl) threadEl.style.display = 'none';
+            if (composerEl) composerEl.style.display = 'none';
+            if (gadSwitchModeBtn) gadSwitchModeBtn.classList.remove('visible');
+            if (gadActiveModeBadge) gadActiveModeBadge.classList.remove('visible');
+            updateGadUnreadBadges();
+        }
+
+        function enterGadChatMode(mode) {
+            const uid = appState.user?.uid || auth.currentUser?.uid;
+            if (!uid) return;
+            gadActiveChatMode = mode;
+            const anonToggle = document.getElementById("gadAnonToggle");
+            if (anonToggle) anonToggle.checked = (mode === 'anonymous');
+            const tid = getGadThreadId(uid, mode);
+            setGadReadTs(tid, Date.now());
+            markThreadMessagesSeen(tid, 'student').catch(() => {});
+            updateGadUnreadBadges();
+
+            if (gadModeChooser) gadModeChooser.classList.remove('active');
+            if (gadAliasSetupPanel) gadAliasSetupPanel.classList.remove('active');
+            const threadEl = document.getElementById('gadChatThread');
+            const composerEl = gadPmModal?.querySelector('.gad-chat-composer');
+            if (threadEl) threadEl.style.display = '';
+            if (composerEl) composerEl.style.display = '';
+            if (gadSwitchModeBtn) gadSwitchModeBtn.classList.add('visible');
+            if (gadActiveModeBadge) {
+                const alias = getSavedAnonAlias(uid);
+                gadActiveModeBadge.textContent = mode === 'anonymous' ? `Alias: ${alias}` : 'Named';
+                gadActiveModeBadge.classList.add('visible');
+            }
+            renderGadChatThread();
+            const msgInput = document.getElementById("gadMessageBody");
+            if (msgInput) {
+                msgInput.focus();
+                if (!msgInput._enterBound) {
+                    msgInput._enterBound = true;
+                    msgInput.addEventListener("keydown", (e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            submitGadPmBtn?.click();
+                        }
+                    });
                 }
             }
+        }
+
+        function openGadPmModal() {
+            const uid = appState.user?.uid || auth.currentUser?.uid;
+            if (!gadPmModal || !uid) return;
+            gadPmModal.classList.add("active");
+            if (!gadNamedThreadUnsub || !gadAnonThreadUnsub) initGadMessagingWatchers(uid);
+            if (!gadInquiriesUnsub) loadStudentGADInquiries();
+            showGadModeChooser();
         }
 
         function closeGadPmModal() {
@@ -4751,6 +4939,33 @@ setTimeout(() => {
                 gadPmModal.classList.remove("active");
             }
         }
+
+        if (gadChooseNamedBtn) gadChooseNamedBtn.addEventListener("click", () => enterGadChatMode('named'));
+        if (gadChooseAnonBtn) gadChooseAnonBtn.addEventListener("click", () => {
+            const uid = appState.user?.uid || auth.currentUser?.uid;
+            const savedAlias = getSavedAnonAlias(uid);
+            if (savedAlias) {
+                enterGadChatMode('anonymous');
+            } else if (gadAliasSetupPanel) {
+                gadAliasSetupPanel.classList.add('active');
+                if (gadAliasInput) { gadAliasInput.value = ''; gadAliasInput.focus(); }
+            }
+        });
+        if (gadSaveAliasBtn) gadSaveAliasBtn.addEventListener("click", async () => {
+            const uid = appState.user?.uid || auth.currentUser?.uid;
+            const val = (gadAliasInput?.value || '').trim();
+            if (val.length < 2) {
+                if (gadAliasError) gadAliasError.textContent = 'Please enter a name (at least 2 characters).';
+                return;
+            }
+            if (gadAliasError) gadAliasError.textContent = '';
+            await saveAnonAlias(uid, val);
+            enterGadChatMode('anonymous');
+        });
+        if (gadAliasInput) gadAliasInput.addEventListener("keydown", (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); gadSaveAliasBtn?.click(); }
+        });
+        if (gadSwitchModeBtn) gadSwitchModeBtn.addEventListener("click", showGadModeChooser);
 
         if (headerGadMsgBtn) headerGadMsgBtn.addEventListener("click", openGadPmModal);
         if (openGadPmBtn) openGadPmBtn.addEventListener("click", openGadPmModal);
@@ -4760,30 +4975,49 @@ setTimeout(() => {
 
         if (submitGadPmBtn) {
             submitGadPmBtn.addEventListener("click", async () => {
-                const isAnon = !!document.getElementById("gadAnonToggle")?.checked;
+                const isAnon = gadActiveChatMode === 'anonymous';
                 const category = document.getElementById("gadCategorySelect")?.value || "general";
                 const messageInput = document.getElementById("gadMessageBody");
                 const message = messageInput?.value.trim();
+                const uid = appState.user?.uid || auth.currentUser?.uid;
 
-                if (!message) return;
+                if (!message || !uid) return;
 
                 const originalBtnHtml = submitGadPmBtn.innerHTML;
                 submitGadPmBtn.disabled = true;
                 submitGadPmBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:18px;">hourglass_top</span>';
 
                 try {
-                    await sendGADMessage({
-                        studentUid: appState.user.uid,
-                        studentName: appState.user.name,
-                        studentId: appState.user.studentId,
-                        isAnonymous: isAnon,
-                        subject: category === 'counseling' ? 'Counseling Request' : 'GAD Inquiry',
-                        category,
-                        message
-                    });
+                    if (isAnon) {
+                        const alias = getSavedAnonAlias(uid) || 'Anonymous Student';
+                        const anonTid = getGadThreadId(uid, 'anonymous');
+                        await sendChatMessage(uid, "system_admin_securo", message, alias, {
+                            threadId: anonTid,
+                            senderRole: "student",
+                            recipientRole: "admin",
+                            supportMode: "gad_support",
+                            isAnonymous: true,
+                            anonymousAlias: alias,
+                            clientName: alias,
+                            senderLabel: alias,
+                            ownerId: uid
+                        });
+                        setGadReadTs(anonTid, Date.now());
+                    } else {
+                        await sendGADMessage({
+                            studentUid: uid,
+                            studentName: appState.profile?.name || appState.user?.name || "Student",
+                            studentId: appState.profile?.studentId || appState.user?.studentId || "",
+                            role: "student",
+                            isAnonymous: false,
+                            subject: category === 'counseling' ? 'Counseling Request' : 'GAD Inquiry',
+                            category,
+                            message
+                        });
+                        setGadReadTs(getGadThreadId(uid, 'named'), Date.now());
+                    }
 
                     if (messageInput) messageInput.value = "";
-                    loadStudentGADInquiries();
                 } catch (e) {
                     console.warn("GAD message send error:", e);
                     showStatus("Send Error", "Could not send message right now.", "error");
@@ -4796,22 +5030,17 @@ setTimeout(() => {
         }
 
         let gadInquiriesUnsub = null;
-        // (2026-07-13) Subscribe to both GAD inquiries & chat thread; was inquiries only
+        // (2026-07-13) Subscribe to GAD inquiries alongside dual chat threads; was single
         function loadStudentGADInquiries() {
-            if (!appState.user?.uid) return;
+            const uid = appState.user?.uid || auth.currentUser?.uid;
+            if (!uid) return;
             if (gadInquiriesUnsub) gadInquiriesUnsub();
-            if (gadThreadUnsub) gadThreadUnsub();
+            if (!gadNamedThreadUnsub || !gadAnonThreadUnsub) initGadMessagingWatchers(uid);
             const container = document.getElementById("gadInquiriesList");
 
-            const threadId = [appState.user.uid, "system_admin_securo"].sort().join("_");
-            gadThreadUnsub = subscribeToMessagesByThread(threadId, (threadMsgs) => {
-                _cachedGadThreadMessages = Array.isArray(threadMsgs) ? threadMsgs : [];
-                renderGadChatThread(_cachedGadMessages);
-            });
-
-            gadInquiriesUnsub = subscribeToGADMessages(appState.user.uid, (messages) => {
+            gadInquiriesUnsub = subscribeToGADMessages(uid, (messages) => {
                 _cachedGadMessages = Array.isArray(messages) ? messages : [];
-                renderGadChatThread(_cachedGadMessages);
+                if (gadActiveChatMode === 'named') renderGadChatThread(_cachedGadMessages);
                 if (!container) return;
                 if (!messages || !messages.length) {
                     container.innerHTML = '<div style="text-align: center; padding: 30px; color: var(--muted); font-size:0.88rem;">No messages sent yet. Use "Message GAD" above to start.</div>';

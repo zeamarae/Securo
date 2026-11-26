@@ -893,12 +893,90 @@
                     </button>
                 </div>
             </div>
-            <div class="adm-u170">
-                <div id="adminGeofenceModalMap" class="adm-u171"></div>
+            <!-- (2026-07-13) Add markers CRUD sidebar beside map; was map only -->
+            <div class="adm-u170 geofence-editor-workspace">
+                <!-- Campus markers CRUD list -->
+                <aside class="campus-markers-panel" id="geofenceMarkersSidebar" aria-label="Campus Markers">
+                    <div class="campus-markers-panel-head">
+                        <div class="campus-markers-head-title">
+                            <span>Campus Places</span>
+                            <span class="campus-markers-count" id="geofenceMarkerCountBadge">0</span>
+                        </div>
+                        <button type="button" class="campus-markers-new-btn" id="btnOpenCreatePlaceSidebar">
+                            <span class="material-symbols-outlined">add</span>
+                            <span>New</span>
+                        </button>
+                    </div>
+                    <div class="campus-markers-list" id="geofenceMarkersList"></div>
+                </aside>
+                <!-- Interactive geofence map stage -->
+                <div class="geofence-map-stage">
+                    <div id="adminGeofenceModalMap" class="adm-u171"></div>
+                </div>
             </div>
             <div class="adm-u172">
                 <span id="geofenceModalVertexCount">6 Boundary Vertices • 9 Campus Buildings</span>
                 <span class="adm-u88"><span class="adm-u173"></span> Real-time Firestore Sync Active</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- (2026-07-13) Add Place CRUD & zone slider modal; was browser prompt -->
+    <div class="place-editor-overlay" id="adminPlaceEditorModal" aria-hidden="true">
+        <!-- Place editor dialog card -->
+        <div class="place-editor-card" role="dialog" aria-modal="true" aria-labelledby="placeEditorTitle">
+            <!-- Top cancel, title, save bar -->
+            <div class="place-editor-topbar">
+                <button type="button" class="place-editor-action-cancel" id="placeEditorCancelBtn">CANCEL</button>
+                <h3 class="place-editor-title" id="placeEditorTitle">Edit Place</h3>
+                <button type="button" class="place-editor-action-save" id="placeEditorSaveBtn">SAVE</button>
+            </div>
+            <!-- Place metadata form strip -->
+            <div class="place-editor-fields">
+                <div class="place-editor-field-group place-editor-field-name">
+                    <label for="placeEditorName">Place Name</label>
+                    <input type="text" id="placeEditorName" class="place-editor-input" placeholder="e.g. Campus Library, Main Gate" maxlength="60" autocomplete="off">
+                </div>
+                <div class="place-editor-field-group place-editor-field-icon">
+                    <label for="placeEditorIcon">Icon</label>
+                    <select id="placeEditorIcon" class="place-editor-select">
+                        <option value="location_on">Pin</option>
+                        <option value="school">School / Academics</option>
+                        <option value="apartment">Admin Building</option>
+                        <option value="account_balance">Hall / Office</option>
+                        <option value="local_library">Library</option>
+                        <option value="science">Laboratory</option>
+                        <option value="restaurant">Canteen / Dining</option>
+                        <option value="fitness_center">Gym / Sports</option>
+                        <option value="medical_services">Medical Clinic</option>
+                        <option value="security">Guard House</option>
+                        <option value="door_front">Campus Gate</option>
+                        <option value="precision_manufacturing">Engineering</option>
+                        <option value="local_parking">Parking</option>
+                        <option value="location_city">Campus Facility</option>
+                    </select>
+                </div>
+                <div class="place-editor-field-group place-editor-field-desc">
+                    <label for="placeEditorDesc">Description</label>
+                    <input type="text" id="placeEditorDesc" class="place-editor-input" placeholder="Short facility note" maxlength="120" autocomplete="off">
+                </div>
+                <button type="button" class="place-editor-delete-btn is-hidden" id="placeEditorDeleteBtn" title="Delete this campus place">
+                    <span class="material-symbols-outlined">delete</span>
+                    <span>Delete</span>
+                </button>
+            </div>
+            <!-- Interactive zone preview map -->
+            <div class="place-editor-map-wrap">
+                <div id="placeEditorMap" class="place-editor-map"></div>
+                <div class="place-editor-map-hint">Drag pin or click map to adjust position</div>
+                <button type="button" class="place-editor-layer-fab" id="placeEditorLayerBtn" title="Switch map view (Hybrid / Streets / Satellite)">
+                    <span class="material-symbols-outlined">layers</span>
+                </button>
+            </div>
+            <!-- (2026-07-13) Cap zone radius slider at 50m max; was 1000m max -->
+            <div class="place-editor-slider-bar">
+                <input type="range" id="placeEditorRadiusSlider" class="place-editor-range" min="5" max="50" step="1" value="25" aria-label="Zone radius in meters">
+                <span class="place-editor-radius-label" id="placeEditorRadiusLabel">25 m zone</span>
             </div>
         </div>
     </div>
