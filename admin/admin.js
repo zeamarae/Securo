@@ -5061,16 +5061,17 @@ function renderThreads(threads) {
     const rawThreads = Array.isArray(threads) ? threads : [];
     const query = currentMsgSearchQuery.trim().toLowerCase();
 
-    // (2026-07-13) Keep named and anonymous conversations separate; was merged by uid
+    // (2026-07-13) Dedupe one anon thread per user UID; was splitting legacy anon threads
     const dedupedMap = new Map();
     rawThreads.forEach(t => {
         const client = getThreadClientInfo(t);
+        const baseId = client.userObj?.uid || client.userObj?.id || client.userId || '';
         let dedupKey;
         if (client.isAnonymous) {
-            dedupKey = `anon_${t.threadId}`;
+            dedupKey = (baseId && !String(baseId).startsWith('anon_')) ? `anon_${baseId}` : `anon_${t.threadId}`;
         } else {
-            const baseId = client.userObj?.uid || client.userObj?.id || client.userObj?.studentId || client.userId || t.threadId;
-            dedupKey = `named_${baseId}`;
+            const namedBase = baseId || client.userObj?.studentId || t.threadId;
+            dedupKey = `named_${namedBase}`;
         }
 
         const existing = dedupedMap.get(dedupKey);
@@ -5487,11 +5488,15 @@ async function handleAdminSendMessage() {
     adminChatInput.value = "";
 
     try {
-        // (2026-07-13) Preserve anon alias & role on admin reply; was losing alias meta
+        // (2026-07-13) Use canonical __anon threadId on admin reply; was legacy split
         const activeThreadObj = cachedThreads.find(t => t.threadId === currentActiveThreadId);
         const activeClient = getThreadClientInfo(activeThreadObj);
-        await sendChatMessage(adminSenderId, targetUserId, text, "GAD Office", {
-            threadId: currentActiveThreadId,
+        const cleanTargetUid = String(targetUserId || '').replace(/__anon$/, '');
+        const canonicalReplyTid = (activeClient.isAnonymous && cleanTargetUid && !cleanTargetUid.startsWith('anon_'))
+            ? [`${cleanTargetUid}__anon`, ADMIN_ID].sort().join('_')
+            : currentActiveThreadId;
+        await sendChatMessage(adminSenderId, cleanTargetUid || targetUserId, text, "GAD Office", {
+            threadId: canonicalReplyTid,
             supportMode: "gad_support",
             senderRole: "admin",
             recipientRole: activeClient.role || "student",

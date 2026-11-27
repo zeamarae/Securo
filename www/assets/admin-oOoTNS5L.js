@@ -1,4 +1,4 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./admin-CSDLT4Kb.js","./install-sw-BcId-7Bf.js","./preload-helper-BXBgov45.js"])))=>i.map(i=>d[i]);
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./admin-Y4-QyYfd.js","./install-sw-BcId-7Bf.js","./preload-helper-BXBgov45.js"])))=>i.map(i=>d[i]);
 import{a as e,i as t,n,o as r,r as i,t as a}from"./preload-helper-BXBgov45.js";r();var o=e(),s=`<!-- (2026-07-13) Consolidated admin login, dashboard & analytics views; was 3 files -->\r
 <section id="adminLoginSection" class="admin-view-section is-hidden">\r
 <div class="login-container">\r
@@ -1188,4 +1188,4 @@ import{a as e,i as t,n,o as r,r as i,t as a}from"./preload-helper-BXBgov45.js";r
         </div>\r
     </div>\r
 </section>\r
-`,c=t(),l=()=>a(()=>import(`./admin-CSDLT4Kb.js`),__vite__mapDeps([0,1,2]),import.meta.url);function u(){return(0,c.jsx)(n,{templateHtml:s,loadController:l})}var d=document.getElementById(`root`);d&&(0,o.createRoot)(d).render((0,c.jsx)(i,{children:(0,c.jsx)(u,{})}));
+`,c=t(),l=()=>a(()=>import(`./admin-Y4-QyYfd.js`),__vite__mapDeps([0,1,2]),import.meta.url);function u(){return(0,c.jsx)(n,{templateHtml:s,loadController:l})}var d=document.getElementById(`root`);d&&(0,o.createRoot)(d).render((0,c.jsx)(i,{children:(0,c.jsx)(u,{})}));

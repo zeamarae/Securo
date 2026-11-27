@@ -1,40 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <!-- (2026-07-13) Remove Ecosystem from title; was Campus Safety & Attendance Ecosystem -->
-    <title>Securo - The Next-Gen Campus Safety & Attendance Platform</title>
-    <meta name="description"
-        content="Securo is the shared campus safety, attendance, and emergency protection platform connecting students, parents, and security in real time.">
-    <link rel="icon" type="image/png" href="./assets/logo-Dzg4cQnr.png">
-
-    <!-- (2026-07-13) Preloader & redirect mobile to role-selection; was index redirect -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="js/preloader.js"></script>
-    <!-- (2026-07-13) Native app route check; was file-protocol redirect -->
-    
-
-    <!-- Typography & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=Sora:wght@600;700;800&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
-
-    
-    <!-- (2026-07-13) Link consolidated public styles; was inline style tag -->
-  <script type="module" crossorigin src="./assets/main-BbUl-KUW.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/preload-helper-BXBgov45.js">
-  <link rel="stylesheet" crossorigin href="./assets/preloader-CBUYoqaT.css">
-  <link rel="stylesheet" crossorigin href="./assets/public-DytzRZIM.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Securo</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #ffffff; display: flex; align-items: center; justify-content: center; }
+    img { width: 88px; height: 88px; object-fit: contain; }
+  </style>
+  <script>
+    (function () {
+      try {
+        var token = localStorage.getItem('securo_session_token');
+        var role = (localStorage.getItem('securo_user_role') || '').toLowerCase();
+        var camOk = localStorage.getItem('securo_camera_granted') === 'true';
+        var locOk = localStorage.getItem('securo_location_granted') === 'true';
+        if (token && role) {
+          if (!camOk || !locOk) {
+            window.location.replace('public/permissions-onboarding.html');
+            return;
+          }
+          if (role === 'admin') { window.location.replace('admin/admin.html'); return; }
+          if (role === 'staff') { window.location.replace('staff/staff.html'); return; }
+          if (role === 'guardian' || role === 'parent') { window.location.replace('parent/parent.html'); return; }
+          window.location.replace('student/student.html');
+          return;
+        }
+      } catch (e) {}
+      window.location.replace('public/role-selection.html');
+    })();
+  </script>
 </head>
-
-<body class="page-landing" data-page="landing">
-    <div id="root"></div>
+<body>
+  <img src="assets/images/logo.png" alt="Securo" />
 </body>
-
 </html>

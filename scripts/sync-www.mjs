@@ -67,4 +67,65 @@ if (fs.existsSync(wwwDir)) {
   fs.mkdirSync(wwwDir, { recursive: true });
 }
 copyRecursive(distDir, wwwDir);
-console.log('React Vite build assets & clean routes synced to dist/ and www/');
+
+// (2026-07-13) Exclude landing page & its screenshots from APK www/; was bundled
+const apkEntryHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Securo</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #ffffff; display: flex; align-items: center; justify-content: center; }
+    img { width: 88px; height: 88px; object-fit: contain; }
+  </style>
+  <script>
+    (function () {
+      try {
+        var token = localStorage.getItem('securo_session_token');
+        var role = (localStorage.getItem('securo_user_role') || '').toLowerCase();
+        var camOk = localStorage.getItem('securo_camera_granted') === 'true';
+        var locOk = localStorage.getItem('securo_location_granted') === 'true';
+        if (token && role) {
+          if (!camOk || !locOk) {
+            window.location.replace('public/permissions-onboarding.html');
+            return;
+          }
+          if (role === 'admin') { window.location.replace('admin/admin.html'); return; }
+          if (role === 'staff') { window.location.replace('staff/staff.html'); return; }
+          if (role === 'guardian' || role === 'parent') { window.location.replace('parent/parent.html'); return; }
+          window.location.replace('student/student.html');
+          return;
+        }
+      } catch (e) {}
+      window.location.replace('public/role-selection.html');
+    })();
+  </script>
+</head>
+<body>
+  <img src="assets/images/logo.png" alt="Securo" />
+</body>
+</html>`;
+fs.writeFileSync(path.join(wwwDir, 'index.html'), apkEntryHtml, 'utf8');
+
+const landingOnlyPatterns = [
+  /^landing_mobile/i,
+  /^db campus\.png$/i,
+  /^guardian_dashboard/i,
+  /^student_attendance/i,
+  /^student_gad/i,
+  /^student_map/i,
+  /^student_sos/i,
+  /^student_vault/i
+];
+for (const sub of ['assets', path.join('assets', 'images')]) {
+  const dirPath = path.join(wwwDir, sub);
+  if (!fs.existsSync(dirPath)) continue;
+  for (const file of fs.readdirSync(dirPath)) {
+    if (landingOnlyPatterns.some((re) => re.test(file))) {
+      fs.rmSync(path.join(dirPath, file), { force: true });
+    }
+  }
+}
+
+console.log('React Vite build assets & clean routes synced to dist/ and www/ (APK excludes landing page)');

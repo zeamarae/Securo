@@ -4515,8 +4515,10 @@ const initStudentSwipeToClose = () => {
                                 if (typeof setActiveView === 'function') setActiveView('gad');
                             } else if (nType === 'chat_message' || nType === 'gad' || nType === 'gad_reply' || nText.includes('gad') || nText.includes('reply') || nText.includes('message') || nText.includes('support')) {
                                 closeNotifications();
-                                // (2026-07-13) Open new GAD messenger modal from notifs; was legacy openChat
-                                if (typeof openGadPmModal === 'function') openGadPmModal();
+                                // (2026-07-13) Open exact named/anon thread from notif relatedId; was chooser
+                                const relId = String(target.relatedId || '');
+                                const notifMode = (relId.includes('__anon') || relId.includes('anon_')) ? 'anonymous' : (relId ? 'named' : null);
+                                if (typeof openGadPmModal === 'function') openGadPmModal(notifMode);
                             }
                         }
                     }
@@ -5167,13 +5169,20 @@ const initStudentSwipeToClose = () => {
             }
         }
 
-        function openGadPmModal() {
+        // (2026-07-13) Support opening directly into named or anonymous mode; was chooser only
+        function openGadPmModal(directMode = null) {
             const uid = appState.user?.uid || auth.currentUser?.uid;
             if (!gadPmModal || !uid) return;
             gadPmModal.classList.add("active");
             if (!gadNamedThreadUnsub || !gadAnonThreadUnsub) initGadMessagingWatchers(uid);
             if (!gadInquiriesUnsub) loadStudentGADInquiries();
-            showGadModeChooser();
+            if (directMode === 'named') {
+                enterGadChatMode('named');
+            } else if (directMode === 'anonymous') {
+                enterGadChatMode('anonymous');
+            } else {
+                showGadModeChooser();
+            }
         }
 
         function closeGadPmModal() {
