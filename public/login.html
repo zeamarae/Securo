@@ -17,7 +17,8 @@
     <script src="../js/router.js"></script>
     <!-- (2026-07-13) Dramatic intro preloader styles and GSAP; was no preloader -->
     <link rel="stylesheet" href="../css/preloader.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- (2026-07-13) Defer GSAP CDN script so APK never blocks first load; was sync -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
     <script src="../js/preloader.js"></script>
 
     

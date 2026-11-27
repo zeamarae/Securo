@@ -23,8 +23,11 @@ export default function PortalShell({ templateHtml, loadController, bodyClass, d
   const bootedRef = useRef(false);
 
   useEffect(() => {
-    // (2026-07-13) Reset unknown landing fallback paths to /; was stacking routes
-    if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
+    // (2026-07-13) Skip clean-route replaceState in native APK; was breaking paths
+    const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web')) ||
+      window.location.protocol.startsWith('capacitor:') ||
+      !!window.cordova;
+    if (!isNativeApk && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
       const cleanPath = dataPage === 'landing'
         ? '/'
         : (CLEAN_ROUTE_MAP[window.location.pathname] || window.location.pathname);

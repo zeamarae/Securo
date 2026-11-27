@@ -31,14 +31,24 @@
         return overlay;
     }
 
+    // (2026-07-13) Guard late GSAP re-show & skip CDN wait in APK; was sticking
+    let hasDismissed = false;
     function ensureGSAP(callback) {
+        if (hasDismissed) return;
         if (window.gsap) {
             callback();
             return;
         }
+        const isNative = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web')) ||
+            window.location.protocol.startsWith('capacitor:') ||
+            !!window.cordova;
+        if (isNative) {
+            setTimeout(dismissFallback, 320);
+            return;
+        }
         const script = document.createElement('script');
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js';
-        script.onload = () => callback();
+        script.onload = () => { if (!hasDismissed) callback(); };
         script.onerror = () => dismissFallback();
         document.head.appendChild(script);
         // (2026-07-13) GSAP load timeout fallback; was hanging on offline/blocked CDN
@@ -47,6 +57,7 @@
 
     // (2026-07-13) Kill GSAP tweens & force-hide all overlays; was leaving stuck
     function dismissFallback() {
+        hasDismissed = true;
         const overlays = document.querySelectorAll('#' + OVERLAY_ID);
         overlays.forEach((overlay) => {
             if (window.gsap) {

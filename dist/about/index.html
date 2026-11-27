@@ -12,15 +12,16 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="../assets/logo-Dzg4cQnr.png">
     <!-- (2026-07-13) Add dramatic intro preloader; was no preloader -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- (2026-07-13) Defer GSAP CDN script so APK never blocks first load; was sync -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
     <script src="../js/preloader.js"></script>
 
     <!-- (2026-07-13) Add About Us page styles matching Securo theme; was missing -->
     
     <!-- (2026-07-13) Link consolidated public styles; was inline style tag -->
     <!-- (2026-07-13) Use ../public/public.css for clean routes; was public.css -->
-  <script type="module" crossorigin src="../assets/about-D8dO3WMA.js"></script>
-  <link rel="modulepreload" crossorigin href="../assets/preload-helper-BXBgov45.js">
+  <script type="module" crossorigin src="../assets/about-BWjeTQQG.js"></script>
+  <link rel="modulepreload" crossorigin href="../assets/preload-helper-DTATth7K.js">
   <link rel="stylesheet" crossorigin href="../assets/preloader-CBUYoqaT.css">
   <link rel="stylesheet" crossorigin href="../assets/public-DytzRZIM.css">
 </head>
