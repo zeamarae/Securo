@@ -4551,8 +4551,9 @@ let gadAnonThreadUnsub = null;
 let gadAdminPresenceUnsub = null;
 let gadActiveChatMode = null; // 'named' | 'anonymous'
 
+// (2026-07-13) Dedicated __official threadId for clean staff real-name history; was bare uid
 const getGadThreadId = (uid, mode) => {
-    const participant = mode === 'anonymous' ? `${uid}__anon` : uid;
+    const participant = mode === 'anonymous' ? `${uid}__anon` : `${uid}__official`;
     return [participant, "system_admin_securo"].sort().join("_");
 };
 const getGadReadTsKey = (tid) => `securo_msg_read_ts_${tid}`;
@@ -4684,23 +4685,12 @@ function renderGadChatThread(messages) {
     const items = [{ type: 'them', text: welcomeText, ts: 0, id: null, source: 'welcome' }];
     const timeline = [];
 
+    // (2026-07-13) Keep named staff chat clean from legacy gad_messages; was mixed
     const threadMsgs = isAnonMode ? _cachedAnonThreadMessages : _cachedNamedThreadMessages;
-    if (!isAnonMode) {
-        const msgs = (messages || _cachedGadMessages || []).filter(m => !m.isAnonymous && !m.deleted);
-        msgs.forEach(m => {
-            const baseTs = gadMsgToMs(m.createdAt);
-            if (m.message) {
-                timeline.push({ type: 'me', text: String(m.message).trim(), ts: baseTs, id: m.id || null, source: 'gad' });
-            }
-            if (m.status === 'answered' && m.reply) {
-                const repTs = gadMsgToMs(m.repliedAt) || (baseTs + 1);
-                timeline.push({ type: 'them', text: String(m.reply).trim(), ts: repTs, id: null, source: 'gad' });
-            }
-        });
-    }
 
     (threadMsgs || []).forEach(tm => {
         if (!tm || tm.deleted) return;
+        if (!isAnonMode && tm.isAnonymous) return;
         const text = String(tm.text || tm.message || '').trim();
         if (!text) return;
         const type = (tm.senderId === myUid || tm.senderUid === myUid) ? 'me' : 'them';

@@ -2266,8 +2266,9 @@ window.switchParentMode = function(mode) {
         let _guardianAdminPresenceUnsub = null;
         let _guardianActiveChatMode = null; // 'named' | 'anonymous'
 
+        // (2026-07-13) Dedicated __official threadId for clean parent real-name history; was bare uid
         const getGuardianThreadId = (uid, mode) => {
-            const participant = mode === 'anonymous' ? `${uid}__anon` : uid;
+            const participant = mode === 'anonymous' ? `${uid}__anon` : `${uid}__official`;
             return [participant, "system_admin_securo"].sort().join("_");
         };
         const getGuardianReadTs = (tid) => parseInt(localStorage.getItem(`securo_msg_read_ts_${tid}`) || '0', 10) || 0;

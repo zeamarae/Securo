@@ -1968,9 +1968,9 @@ export const getEmergencyPostById = async (postId) => {
         } catch (_) {}
     };
 
-    // (2026-07-13) Strip __anon from receiverId & keep sender silent; was send ping
+    // (2026-07-13) Strip __anon/__official from receiverId for rules; was __anon only
     export const sendChatMessage = async (senderId, receiverId, text, senderName, options = {}) => {
-        const cleanReceiverId = String(receiverId || "").replace(/__anon$/, "");
+        const cleanReceiverId = String(receiverId || "").replace(/__(?:anon|official)$/, "");
         const threadId = options.threadId || [senderId, cleanReceiverId].sort().join("_");
         const senderRole = options.senderRole || (senderId === "system_admin_securo" ? "admin" : "student");
         const recipientRole = options.recipientRole || (cleanReceiverId === "system_admin_securo" ? "admin" : "student");
@@ -4406,7 +4406,8 @@ export const getEmergencyPostById = async (postId) => {
             ? (alias || (senderRole === 'staff' ? 'Anonymous Staff' : 'Anonymous Student'))
             : (messageData.studentName || defaultRoleName);
         if (messageData.studentUid) {
-            const threadParticipant = isAnon ? `${messageData.studentUid}__anon` : messageData.studentUid;
+            // (2026-07-13) Use clean __official threadId for named GAD chat; was bare uid
+            const threadParticipant = isAnon ? `${messageData.studentUid}__anon` : `${messageData.studentUid}__official`;
             await sendChatMessage(messageData.studentUid, "system_admin_securo", messageData.message || "", displaySenderName, {
                 threadId: [threadParticipant, "system_admin_securo"].sort().join("_"),
                 senderRole,

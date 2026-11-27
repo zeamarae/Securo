@@ -4985,10 +4985,10 @@ function isAdminName(name) {
 function getThreadClientInfo(thread) {
     if (!thread) return { userId: '', name: 'Student', role: 'student', isGuardian: false, isAnonymous: false, userObj: null };
     const rawOtherId = getOtherUserIdFromThread(thread);
-    const otherUserId = String(rawOtherId || '').replace(/__anon$/, '');
-    // (2026-07-13) Determine anon strictly by __anon/anon_ threadId; was old msg flag
+    const otherUserId = String(rawOtherId || '').replace(/__(?:anon|official)$/, '');
+    // (2026-07-13) Never mark __official threads as anon; was __anon/anon_ only
     const tidStr = String(thread.threadId || '');
-    const isAnonymous = tidStr.includes('__anon') || tidStr.includes('anon_');
+    const isAnonymous = !tidStr.includes('__official') && (tidStr.includes('__anon') || tidStr.includes('anon_'));
     const userObj = cachedUsers.find(u => {
         if (!u) return false;
         if (otherUserId && (u.id === otherUserId || u.uid === otherUserId || String(u.studentId || '') === String(otherUserId))) return true;
@@ -5490,10 +5490,10 @@ async function handleAdminSendMessage() {
     adminChatInput.value = "";
 
     try {
-        // (2026-07-13) Use canonical __anon threadId on admin reply; was legacy split
+        // (2026-07-13) Use canonical __anon/__official threadId on admin reply; was legacy
         const activeThreadObj = cachedThreads.find(t => t.threadId === currentActiveThreadId);
         const activeClient = getThreadClientInfo(activeThreadObj);
-        const cleanTargetUid = String(targetUserId || '').replace(/__anon$/, '');
+        const cleanTargetUid = String(targetUserId || '').replace(/__(?:anon|official)$/, '');
         const canonicalReplyTid = (activeClient.isAnonymous && cleanTargetUid && !cleanTargetUid.startsWith('anon_'))
             ? [`${cleanTargetUid}__anon`, ADMIN_ID].sort().join('_')
             : currentActiveThreadId;
@@ -5682,7 +5682,8 @@ if (btnRefreshThreads) {
                 const name = row.dataset.pickName;
                 if (!uid) return;
                 const existing = findExistingNamedThread(uid);
-                const threadId = existing ? existing.threadId : [uid, ADMIN_ID].sort().join('_');
+                // (2026-07-13) Start new admin chats on clean __official threadId; was bare uid
+                const threadId = existing ? existing.threadId : [`${uid}__official`, ADMIN_ID].sort().join('_');
                 modal.classList.remove('active');
                 modal.setAttribute('aria-hidden', 'true');
                 window.openAdminThread(threadId, uid, name);
