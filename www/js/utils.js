@@ -539,6 +539,69 @@ export const UI = {
     hideLoadingOverlay() {
         const overlay = document.getElementById('securo-loading-overlay');
         if (overlay) overlay.remove();
+    },
+
+    // (2026-07-13) Messenger-style 3-dot hover menu for message delete; was raw icon
+    openMessageActionMenu(anchorBtn, onDelete) {
+        if (!anchorBtn || typeof onDelete !== 'function') return;
+        const existing = document.getElementById('securo-msg-action-menu');
+        const wasSame = existing && existing._anchorBtn === anchorBtn;
+        if (existing) {
+            existing._cleanup?.();
+            existing.remove();
+        }
+        if (wasSame) return;
+
+        const menu = document.createElement('div');
+        menu.id = 'securo-msg-action-menu';
+        menu._anchorBtn = anchorBtn;
+        menu.style.cssText = 'position:fixed; z-index:100500; min-width:154px; background:#ffffff; border:1px solid rgba(15,23,42,0.09); border-radius:14px; box-shadow:0 14px 36px rgba(15,23,42,0.18), 0 2px 8px rgba(15,23,42,0.06); padding:6px; font-family:Outfit,system-ui,-apple-system,sans-serif;';
+        menu.innerHTML = `<button type="button" data-msg-delete-opt="1" style="width:100%; display:flex; align-items:center; gap:9px; padding:9px 11px; border:none; border-radius:10px; background:transparent; color:#dc2626; font-family:inherit; font-size:0.84rem; font-weight:700; cursor:pointer; text-align:left;"><span class="material-symbols-outlined" style="font-size:17px;">delete</span><span>Delete message</span></button>`;
+
+        const delOpt = menu.querySelector('[data-msg-delete-opt="1"]');
+        delOpt.addEventListener('mouseenter', () => { delOpt.style.background = 'rgba(220,38,38,0.08)'; });
+        delOpt.addEventListener('mouseleave', () => { delOpt.style.background = 'transparent'; });
+
+        document.body.appendChild(menu);
+        anchorBtn.classList.add('menu-open');
+
+        const rect = anchorBtn.getBoundingClientRect();
+        const mw = menu.offsetWidth || 160;
+        const mh = menu.offsetHeight || 48;
+        let left = rect.left - mw + rect.width;
+        if (left < 10) left = Math.min(rect.left, window.innerWidth - mw - 10);
+        let top = rect.bottom + 6;
+        if (top + mh > window.innerHeight - 10) top = Math.max(10, rect.top - mh - 6);
+        menu.style.left = `${Math.max(10, left)}px`;
+        menu.style.top = `${top}px`;
+
+        const cleanup = () => {
+            anchorBtn.classList.remove('menu-open');
+            document.removeEventListener('click', onOutside, true);
+            document.removeEventListener('keydown', onKey);
+        };
+        const closeMenu = () => {
+            cleanup();
+            menu.remove();
+        };
+        const onOutside = (ev) => {
+            if (menu.contains(ev.target) || anchorBtn.contains(ev.target)) return;
+            closeMenu();
+        };
+        const onKey = (ev) => {
+            if (ev.key === 'Escape') closeMenu();
+        };
+        menu._cleanup = cleanup;
+        setTimeout(() => {
+            document.addEventListener('click', onOutside, true);
+            document.addEventListener('keydown', onKey);
+        }, 0);
+
+        delOpt.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            closeMenu();
+            await onDelete();
+        });
     }
 };
 

@@ -4,7 +4,7 @@ import { renderEmergencyContactWidget } from '../js/emergency-contacts.js';
 import { checkAuth, logout } from '../js/auth.js';
 import { auth } from '../js/firebase-config.js';
 // (2026-07-13) Import message deletion & admin presence helpers; was missing
-import { getUserProfile, saveUserProfile, saveUserDirectoryMarker, getGADPosts, toggleLikeGADPost, logAttendance, getAttendanceHistory, logSOS, getUserSOSLogs, saveEmergencyPost, getUserEmergencyPosts, deleteEmergencyPost, updateEmergencyPostAttachments, getEmergencyPostById, toggleEmergencyPostAccess, toggleEmergencyPostGuardianAccess, sendChatMessage, subscribeToMessages, subscribeToMessagesByThread, deleteChatMessage, deleteGADMessage, markThreadMessagesSeen, subscribeToAdminPresence, subscribeToGuardianRequests, getLinksForStudent, createGuardianLinkFromStudent, respondToGuardianLink, removeGuardianLink, updateStudentLiveLocation, syncGuardianLinksForStudent, setStudentLocationSharingStatus, subscribeToAccountNotifications, markAccountNotificationRead, sendAccountNotification, subscribeToStudentLinks, sendGADMessage, subscribeToGADMessages, subscribeToCampusMapConfig, notifyGuardiansOfGeofenceEvent, attachPhotoToActiveSOS, fetchLatestCampusMapConfig, startUserPresenceHeartbeat } from '../js/db.js';
+import { getUserProfile, subscribeToUserProfile, saveUserProfile, saveUserDirectoryMarker, getGADPosts, toggleLikeGADPost, logAttendance, getAttendanceHistory, logSOS, getUserSOSLogs, saveEmergencyPost, getUserEmergencyPosts, deleteEmergencyPost, updateEmergencyPostAttachments, getEmergencyPostById, toggleEmergencyPostAccess, toggleEmergencyPostGuardianAccess, sendChatMessage, subscribeToMessages, subscribeToMessagesByThread, deleteChatMessage, deleteGADMessage, markThreadMessagesSeen, subscribeToAdminPresence, subscribeToGuardianRequests, getLinksForStudent, createGuardianLinkFromStudent, respondToGuardianLink, removeGuardianLink, updateStudentLiveLocation, syncGuardianLinksForStudent, setStudentLocationSharingStatus, subscribeToAccountNotifications, markAccountNotificationRead, sendAccountNotification, subscribeToStudentLinks, sendGADMessage, subscribeToGADMessages, subscribeToCampusMapConfig, notifyGuardiansOfGeofenceEvent, attachPhotoToActiveSOS, fetchLatestCampusMapConfig, startUserPresenceHeartbeat, playMessagePing } from '../js/db.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import '../js/install-sw.js';
 // (2026-07-13) Import Messenger-style GAD popover & back button helper; was modal
@@ -2488,8 +2488,25 @@ function syncNotificationViews() {
     }).join("");
 }
 
+// (2026-07-13) Play quick ping on new staff message notifications; was silent
+let _staffNotifPingInit = false;
+const _seenStaffNotifPingIds = new Set();
 function renderAccountNotifications(notifications = []) {
     appState.accountNotifications = Array.isArray(notifications) ? notifications : [];
+    let hasNewMsgNotif = false;
+    appState.accountNotifications.forEach((item) => {
+        const nid = String(item?.id || '');
+        if (!nid) return;
+        if (!_seenStaffNotifPingIds.has(nid)) {
+            _seenStaffNotifPingIds.add(nid);
+            const nType = String(item?.type || '').toLowerCase();
+            const nText = `${item?.title || ''} ${item?.message || ''}`.toLowerCase();
+            const isMsgNotif = nType === 'chat_message' || nType === 'gad' || nType === 'gad_reply' || nText.includes('message') || nText.includes('reply') || nText.includes('gad');
+            if (_staffNotifPingInit && !item.isRead && isMsgNotif) hasNewMsgNotif = true;
+        }
+    });
+    _staffNotifPingInit = true;
+    if (hasNewMsgNotif) playMessagePing('receive');
     // (2026-07-13) Persist student notifs to localStorage; was memory only
     try { localStorage.setItem('securo_student_notifications', JSON.stringify(appState.accountNotifications)); } catch (_) { }
     syncNotificationViews();
@@ -3041,15 +3058,122 @@ if (fsGalleryInput) {
     });
 }
 
-// (2026-07-13) Save directory entry locally in index.html; was missing definition
-function saveLocalUserDirectoryEntry(uid, data) {
+// (2026-07-13) Reliable per-UID staff profile cache & UI applier; was quota-prone
+function isRealProfileName(value) {
+    const clean = String(value || "").trim();
+    const lower = clean.toLowerCase();
+    return Boolean(clean.length >= 2 && lower !== "student" && lower !== "staff" && lower !== "staff member" && lower !== "user" && !lower.startsWith("student.") && !lower.startsWith("staff."));
+}
+
+function resolveBestProfileName(data, user, fallback = "Staff Member") {
+    const combined = `${data?.firstName || ""} ${data?.lastName || ""}`.trim();
+    const candidates = [data?.name, data?.fullName, combined, appState.profile?.name, appState.user?.name, user?.displayName];
+    const valid = candidates.find((c) => isRealProfileName(c));
+    return valid ? String(valid).trim() : fallback;
+}
+
+function readCachedStaffProfile(uid) {
+    if (!uid) return null;
+    let active = null;
+    let dirEntry = null;
+    let localEntry = null;
+    try {
+        const rawActive = localStorage.getItem(`securo_active_profile_${uid}`);
+        if (rawActive) active = JSON.parse(rawActive);
+    } catch (_) { }
     try {
         const raw = localStorage.getItem("securo_user_directory");
         const dir = raw ? JSON.parse(raw) : {};
-        dir[uid] = { ...(dir[uid] || {}), ...data, updatedAt: new Date().toISOString() };
+        dirEntry = dir[uid] || null;
+    } catch (_) { }
+    try {
+        const localUsers = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || "[]");
+        localEntry = localUsers.find((u) => String(u.id || u.uid || "") === String(uid)) || null;
+    } catch (_) { }
+    if (!active && !dirEntry && !localEntry) return null;
+    const merged = { ...(localEntry || {}), ...(dirEntry || {}), ...(active || {}) };
+    const bestName = [active?.name, dirEntry?.name, localEntry?.name, `${merged.firstName || ""} ${merged.lastName || ""}`.trim()].find((n) => isRealProfileName(n));
+    if (bestName) merged.name = String(bestName).trim();
+    if (!merged.photoURL && (dirEntry?.photoURL || dirEntry?.avatar || localEntry?.photoURL)) {
+        merged.photoURL = dirEntry?.photoURL || dirEntry?.avatar || localEntry?.photoURL;
+    }
+    return merged;
+}
+
+function saveLocalUserDirectoryEntry(uid, data) {
+    if (!uid || !data || typeof data !== "object") return;
+    const prevActive = readCachedStaffProfile(uid) || {};
+    const mergedCore = {
+        uid,
+        name: isRealProfileName(data.name) ? String(data.name).trim() : (isRealProfileName(`${data.firstName || ""} ${data.lastName || ""}`.trim()) ? `${data.firstName || ""} ${data.lastName || ""}`.trim() : (isRealProfileName(prevActive.name) ? prevActive.name : "")),
+        firstName: data.firstName || prevActive.firstName || "",
+        lastName: data.lastName || prevActive.lastName || "",
+        studentId: data.studentId || prevActive.studentId || "",
+        department: data.department || prevActive.department || "",
+        section: data.section || prevActive.section || "Staff",
+        role: data.role || prevActive.role || "staff",
+        initials: data.initials || prevActive.initials || "",
+        email: data.email || prevActive.email || "",
+        onboardingCompleted: Boolean(data.onboardingCompleted || prevActive.onboardingCompleted),
+        updatedAt: new Date().toISOString()
+    };
+    try {
+        localStorage.setItem(`securo_active_profile_${uid}`, JSON.stringify(mergedCore));
+    } catch (_) { }
+    try {
+        const raw = localStorage.getItem("securo_user_directory");
+        const dir = raw ? JSON.parse(raw) : {};
+        const nextEntry = { ...(dir[uid] || {}), ...data, ...mergedCore };
+        if (nextEntry.avatar && nextEntry.avatar === nextEntry.photoURL) delete nextEntry.avatar;
+        dir[uid] = nextEntry;
         localStorage.setItem("securo_user_directory", JSON.stringify(dir));
     } catch (e) {
-        console.warn("Local user directory save failed:", e);
+        try {
+            const raw = localStorage.getItem("securo_user_directory");
+            const dir = raw ? JSON.parse(raw) : {};
+            dir[uid] = { ...mergedCore };
+            localStorage.setItem("securo_user_directory", JSON.stringify(dir));
+        } catch (e2) {
+            console.warn("Local user directory save failed:", e2);
+        }
+    }
+}
+
+function applyStaffProfileToUI(profileData, user) {
+    const derivedId = user?.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1] || "";
+    const resolvedName = resolveBestProfileName(profileData, user, "Staff Member");
+    const resolvedId = profileData?.studentId || appState.user.studentId || derivedId || "";
+    const resolvedInitials = isRealProfileName(resolvedName)
+        ? (profileData?.initials || resolvedName.split(" ").filter(Boolean).map((n) => n[0]).join("").toUpperCase().slice(0, 2))
+        : (profileData?.initials || "S");
+    const resolvedPhoto = profileData?.photoURL || profileData?.avatar || appState.user.photoURL || "";
+    appState.profile = { ...(appState.profile || {}), ...(profileData || {}), name: resolvedName, studentId: resolvedId, initials: resolvedInitials };
+    appState.user.studentId = resolvedId;
+    appState.user.name = resolvedName;
+    appState.user.section = profileData?.department || profileData?.section || appState.user.section || "Staff";
+    appState.user.photoURL = resolvedPhoto;
+    appState.user.initials = resolvedInitials;
+    if (dropdownId) dropdownId.textContent = appState.user.studentId ? `ID: ${appState.user.studentId}` : "ID: Not linked";
+    if (dropdownName) dropdownName.textContent = appState.user.name;
+    const initialsEl = document.getElementById("userInitials");
+    if (appState.user.photoURL && profileChip) {
+        let chipImg = profileChip.querySelector(".profile-chip-avatar");
+        if (!chipImg) {
+            chipImg = document.createElement("img");
+            chipImg.className = "profile-chip-avatar";
+            chipImg.style.cssText = "width:100%; height:100%; border-radius:50%; object-fit:cover; position:absolute; inset:0;";
+            profileChip.insertBefore(chipImg, profileChip.firstChild);
+        }
+        chipImg.src = appState.user.photoURL;
+        chipImg.style.display = "block";
+        if (initialsEl) initialsEl.style.display = "none";
+    } else {
+        const chipImg = profileChip?.querySelector(".profile-chip-avatar");
+        if (chipImg) chipImg.style.display = "none";
+        if (initialsEl) {
+            initialsEl.style.display = "block";
+            initialsEl.textContent = appState.user.initials;
+        }
     }
 }
 
@@ -3218,17 +3342,9 @@ if (fsOnboardingForm) {
             saveUserDirectoryMarker(user.uid, updatedProfile).catch(() => { });
             sessionStorage.removeItem('securo_just_registered');
 
-            appState.user.studentId = updatedProfile.studentId;
-            appState.user.name = updatedProfile.name;
+            // (2026-07-13) Sync appState.profile & UI immediately; was missing appState.profile
+            applyStaffProfileToUI(updatedProfile, user);
             appState.user.role = updatedProfile.role;
-            appState.user.course = updatedProfile.course;
-            appState.user.yearLevel = updatedProfile.yearLevel;
-            appState.user.section = updatedProfile.section;
-            appState.user.photoURL = updatedProfile.photoURL;
-            appState.user.initials = updatedProfile.initials;
-
-            dropdownName.textContent = appState.user.name;
-            dropdownId.textContent = appState.user.studentId ? `ID: ${appState.user.studentId}` : "ID: Not linked";
 
             const initialsEl = document.getElementById("userInitials");
             if (appState.user.photoURL) {
@@ -3451,20 +3567,12 @@ onAuthStateChanged(auth, async (user) => {
     // (2026-07-13) Start live GAD unread & admin presence watchers; was modal only
     if (typeof initGadMessagingWatchers === "function") initGadMessagingWatchers(user.uid);
 
-    // (2026-07-13) Role-based auth routing and onboarding gate; was hardcoded
+    // (2026-07-13) Hydrate cached staff profile immediately on boot; was delayed
     appState.user.uid = user.uid;
     const isJustRegistered = sessionStorage.getItem('securo_just_registered') === '1';
-    let cachedProfile = null;
-    try {
-        const raw = localStorage.getItem("securo_user_directory");
-        const dir = raw ? JSON.parse(raw) : {};
-        cachedProfile = dir[user.uid] || null;
-    } catch (e) { }
-    if (!cachedProfile) {
-        try {
-            const localUsers = JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '[]');
-            cachedProfile = localUsers.find(u => String(u.id) === String(user.uid));
-        } catch (e) { }
+    const cachedProfile = readCachedStaffProfile(user.uid);
+    if (cachedProfile) {
+        applyStaffProfileToUI(cachedProfile, user);
     }
 
     // (2026-07-13) Apply staff theme before view switch; was unstyled
@@ -3541,43 +3649,27 @@ onAuthStateChanged(auth, async (user) => {
         ]);
         const profileTimedOut = racedProfile === PROFILE_TIMEOUT;
         let profile = profileTimedOut ? (cachedProfile || { onboardingCompleted: true }) : racedProfile;
+        // (2026-07-13) Merge cached name if Firestore doc lacks one; was overwriting
+        if (profile && cachedProfile) {
+            profile = { ...cachedProfile, ...profile };
+            if (!isRealProfileName(profile.name) && isRealProfileName(cachedProfile.name)) {
+                profile.name = cachedProfile.name;
+            }
+        }
         if (!profileTimedOut && profile) {
             saveLocalUserDirectoryEntry(user.uid, profile);
         }
         if (profileTimedOut) {
             profilePromise.then((lateProfile) => {
                 if (!lateProfile || auth.currentUser?.uid !== user.uid) return;
-                saveLocalUserDirectoryEntry(user.uid, lateProfile);
-                appState.profile = lateProfile;
-                const lateDerivedId = user.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1] || "";
-                appState.user.studentId = lateProfile.studentId || lateDerivedId || appState.user.studentId;
-                if (lateProfile.name) {
-                    appState.user.name = lateProfile.name;
-                    appState.user.initials = lateProfile.initials || lateProfile.name.split(" ").filter(Boolean).map(n => n[0]).join("").toUpperCase().slice(0, 2);
+                const mergedLate = cachedProfile ? { ...cachedProfile, ...lateProfile } : lateProfile;
+                if (!isRealProfileName(mergedLate.name) && isRealProfileName(cachedProfile?.name)) {
+                    mergedLate.name = cachedProfile.name;
                 }
-                if (lateProfile.department || lateProfile.section) appState.user.section = lateProfile.department || lateProfile.section;
-                if (lateProfile.photoURL || lateProfile.avatar) appState.user.photoURL = lateProfile.photoURL || lateProfile.avatar;
-                if (dropdownId) dropdownId.textContent = appState.user.studentId ? `ID: ${appState.user.studentId}` : "ID: Not linked";
-                if (dropdownName) dropdownName.textContent = appState.user.name;
-                const initEl = document.getElementById("userInitials");
-                if (appState.user.photoURL && profileChip) {
-                    let cImg = profileChip.querySelector('.profile-chip-avatar');
-                    if (!cImg) {
-                        cImg = document.createElement('img');
-                        cImg.className = 'profile-chip-avatar';
-                        cImg.style.cssText = 'width:100%; height:100%; border-radius:50%; object-fit:cover; position:absolute; inset:0;';
-                        profileChip.insertBefore(cImg, profileChip.firstChild);
-                    }
-                    cImg.src = appState.user.photoURL;
-                    cImg.style.display = 'block';
-                    if (initEl) initEl.style.display = 'none';
-                } else if (initEl) {
-                    initEl.textContent = appState.user.initials;
-                }
-                const rName = String(lateProfile.name || '').trim().toLowerCase();
-                const okName = Boolean(rName && rName.length >= 2 && rName !== 'staff member' && rName !== 'staff' && rName !== 'user');
-                if (!lateProfile.onboardingCompleted || !okName) {
-                    triggerFullscreenOnboarding(user, lateProfile);
+                saveLocalUserDirectoryEntry(user.uid, mergedLate);
+                applyStaffProfileToUI(mergedLate, user);
+                if (!isRealProfileName(mergedLate.name)) {
+                    triggerFullscreenOnboarding(user, mergedLate);
                 }
             }).catch(() => {});
         }
@@ -3591,14 +3683,14 @@ onAuthStateChanged(auth, async (user) => {
             return;
         }
 
-        // (2026-07-13) Respect local & remote onboarding flag; was re-prompting on reload
+        // (2026-07-13) Skip onboarding if staff already has valid name; was checking flag
         const isStaff = true;
         const rawName = String(profile?.name || '').trim();
         const lowerName = rawName.toLowerCase();
         const hasValidName = Boolean(rawName && rawName.length >= 2 && lowerName !== 'staff member' && lowerName !== 'student' && lowerName !== 'staff' && lowerName !== 'user' && !lowerName.startsWith('staff.'));
         const localOnboardDone = localStorage.getItem('securo_onboarding_done_' + user.uid) === '1';
-        const alreadyCompleted = localOnboardDone || (Boolean(profile?.onboardingCompleted) && hasValidName);
-        const needsOnboarding = !alreadyCompleted && !profileTimedOut && (isJustRegistered || !hasValidName || !profile?.onboardingCompleted);
+        const alreadyCompleted = localOnboardDone || hasValidName;
+        const needsOnboarding = !alreadyCompleted && !profileTimedOut;
 
         if (needsOnboarding) {
             triggerFullscreenOnboarding(user, profile || cachedProfile);
@@ -3615,17 +3707,19 @@ onAuthStateChanged(auth, async (user) => {
             appState.initialViewDone = true;
         }
 
-        const derivedId = user.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1] || "";
+        // (2026-07-13) Apply merged staff profile & keep live Firestore sync; was once
         const derivedRole = user.email?.startsWith('staff.') ? 'staff' : 'student';
-        appState.user.studentId = profile?.studentId || derivedId;
-        appState.user.name = profile?.name || user.displayName || (isStaff ? "Staff Member" : "Student");
-        // (2026-07-13) Persist staff role & apply theme; was unpersisted
+        applyStaffProfileToUI(profile, user);
+        saveLocalUserDirectoryEntry(user.uid, appState.profile);
+        if (window._staffProfileUnsub) window._staffProfileUnsub();
+        window._staffProfileUnsub = subscribeToUserProfile(user.uid, (liveProfile) => {
+            if (!liveProfile || auth.currentUser?.uid !== user.uid) return;
+            saveLocalUserDirectoryEntry(user.uid, liveProfile);
+            applyStaffProfileToUI(liveProfile, user);
+        });
         appState.user.role = profile?.role || derivedRole;
         try { localStorage.setItem('securo_user_role', appState.user.role); } catch (_) { }
         applyRoleTheme(appState.user.role);
-        appState.user.section = profile?.section || (isStaff ? "Staff" : "");
-        appState.user.photoURL = profile?.photoURL || profile?.avatar || "";
-        appState.user.initials = profile?.initials || appState.user.name.split(" ").map(n => n[0]).join("").toUpperCase();
 
         if (profile?.role === 'student') {
             syncGuardianLinksForStudent(user.uid, {
@@ -4105,7 +4199,8 @@ if (notifList) {
                         if (typeof setActiveView === 'function') setActiveView('gad');
                     } else if (nType === 'chat_message' || nType === 'gad' || nType === 'gad_reply' || nText.includes('gad') || nText.includes('reply') || nText.includes('message') || nText.includes('support')) {
                         closeNotifications();
-                        if (typeof openChat === 'function') openChat();
+                        // (2026-07-13) Open new GAD messenger modal from notifs; was legacy openChat
+                        if (typeof openGadPmModal === 'function') openGadPmModal();
                     }
                 }
             }
@@ -4530,6 +4625,7 @@ function updateGadAdminPresenceUI(isOnline) {
     if (gadAdminPresenceText) gadAdminPresenceText.textContent = isOnline ? 'Online' : 'Offline';
 }
 
+// (2026-07-13) Play ping sound on incoming staff GAD messages; was silent
 function initGadMessagingWatchers(uid) {
     if (!uid) return;
     if (gadNamedThreadUnsub) gadNamedThreadUnsub();
@@ -4538,14 +4634,35 @@ function initGadMessagingWatchers(uid) {
 
     const namedTid = getGadThreadId(uid, 'named');
     const anonTid = getGadThreadId(uid, 'anonymous');
+    const seenNamed = new Set();
+    const seenAnon = new Set();
+    let namedInit = false;
+    let anonInit = false;
+
+    const handleIncomingPing = (list, seenSet, isInit) => {
+        let hasNewIncoming = false;
+        list.forEach((m) => {
+            const key = m?.id || `${m?.senderId || ''}_${m?.localTime || m?.text || ''}`;
+            if (!seenSet.has(key)) {
+                seenSet.add(key);
+                const fromAdmin = m?.senderId === 'system_admin_securo' || m?.senderRole === 'admin';
+                if (isInit && fromAdmin) hasNewIncoming = true;
+            }
+        });
+        if (hasNewIncoming) playMessagePing('receive');
+    };
 
     gadNamedThreadUnsub = subscribeToMessagesByThread(namedTid, (msgs) => {
         _cachedNamedThreadMessages = Array.isArray(msgs) ? msgs : [];
+        handleIncomingPing(_cachedNamedThreadMessages, seenNamed, namedInit);
+        namedInit = true;
         updateGadUnreadBadges();
         if (gadActiveChatMode === 'named') renderGadChatThread();
     });
     gadAnonThreadUnsub = subscribeToMessagesByThread(anonTid, (msgs) => {
         _cachedAnonThreadMessages = Array.isArray(msgs) ? msgs : [];
+        handleIncomingPing(_cachedAnonThreadMessages, seenAnon, anonInit);
+        anonInit = true;
         updateGadUnreadBadges();
         if (gadActiveChatMode === 'anonymous') renderGadChatThread();
     });
@@ -4615,8 +4732,9 @@ function renderGadChatThread(messages) {
                 : '<div class="gad-them-avatar-spacer"></div>';
             html += `<div class="gad-them-row ${bubbleClass}">${avatarHtml}<div class="gad-bubble them ${bubbleClass}">${escapeHtml(cur.text)}</div></div>`;
         } else {
+            // (2026-07-13) Use hover 3-dot menu for staff message delete; was trash
             const delBtnHtml = (cur.chatId || cur.id)
-                ? `<button type="button" class="gad-msg-del-btn" data-del-chat-id="${escapeHtml(cur.chatId || '')}" data-del-gad-id="${escapeHtml(cur.source === 'gad' ? (cur.id || '') : '')}" data-del-thread-id="${escapeHtml(activeThreadId)}" title="Delete message" aria-label="Delete message"><span class="material-symbols-outlined">delete</span></button>`
+                ? `<button type="button" class="gad-msg-del-btn" data-del-chat-id="${escapeHtml(cur.chatId || '')}" data-del-gad-id="${escapeHtml(cur.source === 'gad' ? (cur.id || '') : '')}" data-del-thread-id="${escapeHtml(activeThreadId)}" title="More options" aria-label="Message options"><span class="material-symbols-outlined">more_vert</span></button>`
                 : '';
             html += `<div class="gad-me-row">${delBtnHtml}<div class="gad-bubble me ${bubbleClass}">${escapeHtml(cur.text)}</div></div>`;
         }
@@ -4637,16 +4755,17 @@ function renderGadChatThread(messages) {
     thread.innerHTML = html;
     thread.scrollTop = thread.scrollHeight;
     thread.querySelectorAll('.gad-msg-del-btn').forEach((btn) => {
-        btn.addEventListener('click', async (ev) => {
+        btn.addEventListener('click', (ev) => {
             ev.stopPropagation();
-            // (2026-07-13) Use styled modal for message delete; was window.confirm
-            if (!(await UI.showModal('Delete Message', 'Delete this message permanently?', { type: 'error', showCancel: true, confirmText: 'Delete' }))) return;
-            const chatId = btn.dataset.delChatId;
-            const gadId = btn.dataset.delGadId;
-            const tid = btn.dataset.delThreadId;
-            if (chatId) await deleteChatMessage(chatId, tid);
-            if (gadId) await deleteGADMessage(gadId);
-            renderGadChatThread();
+            UI.openMessageActionMenu(btn, async () => {
+                if (!(await UI.showModal('Delete Message', 'Delete this message permanently?', { type: 'error', showCancel: true, confirmText: 'Delete' }))) return;
+                const chatId = btn.dataset.delChatId;
+                const gadId = btn.dataset.delGadId;
+                const tid = btn.dataset.delThreadId;
+                if (chatId) await deleteChatMessage(chatId, tid);
+                if (gadId) await deleteGADMessage(gadId);
+                renderGadChatThread();
+            });
         });
     });
 }
@@ -6401,7 +6520,12 @@ function getSupportThreadState() {
     };
 }
 
+// (2026-07-13) Redirect legacy openChat to new GAD modal; was old support overlay
 function openChat() {
+    if (typeof openGadPmModal === "function") {
+        openGadPmModal();
+        return;
+    }
     chatOverlay.classList.add("active");
     syncChatViewport();
 

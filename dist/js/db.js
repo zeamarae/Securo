@@ -76,13 +76,34 @@ const writeLocalEmergencyPosts = (posts) => {
     }
 };
 
-// (2026-07-13) Support sessionStorage in user persistence; was localStorage only
+// (2026-07-13) Strip bulky base64 on quota error; was failing local user cache
 const writeLocalUsers = (users) => {
+    const clean = (Array.isArray(users) ? users : []).map((u) => {
+        if (!u || typeof u !== "object") return u;
+        const copy = { ...u };
+        if (copy.avatar && copy.avatar === copy.photoURL) delete copy.avatar;
+        return copy;
+    });
+    const tryStore = (payload) => {
+        const serialized = JSON.stringify(payload);
+        localStorage.setItem(LOCAL_USERS_KEY, serialized);
+        sessionStorage.setItem(LOCAL_USERS_KEY, serialized);
+    };
     try {
-        localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
-        sessionStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
+        tryStore(clean);
     } catch (error) {
-        Logger.warn("DB", "Error writing local users", error);
+        try {
+            const slim = clean.map((u) => {
+                if (!u || typeof u !== "object") return u;
+                const copy = { ...u };
+                if (typeof copy.photoURL === "string" && copy.photoURL.startsWith("data:")) delete copy.photoURL;
+                if (typeof copy.avatar === "string" && copy.avatar.startsWith("data:")) delete copy.avatar;
+                return copy;
+            });
+            tryStore(slim);
+        } catch (err2) {
+            Logger.warn("DB", "Error writing local users", err2);
+        }
     }
 };
 
@@ -160,17 +181,26 @@ export const removeLocalGuardianLink = (linkId) => {
     writeLocalGuardianLinks(current);
 };
 
+// (2026-07-13) Preserve valid cached name on upsert; was blindly overwriting
 const upsertLocalUser = (userId, profileData) => {
     const users = readLocalUsers();
+    const isGeneric = (v) => {
+        const s = String(v || "").trim().toLowerCase();
+        return !s || s.length < 2 || ["student", "staff", "staff member", "user", "unknown"].includes(s) || s.startsWith("student.") || s.startsWith("staff.");
+    };
+    const existingIndex = users.findIndex((user) => String(user.id) === String(userId));
+    const existing = existingIndex >= 0 ? users[existingIndex] : null;
     const nextUser = {
         id: userId,
         ...profileData,
         updatedAt: new Date().toISOString(),
         isLocalFallback: true
     };
-    const existingIndex = users.findIndex((user) => String(user.id) === String(userId));
+    if (existing && !isGeneric(existing.name) && isGeneric(nextUser.name)) {
+        nextUser.name = existing.name;
+    }
     if (existingIndex >= 0) {
-        users[existingIndex] = { ...users[existingIndex], ...nextUser };
+        users[existingIndex] = { ...existing, ...nextUser };
     } else {
         users.unshift(nextUser);
     }
@@ -273,9 +303,28 @@ const mergeEmergencyPosts = (remotePosts = [], localPosts = []) => {
  * @param {string} userId 
  * @param {object} profileData 
  */
-// (2026-07-13) Non-blocking link syncs after setDoc; was stalling onboarding save
+// (2026-07-13) Sync per-UID active profile cache on save; was stale across pages
+const syncActiveProfileCache = (userId, data) => {
+    if (!userId || !data || typeof data !== "object") return;
+    try {
+        const key = `securo_active_profile_${userId}`;
+        const prev = JSON.parse(localStorage.getItem(key) || "{}");
+        const isGeneric = (v) => {
+            const s = String(v || "").trim().toLowerCase();
+            return !s || s.length < 2 || ["student", "staff", "staff member", "user", "unknown"].includes(s) || s.startsWith("student.") || s.startsWith("staff.");
+        };
+        const merged = { ...prev, ...data, uid: userId, updatedAt: new Date().toISOString() };
+        if (isGeneric(merged.name) && !isGeneric(prev.name)) merged.name = prev.name;
+        delete merged.photoURL;
+        delete merged.avatar;
+        localStorage.setItem(key, JSON.stringify(merged));
+    } catch (_) { }
+};
+
+// (2026-07-13) Non-blocking link syncs & active cache sync; was stalling/stale
 export const saveUserProfile = async (userId, profileData) => {
     upsertLocalUser(userId, profileData);
+    syncActiveProfileCache(userId, profileData);
     try {
         const cleanData = { ...profileData };
         if (cleanData.photoURL && cleanData.avatar === cleanData.photoURL && String(cleanData.photoURL).length > 200000) {
@@ -328,12 +377,16 @@ export const saveUserDirectoryMarker = async (userId, profileData) => {
  * Get user profile information
  * @param {string} userId 
  */
+// (2026-07-13) Warm local & active user cache + live profile subscriber; was once
 export const getUserProfile = async (userId) => {
     try {
         const docRef = doc(db, "users", userId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-            return docSnap.data();
+            const data = docSnap.data();
+            upsertLocalUser(userId, data);
+            syncActiveProfileCache(userId, data);
+            return data;
         } else {
             const localUsers = readLocalUsers();
             return localUsers.find((user) => String(user.id) === String(userId)) || null;
@@ -344,6 +397,21 @@ export const getUserProfile = async (userId) => {
             console.warn("Profile lookup fallback used:", error?.message || error);
         }
         return localUsers.find((user) => String(user.id) === String(userId)) || null;
+    }
+};
+
+export const subscribeToUserProfile = (userId, callback) => {
+    if (!userId || typeof callback !== "function") return () => {};
+    try {
+        return onSnapshot(doc(db, "users", userId), (docSnap) => {
+            if (!docSnap.exists()) return;
+            const data = docSnap.data();
+            upsertLocalUser(userId, data);
+            syncActiveProfileCache(userId, data);
+            callback(data);
+        }, () => {});
+    } catch (_) {
+        return () => {};
     }
 };
 // (2026-07-13) Resolve real profile name & role in logSOS; was defaulting Student
@@ -917,8 +985,10 @@ export const getEmergencyPostById = async (postId) => {
      * @param {object} data 
      */
     // (2026-07-13) Run guardian link sync in background after save; was blocking UI
+    // (2026-07-13) Sync active profile cache on updateUserProfile; was stale name
     export const updateUserProfile = async (uid, data) => {
         upsertLocalUser(uid, data);
+        syncActiveProfileCache(uid, data);
         try {
             const userRef = doc(db, "users", uid);
             await setDoc(userRef, {
@@ -1760,39 +1830,64 @@ export const getEmergencyPostById = async (postId) => {
      * @param {string} threadId
      * @param {function} callback
      */
+    // (2026-07-13) Use rules-compliant sender/receiver snapshots for non-admins; was denied
     export const subscribeToMessagesByThread = (threadId, callback) => {
-        let remoteMessages = [];
+        let remoteSent = [];
+        let remoteRecv = [];
+        let remoteAdmin = [];
         const emit = () => {
+            const combinedRemote = mergeChatMessagesList(remoteAdmin, mergeChatMessagesList(remoteSent, remoteRecv));
             const localForThread = readLocalChatMessages().filter(m => m.threadId === threadId);
-            callback(mergeChatMessagesList(remoteMessages, localForThread));
+            callback(mergeChatMessagesList(combinedRemote, localForThread));
         };
         emit();
 
-        const q = query(
-            collection(db, "messages"),
-            where("threadId", "==", threadId)
-        );
-        const unsubFs = onSnapshot(q, (snapshot) => {
-            remoteMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            // (2026-07-13) Cache all received thread messages for reload; was volatile
-            if (remoteMessages.length) persistChatMessagesBulk(remoteMessages);
-            emit();
-        }, () => emit());
+        const myUid = auth.currentUser?.uid || "";
+        const myEmail = String(auth.currentUser?.email || "").toLowerCase();
+        const isAdminUser = myEmail === "admin@admin.com" || myEmail === "zearamil9@gmail.com" || myUid === "system_admin_securo";
+        const unsubs = [];
 
+        if (isAdminUser || !myUid) {
+            const q = query(collection(db, "messages"), where("threadId", "==", threadId));
+            unsubs.push(onSnapshot(q, (snapshot) => {
+                remoteAdmin = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                if (remoteAdmin.length) persistChatMessagesBulk(remoteAdmin);
+                emit();
+            }, () => emit()));
+        } else {
+            const qSent = query(collection(db, "messages"), where("senderId", "==", myUid));
+            const qRecv = query(collection(db, "messages"), where("receiverId", "==", myUid));
+            unsubs.push(onSnapshot(qSent, (snapshot) => {
+                remoteSent = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.threadId === threadId);
+                if (remoteSent.length) persistChatMessagesBulk(remoteSent);
+                emit();
+            }, () => emit()));
+            unsubs.push(onSnapshot(qRecv, (snapshot) => {
+                remoteRecv = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(m => m.threadId === threadId);
+                if (remoteRecv.length) persistChatMessagesBulk(remoteRecv);
+                emit();
+            }, () => emit()));
+        }
+
+        // (2026-07-13) Invalidate _memChatCache on cross-tab chat events; was delayed
         let ch = null;
         try {
             ch = new BroadcastChannel('securo_chat_channel');
             ch.onmessage = (e) => {
+                _memChatCache = null;
                 if (!e.data?.msg || e.data.msg.threadId === threadId) emit();
             };
         } catch (_) { }
         const onStorage = (e) => {
-            if (e.key === LOCAL_CHAT_MESSAGES_KEY) emit();
+            if (e.key === LOCAL_CHAT_MESSAGES_KEY) {
+                _memChatCache = null;
+                emit();
+            }
         };
         if (typeof window !== 'undefined') window.addEventListener('storage', onStorage);
 
         return () => {
-            unsubFs();
+            unsubs.forEach((u) => { try { u(); } catch (_) {} });
             if (ch) ch.close();
             if (typeof window !== 'undefined') window.removeEventListener('storage', onStorage);
         };
@@ -1801,19 +1896,90 @@ export const getEmergencyPostById = async (postId) => {
     /**
      * Messaging: Send a message with threadId
      */
-    // (2026-07-13) Persist chat locally + Firestore with fallback; was Firestore only
+    // (2026-07-13) Distinct warm send pop & receive chime tones; was basic sine
+    let _msgAudioCtx = null;
+    let _lastSendPingTs = 0;
+    let _lastRecvPingTs = 0;
+    const _unlockMsgAudio = () => {
+        try {
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+            if (!_msgAudioCtx) _msgAudioCtx = new Ctx();
+            if (_msgAudioCtx.state === "suspended") _msgAudioCtx.resume().catch(() => {});
+        } catch (_) {}
+    };
+    if (typeof window !== "undefined" && !window._securoMsgAudioBound) {
+        window._securoMsgAudioBound = true;
+        window.addEventListener("pointerdown", _unlockMsgAudio, { passive: true });
+        window.addEventListener("keydown", _unlockMsgAudio, { passive: true });
+        window.addEventListener("touchstart", _unlockMsgAudio, { passive: true });
+    }
+    // (2026-07-13) Play chime only for incoming receiver messages; was send+receive
+    export const playMessagePing = (kind = "receive") => {
+        if (kind === "send") return;
+        try {
+            const nowMs = Date.now();
+            if (nowMs - _lastRecvPingTs < 200) return;
+            _lastRecvPingTs = nowMs;
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) return;
+            if (!_msgAudioCtx) _msgAudioCtx = new Ctx();
+            if (_msgAudioCtx.state === "suspended") _msgAudioCtx.resume().catch(() => {});
+            const ctx = _msgAudioCtx;
+            const t0 = ctx.currentTime + 0.005;
+
+            const filter = ctx.createBiquadFilter();
+            filter.type = "lowpass";
+            filter.frequency.setValueAtTime(3400, t0);
+            filter.connect(ctx.destination);
+
+            // Bright crystalline two-note chime (F5 -> C6) with harmonic shimmer for incoming messages
+            const chimeNotes = [
+                { freq: 698.46, overtone: 1396.92, start: 0, dur: 0.16, vol: 0.14 },
+                { freq: 1046.5, overtone: 2093.0, start: 0.082, dur: 0.28, vol: 0.16 }
+            ];
+            chimeNotes.forEach((n) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(n.freq, t0 + n.start);
+                gain.gain.setValueAtTime(0.0001, t0 + n.start);
+                gain.gain.linearRampToValueAtTime(n.vol, t0 + n.start + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.0001, t0 + n.start + n.dur);
+                osc.connect(gain);
+                gain.connect(filter);
+                osc.start(t0 + n.start);
+                osc.stop(t0 + n.start + n.dur + 0.015);
+
+                const ov = ctx.createOscillator();
+                const ovGain = ctx.createGain();
+                ov.type = "sine";
+                ov.frequency.setValueAtTime(n.overtone, t0 + n.start);
+                ovGain.gain.setValueAtTime(0.0001, t0 + n.start);
+                ovGain.gain.linearRampToValueAtTime(n.vol * 0.22, t0 + n.start + 0.008);
+                ovGain.gain.exponentialRampToValueAtTime(0.0001, t0 + n.start + n.dur * 0.65);
+                ov.connect(ovGain);
+                ovGain.connect(filter);
+                ov.start(t0 + n.start);
+                ov.stop(t0 + n.start + n.dur * 0.7);
+            });
+        } catch (_) {}
+    };
+
+    // (2026-07-13) Strip __anon from receiverId & keep sender silent; was send ping
     export const sendChatMessage = async (senderId, receiverId, text, senderName, options = {}) => {
-        const threadId = options.threadId || [senderId, receiverId].sort().join("_");
+        const cleanReceiverId = String(receiverId || "").replace(/__anon$/, "");
+        const threadId = options.threadId || [senderId, cleanReceiverId].sort().join("_");
         const senderRole = options.senderRole || (senderId === "system_admin_securo" ? "admin" : "student");
-        const recipientRole = options.recipientRole || (receiverId === "system_admin_securo" ? "admin" : "student");
+        const recipientRole = options.recipientRole || (cleanReceiverId === "system_admin_securo" ? "admin" : "student");
         const nowMs = Date.now();
         const localId = `local_msg_${nowMs}_${Math.random().toString(36).slice(2, 7)}`;
         const basePayload = {
             threadId,
             senderId,
-            receiverId,
+            receiverId: cleanReceiverId,
             senderUid: senderId,
-            recipientUid: receiverId,
+            recipientUid: cleanReceiverId,
             text,
             message: text,
             senderName: senderName || "User",
@@ -1832,6 +1998,14 @@ export const getEmergencyPostById = async (postId) => {
             seenAt: null,
             status: "delivered"
         };
+
+        // (2026-07-13) Broadcast optimistic local message before addDoc; was waiting
+        writeLocalChatMessage({
+            id: localId,
+            ...basePayload,
+            localTime: nowMs,
+            timestamp: { seconds: Math.floor(nowMs / 1000) }
+        });
 
         try {
             // (2026-07-13) Include localTime in Firestore doc for instant sort; was null ts
@@ -4197,7 +4371,7 @@ export const getEmergencyPostById = async (postId) => {
         }
     };
 
-    // (2026-07-13) Include location and notify admin on GAD send; was text only
+    // (2026-07-13) Include location & notify admin on GAD send without sender sfx; was ping
     export const sendGADMessage = async (messageData) => {
         const isAnon = !!messageData.isAnonymous;
         const alias = isAnon ? (messageData.anonymousAlias || `Student-${Math.floor(1000 + Math.random() * 9000)}`) : "";

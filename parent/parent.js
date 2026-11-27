@@ -4,7 +4,7 @@ import { auth, db, firebaseConfig } from '../js/firebase-config.js';
 import { onAuthStateChanged, getAuth, signInWithEmailAndPassword, updatePassword, createUserWithEmailAndPassword, confirmPasswordReset } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { doc, onSnapshot, collection, query, where, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 // (2026-07-13) Import real-time shared vault listener; was one-shot fetch only
-import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, getGuardianSharedEmergencyPosts, subscribeToGuardianSharedEmergencyPosts, findStudentUidByStudentId, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, markAccountNotificationRead, sendChatMessage, subscribeToMessagesByThread, deleteChatMessage, markThreadMessagesSeen, subscribeToAdminPresence, updateUserPresence, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword, startUserPresenceHeartbeat } from '../js/db.js';
+import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, getGuardianSharedEmergencyPosts, subscribeToGuardianSharedEmergencyPosts, findStudentUidByStudentId, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, markAccountNotificationRead, sendChatMessage, subscribeToMessagesByThread, deleteChatMessage, markThreadMessagesSeen, subscribeToAdminPresence, updateUserPresence, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword, startUserPresenceHeartbeat, playMessagePing } from '../js/db.js';
 import { login, signUp, forgotPassword, getFriendlyAuthMessage } from '../js/auth.js';
 import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import '../js/install-sw.js';
@@ -2348,19 +2348,41 @@ window.switchParentMode = function(mode) {
             if (txt) txt.textContent = isOnline ? 'Online' : 'Offline';
         }
 
+        // (2026-07-13) Play ping sound on incoming parent GAD messages; was silent
         function initGuardianMessagingWatchers(uid) {
             if (!uid) return;
             if (_guardianNamedUnsub) _guardianNamedUnsub();
             if (_guardianAnonUnsub) _guardianAnonUnsub();
             if (_guardianAdminPresenceUnsub) _guardianAdminPresenceUnsub();
 
+            const seenNamed = new Set();
+            const seenAnon = new Set();
+            let namedInit = false;
+            let anonInit = false;
+            const handleIncomingPing = (list, seenSet, isInit) => {
+                let hasNewIncoming = false;
+                list.forEach((m) => {
+                    const key = m?.id || `${m?.senderId || ''}_${m?.localTime || m?.text || ''}`;
+                    if (!seenSet.has(key)) {
+                        seenSet.add(key);
+                        const fromAdmin = m?.senderId === 'system_admin_securo' || m?.senderRole === 'admin';
+                        if (isInit && fromAdmin) hasNewIncoming = true;
+                    }
+                });
+                if (hasNewIncoming) playMessagePing('receive');
+            };
+
             _guardianNamedUnsub = subscribeToMessagesByThread(getGuardianThreadId(uid, 'named'), (msgs) => {
                 _guardianNamedMsgs = Array.isArray(msgs) ? msgs : [];
+                handleIncomingPing(_guardianNamedMsgs, seenNamed, namedInit);
+                namedInit = true;
                 updateGuardianUnreadMsgBadges();
                 if (_guardianActiveChatMode === 'named') renderGuardianSupportMessages(_guardianNamedMsgs);
             });
             _guardianAnonUnsub = subscribeToMessagesByThread(getGuardianThreadId(uid, 'anonymous'), (msgs) => {
                 _guardianAnonMsgs = Array.isArray(msgs) ? msgs : [];
+                handleIncomingPing(_guardianAnonMsgs, seenAnon, anonInit);
+                anonInit = true;
                 updateGuardianUnreadMsgBadges();
                 if (_guardianActiveChatMode === 'anonymous') renderGuardianSupportMessages(_guardianAnonMsgs);
             });
@@ -2413,17 +2435,19 @@ window.switchParentMode = function(mode) {
                     item.className = `chat-message ${isSent ? 'sent' : 'received'}`;
                     item.innerHTML = `${escapeHtml(msg.text || '')}<span class="chat-time">${timeStr}</span>`;
                     if (isSent && msg.id) {
+                        // (2026-07-13) Use hover 3-dot menu for parent message delete; was trash
                         const delBtn = document.createElement('button');
                         delBtn.type = 'button';
                         delBtn.className = 'gad-msg-del-btn';
-                        delBtn.title = 'Delete message';
-                        delBtn.setAttribute('aria-label', 'Delete message');
-                        delBtn.innerHTML = '<span class="material-symbols-outlined">delete</span>';
-                        delBtn.addEventListener('click', async (ev) => {
+                        delBtn.title = 'More options';
+                        delBtn.setAttribute('aria-label', 'Message options');
+                        delBtn.innerHTML = '<span class="material-symbols-outlined">more_vert</span>';
+                        delBtn.addEventListener('click', (ev) => {
                             ev.stopPropagation();
-                            // (2026-07-13) Use styled modal for message delete; was window.confirm
-                            if (!(await UI.showModal('Delete Message', 'Delete this message permanently?', { type: 'error', showCancel: true, confirmText: 'Delete' }))) return;
-                            await deleteChatMessage(msg.id, activeTid);
+                            UI.openMessageActionMenu(delBtn, async () => {
+                                if (!(await UI.showModal('Delete Message', 'Delete this message permanently?', { type: 'error', showCancel: true, confirmText: 'Delete' }))) return;
+                                await deleteChatMessage(msg.id, activeTid);
+                            });
                         });
                         row.appendChild(delBtn);
                     }

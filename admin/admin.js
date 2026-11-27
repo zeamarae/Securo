@@ -3,7 +3,7 @@ import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device }
 import { auth, app, firebaseConfig } from '../js/firebase-config.js';
 import { logout, roleIdToEmail, login, checkAuth } from '../js/auth.js';
 // (2026-07-13) Import real-time vault listener for GAD visibility; was one-shot
-import { getGADPosts, saveGADPost, deleteGADPost, updateGADPost, getAllUsers, getUserProfile, saveUserProfile, updateUserProfile, isStudentIdTaken, sendChatMessage, subscribeToMessages, getAllChatThreads, getAllChatThreadsOnce, getAllGuardianLinksAdmin, deleteConversationThread, deleteChatMessage, deleteUserRecord, getAllSOSLogs, getAllEmergencyPosts, subscribeToAllEmergencyPosts, getStudentLiveLocationOnce, subscribeToAccountNotifications, subscribeToMessagesByThread, subscribeToGADMessages, replyToGADMessage, saveCampusMapConfig, logAttendance, updateStudentLiveLocation, notifyGuardiansOfGeofenceEvent, getAttendanceHistory, getAllAttendance, subscribeToCampusMapConfig, removeGuardianLink, createGuardianLinkRequest, getUserSOSLogs, saveAdminUserPassword, syncGuardianLinksForGuardian, markThreadMessagesSeen, getAttendanceStats, getSOSStats, getAllAuditLogs, subscribeToAllUsersPresence, startUserPresenceHeartbeat, updateUserPresence } from '../js/db.js';
+import { getGADPosts, saveGADPost, deleteGADPost, updateGADPost, getAllUsers, getUserProfile, saveUserProfile, updateUserProfile, isStudentIdTaken, sendChatMessage, subscribeToMessages, getAllChatThreads, getAllChatThreadsOnce, getAllGuardianLinksAdmin, deleteConversationThread, deleteChatMessage, deleteUserRecord, getAllSOSLogs, getAllEmergencyPosts, subscribeToAllEmergencyPosts, getStudentLiveLocationOnce, subscribeToAccountNotifications, subscribeToMessagesByThread, subscribeToGADMessages, replyToGADMessage, saveCampusMapConfig, logAttendance, updateStudentLiveLocation, notifyGuardiansOfGeofenceEvent, getAttendanceHistory, getAllAttendance, subscribeToCampusMapConfig, removeGuardianLink, createGuardianLinkRequest, getUserSOSLogs, saveAdminUserPassword, syncGuardianLinksForGuardian, markThreadMessagesSeen, getAttendanceStats, getSOSStats, getAllAuditLogs, subscribeToAllUsersPresence, startUserPresenceHeartbeat, updateUserPresence, playMessagePing } from '../js/db.js';
 import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import '../js/install-sw.js';
@@ -4885,12 +4885,29 @@ function stopAdminRealtimeThreads() {
     }
 }
 
+// (2026-07-13) Play ping sound on incoming admin chat messages; was silent
 function initAdminChat() {
-    // (2026-07-13) Wait for Firebase auth before attaching chat listener; was dying early
     if (!auth.currentUser) return;
     if (unsubscribeAdminThreads) return;
+    const threadSignatures = new Map();
+    let threadsInitialized = false;
     unsubscribeAdminThreads = getAllChatThreads(currentAdminUid || auth.currentUser.uid, (threads) => {
         cachedThreads = Array.isArray(threads) ? threads : [];
+        let hasNewIncoming = false;
+        cachedThreads.forEach((t) => {
+            const tid = t?.threadId || t?.id;
+            if (!tid) return;
+            const ts = t?.timestamp?.toMillis ? t.timestamp.toMillis() : (t?.localTime || new Date(t?.timestamp || 0).getTime() || 0);
+            const sig = `${ts}_${t?.text || t?.lastMessage || ''}`;
+            const prevSig = threadSignatures.get(tid);
+            if (prevSig !== sig) {
+                threadSignatures.set(tid, sig);
+                const fromAdmin = t?.senderId === ADMIN_ID || t?.senderId === currentAdminUid || t?.senderRole === 'admin';
+                if (threadsInitialized && !fromAdmin) hasNewIncoming = true;
+            }
+        });
+        threadsInitialized = true;
+        if (hasNewIncoming) playMessagePing('receive');
         renderStatistics(cachedUsers);
         renderThreads(cachedThreads);
         if (currentActiveThreadId && currentActiveUserId && !unsubscribeAdminChat) {
@@ -4936,12 +4953,23 @@ function getOtherUserIdFromThread(thread) {
     return parts.length > 0 ? parts.join('_') : (thread.senderId || thread.ownerId || '');
 }
 
-// (2026-07-13) Classify user or parent role for thread filters; was default
+// (2026-07-13) Detect staff/guardian from authEmail & thread role; was student
 function getThreadParticipantRole(thread, userObj) {
-    if (userObj?.role) return userObj.role;
-    if (thread?.senderRole && thread.senderRole !== 'admin') return thread.senderRole;
-    if (thread?.recipientRole && thread.recipientRole !== 'admin') return thread.recipientRole;
-    const searchStr = `${userObj?.name || ''} ${userObj?.email || ''} ${thread?.senderName || ''} ${thread?.senderEmail || ''} ${thread?.senderLabel || ''}`.toLowerCase();
+    const emailHint = String(userObj?.authEmail || userObj?.email || thread?.senderEmail || thread?.recipientEmail || '').toLowerCase();
+    const uRole = String(userObj?.role || '').toLowerCase();
+    const tSender = String(thread?.senderRole || '').toLowerCase();
+    const tRecip = String(thread?.recipientRole || '').toLowerCase();
+    const tClient = String(thread?.clientRole || '').toLowerCase();
+    if (uRole === 'staff' || tClient === 'staff' || tSender === 'staff' || tRecip === 'staff' || emailHint.startsWith('staff.') || emailHint.includes('staff@')) {
+        return 'staff';
+    }
+    if (uRole === 'guardian' || uRole === 'parent' || tClient === 'guardian' || tClient === 'parent' || tSender === 'guardian' || tSender === 'parent' || tRecip === 'guardian' || tRecip === 'parent' || emailHint.startsWith('guardian.')) {
+        return 'guardian';
+    }
+    if (uRole && uRole !== 'admin') return uRole;
+    if (tSender && tSender !== 'admin') return tSender;
+    if (tRecip && tRecip !== 'admin') return tRecip;
+    const searchStr = `${userObj?.name || ''} ${emailHint} ${thread?.senderName || ''} ${thread?.senderLabel || ''}`.toLowerCase();
     if (searchStr.includes('parent') || searchStr.includes('guardian')) return 'guardian';
     return 'student';
 }
@@ -4977,6 +5005,19 @@ function getThreadClientInfo(thread) {
     const isGuardian = role === 'guardian' || role === 'parent';
     const isSentByAdmin = thread.senderRole === 'admin' || thread.senderId === ADMIN_ID || thread.senderId === currentAdminUid;
 
+    // (2026-07-13) Prefer live profile name & refresh user doc on open; was stale
+    if (otherUserId && userObj) {
+        const senderIsUser = !isSentByAdmin && thread.senderName && !isAdminName(thread.senderName) && !isAnonymous;
+        if (senderIsUser && userObj.name !== thread.senderName && !userObj._liveFetched) {
+            userObj._liveFetched = true;
+            getUserProfile(otherUserId).then((fresh) => {
+                if (fresh && fresh.name && fresh.name !== userObj.name) {
+                    Object.assign(userObj, fresh);
+                    renderThreads(cachedThreads);
+                }
+            }).catch(() => {});
+        }
+    }
     let name = '';
     if (isAnonymous) {
         const aliasCandidates = [
@@ -5179,16 +5220,38 @@ window.openAdminThread = function (threadId, userId, userName) {
     const messagesShell = document.querySelector('.messages-shell');
     if (messagesShell) messagesShell.classList.add('mobile-chat-active');
 
-    // (2026-07-13) Resolve user from cachedUsers for new chats; was null without thread
+    // (2026-07-13) Resolve user, match sidebar role & refresh live name; was stale
     const userObj = client.userObj || cachedUsers.find(u => String(u.id || u.uid || '') === String(resolvedUserId)) || null;
     const displayName = (!userName || isAdminName(userName)) ? (userObj?.name || client.name) : userName;
     activeUserName.textContent = displayName;
-    const inferredRole = userObj?.role || client.role || (String(userObj?.email || '').startsWith('staff.') ? 'staff' : 'student');
+    const inferredRole = getThreadParticipantRole(threadObj, userObj) || client.role || 'student';
     const role = inferredRole;
     const isGuardian = client.isGuardian || inferredRole === 'guardian' || inferredRole === 'parent';
     const isAnon = Boolean(threadObj && client.isAnonymous);
     const roleClass = (role === 'guardian' || isGuardian) ? 'guardian' : (role === 'staff' ? 'staff' : 'student');
     const roleLabel = (role === 'guardian' || isGuardian) ? 'Parent' : (role === 'staff' ? 'Staff' : 'Student');
+    if (resolvedUserId && !isAnon) {
+        getUserProfile(resolvedUserId).then((fresh) => {
+            if (!fresh) return;
+            if (userObj) Object.assign(userObj, fresh);
+            else cachedUsers.push({ id: resolvedUserId, uid: resolvedUserId, ...fresh });
+            const freshRole = getThreadParticipantRole(threadObj, fresh);
+            const freshRoleClass = (freshRole === 'guardian' || freshRole === 'parent') ? 'guardian' : (freshRole === 'staff' ? 'staff' : 'student');
+            const freshRoleLabel = (freshRole === 'guardian' || freshRole === 'parent') ? 'Parent' : (freshRole === 'staff' ? 'Staff' : 'Student');
+            if (currentActiveThreadId === threadId) {
+                if (fresh.name && !isAdminName(fresh.name) && activeUserName.textContent !== fresh.name) {
+                    activeUserName.textContent = fresh.name;
+                    if (adminChatInput) adminChatInput.placeholder = `Type response to ${fresh.name}...`;
+                }
+                if (activeUserRoleBadge) {
+                    activeUserRoleBadge.className = 'role-pill ' + freshRoleClass;
+                    activeUserRoleBadge.textContent = freshRoleLabel;
+                }
+                if (activeUserAvatar) activeUserAvatar.className = 'thread-avatar ' + freshRoleClass;
+            }
+            renderThreads(cachedThreads);
+        }).catch(() => {});
+    }
     const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || 'U';
     const activePresence = getUserPresenceStatus(resolvedUserId, userObj);
     activeUserAvatar.className = 'thread-avatar ' + roleClass;
@@ -5340,17 +5403,19 @@ function renderAdminMessages(messages) {
                     ${(groupPos === 'last' || groupPos === 'single') ? `<span class="msg-time">${timeStr}</span>` : ''}
                 `;
         if (msg.id) {
+            // (2026-07-13) Use Messenger-style hover 3-dot menu for delete; was trash icon
             const delBtn = document.createElement("button");
             delBtn.type = "button";
             delBtn.className = "admin-msg-del-btn";
-            delBtn.title = "Delete message";
-            delBtn.setAttribute("aria-label", "Delete message");
-            delBtn.innerHTML = '<span class="material-symbols-outlined">delete</span>';
-            delBtn.addEventListener("click", async (ev) => {
+            delBtn.title = "More options";
+            delBtn.setAttribute("aria-label", "Message options");
+            delBtn.innerHTML = '<span class="material-symbols-outlined">more_vert</span>';
+            delBtn.addEventListener("click", (ev) => {
                 ev.stopPropagation();
-                // (2026-07-13) Use styled modal for admin msg delete; was window.confirm
-                if (!(await UI.showModal('Delete Message', 'Delete this message permanently?', { type: 'error', showCancel: true, confirmText: 'Delete' }))) return;
-                await deleteChatMessage(msg.id, currentActiveThreadId);
+                UI.openMessageActionMenu(delBtn, async () => {
+                    if (!(await UI.showModal('Delete Message', 'Delete this message permanently?', { type: 'error', showCancel: true, confirmText: 'Delete' }))) return;
+                    await deleteChatMessage(msg.id, currentActiveThreadId);
+                });
             });
             if (isSent) {
                 rowEl.appendChild(delBtn);

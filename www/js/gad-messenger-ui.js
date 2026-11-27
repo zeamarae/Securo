@@ -433,6 +433,22 @@ export function initGadMessengerUI(config) {
         if (editAliasBtnEl) editAliasBtnEl.classList.toggle('visible', mode === 'anonymous');
     }
 
+    // (2026-07-13) Prevent Chats, Notifications & Profile popups overlapping; was stacked
+    function closeOtherHeaderPopups() {
+        ['notifDropdown', 'profileDropdown', 'guardianProfileDropdown', 'profileMenu'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('active', 'open', 'show');
+        });
+        const gNotif = document.getElementById('guardianNotifDropdown');
+        if (gNotif) {
+            gNotif.style.display = 'none';
+            gNotif.classList.remove('active', 'open', 'show');
+        }
+        document.querySelectorAll('.notif-dropdown.active, .profile-dropdown.active').forEach((el) => {
+            el.classList.remove('active');
+        });
+    }
+
     function closePopover() {
         if (!activePopover) return;
         const pop = activePopover;
@@ -440,8 +456,10 @@ export function initGadMessengerUI(config) {
         pop.classList.add('closing');
         setTimeout(() => pop.remove(), 170);
     }
+    window.closeActiveGadPopover = closePopover;
 
     function openPopover(anchorBtn, startInEditAlias = false) {
+        closeOtherHeaderPopups();
         if (activePopover) {
             closePopover();
             if (!startInEditAlias) return;
@@ -523,7 +541,8 @@ export function initGadMessengerUI(config) {
                 ` : ''}
             `;
 
-            pop.querySelector('[data-mp-mode="named"]')?.addEventListener('click', () => {
+            pop.querySelector('[data-mp-mode="named"]')?.addEventListener('click', (e) => {
+                e.stopPropagation();
                 closePopover();
                 openMode?.('named');
             });
@@ -534,7 +553,9 @@ export function initGadMessengerUI(config) {
                 setTimeout(() => pop.querySelector('#gadMpAliasInput')?.focus(), 40);
             });
 
-            pop.querySelector('[data-mp-mode="anonymous"]')?.addEventListener('click', () => {
+            // (2026-07-13) Stop propagation so renderBody doesn't trigger outside-click close; was closing
+            pop.querySelector('[data-mp-mode="anonymous"]')?.addEventListener('click', (e) => {
+                e.stopPropagation();
                 const existing = getAlias?.(uid);
                 if (existing) {
                     closePopover();
@@ -566,21 +587,69 @@ export function initGadMessengerUI(config) {
             }
         };
 
+        // (2026-07-13) Keep clicks inside popover from bubbling to document close; was detaching
+        pop.addEventListener('click', (e) => e.stopPropagation());
         renderBody(startInEditAlias);
         document.body.appendChild(pop);
         activePopover = pop;
     }
 
+    // (2026-07-13) Capture clicks on other header popups to close Chats; was blocked by stopPropagation
     document.addEventListener('click', (e) => {
         if (!activePopover) return;
         const anchor = document.getElementById(headerBtnId);
         if (activePopover.contains(e.target) || (anchor && anchor.contains(e.target))) return;
         closePopover();
-    });
+    }, true);
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && activePopover) closePopover();
     });
+
+    // (2026-07-13) Sync GAD chat modal insets with mobile keyboard visualViewport; was static
+    if (!window._securoGadViewportBound) {
+        window._securoGadViewportBound = true;
+        const syncGadChatViewport = () => {
+            const vv = window.visualViewport;
+            const vh = vv ? Math.round(vv.height) : window.innerHeight;
+            const vTop = vv ? Math.max(0, Math.round(vv.offsetTop)) : 0;
+            const kbOpen = vv ? (window.innerHeight - vv.height) > 100 : false;
+            document.documentElement.style.setProperty('--gad-vv-height', `${vh}px`);
+            document.documentElement.style.setProperty('--gad-vv-top', `${vTop}px`);
+            const activeModal = document.querySelector('#gadPmModal.active, #guardianChatOverlay.active');
+            if (activeModal) {
+                activeModal.classList.toggle('keyboard-open', kbOpen);
+                if (activeModal.id === 'guardianChatOverlay') {
+                    activeModal.style.top = `${vTop}px`;
+                    activeModal.style.height = `${vh}px`;
+                    activeModal.style.bottom = 'auto';
+                }
+                if (kbOpen) {
+                    const thread = activeModal.querySelector('#gadChatThread, #guardianChatMessages');
+                    if (thread) {
+                        requestAnimationFrame(() => { thread.scrollTop = thread.scrollHeight; });
+                    }
+                }
+            }
+        };
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', syncGadChatViewport);
+            window.visualViewport.addEventListener('scroll', syncGadChatViewport);
+        }
+        window.addEventListener('resize', syncGadChatViewport);
+        document.addEventListener('focusin', (e) => {
+            if (e.target && e.target.closest('#gadPmModal, #guardianChatOverlay')) {
+                setTimeout(syncGadChatViewport, 60);
+                setTimeout(syncGadChatViewport, 280);
+            }
+        });
+        document.addEventListener('focusout', (e) => {
+            if (e.target && e.target.closest('#gadPmModal, #guardianChatOverlay')) {
+                setTimeout(syncGadChatViewport, 120);
+            }
+        });
+        syncGadChatViewport();
+    }
 
     return {
         togglePopover: (anchorBtn) => openPopover(anchorBtn || document.getElementById(headerBtnId), false),

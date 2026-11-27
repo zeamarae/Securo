@@ -4830,14 +4830,16 @@ body {
     flex-shrink: 0;
 }
 
+/* (2026-07-13) Hide 3-dot message trigger until row hover; was always visible */
 .admin-msg-del-btn {
-    opacity: 0.25;
+    opacity: 0;
+    pointer-events: none;
     border: none;
     background: transparent;
-    color: #94a3b8;
+    color: #64748b;
     cursor: pointer;
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
@@ -4848,17 +4850,20 @@ body {
 }
 
 .admin-msg-row:hover .admin-msg-del-btn,
+.admin-msg-del-btn.menu-open,
 .admin-msg-del-btn:focus-visible {
     opacity: 1;
+    pointer-events: auto;
 }
 
-.admin-msg-del-btn:hover {
-    color: #dc2626;
-    background: rgba(220, 38, 38, 0.1);
+.admin-msg-del-btn:hover,
+.admin-msg-del-btn.menu-open {
+    color: #1e293b;
+    background: rgba(15, 23, 42, 0.08);
 }
 
 .admin-msg-del-btn .material-symbols-outlined {
-    font-size: 16px;
+    font-size: 18px;
 }
 
 /* (2026-07-13) Campus marker CRUD sidebar & Place Editor UI; was prompt */

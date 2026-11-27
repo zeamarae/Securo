@@ -88,6 +88,7 @@ service cloud.firestore {
     }
     
     // Messages (Chat)
+    // (2026-07-13) Allow ownerId reads on messages for anon threads; was sender/receiver
     match /messages/{messageId} {
       allow read: if isSignedIn() && (
         isAdmin() ||
@@ -95,6 +96,7 @@ service cloud.firestore {
         request.auth.uid == resource.data.senderUid ||
         request.auth.uid == resource.data.receiverId ||
         request.auth.uid == resource.data.recipientUid ||
+        request.auth.uid == resource.data.ownerId ||
         resource.data.receiverId == 'system_admin_securo' ||
         resource.data.recipientUid == 'system_admin_securo'
       );

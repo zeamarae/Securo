@@ -2291,20 +2291,26 @@
 .guardian-msg-row { display: flex; align-items: center; gap: 6px; width: 100%; }
 .guardian-msg-row.sent { justify-content: flex-end; }
 .guardian-msg-row.received { justify-content: flex-start; }
+/* (2026-07-13) Show parent 3-dot message trigger on hover; was always visible */
 .gad-msg-del-btn {
-    opacity: 0.35;
+    opacity: 0;
+    pointer-events: none;
     border: none;
     background: transparent;
-    color: #94a3b8;
-    width: 24px;
-    height: 24px;
+    color: #64748b;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: opacity 0.16s ease, background 0.16s ease, color 0.16s ease;
 }
 .guardian-msg-row:hover .gad-msg-del-btn,
-.gad-msg-del-btn:focus-visible { opacity: 1; color: #dc2626; }
-.gad-msg-del-btn .material-symbols-outlined { font-size: 15px; }
+.gad-msg-del-btn.menu-open,
+.gad-msg-del-btn:focus-visible { opacity: 1; pointer-events: auto; }
+.gad-msg-del-btn:hover,
+.gad-msg-del-btn.menu-open { color: #1e293b; background: rgba(15, 23, 42, 0.08); }
+.gad-msg-del-btn .material-symbols-outlined { font-size: 18px; }
