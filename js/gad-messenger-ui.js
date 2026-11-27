@@ -358,14 +358,51 @@ function ensureStyles() {
             cursor: pointer;
             transition: background 0.16s ease, color 0.16s ease;
         }
+        /* (2026-07-13) Keep GAD chat header single-line & remove legacy badge/switch gaps */
         .gad-chat-header,
         #guardianChatOverlay .chat-header {
             gap: 8px;
+            padding: 10px 12px;
         }
         .gad-chat-header > div:first-child,
         #guardianChatOverlay .chat-header > div:first-child {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             min-width: 0;
             flex: 1;
+        }
+        .gad-chat-header .stu-u159,
+        .gad-chat-header .sta-u159 {
+            flex-shrink: 0;
+        }
+        .gad-chat-header .stu-u161,
+        .gad-chat-header .sta-u161 {
+            white-space: nowrap;
+            font-size: 0.96rem;
+            line-height: 1.2;
+            margin: 0;
+        }
+        .gad-chat-header .stu-u162,
+        .gad-chat-header .sta-u162 {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 2px;
+            line-height: 1.1;
+        }
+        .gad-chat-header #gadActiveModeBadge,
+        .gad-chat-header #gadSwitchModeBtn,
+        #guardianChatOverlay #guardianActiveModeBadge,
+        #guardianChatOverlay #guardianSwitchModeBtn {
+            display: none !important;
+        }
+        .gad-chat-header .gad-header-actions,
+        #guardianChatOverlay .gad-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
         }
         .gad-anon-mode-text {
             overflow: hidden;

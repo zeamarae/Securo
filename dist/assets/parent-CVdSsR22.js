@@ -1,4 +1,4 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./parent-CA42S85h.js","./install-sw-DAi8K7sx.js","./preload-helper-BXBgov45.js","./gad-messenger-ui-C7n02HOK.js"])))=>i.map(i=>d[i]);
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./parent-DEQxq7Ee.js","./install-sw-DAi8K7sx.js","./preload-helper-BXBgov45.js","./gad-messenger-ui-BzkcC428.js"])))=>i.map(i=>d[i]);
 import{a as e,i as t,n,o as r,r as i,t as a}from"./preload-helper-BXBgov45.js";/* empty css                  */r();var o=e(),s=`<!-- (2026-07-13) Consolidated parent auth & dashboard views; was 2 files -->\r
 <section id="parentAuthSection" class="parent-view-section is-hidden">\r
 <div class="toast-stack" id="toastStack" aria-live="polite"></div>\r
@@ -774,4 +774,4 @@ import{a as e,i as t,n,o as r,r as i,t as a}from"./preload-helper-BXBgov45.js";/
 \r
 </div>\r
 <!-- (2026-07-13) Remove duplicate parent.js script tag; was loaded twice -->\r
-`,c=t(),l=()=>a(()=>import(`./parent-CA42S85h.js`),__vite__mapDeps([0,1,2,3]),import.meta.url);function u(){return(0,c.jsx)(n,{templateHtml:s,loadController:l})}var d=document.getElementById(`root`);d&&(0,o.createRoot)(d).render((0,c.jsx)(i,{children:(0,c.jsx)(u,{})}));
+`,c=t(),l=()=>a(()=>import(`./parent-DEQxq7Ee.js`),__vite__mapDeps([0,1,2,3]),import.meta.url);function u(){return(0,c.jsx)(n,{templateHtml:s,loadController:l})}var d=document.getElementById(`root`);d&&(0,o.createRoot)(d).render((0,c.jsx)(i,{children:(0,c.jsx)(u,{})}));
