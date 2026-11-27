@@ -386,31 +386,13 @@
                             <div class="section-stack stu-u80">
                                 <!-- (2026-07-13) Removed Support Services & Quick Resources; was cards -->
 
-                                <!-- GAD Sub-Navigation Tabs -->
-                                <div class="stu-u81">
-                                    <button class="history-filter-btn active stu-u82" id="gadTabAnnouncements"
-                                        type="button" onclick="switchGadTab('announcements')">Announcements</button>
-                                    <button class="history-filter-btn stu-u82" id="gadTabMyMessages" type="button"
-                                        onclick="switchGadTab('messages')">My Inquiries</button>
-                                </div>
-
-                                <!-- Announcements Panel -->
+                                <!-- (2026-07-13) Removed My Inquiries tab & panel; was dual sub-tabs -->
                                 <div id="gadAnnouncementsPanel">
                                     <div id="gadPostsFeed">
                                         <div id="feedLoader" class="stu-u83">
                                             <span class="spinner stu-u84"></span>
                                             <p class="stu-u85">Loading announcements...
                                             </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Student Inquiries / Messages Panel -->
-                                <div id="gadMessagesPanel" class="stu-u86">
-                                    <div id="gadInquiriesList">
-                                        <div class="stu-u87">
-                                            <span class="material-symbols-outlined stu-u88">forum</span>
-                                            No messages sent yet. Use "Report / Message GAD" above to start.
                                         </div>
                                     </div>
                                 </div>
@@ -977,13 +959,7 @@
                 </div>
             </div>
             <div class="gad-chat-composer">
-                <select id="gadCategorySelect" aria-label="Topic">
-                    <option value="counseling">Topic: Counseling &amp; Mental Health</option>
-                    <option value="cosh">Topic: Anti-Sexual Harassment (COSH)</option>
-                    <option value="safespaces">Topic: Safe Spaces &amp; Inclusion</option>
-                    <option value="policy">Topic: Policy &amp; Rights Inquiry</option>
-                    <option value="general">Topic: General Support</option>
-                </select>
+                <!-- (2026-07-13) Removed gadCategorySelect topic dropdown; was select -->
                 <input type="hidden" id="gadSubjectInput" value="">
                 <div class="gad-chat-input-row">
                     <textarea id="gadMessageBody" rows="1" placeholder="Type a message..."></textarea>
