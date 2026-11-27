@@ -105,13 +105,21 @@ window.switchAdminMode = function (mode) {
     }
 };
 
+// (2026-07-13) Shared persisted admin session check; was missing role/token check
+const hasPersistedAdminSession = () => {
+    if (sessionStorage.getItem('securo_admin_logged_out') === '1') return false;
+    return localStorage.getItem('securo_admin_logged_in') === '1'
+        || (localStorage.getItem('securo_user_role') === 'admin' && Boolean(localStorage.getItem('securo_session_token')));
+};
+
 // Initial view check based on URL query
 (function () {
-    // (2026-07-13) Require login view first until auth verifies; was showing dashboard
+    // (2026-07-13) Keep dashboard on reload if admin session persisted; was login
     const view = new URLSearchParams(window.location.search).get('view');
-    if (!auth.currentUser) window.switchAdminMode('login');
-    else if (view === 'login') window.switchAdminMode('login');
+    const hasAdminSession = hasPersistedAdminSession();
+    if (view === 'login' || (!auth.currentUser && !hasAdminSession)) window.switchAdminMode('login');
     else if (view === 'analytics') window.switchAdminMode('analytics');
+    else window.switchAdminMode('dashboard');
     const backBtn = document.getElementById('analyticsBackToDashboardBtn');
     if (backBtn) {
         backBtn.addEventListener('click', (e) => {
@@ -181,11 +189,12 @@ window.switchAdminMode = function (mode) {
             if (!user) {
                 user = await ensureAdminFirebaseSession(ADMIN_EMAIL, ADMIN_PASSWORD);
             }
-            // (2026-07-13) Cache admin role on login for Back guard; was missing role
+            // (2026-07-13) Persist explicit admin login across reload; was session-only
+            localStorage.setItem('securo_admin_logged_in', '1');
+            localStorage.setItem('securo_user_role', 'admin');
+            sessionStorage.setItem('securo_authenticated', '1');
             if (user?.uid) {
                 localStorage.setItem('securo_session_token', user.uid);
-                localStorage.setItem('securo_user_role', 'admin');
-                sessionStorage.setItem('securo_authenticated', '1');
                 sessionStorage.setItem('securo_session_token', user.uid);
             }
 
@@ -468,9 +477,10 @@ const isAdminEmail = (email) => {
 };
 
 let _adminAuthInFlight = null;
+// (2026-07-13) Fast single-trip admin auth with cached email; was 6-pass loop
 async function ensureAdminFirebaseSession(email = 'admin@admin.com', pass = 'admin123') {
     if (auth.currentUser && isAdminEmail(auth.currentUser.email)) {
-        await saveUserProfile(auth.currentUser.uid, {
+        saveUserProfile(auth.currentUser.uid, {
             name: 'Administrator',
             email: 'admin@admin.com',
             role: 'admin'
@@ -481,52 +491,33 @@ async function ensureAdminFirebaseSession(email = 'admin@admin.com', pass = 'adm
     _adminAuthInFlight = (async () => {
         const targetEmail = String(email || 'admin@admin.com').trim().toLowerCase();
         const primaryPass = pass || 'admin123';
-        try {
-            const cred = await signInWithEmailAndPassword(auth, targetEmail, primaryPass);
-            if (cred?.user) {
-                await saveUserProfile(cred.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
-                return cred.user;
-            }
-        } catch (_) {
-            try {
-                const created = await createUserWithEmailAndPassword(auth, targetEmail, primaryPass);
-                if (created?.user) {
-                    await saveUserProfile(created.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
-                    return created.user;
-                }
-            } catch (createErr) {
-                const errCode = String(createErr?.code || '').toLowerCase();
-                if (errCode.includes('email-already-in-use')) {
-                    const altPasswords = ['admin123', '123123123', 'password', '12345678', 'securo123'].filter(p => p !== primaryPass);
-                    for (const altP of altPasswords) {
-                        try {
-                            const altCred = await signInWithEmailAndPassword(auth, targetEmail, altP);
-                            if (altCred?.user) {
-                                await saveUserProfile(altCred.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
-                                return altCred.user;
-                            }
-                        } catch (_) { }
-                    }
-                }
-            }
-        }
         const fallbackEmail = 'admin.command.desk@securo.app';
         const fallbackPass = 'AdminSecuro123!';
-        try {
-            const fbSign = await signInWithEmailAndPassword(auth, fallbackEmail, fallbackPass);
-            if (fbSign?.user) {
-                await saveUserProfile(fbSign.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
-                return fbSign.user;
+        const cachedEmail = localStorage.getItem('securo_admin_auth_email');
+
+        const trySignIn = async (em, pw) => {
+            const cred = await signInWithEmailAndPassword(auth, em, pw);
+            if (cred?.user) {
+                try { localStorage.setItem('securo_admin_auth_email', em); } catch (_) { }
+                saveUserProfile(cred.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
+                return cred.user;
             }
-        } catch (_) {
-            try {
-                const fbCreate = await createUserWithEmailAndPassword(auth, fallbackEmail, fallbackPass);
-                if (fbCreate?.user) {
-                    await saveUserProfile(fbCreate.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
-                    return fbCreate.user;
-                }
-            } catch (_) { }
+            return null;
+        };
+
+        if (cachedEmail === fallbackEmail) {
+            try { const u = await trySignIn(fallbackEmail, fallbackPass); if (u) return u; } catch (_) { }
         }
+        try { const u = await trySignIn(targetEmail, primaryPass); if (u) return u; } catch (_) { }
+        try { const u = await trySignIn(fallbackEmail, fallbackPass); if (u) return u; } catch (_) { }
+        try {
+            const fbCreate = await createUserWithEmailAndPassword(auth, fallbackEmail, fallbackPass);
+            if (fbCreate?.user) {
+                try { localStorage.setItem('securo_admin_auth_email', fallbackEmail); } catch (_) { }
+                saveUserProfile(fbCreate.user.uid, { name: 'Administrator', email: 'admin@admin.com', role: 'admin' }).catch(() => { });
+                return fbCreate.user;
+            }
+        } catch (_) { }
         return auth.currentUser || null;
     })().finally(() => {
         _adminAuthInFlight = null;
@@ -2257,8 +2248,10 @@ async function executeAdminLogout() {
             unsubscribeAdminNotifications();
             unsubscribeAdminNotifications = null;
         }
-        // (2026-07-13) Retain offline master cache & mark explicit logout; was clearing
+        // (2026-07-13) Clear persisted admin login flag on logout; was token-only
         try {
+            localStorage.removeItem('securo_admin_logged_in');
+            localStorage.removeItem('securo_user_role');
             localStorage.removeItem('securo_session_token');
             sessionStorage.clear();
             sessionStorage.setItem('securo_admin_logged_out', '1');
@@ -2843,8 +2836,13 @@ window._triggerAdminDashboardLoad = () => {
 
     onAuthStateChanged(auth, async (user) => {
     const reqView = new URLSearchParams(window.location.search).get('view');
-    // (2026-07-13) Always require explicit admin login when signed out; was auto-login
+    // (2026-07-13) Never log out on reload when admin session persisted; was login
     if (!user) {
+        if (hasPersistedAdminSession() && reqView !== 'login') {
+            window.switchAdminMode(reqView === 'analytics' ? 'analytics' : 'dashboard');
+            ensureAdminFirebaseSession().catch(() => null);
+            return;
+        }
         window.switchAdminMode('login');
         return;
     }
@@ -2857,6 +2855,12 @@ window._triggerAdminDashboardLoad = () => {
             return;
         }
     }
+    try {
+        localStorage.setItem('securo_admin_logged_in', '1');
+        localStorage.setItem('securo_user_role', 'admin');
+        localStorage.setItem('securo_session_token', user.uid);
+        sessionStorage.setItem('securo_authenticated', '1');
+    } catch (_) { }
 
     currentAdminUid = user.uid;
     currentAdminName = (isKnownAdmin ? (user.displayName || 'Administrator') : (user.displayName || 'Administrator'));

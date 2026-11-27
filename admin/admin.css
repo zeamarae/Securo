@@ -2808,11 +2808,39 @@ body {
     align-items: center;
 }
 
-:where(#adminLoginSection) .input-wrapper span {
+/* (2026-07-13) Keep visibility toggle on right; was .input-wrapper span left:16px */
+:where(#adminLoginSection) .input-wrapper > span {
     position: absolute;
     left: 16px;
     color: var(--text-muted);
     font-size: 20px;
+    pointer-events: none;
+}
+
+:where(#adminLoginSection) .input-wrapper button[data-password-target] {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 4px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+:where(#adminLoginSection) .input-wrapper button[data-password-target]:hover {
+    color: var(--primary);
+}
+
+:where(#adminLoginSection) .input-wrapper button[data-password-target] span {
+    position: static;
+    font-size: 20px;
+    line-height: 1;
 }
 
 :where(#adminLoginSection) input {
@@ -2820,7 +2848,7 @@ body {
     background: #ffffff;
     border: 1.5px solid var(--border);
     border-radius: 16px;
-    padding: 14px 16px 14px 48px;
+    padding: 14px 48px 14px 48px;
     color: var(--text);
     font-family: inherit;
     font-size: 1rem;
@@ -5342,5 +5370,254 @@ body {
     .place-editor-radius-label {
         min-width: 92px;
         font-size: 0.88rem;
+    }
+}
+
+/* (2026-07-13) Full tablet & mobile responsive layout for Admin; was overflowing */
+.admin-shell,
+.glass-shell,
+.dashboard-grid,
+.main-panel,
+.admin-section,
+.panel-card,
+.metric-card {
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1120px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+    }
+
+    .chart-grid {
+        grid-template-columns: 1fr !important;
+        gap: 14px !important;
+    }
+}
+
+@media (max-width: 960px) {
+    .topbar {
+        padding: 10px 14px !important;
+        gap: 10px !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        min-height: 58px !important;
+    }
+
+    .brand-wrap {
+        gap: 10px !important;
+        min-width: 0;
+        align-items: center !important;
+    }
+
+    .adm-u4 {
+        padding-left: 10px !important;
+        min-width: 0;
+    }
+
+    .adm-u5 {
+        font-size: 0.96rem !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .adm-u6 {
+        display: none !important;
+    }
+
+    .topbar-actions {
+        flex-wrap: nowrap !important;
+        gap: 6px !important;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .topbar-actions .signal-chip,
+    .topbar-actions .adm-u9 {
+        display: none !important;
+    }
+
+    #topbarSosAlertBadge {
+        padding: 5px 10px !important;
+        font-size: 0.72rem !important;
+        white-space: nowrap;
+    }
+
+    #topbarDirectLogoutBtn {
+        padding: 6px 10px !important;
+        font-size: 0.76rem !important;
+        white-space: nowrap;
+    }
+
+    .dashboard-grid {
+        display: flex !important;
+        flex-direction: column !important;
+        min-height: calc(100dvh - 58px);
+    }
+
+    .sidebar {
+        width: 100% !important;
+        min-width: 0 !important;
+        height: auto !important;
+        padding: 8px 12px !important;
+        border-right: 0 !important;
+        border-bottom: 1px solid var(--border) !important;
+        background: rgba(255, 255, 255, 0.96) !important;
+        position: sticky !important;
+        top: 0;
+        z-index: 80;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .sidebar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .sidebar:hover {
+        width: 100% !important;
+    }
+
+    .sidebar-inner {
+        position: static !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 6px !important;
+        padding: 0 !important;
+        width: max-content !important;
+        min-width: 100%;
+    }
+
+    .sidebar-label,
+    .sidebar-note,
+    .adm-u20 {
+        display: none !important;
+    }
+
+    .nav-stack {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 6px !important;
+        margin: 0 !important;
+    }
+
+    .sidebar .tab-btn {
+        width: auto !important;
+        min-width: auto !important;
+        flex-shrink: 0;
+        padding: 8px 12px !important;
+        border-radius: 999px !important;
+        white-space: nowrap;
+        gap: 6px !important;
+        font-size: 0.82rem !important;
+        justify-content: center !important;
+    }
+
+    .sidebar .tab-btn span:not(.material-symbols-outlined):not(.capsule),
+    .sidebar .tab-btn .capsule {
+        opacity: 1 !important;
+        max-width: none !important;
+        width: auto !important;
+        overflow: visible !important;
+        pointer-events: auto !important;
+        margin-left: 0 !important;
+    }
+
+    .main-panel {
+        width: 100% !important;
+        padding: 14px 12px 28px !important;
+        overflow-x: hidden !important;
+    }
+
+    .role-chart-wrap {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 16px !important;
+    }
+
+    .legend-list {
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .adm-u4 {
+        display: none !important;
+    }
+
+    #topbarDirectLogoutBtn span:not(.material-symbols-outlined) {
+        display: none !important;
+    }
+
+    #topbarDirectLogoutBtn {
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    .metric-card {
+        padding: 14px 12px !important;
+        border-radius: 16px !important;
+    }
+
+    .metric-label {
+        font-size: 0.68rem !important;
+    }
+
+    .metric-value {
+        font-size: 1.65rem !important;
+    }
+
+    .metric-sub {
+        font-size: 0.74rem !important;
+    }
+
+    .panel-card,
+    .chart-card {
+        padding: 16px 14px !important;
+        border-radius: 18px !important;
+    }
+
+    .chart-title {
+        font-size: 1.05rem !important;
+    }
+
+    .accounts-head {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 10px !important;
+    }
+
+    .adm-u41 {
+        display: none !important;
+    }
+
+    .sos-row,
+    .user-table-row,
+    .table-row {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+        padding: 14px 12px !important;
+    }
+
+    .modal-card,
+    .admin-modal-card {
+        width: calc(100vw - 24px) !important;
+        max-width: 100% !important;
+        max-height: 90dvh !important;
+        overflow-y: auto !important;
     }
 }

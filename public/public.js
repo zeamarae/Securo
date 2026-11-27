@@ -728,9 +728,9 @@ const PAGE_CONTROLLERS = {
         if (subtitle) subtitle.textContent = isStaffRole ? 'Staff access portal' : 'Student access portal';
         if (identifierLabel) identifierLabel.textContent = `${roleLabel} ID Number`;
         if (signupIdLabel) signupIdLabel.textContent = `${roleLabel} ID Number`;
-        // (2026-07-13) Blank placeholders for ID inputs; was example strings
-        if (signupIdInput) signupIdInput.placeholder = '';
-        if (identifierInput) identifierInput.placeholder = '';
+        // (2026-07-13) Set descriptive ID placeholders; was cleared to empty string
+        if (signupIdInput) signupIdInput.placeholder = `Enter 7-digit ${roleLabel} ID`;
+        if (identifierInput) identifierInput.placeholder = `Enter 7-digit ${roleLabel} ID`;
 
         loginTab.addEventListener('click', () => setMode('login'));
         signupTab.addEventListener('click', () => setMode('signup'));

@@ -294,53 +294,178 @@ export const UI = {
         }
     },
 
+    // (2026-07-13) Inject shared styles for UI.showModal & overlay; was unstyled
+    ensureModalStyles() {
+        if (document.getElementById('securo-ui-modal-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'securo-ui-modal-styles';
+        style.textContent = `
+            @keyframes securoModalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes securoModalFadeOut { from { opacity: 1; } to { opacity: 0; } }
+            @keyframes securoModalPopIn { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+            .securo-modal-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(23, 20, 40, 0.62);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10050;
+                padding: 20px;
+                animation: securoModalFadeIn 0.2s ease forwards;
+                font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+            }
+            .securo-modal-overlay.closing {
+                animation: securoModalFadeOut 0.18s ease forwards;
+            }
+            .securo-modal-card {
+                width: 100%;
+                max-width: 368px;
+                background: #ffffff;
+                border-radius: 26px;
+                padding: 28px 24px 22px;
+                text-align: center;
+                box-shadow: 0 24px 60px rgba(23, 20, 40, 0.28), 0 0 0 1px rgba(90, 31, 224, 0.08);
+                animation: securoModalPopIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+                box-sizing: border-box;
+            }
+            .securo-modal-icon {
+                width: 60px;
+                height: 60px;
+                border-radius: 18px;
+                margin: 0 auto 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(90, 31, 224, 0.12);
+                color: var(--primary, #5a1fe0);
+            }
+            .securo-modal-icon .material-symbols-outlined {
+                font-size: 30px;
+                line-height: 1;
+            }
+            .securo-modal-icon.success { background: rgba(16, 185, 129, 0.14); color: #059669; }
+            .securo-modal-icon.warning { background: rgba(245, 158, 11, 0.14); color: #d97706; }
+            .securo-modal-icon.error { background: rgba(220, 38, 38, 0.14); color: #dc2626; }
+            .securo-modal-title {
+                margin: 0 0 8px;
+                font-family: 'Sora', 'Outfit', sans-serif;
+                font-size: 1.24rem;
+                font-weight: 800;
+                color: #181428;
+                letter-spacing: -0.02em;
+            }
+            .securo-modal-message {
+                margin: 0 0 22px;
+                font-size: 0.9rem;
+                line-height: 1.5;
+                color: #64748b;
+            }
+            .securo-modal-actions {
+                display: flex;
+                gap: 10px;
+                width: 100%;
+            }
+            .securo-modal-actions button {
+                flex: 1;
+                height: 46px;
+                border-radius: 14px;
+                border: none;
+                font-family: inherit;
+                font-size: 0.92rem;
+                font-weight: 700;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+            }
+            .securo-modal-actions button:active {
+                transform: scale(0.97);
+            }
+            .securo-modal-actions .btn-secondary {
+                background: #f1f0f7;
+                color: #475569;
+            }
+            .securo-modal-actions .btn-secondary:hover {
+                background: #e5e3f0;
+                color: #1e293b;
+            }
+            .securo-modal-actions .btn-primary {
+                background: linear-gradient(135deg, var(--primary, #682ef1), #4e14e6);
+                color: #ffffff;
+                box-shadow: 0 8px 20px rgba(90, 31, 224, 0.26);
+            }
+            .securo-modal-actions .btn-primary.error {
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+                box-shadow: 0 8px 20px rgba(220, 38, 38, 0.26);
+            }
+            .securo-modal-actions .btn-primary.success {
+                background: linear-gradient(135deg, #10b981, #059669);
+                box-shadow: 0 8px 20px rgba(5, 150, 105, 0.26);
+            }
+            .securo-modal-actions .btn-primary.warning {
+                background: linear-gradient(135deg, #f59e0b, #d97706);
+                box-shadow: 0 8px 20px rgba(217, 119, 6, 0.26);
+            }
+            #securo-loading-overlay .spinner {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                border: 3.5px solid rgba(255, 255, 255, 0.25);
+                border-top-color: #ffffff;
+                animation: securoSpin 0.8s linear infinite;
+            }
+            @keyframes securoSpin { to { transform: rotate(360deg); } }
+        `;
+        document.head.appendChild(style);
+    },
+
     showModal(title, message, options = {}) {
         return new Promise((resolve) => {
+            this.ensureModalStyles();
+            const type = options.type || 'info';
             const modal = document.createElement('div');
             modal.className = 'securo-modal-overlay';
             modal.innerHTML = `
-                <div class="securo-modal-card">
-                    <div class="securo-modal-icon ${options.type || 'info'}">
+                <div class="securo-modal-card" role="dialog" aria-modal="true">
+                    <div class="securo-modal-icon ${type}">
                         <span class="material-symbols-outlined">
-                            ${options.type === 'error' ? 'error' : options.type === 'success' ? 'check_circle' : options.type === 'warning' ? 'warning' : 'info'}
+                            ${type === 'error' ? 'error' : type === 'success' ? 'check_circle' : type === 'warning' ? 'warning' : 'info'}
                         </span>
                     </div>
                     <h3 class="securo-modal-title">${title}</h3>
                     <p class="securo-modal-message">${message}</p>
                     <div class="securo-modal-actions">
-                        ${options.showCancel ? '<button class="btn-secondary" data-action="cancel">Cancel</button>' : ''}
-                        <button class="btn-primary" data-action="confirm">${options.confirmText || 'OK'}</button>
+                        ${options.showCancel ? `<button type="button" class="btn-secondary" data-action="cancel">${options.cancelText || 'Cancel'}</button>` : ''}
+                        <button type="button" class="btn-primary ${type}" data-action="confirm">${options.confirmText || 'OK'}</button>
                     </div>
                 </div>
             `;
 
-            modal.style.cssText = `
-                position: fixed;
-                inset: 0;
-                background: rgba(23, 20, 40, 0.7);
-                backdrop-filter: blur(8px);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10000;
-                padding: 20px;
-                animation: fadeIn 0.2s ease;
-            `;
-
             document.body.appendChild(modal);
 
+            const closeModal = (confirmed) => {
+                modal.classList.add('closing');
+                setTimeout(() => modal.remove(), 180);
+                resolve(confirmed);
+            };
+
             modal.addEventListener('click', (e) => {
-                const action = e.target.dataset.action;
-                if (action) {
-                    modal.style.animation = 'fadeOut 0.2s ease';
-                    setTimeout(() => modal.remove(), 200);
-                    resolve(action === 'confirm');
+                const actionBtn = e.target.closest('[data-action]');
+                if (actionBtn) {
+                    closeModal(actionBtn.dataset.action === 'confirm');
+                } else if (e.target === modal && options.showCancel) {
+                    closeModal(false);
                 }
             });
         });
     },
 
     showLoadingOverlay(message = 'Loading...') {
+        this.ensureModalStyles();
         const overlay = document.createElement('div');
         overlay.id = 'securo-loading-overlay';
         overlay.innerHTML = `

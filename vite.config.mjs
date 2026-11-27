@@ -11,6 +11,8 @@ const CLEAN_REWRITES = {
   '/student/': '/student/student.html',
   '/staff/': '/staff/staff.html',
   '/parent/': '/parent/parent.html',
+  // (2026-07-13) Alias /guardian/ to parent portal; was SPA fallback to landing
+  '/guardian/': '/parent/parent.html',
   '/login/': '/public/login.html',
   '/role-selection/': '/public/role-selection.html',
   '/profile/': '/public/profile.html',

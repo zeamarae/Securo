@@ -207,10 +207,46 @@
         }
     }
 
+    // (2026-07-13) Resolve relative portal URLs to clean root paths; was stacking
+    const PRELOADER_CLEAN_ROUTES = {
+        'index.html': '/',
+        'admin/admin.html': '/admin/',
+        'student/student.html': '/student/',
+        'staff/staff.html': '/staff/',
+        'parent/parent.html': '/parent/',
+        'public/login.html': '/login/',
+        'login.html': '/login/',
+        'public/role-selection.html': '/role-selection/',
+        'role-selection.html': '/role-selection/',
+        'public/profile.html': '/profile/',
+        'profile.html': '/profile/',
+        'public/settings.html': '/settings/',
+        'settings.html': '/settings/',
+        'public/about.html': '/about/',
+        'about.html': '/about/',
+        'public/hotlines.html': '/hotlines/',
+        'hotlines.html': '/hotlines/',
+        'public/incident-report.html': '/incident-report/',
+        'incident-report.html': '/incident-report/',
+        'public/permissions-onboarding.html': '/permissions-onboarding/',
+        'permissions-onboarding.html': '/permissions-onboarding/',
+        'public/terms.html': '/terms/',
+        'terms.html': '/terms/'
+    };
+    function normalizePreloaderTarget(url) {
+        if (!url || (window.location.protocol !== 'http:' && window.location.protocol !== 'https:')) return url;
+        if (/^https?:\/\//i.test(url) || url.startsWith('/')) return url;
+        const [pathPart, rest] = url.split(/(?=[?#])/);
+        const stripped = pathPart.replace(/^(?:\.\.\/|\.\/)+/, '');
+        const mapped = PRELOADER_CLEAN_ROUTES[stripped];
+        return mapped ? (mapped + (rest || '')) : url;
+    }
+
     let isTransitioning = false;
     window.showSecuroPreloader = function (targetUrl) {
         if (isTransitioning) return;
         isTransitioning = true;
+        targetUrl = normalizePreloaderTarget(targetUrl);
         sessionStorage.setItem('securo_transition_active', '1');
         const overlay = ensureOverlay();
         if (overlay) {
@@ -273,6 +309,20 @@
             ensureGSAP(runAnimation);
         }
     }
+
+    // (2026-07-13) Clear stuck preloader on BFCache back/forward; was frozen on back
+    window.addEventListener('pageshow', (e) => {
+        if (e.persisted || isTransitioning) {
+            isTransitioning = false;
+            sessionStorage.removeItem('securo_transition_active');
+            dismissFallback();
+        }
+    });
+
+    window.addEventListener('pagehide', () => {
+        isTransitioning = false;
+        dismissFallback();
+    });
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initPreloader);

@@ -23,9 +23,11 @@ export default function PortalShell({ templateHtml, loadController, bodyClass, d
   const bootedRef = useRef(false);
 
   useEffect(() => {
-    // (2026-07-13) Strip legacy #/ hash & normalize to short route; was preserving hash
+    // (2026-07-13) Reset unknown landing fallback paths to /; was stacking routes
     if (window.location.protocol === 'http:' || window.location.protocol === 'https:') {
-      const cleanPath = CLEAN_ROUTE_MAP[window.location.pathname] || window.location.pathname;
+      const cleanPath = dataPage === 'landing'
+        ? '/'
+        : (CLEAN_ROUTE_MAP[window.location.pathname] || window.location.pathname);
       const cleanHash = window.location.hash && window.location.hash.startsWith('#/') ? '' : window.location.hash;
       const nextUrl = cleanPath + window.location.search + cleanHash;
       const curUrl = window.location.pathname + window.location.search + window.location.hash;
