@@ -6,10 +6,17 @@ import { Logger, Validation, UI, Permissions, Format, Storage, Network, Device }
 import { login, signUp, checkAuth, forgotPassword, roleIdToEmail, getPreferredAuthRole, getFriendlyAuthMessage, logout } from '../js/auth.js';
 import '../js/install-sw.js';
 
+// (2026-07-13) Use root-absolute .html dashboard paths in native APK; was relative
+function isNativeCapacitorApk() {
+    return Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web')) ||
+        window.location.protocol.startsWith('capacitor:') ||
+        !!window.cordova;
+}
+
 function getRoleDashboardUrl(roleOverride) {
     const role = (roleOverride || localStorage.getItem('securo_user_role') || localStorage.getItem('securo_preferred_role') || 'student').toLowerCase();
     const isRoot = document.body?.dataset?.page === 'landing';
-    const p = isRoot ? '' : '../';
+    const p = isNativeCapacitorApk() ? '/' : (isRoot ? '' : '../');
     if (role === 'admin') return p + 'admin/admin.html';
     if (role === 'guardian' || role === 'parent') return p + 'parent/parent.html';
     if (role === 'staff') return p + 'staff/staff.html';
@@ -34,8 +41,8 @@ const PAGE_CONTROLLERS = {
                 !!window.cordova;
             if (isNativeApk) {
                 const isLoggedIn = Boolean(localStorage.getItem('securo_session_token') || sessionStorage.getItem('securo_authenticated') === '1');
-                // (2026-07-13) Route native logged-in user to role dashboard; was index
-                window.location.replace(isLoggedIn ? getRoleDashboardUrl() : 'public/role-selection.html');
+                // (2026-07-13) Use root-absolute path in native APK; was relative
+                window.location.replace(isLoggedIn ? getRoleDashboardUrl() : '/public/role-selection.html');
             }
         })();
 
@@ -2035,6 +2042,7 @@ const PAGE_CONTROLLERS = {
 
         finishBtn.addEventListener('click', () => {
             if (!cameraGranted || !locationGranted) {
+                alert('Access blocked: Both Camera and Location permissions must be granted to continue.');
                 // (2026-07-13) Use styled modal for permission block; was native alert
                 UI.showModal('Permissions Required', 'Both Camera and Location permissions must be granted to continue.', { type: 'warning', confirmText: 'OK' });
                 showCompleteCard();
@@ -3007,7 +3015,9 @@ const PAGE_CONTROLLERS = {
                 if (deleteModal) deleteModal.classList.remove('active');
                 await showStatus('Account Deleted', 'Your account has been permanently erased.');
                 // (2026-07-13) Redirect deleted account to role-selection; was student login
-                const nextUrl = (window.location.protocol === 'http:' || window.location.protocol === 'https:') ? '/role-selection/' : '../public/role-selection.html';
+                const nextUrl = isNativeCapacitorApk()
+                    ? '/public/role-selection.html'
+                    : ((window.location.protocol === 'http:' || window.location.protocol === 'https:') ? '/role-selection/' : '../public/role-selection.html');
                 setTimeout(() => {
                     window.location.replace(nextUrl);
                 }, 900);
@@ -3223,11 +3233,16 @@ const PAGE_CONTROLLERS = {
             confirmDeleteBtn.textContent = 'Deleting...';
             try {
                 await deleteCurrentUserAccount(pwd);
+                alert('Your account has been permanently deleted.');
+                window.location.replace('../public/login.html');
                 // (2026-07-13) Use styled modals for settings account delete; was alert
                 await UI.showModal('Account Deleted', 'Your account has been permanently deleted.', { type: 'success', confirmText: 'OK' });
-                const nextUrl = (window.location.protocol === 'http:' || window.location.protocol === 'https:') ? '/role-selection/' : '../public/role-selection.html';
+                const nextUrl = isNativeCapacitorApk()
+                    ? '/public/role-selection.html'
+                    : ((window.location.protocol === 'http:' || window.location.protocol === 'https:') ? '/role-selection/' : '../public/role-selection.html');
                 window.location.replace(nextUrl);
             } catch (err) {
+                alert(err.message || 'Could not delete account. Please verify password.');
                 await UI.showModal('Deletion Failed', err.message || 'Could not delete account. Please verify your password.', { type: 'error', confirmText: 'OK' });
                 confirmDeleteBtn.disabled = false;
                 confirmDeleteBtn.textContent = 'Confirm Delete';

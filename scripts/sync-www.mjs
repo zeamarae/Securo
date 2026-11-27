@@ -81,6 +81,28 @@ const apkEntryHtml = `<!DOCTYPE html>
   </style>
   <script>
     (function () {
+      // (2026-07-13) Use root-absolute .html paths & map clean SPA fallbacks in APK
+      var routeMap = {
+        '/login': '/public/login.html',
+        '/role-selection': '/public/role-selection.html',
+        '/student': '/student/student.html',
+        '/staff': '/staff/staff.html',
+        '/parent': '/parent/parent.html',
+        '/guardian': '/parent/parent.html',
+        '/admin': '/admin/admin.html',
+        '/profile': '/public/profile.html',
+        '/settings': '/public/settings.html',
+        '/about': '/public/about.html',
+        '/hotlines': '/public/hotlines.html',
+        '/incident-report': '/public/incident-report.html',
+        '/permissions-onboarding': '/public/permissions-onboarding.html',
+        '/terms': '/public/terms.html'
+      };
+      var cleanPath = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
+      if (routeMap[cleanPath]) {
+        window.location.replace(routeMap[cleanPath] + window.location.search + window.location.hash);
+        return;
+      }
       try {
         var token = localStorage.getItem('securo_session_token');
         var role = (localStorage.getItem('securo_user_role') || '').toLowerCase();
@@ -88,22 +110,22 @@ const apkEntryHtml = `<!DOCTYPE html>
         var locOk = localStorage.getItem('securo_location_granted') === 'true';
         if (token && role) {
           if (!camOk || !locOk) {
-            window.location.replace('public/permissions-onboarding.html');
+            window.location.replace('/public/permissions-onboarding.html');
             return;
           }
-          if (role === 'admin') { window.location.replace('admin/admin.html'); return; }
-          if (role === 'staff') { window.location.replace('staff/staff.html'); return; }
-          if (role === 'guardian' || role === 'parent') { window.location.replace('parent/parent.html'); return; }
-          window.location.replace('student/student.html');
+          if (role === 'admin') { window.location.replace('/admin/admin.html'); return; }
+          if (role === 'staff') { window.location.replace('/staff/staff.html'); return; }
+          if (role === 'guardian' || role === 'parent') { window.location.replace('/parent/parent.html'); return; }
+          window.location.replace('/student/student.html');
           return;
         }
       } catch (e) {}
-      window.location.replace('public/role-selection.html');
+      window.location.replace('/public/role-selection.html');
     })();
   </script>
 </head>
 <body>
-  <img src="assets/images/logo.png" alt="Securo" />
+  <img src="/assets/images/logo.png" alt="Securo" />
 </body>
 </html>`;
 fs.writeFileSync(path.join(wwwDir, 'index.html'), apkEntryHtml, 'utf8');

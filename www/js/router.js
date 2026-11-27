@@ -21,7 +21,29 @@
         ? '/' + window.location.pathname.split('/')[1] + '/'  // e.g. /Securo/
         : '/';
 
-    // (2026-07-13) Short extensionless route map; was long hash #/.. paths
+    // (2026-07-13) Use exact absolute .html routes in Capacitor APK; was clean /login/
+    const isNativeApk = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web')) ||
+        window.location.protocol.startsWith('capacitor:') ||
+        !!window.cordova;
+
+    const APK_ROUTES = {
+        'index': '/public/role-selection.html',
+        'landing': '/public/role-selection.html',
+        'admin': '/admin/admin.html',
+        'student': '/student/student.html',
+        'staff': '/staff/staff.html',
+        'parent': '/parent/parent.html',
+        'login': '/public/login.html',
+        'role-selection': '/public/role-selection.html',
+        'profile': '/public/profile.html',
+        'settings': '/public/settings.html',
+        'about': '/public/about.html',
+        'hotlines': '/public/hotlines.html',
+        'incident-report': '/public/incident-report.html',
+        'permissions-onboarding': '/public/permissions-onboarding.html',
+        'terms': '/public/terms.html'
+    };
+
     const SHORT_ROUTES = {
         'index': '/',
         'landing': '/',
@@ -44,6 +66,11 @@
         const str = String(rawTarget || '').trim();
         const [pathOnly, queryPart] = str.split('?');
         const cleanFile = pathOnly.split('#')[0].replace(/\/$/, '').split('/').pop().replace(/\.html$/i, '').toLowerCase();
+        if (isNativeApk) {
+            const apkRoute = APK_ROUTES[cleanFile];
+            if (!apkRoute) return null;
+            return apkRoute + (queryPart ? `?${queryPart}` : '');
+        }
         const route = SHORT_ROUTES[cleanFile];
         if (!route) return null;
         const prefix = isGitHubPages ? basePath.replace(/\/$/, '') : '';
@@ -56,6 +83,7 @@
     }
 
     function cleanURL() {
+        if (isNativeApk) return;
         if (window.location.protocol !== 'http:' && window.location.protocol !== 'https:') return;
         const target = resolveShortRoute(window.location.pathname + window.location.search);
         const keepHash = window.location.hash && !window.location.hash.startsWith('#/') ? window.location.hash : '';

@@ -212,6 +212,51 @@
     }
 
     // (2026-07-13) Resolve relative portal URLs to clean root paths; was stacking
+    // (2026-07-13) Keep absolute .html targets in Capacitor APK; was extensionless
+    const IS_NATIVE_APK = Boolean(window.Capacitor && (window.Capacitor.isNativePlatform ? window.Capacitor.isNativePlatform() : window.Capacitor.platform !== 'web')) ||
+        window.location.protocol.startsWith('capacitor:') ||
+        !!window.cordova;
+
+    const PRELOADER_APK_ROUTES = {
+        'index.html': '/public/role-selection.html',
+        'index': '/public/role-selection.html',
+        'admin/admin.html': '/admin/admin.html',
+        'admin': '/admin/admin.html',
+        'student/student.html': '/student/student.html',
+        'student': '/student/student.html',
+        'staff/staff.html': '/staff/staff.html',
+        'staff': '/staff/staff.html',
+        'parent/parent.html': '/parent/parent.html',
+        'parent': '/parent/parent.html',
+        'public/login.html': '/public/login.html',
+        'login.html': '/public/login.html',
+        'login': '/public/login.html',
+        'public/role-selection.html': '/public/role-selection.html',
+        'role-selection.html': '/public/role-selection.html',
+        'role-selection': '/public/role-selection.html',
+        'public/profile.html': '/public/profile.html',
+        'profile.html': '/public/profile.html',
+        'profile': '/public/profile.html',
+        'public/settings.html': '/public/settings.html',
+        'settings.html': '/public/settings.html',
+        'settings': '/public/settings.html',
+        'public/about.html': '/public/about.html',
+        'about.html': '/public/about.html',
+        'about': '/public/about.html',
+        'public/hotlines.html': '/public/hotlines.html',
+        'hotlines.html': '/public/hotlines.html',
+        'hotlines': '/public/hotlines.html',
+        'public/incident-report.html': '/public/incident-report.html',
+        'incident-report.html': '/public/incident-report.html',
+        'incident-report': '/public/incident-report.html',
+        'public/permissions-onboarding.html': '/public/permissions-onboarding.html',
+        'permissions-onboarding.html': '/public/permissions-onboarding.html',
+        'permissions-onboarding': '/public/permissions-onboarding.html',
+        'public/terms.html': '/public/terms.html',
+        'terms.html': '/public/terms.html',
+        'terms': '/public/terms.html'
+    };
+
     const PRELOADER_CLEAN_ROUTES = {
         'index.html': '/',
         'admin/admin.html': '/admin/',
@@ -239,8 +284,14 @@
     };
     function normalizePreloaderTarget(url) {
         if (!url || (window.location.protocol !== 'http:' && window.location.protocol !== 'https:')) return url;
-        if (/^https?:\/\//i.test(url) || url.startsWith('/')) return url;
+        if (/^https?:\/\//i.test(url)) return url;
         const [pathPart, rest] = url.split(/(?=[?#])/);
+        if (IS_NATIVE_APK) {
+            const cleaned = pathPart.replace(/^(?:\.\.\/|\.\/|\/)+/, '').replace(/\/+$/, '');
+            const mappedApk = PRELOADER_APK_ROUTES[cleaned] || PRELOADER_APK_ROUTES[cleaned.split('/').pop()];
+            return mappedApk ? (mappedApk + (rest || '')) : url;
+        }
+        if (url.startsWith('/')) return url;
         const stripped = pathPart.replace(/^(?:\.\.\/|\.\/)+/, '');
         const mapped = PRELOADER_CLEAN_ROUTES[stripped];
         return mapped ? (mapped + (rest || '')) : url;

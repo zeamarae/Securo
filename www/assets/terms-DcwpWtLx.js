@@ -1,4 +1,4 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./public-CBSv-6As.js","./install-sw-DAi8K7sx.js","./preload-helper-BXBgov45.js"])))=>i.map(i=>d[i]);
+const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["./public-CILs8hzj.js","./install-sw-DAi8K7sx.js","./preload-helper-BXBgov45.js"])))=>i.map(i=>d[i]);
 import{a as e,i as t,n,o as r,r as i,t as a}from"./preload-helper-BXBgov45.js";/* empty css                  *//* empty css               */r();var o=e(),s=`<!-- (2026-07-13) Remove redundant top nav bar; was arrow & title header -->\r
 \r
     <div class="terms-container">\r
@@ -130,4 +130,4 @@ import{a as e,i as t,n,o as r,r as i,t as a}from"./preload-helper-BXBgov45.js";/
 \r
     \r
     <!-- (2026-07-13) Link consolidated public module; was inline script -->\r
-`,c=t(),l=()=>a(()=>import(`./public-CBSv-6As.js`),__vite__mapDeps([0,1,2]),import.meta.url);function u(){return(0,c.jsx)(n,{templateHtml:s,loadController:l,bodyClass:`page-terms`,dataPage:`terms`})}var d=document.getElementById(`root`);d&&(0,o.createRoot)(d).render((0,c.jsx)(i,{children:(0,c.jsx)(u,{})}));
+`,c=t(),l=()=>a(()=>import(`./public-CILs8hzj.js`),__vite__mapDeps([0,1,2]),import.meta.url);function u(){return(0,c.jsx)(n,{templateHtml:s,loadController:l,bodyClass:`page-terms`,dataPage:`terms`})}var d=document.getElementById(`root`);d&&(0,o.createRoot)(d).render((0,c.jsx)(i,{children:(0,c.jsx)(u,{})}));
