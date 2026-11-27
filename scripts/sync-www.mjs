@@ -98,7 +98,9 @@ const apkEntryHtml = `<!DOCTYPE html>
         '/permissions-onboarding': '/public/permissions-onboarding.html',
         '/terms': '/public/terms.html'
       };
-      var cleanPath = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
+      // (2026-07-13) Strip trailing slashes without regex escaping; was broken //+$/
+      var cleanPath = window.location.pathname || '/';
+      while (cleanPath.length > 1 && cleanPath.endsWith('/')) cleanPath = cleanPath.slice(0, -1);
       if (routeMap[cleanPath]) {
         window.location.replace(routeMap[cleanPath] + window.location.search + window.location.hash);
         return;
