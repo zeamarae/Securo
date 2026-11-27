@@ -217,14 +217,26 @@
             display: block;
         }
 
-        /* (2026-07-13) Compact dropdown notifications; was fullscreen blurred sheet */
+        /* (2026-07-13) Uniform 40px header icons & keep notif overlay below header; was inset 0 */
+        .notif-btn,
+        #headerGadMsgBtn {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            min-height: 40px;
+            flex-shrink: 0;
+        }
+
         .notif-dropdown {
             position: fixed;
-            inset: 0;
+            top: calc(60px + env(safe-area-inset-top, 0px));
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: transparent;
             display: none;
             z-index: 9000;
-            padding: 10px;
+            padding: 0;
         }
 
         .notif-dropdown.active {
@@ -233,7 +245,7 @@
 
         .notif-panel {
             position: absolute;
-            top: calc(64px + env(safe-area-inset-top, 0px));
+            top: 6px;
             right: 12px;
             width: min(360px, calc(100vw - 24px));
             height: auto;
@@ -247,6 +259,14 @@
             flex-direction: column;
             transform-origin: top right;
             animation: slideInDown 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @media (max-width: 540px) {
+            .notif-panel {
+                left: 12px;
+                right: 12px;
+                width: auto;
+            }
         }
 
         .notif-header {
@@ -287,19 +307,33 @@
             justify-content: center;
         }
 
+        /* (2026-07-13) Prevent horizontal scrollbar in notif list; was overflowing */
         .notif-list {
             flex: 1;
             overflow-y: auto;
+            overflow-x: hidden;
             padding: 8px 0;
         }
 
         .notif-item {
-            padding: 16px 20px;
+            padding: 14px 16px;
             border-bottom: 1px solid rgba(0, 0, 0, 0.03);
             display: flex;
             gap: 12px;
             transition: background 0.2s;
             cursor: pointer;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .notif-item > * {
+            min-width: 0;
+        }
+
+        .notif-item-title,
+        .notif-item-desc {
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
 
         .notif-item:hover {

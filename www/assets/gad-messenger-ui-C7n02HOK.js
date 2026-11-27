@@ -330,19 +330,64 @@ import{Wt as e}from"./install-sw-DAi8K7sx.js";var t=`securo-gad-messenger-ui-sty
         .gad-chat-back-btn .material-symbols-outlined {
             font-size: 20px;
         }
+        /* (2026-07-13) Keep Edit Alias single-line & chat header responsive; was wrapping */
         .gad-chat-edit-alias-btn {
             display: none;
             align-items: center;
             gap: 4px;
-            padding: 5px 10px;
+            height: 32px;
+            padding: 0 11px;
             border-radius: 999px;
             border: 1px solid rgba(15, 23, 42, 0.12);
             background: #f8fafc;
             color: #334155;
-            font-size: 0.72rem;
+            font-size: 0.74rem;
             font-weight: 700;
+            line-height: 1;
+            white-space: nowrap;
+            flex-shrink: 0;
             cursor: pointer;
             transition: background 0.16s ease, color 0.16s ease;
+        }
+        .gad-chat-header,
+        #guardianChatOverlay .chat-header {
+            gap: 8px;
+        }
+        .gad-chat-header > div:first-child,
+        #guardianChatOverlay .chat-header > div:first-child {
+            min-width: 0;
+            flex: 1;
+        }
+        .gad-anon-mode-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        @media (max-width: 540px) {
+            .gad-messenger-popover {
+                left: 12px !important;
+                right: 12px !important;
+                width: auto !important;
+                max-width: calc(100vw - 24px);
+                padding: 14px;
+            }
+            .gad-chat-back-btn {
+                width: 32px;
+                height: 32px;
+            }
+            .gad-chat-edit-alias-btn {
+                height: 30px;
+                padding: 0 9px;
+                font-size: 0.7rem;
+            }
+            .gad-anon-mode-banner {
+                padding: 7px 12px;
+                font-size: 0.72rem;
+            }
+            .gad-anon-mode-pill {
+                font-size: 0.62rem;
+                padding: 2px 7px;
+            }
         }
         .gad-chat-edit-alias-btn.visible {
             display: inline-flex;
@@ -364,7 +409,7 @@ import{Wt as e}from"./install-sw-DAi8K7sx.js";var t=`securo-gad-messenger-ui-sty
                 <span class="gad-anon-mode-text">Messaging anonymously</span>
             </span>
             <span class="gad-anon-mode-pill">Identity Hidden</span>
-        `,w.insertAdjacentElement(`afterend`,C));function T(e){if(y&&y.classList.toggle(`visible`,e===`named`||e===`anonymous`),b&&b.classList.toggle(`visible`,e===`anonymous`),C){let t=e===`anonymous`;if(C.classList.toggle(`visible`,t),t){let e=l?.(),t=e?(d?.(e)||``).trim():``,n=C.querySelector(`.gad-anon-mode-text`);n&&(n.textContent=t?`Messaging anonymously as "${t}"`:`Messaging anonymously`)}}}function E(){[`notifDropdown`,`profileDropdown`,`guardianProfileDropdown`,`profileMenu`].forEach(e=>{let t=document.getElementById(e);t&&t.classList.remove(`active`,`open`,`show`)});let e=document.getElementById(`guardianNotifDropdown`);e&&(e.style.display=`none`,e.classList.remove(`active`,`open`,`show`)),document.querySelectorAll(`.notif-dropdown.active, .profile-dropdown.active`).forEach(e=>{e.classList.remove(`active`)})}function D(){if(!v)return;let e=v;v=null,e.classList.add(`closing`),setTimeout(()=>e.remove(),170)}window.closeActiveGadPopover=D;function O(e,t=!1){if(E(),v&&(D(),!t))return;let n=l?.();if(!n)return;let r=u?.()||`My Account`;d?.(n);let a=p?.()||{named:0,anon:0},o=!!m?.(),s=document.createElement(`div`);s.className=`gad-messenger-popover`,s.style.setProperty(`--gad-mp-accent`,_.accent),s.style.setProperty(`--gad-mp-color`,_.color),s.style.setProperty(`--gad-mp-soft`,_.soft),s.style.setProperty(`--gad-mp-hover`,_.hover),s.style.setProperty(`--gad-mp-border`,_.border);let c=e?.getBoundingClientRect?.();c&&(s.style.top=`${Math.min(c.bottom+10,window.innerHeight-280)}px`,s.style.right=`${Math.max(12,window.innerWidth-c.right)}px`);let g=e=>{let t=d?.(n)||``;if(s.innerHTML=`
+        `,w.insertAdjacentElement(`afterend`,C));function T(e){if(y&&y.classList.toggle(`visible`,e===`named`||e===`anonymous`),b&&b.classList.toggle(`visible`,e===`anonymous`),C){let t=e===`anonymous`;if(C.classList.toggle(`visible`,t),t){let e=l?.(),t=e?(d?.(e)||``).trim():``,n=C.querySelector(`.gad-anon-mode-text`);n&&(n.textContent=t?`Messaging anonymously as "${t}"`:`Messaging anonymously`)}}}function E(){[`notifDropdown`,`profileDropdown`,`guardianProfileDropdown`,`profileMenu`].forEach(e=>{let t=document.getElementById(e);t&&t.classList.remove(`active`,`open`,`show`)});let e=document.getElementById(`guardianNotifDropdown`);e&&(e.style.display=`none`,e.classList.remove(`active`,`open`,`show`)),document.querySelectorAll(`.notif-dropdown.active, .profile-dropdown.active`).forEach(e=>{e.classList.remove(`active`)})}function D(){if(!v)return;let e=v;v=null,e.classList.add(`closing`),setTimeout(()=>e.remove(),170)}window.closeActiveGadPopover=D;function O(e,t=!1){if(E(),v&&(D(),!t))return;let n=l?.();if(!n)return;let r=u?.()||`My Account`;d?.(n);let a=p?.()||{named:0,anon:0},o=!!m?.(),s=document.createElement(`div`);s.className=`gad-messenger-popover`,s.style.setProperty(`--gad-mp-accent`,_.accent),s.style.setProperty(`--gad-mp-color`,_.color),s.style.setProperty(`--gad-mp-soft`,_.soft),s.style.setProperty(`--gad-mp-hover`,_.hover),s.style.setProperty(`--gad-mp-border`,_.border);let c=e?.getBoundingClientRect?.();if(c){if(s.style.top=`${Math.min(c.bottom+10,window.innerHeight-280)}px`,window.innerWidth<=540)s.style.left=`12px`,s.style.right=`12px`,s.style.width=`auto`;else{let e=Math.max(12,window.innerWidth-c.right),t=Math.max(12,window.innerWidth-368-12);s.style.right=`${Math.min(e,t)}px`}}let g=e=>{let t=d?.(n)||``;if(s.innerHTML=`
                 <div class="gad-mp-head">
                     <h3 class="gad-mp-title">Chats</h3>
                     <span class="gad-mp-status ${o?`online`:``}">

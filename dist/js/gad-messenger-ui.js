@@ -339,19 +339,64 @@ function ensureStyles() {
         .gad-chat-back-btn .material-symbols-outlined {
             font-size: 20px;
         }
+        /* (2026-07-13) Keep Edit Alias single-line & chat header responsive; was wrapping */
         .gad-chat-edit-alias-btn {
             display: none;
             align-items: center;
             gap: 4px;
-            padding: 5px 10px;
+            height: 32px;
+            padding: 0 11px;
             border-radius: 999px;
             border: 1px solid rgba(15, 23, 42, 0.12);
             background: #f8fafc;
             color: #334155;
-            font-size: 0.72rem;
+            font-size: 0.74rem;
             font-weight: 700;
+            line-height: 1;
+            white-space: nowrap;
+            flex-shrink: 0;
             cursor: pointer;
             transition: background 0.16s ease, color 0.16s ease;
+        }
+        .gad-chat-header,
+        #guardianChatOverlay .chat-header {
+            gap: 8px;
+        }
+        .gad-chat-header > div:first-child,
+        #guardianChatOverlay .chat-header > div:first-child {
+            min-width: 0;
+            flex: 1;
+        }
+        .gad-anon-mode-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        @media (max-width: 540px) {
+            .gad-messenger-popover {
+                left: 12px !important;
+                right: 12px !important;
+                width: auto !important;
+                max-width: calc(100vw - 24px);
+                padding: 14px;
+            }
+            .gad-chat-back-btn {
+                width: 32px;
+                height: 32px;
+            }
+            .gad-chat-edit-alias-btn {
+                height: 30px;
+                padding: 0 9px;
+                font-size: 0.7rem;
+            }
+            .gad-anon-mode-banner {
+                padding: 7px 12px;
+                font-size: 0.72rem;
+            }
+            .gad-anon-mode-pill {
+                font-size: 0.62rem;
+                padding: 2px 7px;
+            }
         }
         .gad-chat-edit-alias-btn.visible {
             display: inline-flex;
@@ -545,10 +590,19 @@ export function initGadMessengerUI(config) {
         pop.style.setProperty('--gad-mp-hover', theme.hover);
         pop.style.setProperty('--gad-mp-border', theme.border);
 
+        // (2026-07-13) Clamp popover within mobile & tablet viewports; was clipped left
         const rect = anchorBtn?.getBoundingClientRect?.();
         if (rect) {
             pop.style.top = `${Math.min(rect.bottom + 10, window.innerHeight - 280)}px`;
-            pop.style.right = `${Math.max(12, window.innerWidth - rect.right)}px`;
+            if (window.innerWidth <= 540) {
+                pop.style.left = '12px';
+                pop.style.right = '12px';
+                pop.style.width = 'auto';
+            } else {
+                const desiredRight = Math.max(12, window.innerWidth - rect.right);
+                const maxRight = Math.max(12, window.innerWidth - 368 - 12);
+                pop.style.right = `${Math.min(desiredRight, maxRight)}px`;
+            }
         }
 
         const renderBody = (editingAlias) => {
