@@ -2,8 +2,8 @@
 import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device } from '../js/utils.js';
 import { auth, app, firebaseConfig } from '../js/firebase-config.js';
 import { logout, roleIdToEmail, login, checkAuth } from '../js/auth.js';
-// (2026-07-13) Import message deletion & admin presence heartbeat; was missing
-import { getGADPosts, saveGADPost, deleteGADPost, updateGADPost, getAllUsers, getUserProfile, saveUserProfile, updateUserProfile, isStudentIdTaken, sendChatMessage, subscribeToMessages, getAllChatThreads, getAllChatThreadsOnce, getAllGuardianLinksAdmin, deleteConversationThread, deleteChatMessage, deleteUserRecord, getAllSOSLogs, getAllEmergencyPosts, getStudentLiveLocationOnce, subscribeToAccountNotifications, subscribeToMessagesByThread, subscribeToGADMessages, replyToGADMessage, saveCampusMapConfig, logAttendance, updateStudentLiveLocation, notifyGuardiansOfGeofenceEvent, getAttendanceHistory, getAllAttendance, subscribeToCampusMapConfig, removeGuardianLink, createGuardianLinkRequest, getUserSOSLogs, saveAdminUserPassword, syncGuardianLinksForGuardian, markThreadMessagesSeen, getAttendanceStats, getSOSStats, getAllAuditLogs, subscribeToAllUsersPresence, startUserPresenceHeartbeat, updateUserPresence } from '../js/db.js';
+// (2026-07-13) Import real-time vault listener for GAD visibility; was one-shot
+import { getGADPosts, saveGADPost, deleteGADPost, updateGADPost, getAllUsers, getUserProfile, saveUserProfile, updateUserProfile, isStudentIdTaken, sendChatMessage, subscribeToMessages, getAllChatThreads, getAllChatThreadsOnce, getAllGuardianLinksAdmin, deleteConversationThread, deleteChatMessage, deleteUserRecord, getAllSOSLogs, getAllEmergencyPosts, subscribeToAllEmergencyPosts, getStudentLiveLocationOnce, subscribeToAccountNotifications, subscribeToMessagesByThread, subscribeToGADMessages, replyToGADMessage, saveCampusMapConfig, logAttendance, updateStudentLiveLocation, notifyGuardiansOfGeofenceEvent, getAttendanceHistory, getAllAttendance, subscribeToCampusMapConfig, removeGuardianLink, createGuardianLinkRequest, getUserSOSLogs, saveAdminUserPassword, syncGuardianLinksForGuardian, markThreadMessagesSeen, getAttendanceStats, getSOSStats, getAllAuditLogs, subscribeToAllUsersPresence, startUserPresenceHeartbeat, updateUserPresence } from '../js/db.js';
 import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updatePassword, getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import '../js/install-sw.js';
@@ -178,16 +178,23 @@ const hasPersistedAdminSession = () => {
         spinner.style.display = 'block';
 
         try {
-            // (2026-07-13) Establish real Firebase Auth admin session; was mock uid fallback
+            // (2026-07-13) Specific admin email & password validation; was fallback bypass
+            if (!email) throw new Error("Please enter your administrator email address.");
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error("Invalid administrator email format.");
+            if (!pass) throw new Error("Please enter your security password.");
+
             sessionStorage.removeItem('securo_admin_logged_out');
             let user = null;
-            if (email.toLowerCase() === ADMIN_EMAIL && (pass === 'admin123' || pass === ADMIN_PASSWORD)) {
+            if (email.toLowerCase() === ADMIN_EMAIL) {
+                if (pass !== 'admin123' && pass !== ADMIN_PASSWORD) {
+                    throw new Error("Incorrect password for admin@admin.com. Please check your security password.");
+                }
                 user = await ensureAdminFirebaseSession(email, pass);
             } else {
-                user = await login(email, pass);
+                user = await login(email, pass, 'admin');
             }
             if (!user) {
-                user = await ensureAdminFirebaseSession(ADMIN_EMAIL, ADMIN_PASSWORD);
+                throw new Error("Could not sign in. Please check your administrator credentials.");
             }
             // (2026-07-13) Persist explicit admin login across reload; was session-only
             localStorage.setItem('securo_admin_logged_in', '1');
@@ -448,7 +455,8 @@ const hasPersistedAdminSession = () => {
             URL.revokeObjectURL(url);
         } catch (error) {
             Logger.error('Analytics', 'Export failed', error);
-            alert('Failed to export data');
+            // (2026-07-13) Use styled modal for export error; was native alert
+            UI.showModal('Export Failed', 'Failed to export data. Please try again.', { type: 'error', confirmText: 'OK' });
         }
     });
 
@@ -1377,8 +1385,10 @@ const showToast = (title, message, type = 'info') => {
     window.setTimeout(() => toast.remove(), 3200);
 };
 
-// (2026-07-13) Render SOS map on SOS tab switch; was stats only invalidate
+// (2026-07-13) Persist active admin tab across reloads; was resetting to stats
 const setTab = (tab) => {
+    if (!tab || !document.getElementById(`sec-${tab}`)) return;
+    try { localStorage.setItem('securo_admin_active_tab', tab); } catch (_) { }
     tabBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === tab));
     sections.forEach((section) => section.classList.toggle('active', section.id === `sec-${tab}`));
     if (tab === 'sos') {
@@ -2211,6 +2221,13 @@ executeBulkImportBtn?.addEventListener('click', async () => {
 tabBtns.forEach((btn) => {
     btn.addEventListener('click', () => setTab(btn.dataset.tab));
 });
+// (2026-07-13) Restore last opened admin tab on reload; was defaulting to stats
+try {
+    const savedAdminTab = localStorage.getItem('securo_admin_active_tab');
+    if (savedAdminTab && savedAdminTab !== 'stats' && document.getElementById(`sec-${savedAdminTab}`)) {
+        setTab(savedAdminTab);
+    }
+} catch (_) { }
 
 // (2026-07-13) Navigate logo to Command Stats; was back navigation
 const adminHeaderLogo = document.getElementById('adminHeaderLogo');
@@ -2248,9 +2265,10 @@ async function executeAdminLogout() {
             unsubscribeAdminNotifications();
             unsubscribeAdminNotifications = null;
         }
-        // (2026-07-13) Clear persisted admin login flag on logout; was token-only
+        // (2026-07-13) Clear persisted admin login & tab on logout; was token-only
         try {
             localStorage.removeItem('securo_admin_logged_in');
+            localStorage.removeItem('securo_admin_active_tab');
             localStorage.removeItem('securo_user_role');
             localStorage.removeItem('securo_session_token');
             sessionStorage.clear();
@@ -2827,11 +2845,32 @@ if (auth.currentUser) {
     loadAllData().catch(() => { });
 }
 
-// (2026-07-13) Always init chat & sync admin role; was tab-gated
+// (2026-07-13) Live vault sync + close lightbox if uploader hides item; was static
+let _adminVaultLiveUnsub = null;
+function startAdminVaultRealtime() {
+    if (_adminVaultLiveUnsub) return;
+    _adminVaultLiveUnsub = subscribeToAllEmergencyPosts((livePosts) => {
+        if (!Array.isArray(livePosts)) return;
+        cachedEmergencyPosts = livePosts;
+        if (typeof window.renderAdminVaultGallery === 'function') {
+            window.renderAdminVaultGallery();
+        }
+        if (window._activeVaultLightboxItemId) {
+            const stillVisible = getAllVaultItems().some(it => it.id === window._activeVaultLightboxItemId);
+            if (!stillVisible) {
+                window.closeVaultLightbox?.();
+                showToast("Vault Item Hidden", "This file was hidden from GAD visibility by the uploader.", "info");
+            }
+        }
+    });
+}
+
+// (2026-07-13) Always init chat, live vault & sync admin role; was tab-gated
 window._triggerAdminDashboardLoad = () => {
     if (!_cacheLoadedOnce) loadFromLocalCache(true);
     loadAllData().catch(() => { });
     initAdminChat();
+    startAdminVaultRealtime();
 };
 
     onAuthStateChanged(auth, async (user) => {
@@ -3595,7 +3634,8 @@ async function persistAdminCampusMarkers(toastTitle, toastMessage) {
 async function deleteCampusMarkerByIndex(targetIdx) {
     const target = currentAdminBuildings[targetIdx];
     if (!target) return;
-    if (!confirm(`Delete campus place "${target.name || 'Unnamed Place'}"?`)) return;
+    // (2026-07-13) Use styled modal for campus place delete; was native confirm
+    if (!(await UI.showModal('Delete Campus Place', `Delete campus place "${target.name || 'Unnamed Place'}"?`, { type: 'error', showCancel: true, confirmText: 'Delete' }))) return;
     currentAdminBuildings.splice(targetIdx, 1);
     closePlaceEditorModal();
     await persistAdminCampusMarkers('Place Deleted', `"${target.name || 'Campus place'}" removed from campus map.`);
@@ -3846,7 +3886,8 @@ function setupGeofenceEditorControls() {
     if (btnResetModal && !btnResetModal.dataset.bound) {
         btnResetModal.dataset.bound = 'true';
         btnResetModal.addEventListener('click', async () => {
-            if (!confirm('Are you sure you want to reset the geofence and building markers to default coordinates?')) return;
+            // (2026-07-13) Use styled modal for geofence reset; was native confirm
+            if (!(await UI.showModal('Reset Campus Geofence', 'Are you sure you want to reset the geofence and building markers to default coordinates?', { type: 'warning', showCancel: true, confirmText: 'Reset' }))) return;
             localStorage.removeItem('securo_custom_geofence');
             localStorage.removeItem('securo_campus_buildings');
             currentAdminGeofence = DEFAULT_CAMPUS_GEOFENCE_POLYGON.map(pt => [...pt]);
@@ -4845,9 +4886,10 @@ function stopAdminRealtimeThreads() {
 }
 
 function initAdminChat() {
-    // (2026-09-30) Allow reinit after auth sets real UID; was blocking on any existing sub
+    // (2026-07-13) Wait for Firebase auth before attaching chat listener; was dying early
+    if (!auth.currentUser) return;
     if (unsubscribeAdminThreads) return;
-    unsubscribeAdminThreads = getAllChatThreads(currentAdminUid, (threads) => {
+    unsubscribeAdminThreads = getAllChatThreads(currentAdminUid || auth.currentUser.uid, (threads) => {
         cachedThreads = Array.isArray(threads) ? threads : [];
         renderStatistics(cachedUsers);
         renderThreads(cachedThreads);
@@ -5137,13 +5179,14 @@ window.openAdminThread = function (threadId, userId, userName) {
     const messagesShell = document.querySelector('.messages-shell');
     if (messagesShell) messagesShell.classList.add('mobile-chat-active');
 
-    const userObj = client.userObj;
-    const displayName = (!userName || isAdminName(userName)) ? client.name : userName;
+    // (2026-07-13) Resolve user from cachedUsers for new chats; was null without thread
+    const userObj = client.userObj || cachedUsers.find(u => String(u.id || u.uid || '') === String(resolvedUserId)) || null;
+    const displayName = (!userName || isAdminName(userName)) ? (userObj?.name || client.name) : userName;
     activeUserName.textContent = displayName;
-    // (2026-07-13) Show Anonymous/Alias indicator & hide green dot offline; was static
-    const role = client.role;
-    const isGuardian = client.isGuardian;
-    const isAnon = client.isAnonymous;
+    const inferredRole = userObj?.role || client.role || (String(userObj?.email || '').startsWith('staff.') ? 'staff' : 'student');
+    const role = inferredRole;
+    const isGuardian = client.isGuardian || inferredRole === 'guardian' || inferredRole === 'parent';
+    const isAnon = Boolean(threadObj && client.isAnonymous);
     const roleClass = (role === 'guardian' || isGuardian) ? 'guardian' : (role === 'staff' ? 'staff' : 'student');
     const roleLabel = (role === 'guardian' || isGuardian) ? 'Parent' : (role === 'staff' ? 'Staff' : 'Student');
     const initials = displayName.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || 'U';
@@ -5305,7 +5348,8 @@ function renderAdminMessages(messages) {
             delBtn.innerHTML = '<span class="material-symbols-outlined">delete</span>';
             delBtn.addEventListener("click", async (ev) => {
                 ev.stopPropagation();
-                if (!window.confirm("Delete this message?")) return;
+                // (2026-07-13) Use styled modal for admin msg delete; was window.confirm
+                if (!(await UI.showModal('Delete Message', 'Delete this message permanently?', { type: 'error', showCancel: true, confirmText: 'Delete' }))) return;
                 await deleteChatMessage(msg.id, currentActiveThreadId);
             });
             if (isSent) {
@@ -5401,7 +5445,8 @@ async function handleAdminSendMessage() {
 
 window.handleDeleteThread = async (threadId, userName) => {
     if (!threadId) return;
-    const confirmed = window.confirm(`Delete the conversation with ${userName || 'this user'}?`);
+    // (2026-07-13) Use styled modal for thread delete; was window.confirm
+    const confirmed = await UI.showModal('Delete Conversation', `Delete the conversation with ${userName || 'this user'}?`, { type: 'error', showCancel: true, confirmText: 'Delete' });
     if (!confirmed) return;
     try {
         await deleteConversationThread(threadId);
@@ -5481,6 +5526,124 @@ if (btnRefreshThreads) {
     });
 }
 
+// (2026-07-13) Admin New Message recipient search & existing-thread resume; was absent
+(function initAdminNewMessageModal() {
+    const openBtn = document.getElementById('btnAdminNewMessage');
+    const modal = document.getElementById('adminNewMsgModal');
+    const closeBtn = document.getElementById('closeAdminNewMsgBtn');
+    const searchInput = document.getElementById('adminNewMsgSearchInput');
+    const listEl = document.getElementById('adminNewMsgList');
+    const chipBtns = document.querySelectorAll('#adminNewMsgChips .admin-new-msg-chip');
+    if (!openBtn || !modal || !listEl) return;
+
+    let selectedRole = 'all';
+
+    const getUserNormalizedRole = (u) => {
+        const r = String(u?.role || '').toLowerCase();
+        const em = String(u?.email || '').toLowerCase();
+        if (r === 'admin' || isAdminEmail(em)) return 'admin';
+        if (r === 'guardian' || r === 'parent') return 'guardian';
+        if (r === 'staff' || em.startsWith('staff.')) return 'staff';
+        return 'student';
+    };
+
+    const findExistingNamedThread = (uid) => {
+        if (!uid) return null;
+        return (cachedThreads || []).find((t) => {
+            if (!t || t.isAnonymous || String(t.threadId || '').includes('__anon')) return false;
+            const otherId = getOtherUserIdFromThread(t);
+            return String(otherId) === String(uid) || String(t.ownerId || '') === String(uid) || String(t.threadId || '').includes(String(uid));
+        }) || null;
+    };
+
+    const renderRecipientList = () => {
+        const q = (searchInput?.value || '').trim().toLowerCase();
+        const candidates = (cachedUsers || []).filter((u) => {
+            if (!u || u.isDeleted === true) return false;
+            const role = getUserNormalizedRole(u);
+            if (role === 'admin') return false;
+            if (selectedRole !== 'all' && role !== selectedRole) return false;
+            if (!q) return true;
+            const hay = `${u.name || ''} ${u.studentId || ''} ${u.email || ''} ${u.personalEmail || ''}`.toLowerCase();
+            return hay.includes(q);
+        });
+
+        if (!candidates.length) {
+            listEl.innerHTML = '<div style="padding:32px 16px;text-align:center;color:#94a3b8;font-size:0.84rem;font-weight:600;">No matching accounts found.</div>';
+            return;
+        }
+
+        listEl.innerHTML = candidates.slice(0, 60).map((u) => {
+            const uid = u.id || u.uid || '';
+            const role = getUserNormalizedRole(u);
+            const roleLabel = role === 'guardian' ? 'Parent' : role === 'staff' ? 'Staff' : 'Student';
+            const displayName = u.name || (u.studentId ? `${roleLabel} #${u.studentId}` : (u.email || roleLabel));
+            const initials = displayName.split(/\s+/).filter(Boolean).map(p => p[0]).join('').toUpperCase().slice(0, 2) || 'U';
+            const subParts = [];
+            if (u.studentId) subParts.push(`ID: ${u.studentId}`);
+            if (u.personalEmail || (u.email && !String(u.email).endsWith('@securo.app'))) {
+                subParts.push(u.personalEmail || u.email);
+            } else if (u.email) {
+                subParts.push(u.email);
+            }
+            const existing = findExistingNamedThread(uid);
+            return `
+                <button type="button" class="admin-new-msg-row" data-pick-uid="${escapeHtml(uid)}" data-pick-name="${escapeHtml(displayName)}">
+                    <div class="thread-avatar ${role}" style="width:40px;height:40px;font-size:0.82rem;flex-shrink:0;">
+                        ${u.photoURL ? `<img src="${escapeHtml(u.photoURL)}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : escapeHtml(initials)}
+                    </div>
+                    <div class="admin-new-msg-meta">
+                        <div class="admin-new-msg-name-row">
+                            <span class="admin-new-msg-name">${escapeHtml(displayName)}</span>
+                            <span class="role-pill ${role}" style="font-size:0.6rem;padding:2px 6px;">${roleLabel}</span>
+                        </div>
+                        <div class="admin-new-msg-sub">${escapeHtml(subParts.join(' · ') || 'Registered account')}</div>
+                    </div>
+                    ${existing ? '<span class="admin-new-msg-existing-pill">Continue Chat</span>' : ''}
+                </button>
+            `;
+        }).join('');
+
+        listEl.querySelectorAll('.admin-new-msg-row').forEach((row) => {
+            row.addEventListener('click', () => {
+                const uid = row.dataset.pickUid;
+                const name = row.dataset.pickName;
+                if (!uid) return;
+                const existing = findExistingNamedThread(uid);
+                const threadId = existing ? existing.threadId : [uid, ADMIN_ID].sort().join('_');
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+                window.openAdminThread(threadId, uid, name);
+                setTimeout(() => adminChatInput?.focus(), 80);
+            });
+        });
+    };
+
+    const closeModal = () => {
+        modal.classList.remove('active');
+        modal.setAttribute('aria-hidden', 'true');
+    };
+
+    openBtn.addEventListener('click', () => {
+        if (searchInput) searchInput.value = '';
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+        renderRecipientList();
+        setTimeout(() => searchInput?.focus(), 50);
+    });
+    closeBtn?.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    searchInput?.addEventListener('input', renderRecipientList);
+    chipBtns.forEach((chip) => {
+        chip.addEventListener('click', () => {
+            chipBtns.forEach(c => c.classList.remove('active'));
+            chip.classList.add('active');
+            selectedRole = chip.dataset.newmsgRole || 'all';
+            renderRecipientList();
+        });
+    });
+})();
+
 document.querySelectorAll('.canned-chip').forEach((chip) => {
     chip.addEventListener('click', () => {
         const cannedText = chip.dataset.canned;
@@ -5510,7 +5673,8 @@ if (btnHeaderDeleteThread) {
 // (2026-07-13) Show Delete spinner & disable immediately; was freezing without UI
 window.handleDeleteUser = async (userId, userName) => {
     if (!userId) return;
-    const confirmed = window.confirm(`Delete ${userName || 'this user'} from the admin directory?`);
+    // (2026-07-13) Use styled modal for user delete; was window.confirm
+    const confirmed = await UI.showModal('Delete User', `Delete ${userName || 'this user'} from the admin directory?`, { type: 'error', showCancel: true, confirmText: 'Delete' });
     if (!confirmed) return;
     setModalButtonLoading(deleteManagedUserBtn, true, 'Deleting...');
     if (saveManagedUserBtn) saveManagedUserBtn.disabled = true;
@@ -6062,6 +6226,8 @@ window.openVaultLightbox = function (itemId) {
     const allItems = getAllVaultItems();
     const item = allItems.find(it => it.id === itemId);
     if (!item) return;
+    // (2026-07-13) Track open vault item ID for live visibility revoke; was untracked
+    window._activeVaultLightboxItemId = itemId;
 
     const modal = document.getElementById('vaultLightboxModal');
     const mediaBox = document.getElementById('vaultLightboxMediaBox');
@@ -6128,6 +6294,7 @@ window.openVaultLightbox = function (itemId) {
 };
 
 window.closeVaultLightbox = function () {
+    window._activeVaultLightboxItemId = null;
     const modal = document.getElementById('vaultLightboxModal');
     if (modal) {
         modal.classList.remove('active');

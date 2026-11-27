@@ -464,6 +464,53 @@ export const UI = {
         });
     },
 
+    // (2026-07-13) Styled prompt modal replacing native window.prompt; was absent
+    showPrompt(title, message, options = {}) {
+        return new Promise((resolve) => {
+            this.ensureModalStyles();
+            const type = options.type || 'info';
+            const modal = document.createElement('div');
+            modal.className = 'securo-modal-overlay';
+            const defaultVal = String(options.defaultValue || '').replace(/"/g, '&quot;');
+            const placeholder = String(options.placeholder || '').replace(/"/g, '&quot;');
+            modal.innerHTML = `
+                <div class="securo-modal-card" role="dialog" aria-modal="true">
+                    <div class="securo-modal-icon ${type}">
+                        <span class="material-symbols-outlined">${options.icon || 'edit'}</span>
+                    </div>
+                    <h3 class="securo-modal-title">${title}</h3>
+                    <p class="securo-modal-message" style="margin-bottom:14px;">${message}</p>
+                    <input type="text" id="securoPromptInput" value="${defaultVal}" placeholder="${placeholder}" maxlength="${options.maxLength || 40}" style="width:100%;height:44px;padding:0 14px;border-radius:12px;border:1.5px solid #cbd5e1;font-size:0.92rem;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:18px;">
+                    <div class="securo-modal-actions">
+                        <button type="button" class="btn-secondary" data-action="cancel">${options.cancelText || 'Cancel'}</button>
+                        <button type="button" class="btn-primary ${type}" data-action="confirm">${options.confirmText || 'Save'}</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            const inp = modal.querySelector('#securoPromptInput');
+            setTimeout(() => { inp?.focus(); inp?.select(); }, 40);
+
+            const closeModal = (val) => {
+                modal.classList.add('closing');
+                setTimeout(() => modal.remove(), 180);
+                resolve(val);
+            };
+            inp?.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); closeModal(inp.value); }
+                if (e.key === 'Escape') closeModal(null);
+            });
+            modal.addEventListener('click', (e) => {
+                const actionBtn = e.target.closest('[data-action]');
+                if (actionBtn) {
+                    closeModal(actionBtn.dataset.action === 'confirm' ? (inp?.value || '') : null);
+                } else if (e.target === modal) {
+                    closeModal(null);
+                }
+            });
+        });
+    },
+
     showLoadingOverlay(message = 'Loading...') {
         this.ensureModalStyles();
         const overlay = document.createElement('div');

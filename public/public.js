@@ -696,11 +696,13 @@ const PAGE_CONTROLLERS = {
             document.getElementById('forgotPassword').style.display = isLoginMode ? 'inline' : 'none';
             btnText.textContent = isLoginMode ? `Enter ${roleLabel} Hub` : `Register ${roleLabel} Account`;
             errorMsg.textContent = '';
+            // (2026-07-13) Enforce required email in register mode; was not required attr
+            const signupEmailEl = document.getElementById('studentEmailSignup');
+            if (signupEmailEl) signupEmailEl.required = !isLoginMode;
             // (2026-07-13) Clear register inputs on mode switch; was unmanaged inputs
             if (!isLoginMode) {
                 if (signupIdInput) signupIdInput.value = '';
-                const emailInput = document.getElementById('studentEmailSignup');
-                if (emailInput) emailInput.value = '';
+                if (signupEmailEl) signupEmailEl.value = '';
                 const pwd = document.getElementById('password');
                 if (pwd) pwd.value = '';
                 const cpwd = document.getElementById('confirmPasswordSignup');
@@ -2033,7 +2035,8 @@ const PAGE_CONTROLLERS = {
 
         finishBtn.addEventListener('click', () => {
             if (!cameraGranted || !locationGranted) {
-                alert('Access blocked: Both Camera and Location permissions must be granted to continue.');
+                // (2026-07-13) Use styled modal for permission block; was native alert
+                UI.showModal('Permissions Required', 'Both Camera and Location permissions must be granted to continue.', { type: 'warning', confirmText: 'OK' });
                 showCompleteCard();
                 return;
             }
@@ -3003,9 +3006,11 @@ const PAGE_CONTROLLERS = {
                 await deleteCurrentUserAccount(pwd);
                 if (deleteModal) deleteModal.classList.remove('active');
                 await showStatus('Account Deleted', 'Your account has been permanently erased.');
+                // (2026-07-13) Redirect deleted account to role-selection; was student login
+                const nextUrl = (window.location.protocol === 'http:' || window.location.protocol === 'https:') ? '/role-selection/' : '../public/role-selection.html';
                 setTimeout(() => {
-                    window.location.replace('../public/login.html');
-                }, 1200);
+                    window.location.replace(nextUrl);
+                }, 900);
             } catch (err) {
                 await showStatus('Deletion Failed', err.message || 'Could not delete account. Check password.', 'error');
             } finally {
@@ -3218,10 +3223,12 @@ const PAGE_CONTROLLERS = {
             confirmDeleteBtn.textContent = 'Deleting...';
             try {
                 await deleteCurrentUserAccount(pwd);
-                alert('Your account has been permanently deleted.');
-                window.location.replace('../public/login.html');
+                // (2026-07-13) Use styled modals for settings account delete; was alert
+                await UI.showModal('Account Deleted', 'Your account has been permanently deleted.', { type: 'success', confirmText: 'OK' });
+                const nextUrl = (window.location.protocol === 'http:' || window.location.protocol === 'https:') ? '/role-selection/' : '../public/role-selection.html';
+                window.location.replace(nextUrl);
             } catch (err) {
-                alert(err.message || 'Could not delete account. Please verify password.');
+                await UI.showModal('Deletion Failed', err.message || 'Could not delete account. Please verify your password.', { type: 'error', confirmText: 'OK' });
                 confirmDeleteBtn.disabled = false;
                 confirmDeleteBtn.textContent = 'Confirm Delete';
             }

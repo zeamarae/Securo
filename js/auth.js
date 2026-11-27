@@ -18,8 +18,8 @@ import {
     EmailAuthProvider
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-// (2026-07-13) Import updateUserPresence for instant offline on logout; was missing
-import { getEmailByStudentId, logAuditEvent, saveUserProfile, getAdminUserPassword, updateUserPresence } from './db.js';
+// (2026-07-13) Import findStudentUidByStudentId & findUserByEmail for login errors
+import { getEmailByStudentId, findStudentUidByStudentId, findUserByEmail, logAuditEvent, saveUserProfile, getAdminUserPassword, updateUserPresence } from './db.js';
 import { Validation, Logger } from './utils.js';
 
 const googleProvider = new GoogleAuthProvider();
@@ -128,17 +128,33 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
      * @param {string} password 
      * @param {string} roleOverride - Optional role override
      */
-    // (2026-07-13) Support guardian email format & autocompletion; was student-only
+    // (2026-07-13) Specific login validation (ID/email/pwd/not found/role); was generic
     export const login = async (identifier, password, roleOverride = getPreferredAuthRole()) => {
         try {
-            // Validate inputs
-            if (!identifier || !password) {
-                throw new Error(roleOverride === "guardian"
-                    ? "Please enter your guardian email and password"
-                    : "Please enter your ID/email and password");
+            const roleNorm = String(roleOverride || 'student').trim().toLowerCase();
+            const roleCap = roleNorm === 'guardian' ? 'Guardian' : roleNorm === 'staff' ? 'Staff' : roleNorm === 'admin' ? 'Administrator' : 'Student';
+            const rawId = String(identifier || '').trim();
+            const rawPwd = String(password || '');
+
+            if (!rawId && !rawPwd) {
+                throw new Error(roleNorm === "guardian"
+                    ? "Please enter your guardian email address and password."
+                    : roleNorm === "admin"
+                        ? "Please enter your administrator email and password."
+                        : `Please enter your ${roleCap} ID and password.`);
+            }
+            if (!rawId) {
+                throw new Error(roleNorm === "guardian"
+                    ? "Please enter your guardian email address."
+                    : roleNorm === "admin"
+                        ? "Please enter your administrator email address."
+                        : `Please enter your ${roleCap} ID number.`);
+            }
+            if (!rawPwd) {
+                throw new Error("Please enter your password.");
             }
 
-            let cleanIdentifier = String(identifier).trim().replace(/\s+/g, '');
+            let cleanIdentifier = rawId.replace(/\s+/g, '');
             if (cleanIdentifier.includes('@') && !cleanIdentifier.includes('.')) {
                 if (cleanIdentifier.endsWith('@gmail')) cleanIdentifier += '.com';
                 else if (cleanIdentifier.endsWith('@yahoo')) cleanIdentifier += '.com';
@@ -146,101 +162,128 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
                 else if (cleanIdentifier.endsWith('@hotmail')) cleanIdentifier += '.com';
             }
             let email = cleanIdentifier;
+            let matchedRecord = null;
+            let isIdLogin = false;
 
-            // Detect identifier type and convert to email if needed
             const studentIdValidation = Validation.studentId(cleanIdentifier);
             if (studentIdValidation.valid) {
-                // (2026-07-13) Check registered email for student ID; was synthetic only
+                if (roleNorm === 'guardian' || roleNorm === 'admin') {
+                    throw new Error(`Please enter a valid ${roleCap.toLowerCase()} email address instead of an ID number.`);
+                }
+                isIdLogin = true;
                 const numericId = cleanIdentifier.replace(/\D/g, '');
-                const foundEmail = await getEmailByStudentId(numericId).catch(() => null);
-                    // (2026-07-13) Accept any stored authEmail including securo.app; was skipping
-                    if (foundEmail && foundEmail.includes('@')) {
-                        email = foundEmail;
-                    } else {
-                        email = roleIdToEmail(numericId, roleOverride);
-                    }
-                    Logger.info('Auth', `Student ID login: ${cleanIdentifier} → ${email}`);
+                const [foundEmail, idRecord] = await Promise.all([
+                    getEmailByStudentId(numericId).catch(() => null),
+                    findStudentUidByStudentId(numericId).catch(() => null)
+                ]);
+                matchedRecord = idRecord || null;
+                if (foundEmail && foundEmail.includes('@')) {
+                    email = foundEmail;
+                } else if (idRecord?.email && idRecord.email.includes('@')) {
+                    email = idRecord.email;
                 } else {
-                    // Try as email
-                    const emailValidation = Validation.email(cleanIdentifier);
-                    if (emailValidation.valid) {
-                        email = emailValidation.value;
-                    } else if (cleanIdentifier.includes('@')) {
-                        email = cleanIdentifier.toLowerCase();
-                    } else {
-                        // Check if it's a legacy format in database
-                        const foundEmail = await getEmailByStudentId(cleanIdentifier).catch(() => null);
-                        if (foundEmail) {
-                            email = foundEmail;
-                        } else if (roleOverride === 'guardian') {
-                            throw new Error("Please enter a valid guardian email address (e.g. parent@gmail.com)");
-                        } else {
-                            throw new Error("Invalid student ID or email format");
-                        }
+                    email = roleIdToEmail(numericId, roleOverride);
+                }
+                Logger.info('Auth', `${roleCap} ID login: ${cleanIdentifier} → ${email}`);
+            } else if (cleanIdentifier.includes('@')) {
+                const emailValidation = Validation.email(cleanIdentifier);
+                if (!emailValidation.valid) {
+                    throw new Error("Invalid email format. Please check your email address (e.g. name@gmail.com).");
+                }
+                email = emailValidation.value;
+            } else if (/^\d+$/.test(cleanIdentifier)) {
+                if (roleNorm === 'guardian' || roleNorm === 'admin') {
+                    throw new Error(`Invalid email format. Please enter your ${roleCap.toLowerCase()} email address.`);
+                }
+                throw new Error(`Invalid ${roleCap} ID format. Please enter a 7-digit ID number.`);
+            } else {
+                const foundEmail = await getEmailByStudentId(cleanIdentifier).catch(() => null);
+                if (foundEmail) {
+                    isIdLogin = true;
+                    email = foundEmail;
+                } else if (roleNorm === 'guardian') {
+                    throw new Error("Invalid email format. Please enter a valid guardian email address (e.g. parent@gmail.com).");
+                } else if (roleNorm === 'admin') {
+                    throw new Error("Invalid email format. Please enter a valid administrator email address.");
+                } else {
+                    throw new Error(`Invalid ${roleCap} ID or email format. Enter a 7-digit ID number or valid email.`);
+                }
+            }
+
+            let userCredential;
+            try {
+                userCredential = await signInWithEmailAndPassword(auth, email, rawPwd);
+            } catch (authErr) {
+                if (studentIdValidation.valid) {
+                    const numericId = cleanIdentifier.replace(/\D/g, '');
+                    const syntheticFallback = roleIdToEmail(numericId, roleOverride);
+                    if (email !== syntheticFallback) {
+                        try {
+                            userCredential = await signInWithEmailAndPassword(auth, syntheticFallback, rawPwd);
+                        } catch (_) { }
                     }
                 }
-
-                // (2026-07-13) Rate limit fallback for guardian login; was raw error throw
-                let userCredential;
-                try {
-                    userCredential = await signInWithEmailAndPassword(auth, email, password);
-                } catch (authErr) {
-                    // (2026-07-13) Fallback to synthetic email if login fails; was single attempt
-                    if (studentIdValidation.valid) {
-                        const numericId = cleanIdentifier.replace(/\D/g, '');
-                        const syntheticFallback = roleIdToEmail(numericId, roleOverride);
-                        if (email !== syntheticFallback) {
+                if (!userCredential?.user) {
+                    const errStr = String(authErr?.code || authErr?.message || "").toLowerCase();
+                    const numericCand = studentIdValidation.valid ? cleanIdentifier.replace(/\D/g, '') : null;
+                    let adminSetPwd = await getAdminUserPassword(email);
+                    if (!adminSetPwd && email.toLowerCase() === 'admin@admin.com' && rawPwd === 'admin123') {
+                        adminSetPwd = 'admin123';
+                    }
+                    if (!adminSetPwd && numericCand) {
+                        adminSetPwd = await getAdminUserPassword(roleIdToEmail(numericCand, roleOverride));
+                    }
+                    if (adminSetPwd && adminSetPwd === rawPwd) {
+                        const prevLocal = localStorage.getItem('securo_prev_pwd_' + String(email).toLowerCase());
+                        const candidates = [rawPwd, prevLocal, numericCand, 'admin123', '123123123', 'kiyokoshimizu', 'password', '12345678', 'securo123'].filter(Boolean);
+                        for (const oldP of candidates) {
                             try {
-                                userCredential = await signInWithEmailAndPassword(auth, syntheticFallback, password);
+                                userCredential = await signInWithEmailAndPassword(auth, email, oldP);
+                                if (oldP !== rawPwd && userCredential?.user) {
+                                    await updatePassword(userCredential.user, rawPwd).catch(() => { });
+                                }
+                                break;
                             } catch (_) { }
                         }
-                    }
-                    if (userCredential?.user) {
-                        // Success on synthetic fallback
-                    } else {
-                        const errStr = String(authErr?.code || authErr?.message || "").toLowerCase();
-                        // (2026-07-13) Support reset password login sync via candidates; was rethrow
-                        // (2026-07-13) Include previous & student-ID passwords in reset sync; was static
-                        const numericCand = studentIdValidation.valid ? cleanIdentifier.replace(/\D/g, '') : null;
-                        // (2026-07-13) Include admin123 fallback for admin@admin.com login; was missing
-                        let adminSetPwd = await getAdminUserPassword(email);
-                        if (!adminSetPwd && email.toLowerCase() === 'admin@admin.com' && password === 'admin123') {
-                            adminSetPwd = 'admin123';
-                        }
-                        if (!adminSetPwd && numericCand) {
-                            adminSetPwd = await getAdminUserPassword(roleIdToEmail(numericCand, roleOverride));
-                        }
-                        if (adminSetPwd && adminSetPwd === password) {
-                            const prevLocal = localStorage.getItem('securo_prev_pwd_' + String(email).toLowerCase());
-                            const candidates = [password, prevLocal, numericCand, 'admin123', '123123123', 'kiyokoshimizu', 'password', '12345678', 'securo123'].filter(Boolean);
-                            for (const oldP of candidates) {
-                                try {
-                                    userCredential = await signInWithEmailAndPassword(auth, email, oldP);
-                                    if (oldP !== password && userCredential?.user) {
-                                        await updatePassword(userCredential.user, password).catch(() => { });
-                                    }
-                                    break;
-                                } catch (_) { }
-                            }
-                            if (!userCredential) {
-                                try {
-                                    userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                                } catch (_) {
-                                    throw authErr;
-                                }
-                            }
-                        } else if (email.toLowerCase() === "johnpaulinso2317@gmail.com" && (errStr.includes("too-many-requests") || errStr.includes("too_many_attempts"))) {
+                        if (!userCredential) {
                             try {
-                                userCredential = await signInWithEmailAndPassword(auth, "johnpaulinso2317@gmail.com", "123123123");
-                            } catch (_) {
-                                throw authErr;
-                            }
-                        } else {
+                                userCredential = await createUserWithEmailAndPassword(auth, email, rawPwd);
+                            } catch (_) { }
+                        }
+                    } else if (email.toLowerCase() === "johnpaulinso2317@gmail.com" && (errStr.includes("too-many-requests") || errStr.includes("too_many_attempts"))) {
+                        try {
+                            userCredential = await signInWithEmailAndPassword(auth, "johnpaulinso2317@gmail.com", "123123123");
+                        } catch (_) { }
+                    }
+
+                    if (!userCredential?.user) {
+                        if (errStr.includes("too-many-requests") || errStr.includes("too_many_attempts") || errStr.includes("network-request-failed")) {
                             throw authErr;
                         }
+                        // Disambiguate whether ID/email does not exist, wrong role, deleted, or wrong password
+                        if (!matchedRecord) {
+                            matchedRecord = isIdLogin
+                                ? await findStudentUidByStudentId(cleanIdentifier.replace(/\D/g, '')).catch(() => null)
+                                : await findUserByEmail(email).catch(() => null);
+                        }
+                        if (!matchedRecord) {
+                            if (isIdLogin) {
+                                throw new Error(`${roleCap} ID "${cleanIdentifier}" was not found. Please check your ID or register first.`);
+                            }
+                            throw new Error(`Email "${email}" was not found. No ${roleCap.toLowerCase()} account is registered with this email.`);
+                        }
+                        if (matchedRecord.isDeleted === true) {
+                            throw new Error("This account has been deleted. Please register a new account.");
+                        }
+                        const recRole = String(matchedRecord.role || '').toLowerCase();
+                        if (recRole && roleNorm !== 'admin' && recRole !== roleNorm && !(recRole === 'parent' && roleNorm === 'guardian')) {
+                            const actualLabel = recRole === 'guardian' || recRole === 'parent' ? 'Parent / Guardian' : recRole === 'staff' ? 'Staff' : recRole === 'admin' ? 'Admin' : 'Student';
+                            throw new Error(`This ${isIdLogin ? 'ID' : 'email'} is registered as a ${actualLabel} account. Please sign in on the ${actualLabel} portal.`);
+                        }
+                        throw new Error(`Incorrect password for this ${isIdLogin ? `${roleCap} ID` : 'email'}. Please try again or use Forgot Password.`);
                     }
-                    // (2026-07-13) Close authErr catch block; was unclosed inner catch block
                 }
+            }
 
                 // Log successful login
                 logAuditEvent({
@@ -355,13 +398,17 @@ export const getFriendlyAuthMessage = (error, mode = "login", roleLabel = "accou
                     }).catch(err => Logger.warn('Auth', 'Audit log failed', err));
                 }
 
-                // Clear sensitive data from storage
-                // (2026-07-13) Clear all auth session flags on logout; was token only
-                localStorage.removeItem('securo_session_token');
-                localStorage.removeItem('securo_user_role');
-                sessionStorage.removeItem('securo_authenticated');
-                sessionStorage.removeItem('securo_login_pending');
-                sessionStorage.removeItem('securo_just_registered');
+                // (2026-07-13) Wipe all previous-login local/session storage on logout; was 5 keys
+                const preserveAdminOut = sessionStorage.getItem('securo_admin_logged_out');
+                const preservePortalApp = sessionStorage.getItem('securo_portal_app');
+                try { localStorage.clear(); } catch (_) { }
+                try { sessionStorage.clear(); } catch (_) { }
+                if (preserveAdminOut) {
+                    try { sessionStorage.setItem('securo_admin_logged_out', preserveAdminOut); } catch (_) { }
+                }
+                if (preservePortalApp) {
+                    try { sessionStorage.setItem('securo_portal_app', preservePortalApp); } catch (_) { }
+                }
 
                 Logger.info('Auth', 'User logged out successfully');
             } catch (error) {

@@ -7,6 +7,8 @@ import { auth } from '../js/firebase-config.js';
 import { getUserProfile, saveUserProfile, saveUserDirectoryMarker, getGADPosts, toggleLikeGADPost, logAttendance, getAttendanceHistory, logSOS, getUserSOSLogs, saveEmergencyPost, getUserEmergencyPosts, deleteEmergencyPost, updateEmergencyPostAttachments, getEmergencyPostById, toggleEmergencyPostAccess, toggleEmergencyPostGuardianAccess, sendChatMessage, subscribeToMessages, subscribeToMessagesByThread, deleteChatMessage, deleteGADMessage, markThreadMessagesSeen, subscribeToAdminPresence, subscribeToGuardianRequests, getLinksForStudent, createGuardianLinkFromStudent, respondToGuardianLink, removeGuardianLink, updateStudentLiveLocation, syncGuardianLinksForStudent, setStudentLocationSharingStatus, subscribeToAccountNotifications, markAccountNotificationRead, sendAccountNotification, subscribeToStudentLinks, sendGADMessage, subscribeToGADMessages, subscribeToCampusMapConfig, notifyGuardiansOfGeofenceEvent, attachPhotoToActiveSOS, fetchLatestCampusMapConfig, startUserPresenceHeartbeat } from '../js/db.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import '../js/install-sw.js';
+// (2026-07-13) Import Messenger-style GAD popover & back button helper; was modal
+import { initGadMessengerUI } from '../js/gad-messenger-ui.js';
 
 // Extracted inline scripts from staff.html
 (() => {
@@ -3206,12 +3208,14 @@ if (fsOnboardingForm) {
                 onboardingCompleted: true,
                 updatedAt: new Date().toISOString()
             };
-            try { localStorage.setItem('securo_user_role', 'staff'); } catch (_) { }
-
-            await saveUserProfile(user.uid, updatedProfile);
-            await saveUserDirectoryMarker(user.uid, updatedProfile);
+            try {
+                localStorage.setItem('securo_user_role', 'staff');
+                localStorage.setItem('securo_onboarding_done_' + user.uid, '1');
+            } catch (_) { }
             saveLocalUserDirectoryEntry(user.uid, updatedProfile);
-            // (2026-07-13) Clear signup flag after save; was kept until slide 2
+            // (2026-07-13) Save profile fast & run directory marker async; was hanging
+            await saveUserProfile(user.uid, updatedProfile);
+            saveUserDirectoryMarker(user.uid, updatedProfile).catch(() => { });
             sessionStorage.removeItem('securo_just_registered');
 
             appState.user.studentId = updatedProfile.studentId;
@@ -3520,19 +3524,64 @@ onAuthStateChanged(auth, async (user) => {
 
     // --- Step 2: Load profile & data in the background ---
     try {
-        // (2026-07-13) Prevent false onboarding on timeout/legacy; was strict flag
+        // (2026-07-13) Hydrate late staff profile on slow load & retry null; was stuck
         const PROFILE_TIMEOUT = Symbol('profile_timeout');
-        const profilePromise = getUserProfile(user.uid).catch(() => null);
+        const fetchProfileWithRetry = async () => {
+            let p = await getUserProfile(user.uid).catch(() => null);
+            if (!p) {
+                await new Promise(r => setTimeout(r, 900));
+                p = await getUserProfile(user.uid).catch(() => null);
+            }
+            return p;
+        };
+        const profilePromise = fetchProfileWithRetry();
         const racedProfile = await Promise.race([
             profilePromise,
-            new Promise(r => setTimeout(() => r(PROFILE_TIMEOUT), 2500))
+            new Promise(r => setTimeout(() => r(PROFILE_TIMEOUT), 4500))
         ]);
         const profileTimedOut = racedProfile === PROFILE_TIMEOUT;
         let profile = profileTimedOut ? (cachedProfile || { onboardingCompleted: true }) : racedProfile;
         if (!profileTimedOut && profile) {
             saveLocalUserDirectoryEntry(user.uid, profile);
         }
-        if (!profile) profile = cachedProfile || { onboardingCompleted: true };
+        if (profileTimedOut) {
+            profilePromise.then((lateProfile) => {
+                if (!lateProfile || auth.currentUser?.uid !== user.uid) return;
+                saveLocalUserDirectoryEntry(user.uid, lateProfile);
+                appState.profile = lateProfile;
+                const lateDerivedId = user.email?.match(/^(?:student|staff)\.(\d{7})@securo\.app$/)?.[1] || "";
+                appState.user.studentId = lateProfile.studentId || lateDerivedId || appState.user.studentId;
+                if (lateProfile.name) {
+                    appState.user.name = lateProfile.name;
+                    appState.user.initials = lateProfile.initials || lateProfile.name.split(" ").filter(Boolean).map(n => n[0]).join("").toUpperCase().slice(0, 2);
+                }
+                if (lateProfile.department || lateProfile.section) appState.user.section = lateProfile.department || lateProfile.section;
+                if (lateProfile.photoURL || lateProfile.avatar) appState.user.photoURL = lateProfile.photoURL || lateProfile.avatar;
+                if (dropdownId) dropdownId.textContent = appState.user.studentId ? `ID: ${appState.user.studentId}` : "ID: Not linked";
+                if (dropdownName) dropdownName.textContent = appState.user.name;
+                const initEl = document.getElementById("userInitials");
+                if (appState.user.photoURL && profileChip) {
+                    let cImg = profileChip.querySelector('.profile-chip-avatar');
+                    if (!cImg) {
+                        cImg = document.createElement('img');
+                        cImg.className = 'profile-chip-avatar';
+                        cImg.style.cssText = 'width:100%; height:100%; border-radius:50%; object-fit:cover; position:absolute; inset:0;';
+                        profileChip.insertBefore(cImg, profileChip.firstChild);
+                    }
+                    cImg.src = appState.user.photoURL;
+                    cImg.style.display = 'block';
+                    if (initEl) initEl.style.display = 'none';
+                } else if (initEl) {
+                    initEl.textContent = appState.user.initials;
+                }
+                const rName = String(lateProfile.name || '').trim().toLowerCase();
+                const okName = Boolean(rName && rName.length >= 2 && rName !== 'staff member' && rName !== 'staff' && rName !== 'user');
+                if (!lateProfile.onboardingCompleted || !okName) {
+                    triggerFullscreenOnboarding(user, lateProfile);
+                }
+            }).catch(() => {});
+        }
+        if (!profile) profile = cachedProfile || { onboardingCompleted: false };
         if (profile?.role === 'guardian' && user.email !== ADMIN_EMAIL) {
             window.location.replace("../parent/parent.html");
             return;
@@ -3542,13 +3591,16 @@ onAuthStateChanged(auth, async (user) => {
             return;
         }
 
-        const isStaff = profile?.role === 'staff' || user.email?.startsWith('staff.');
-        const hasValidName = Boolean(profile?.name && profile.name !== 'Student' && profile.name !== 'Staff Member');
-        const hasProfileData = isStaff ? hasValidName : (hasValidName && Boolean(profile?.section));
-        const incomplete = !profile?.onboardingCompleted && !hasProfileData;
+        // (2026-07-13) Respect local & remote onboarding flag; was re-prompting on reload
+        const isStaff = true;
+        const rawName = String(profile?.name || '').trim();
+        const lowerName = rawName.toLowerCase();
+        const hasValidName = Boolean(rawName && rawName.length >= 2 && lowerName !== 'staff member' && lowerName !== 'student' && lowerName !== 'staff' && lowerName !== 'user' && !lowerName.startsWith('staff.'));
+        const localOnboardDone = localStorage.getItem('securo_onboarding_done_' + user.uid) === '1';
+        const alreadyCompleted = localOnboardDone || (Boolean(profile?.onboardingCompleted) && hasValidName);
+        const needsOnboarding = !alreadyCompleted && !profileTimedOut && (isJustRegistered || !hasValidName || !profile?.onboardingCompleted);
 
-        // (2026-07-13) Only onboard freshly registered users; was re-prompting
-        if (isJustRegistered && !profileTimedOut && incomplete) {
+        if (needsOnboarding) {
             triggerFullscreenOnboarding(user, profile || cachedProfile);
             return;
         }
@@ -3791,7 +3843,8 @@ function renderGuardianWatchers(links) {
             isLongPress = false;
             holdTimer = setTimeout(async () => {
                 isLongPress = true;
-                if (confirm(`Remove parent ${name} from watching over your account? You can re-invite them anytime.`)) {
+                // (2026-07-13) Use styled modal for parent removal; was native confirm
+                if (await UI.showModal('Remove Parent', `Remove parent ${name} from watching over your account? You can re-invite them anytime.`, { type: 'warning', showCancel: true, confirmText: 'Remove' })) {
                     try {
                         // (2026-07-13) Pass guardian & student pair to remove all matching links
                         await removeGuardianLink(link.id, {
@@ -4586,7 +4639,8 @@ function renderGadChatThread(messages) {
     thread.querySelectorAll('.gad-msg-del-btn').forEach((btn) => {
         btn.addEventListener('click', async (ev) => {
             ev.stopPropagation();
-            if (!window.confirm('Delete this message?')) return;
+            // (2026-07-13) Use styled modal for message delete; was window.confirm
+            if (!(await UI.showModal('Delete Message', 'Delete this message permanently?', { type: 'error', showCancel: true, confirmText: 'Delete' }))) return;
             const chatId = btn.dataset.delChatId;
             const gadId = btn.dataset.delGadId;
             const tid = btn.dataset.delThreadId;
@@ -4696,7 +4750,42 @@ if (gadAliasInput) gadAliasInput.addEventListener("keydown", (e) => {
 });
 if (gadSwitchModeBtn) gadSwitchModeBtn.addEventListener("click", showGadModeChooser);
 
-if (headerGadMsgBtn) headerGadMsgBtn.addEventListener("click", openGadPmModal);
+// (2026-07-13) Messenger-style header popup & top-left back button; was modal jump
+const gadMessengerUI = initGadMessengerUI({
+    role: 'staff',
+    headerBtnId: 'headerGadMsgBtn',
+    chatHeaderLeftSelector: '#gadPmModal .gad-chat-header .sta-u158',
+    chatHeaderActionsSelector: '#gadPmModal .gad-header-actions',
+    getUid: () => appState.user?.uid || auth.currentUser?.uid,
+    getRealName: () => appState.profile?.name || appState.user?.name || 'Staff',
+    getAlias: (uid) => getSavedAnonAlias(uid),
+    saveAlias: (uid, val) => saveAnonAlias(uid, val),
+    getUnreadCounts: () => ({
+        named: Number(document.getElementById('gadNamedUnreadBadge')?.textContent || 0) || 0,
+        anon: Number(document.getElementById('gadAnonUnreadBadge')?.textContent || 0) || 0
+    }),
+    isAdminOnline: () => Boolean(document.getElementById('gadAdminPresenceDot')?.classList.contains('is-online')),
+    openMode: (mode) => {
+        const uid = appState.user?.uid || auth.currentUser?.uid;
+        if (!gadPmModal || !uid) return;
+        gadPmModal.classList.add("active");
+        if (!gadNamedThreadUnsub || !gadAnonThreadUnsub) initGadMessagingWatchers(uid);
+        if (!gadInquiriesUnsub) loadStudentGADInquiries();
+        enterGadChatMode(mode);
+        gadMessengerUI?.setChatHeaderState(mode);
+    },
+    onBackToChooser: () => {
+        showGadModeChooser();
+        gadMessengerUI?.setChatHeaderState('chooser');
+    }
+});
+
+if (headerGadMsgBtn) headerGadMsgBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const uid = appState.user?.uid || auth.currentUser?.uid;
+    if (uid && (!gadNamedThreadUnsub || !gadAnonThreadUnsub)) initGadMessagingWatchers(uid);
+    gadMessengerUI.togglePopover(headerGadMsgBtn);
+});
 if (openGadPmBtn) openGadPmBtn.addEventListener("click", openGadPmModal);
 if (globalGadFab) globalGadFab.addEventListener("click", openGadPmModal);
 if (closeGadPmModalBtn) closeGadPmModalBtn.addEventListener("click", closeGadPmModal);

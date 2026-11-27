@@ -45,14 +45,18 @@
         setTimeout(dismissFallback, 1200);
     }
 
-    // (2026-07-13) Dismiss all matching preloader overlays; was single getElementById
+    // (2026-07-13) Kill GSAP tweens & force-hide all overlays; was leaving stuck
     function dismissFallback() {
         const overlays = document.querySelectorAll('#' + OVERLAY_ID);
         overlays.forEach((overlay) => {
+            if (window.gsap) {
+                try { gsap.killTweensOf(overlay); } catch (_) { }
+            }
             overlay.classList.add('hidden');
             overlay.style.setProperty('display', 'none', 'important');
             overlay.style.setProperty('visibility', 'hidden', 'important');
             overlay.style.setProperty('pointer-events', 'none', 'important');
+            overlay.style.setProperty('opacity', '0', 'important');
             setTimeout(() => {
                 if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
             }, 250);
@@ -279,19 +283,31 @@
                 window.location.href = targetUrl;
             }, 360);
         }
+        // (2026-07-13) Auto-dismiss transition overlay if page stays; was stuck forever
+        setTimeout(() => {
+            if (isTransitioning) {
+                isTransitioning = false;
+                sessionStorage.removeItem('securo_transition_active');
+                dismissFallback();
+            }
+        }, 2500);
     };
 
     // (2026-07-13) Intercept page link clicks to apply loading animation; was default jump
     document.addEventListener('click', (e) => {
         const link = e.target.closest('a[href]');
-        if (!link) return;
+        if (!link || link.hasAttribute('download')) return;
         const href = link.getAttribute('href');
         if (!href || href.startsWith('#') || href.startsWith('tel:') || href.startsWith('mailto:') || href.startsWith('javascript:') || link.target === '_blank') {
             return;
         }
         if (href.endsWith('.html') || (!href.includes('://') && !href.startsWith('//'))) {
+            const normalized = normalizePreloaderTarget(href);
+            if (normalized === window.location.pathname || normalized === window.location.pathname + window.location.search) {
+                return;
+            }
             e.preventDefault();
-            window.showSecuroPreloader(href);
+            window.showSecuroPreloader(normalized);
         }
     }, true);
 

@@ -3,11 +3,13 @@ import { Logger, UI, Permissions, Validation, Format, Storage, Network, Device }
 import { auth, db, firebaseConfig } from '../js/firebase-config.js';
 import { onAuthStateChanged, getAuth, signInWithEmailAndPassword, updatePassword, createUserWithEmailAndPassword, confirmPasswordReset } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
 import { doc, onSnapshot, collection, query, where, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-// (2026-07-13) Import msg delete, seen, admin presence & user presence; was missing
-import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, getGuardianSharedEmergencyPosts, findStudentUidByStudentId, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, markAccountNotificationRead, sendChatMessage, subscribeToMessagesByThread, deleteChatMessage, markThreadMessagesSeen, subscribeToAdminPresence, updateUserPresence, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword, startUserPresenceHeartbeat } from '../js/db.js';
+// (2026-07-13) Import real-time shared vault listener; was one-shot fetch only
+import { getUserProfile, getAcceptedLinksForGuardian, getAllLinksForGuardian, subscribeToGuardianLinks, getAllUsers, getStudentBootstrapProfile, subscribeToStudentLocation, subscribeToStudentAttendance, logAttendance, getAttendanceHistory, getGADPosts, getAllEmergencyPosts, readLocalEmergencyPosts, getUserEmergencyPosts, getGuardianSharedEmergencyPosts, subscribeToGuardianSharedEmergencyPosts, findStudentUidByStudentId, createGuardianLinkRequest, respondToGuardianLink, removeGuardianLink, updateGuardianLinkStudentId, toggleLikeGADPost, sendAccountNotification, subscribeToAccountNotifications, markAccountNotificationRead, sendChatMessage, subscribeToMessagesByThread, deleteChatMessage, markThreadMessagesSeen, subscribeToAdminPresence, updateUserPresence, sendGuardianLocationReminder, subscribeToCampusMapConfig, subscribeToStudentSOS, deleteCurrentUserAccount, findUserByEmail, syncGuardianLinksForGuardian, saveUserProfile, saveAdminUserPassword, getAdminUserPassword, startUserPresenceHeartbeat } from '../js/db.js';
 import { login, signUp, forgotPassword, getFriendlyAuthMessage } from '../js/auth.js';
 import { initializeApp, deleteApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import '../js/install-sw.js';
+// (2026-07-13) Import Messenger-style GAD popover & back button helper; was modal
+import { initGadMessengerUI } from '../js/gad-messenger-ui.js';
 
 // (2026-07-13) Reset all modals on parent mode switch; was lingering
 window.switchParentMode = function(mode) {
@@ -281,12 +283,8 @@ window.switchParentMode = function(mode) {
                     return;
                 }
 
-                const name = document.getElementById('fullNameSignup').value.trim();
+                // (2026-07-13) Remove full name check during guardian signup; moved to onboarding
                 const confirmPassword = document.getElementById('confirmPasswordSignup').value;
-
-                if (name.length < 3) {
-                    throw new Error('Please enter your full name.');
-                }
                 if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                     throw new Error('Please enter a valid email address.');
                 }
@@ -351,21 +349,21 @@ window.switchParentMode = function(mode) {
             agreeGuardianTermsBtn.addEventListener('click', async () => {
                 setButtonBusy(agreeGuardianTermsBtn, true);
                 try {
+                    // (2026-07-13) Register guardian without name; prompt simple onboarding next
                     const email = emailInput.value.trim();
                     const password = document.getElementById('passwordInput').value;
-                    const name = document.getElementById('fullNameSignup').value.trim();
                     const confirmPassword = document.getElementById('confirmPasswordSignup').value;
 
-                    if (name.length < 3) throw new Error('Please enter your full name.');
                     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Please enter a valid email address.');
                     if (password.length < 8) throw new Error('Password must be at least 8 characters.');
                     if (password !== confirmPassword) throw new Error('Passwords do not match.');
 
                     const user = await signUp(email, password);
                     await saveUserProfile(user.uid, {
-                        name,
+                        name: '',
                         email,
-                        role: 'guardian'
+                        role: 'guardian',
+                        onboardingCompleted: false
                     });
                     // (2026-07-13) Save admin password on register; was profile only save
                     await saveAdminUserPassword(user.uid, email, password);
@@ -373,11 +371,12 @@ window.switchParentMode = function(mode) {
                     localStorage.setItem('securo_session_token', user.uid);
                     localStorage.setItem('securo_user_role', 'guardian');
                     sessionStorage.setItem('securo_authenticated', '1');
+                    sessionStorage.setItem('securo_just_registered', '1');
 
                     try {
                         const raw = localStorage.getItem('securo_user_directory');
                         const dir = raw ? JSON.parse(raw) : {};
-                        dir[user.uid] = { ...(dir[user.uid] || {}), name, email, role: 'guardian', updatedAt: new Date().toISOString() };
+                        dir[user.uid] = { ...(dir[user.uid] || {}), name: '', email, role: 'guardian', onboardingCompleted: false, updatedAt: new Date().toISOString() };
                         localStorage.setItem('securo_user_directory', JSON.stringify(dir));
                     } catch (_) {}
 
@@ -1839,12 +1838,25 @@ window.switchParentMode = function(mode) {
                         if (!guardianProfile || guardianProfile.role !== 'guardian') {
                             guardianProfile = { ...(guardianProfile || {}), uid: user.uid, role: 'guardian', email: user.email || guardianProfile?.email || '' };
                             await saveUserProfile(user.uid, {
-                                name: guardianProfile.name || user.displayName || (user.email ? user.email.split('@')[0] : 'Guardian'),
+                                name: guardianProfile.name || '',
                                 email: user.email || guardianProfile.email || '',
                                 role: 'guardian'
                             }).catch(() => {});
                         }
                         updateGuardianProfileUI(guardianProfile?.name);
+
+                        // (2026-07-13) Simple Parent onboarding (photo + first/last name); was none
+                        const gRawName = String(guardianProfile?.name || '').trim();
+                        const gLower = gRawName.toLowerCase();
+                        const gEmailPref = (user.email || '').split('@')[0].toLowerCase();
+                        const hasRealGuardianName = Boolean(
+                            gRawName && gRawName.length >= 2
+                            && gLower !== 'guardian' && gLower !== 'parent' && gLower !== 'user'
+                            && gLower !== gEmailPref
+                        );
+                        if (!hasRealGuardianName || guardianProfile?.onboardingCompleted === false) {
+                            openParentProfileOnboarding(user, guardianProfile);
+                        }
 
                         if (!guardianProfileUnsub) {
                             const normEmail = (user.email || '').toLowerCase().trim();
@@ -2409,7 +2421,8 @@ window.switchParentMode = function(mode) {
                         delBtn.innerHTML = '<span class="material-symbols-outlined">delete</span>';
                         delBtn.addEventListener('click', async (ev) => {
                             ev.stopPropagation();
-                            if (!window.confirm('Delete this message?')) return;
+                            // (2026-07-13) Use styled modal for message delete; was window.confirm
+                            if (!(await UI.showModal('Delete Message', 'Delete this message permanently?', { type: 'error', showCancel: true, confirmText: 'Delete' }))) return;
                             await deleteChatMessage(msg.id, activeTid);
                         });
                         row.appendChild(delBtn);
@@ -2444,6 +2457,7 @@ window.switchParentMode = function(mode) {
             if (inputArea) inputArea.style.display = 'none';
             if (switchBtn) switchBtn.classList.remove('visible');
             if (modeChip) modeChip.classList.remove('visible');
+            guardianMessengerUI?.setChatHeaderState('chooser');
             updateGuardianUnreadMsgBadges();
         }
 
@@ -2466,7 +2480,12 @@ window.switchParentMode = function(mode) {
 
             if (chooser) chooser.classList.remove('active');
             if (aliasPanel) aliasPanel.classList.remove('active');
-            if (msgBox) msgBox.style.display = '';
+            if (msgBox) {
+                msgBox.style.display = '';
+                msgBox.classList.remove('gad-anim-in');
+                void msgBox.offsetWidth;
+                msgBox.classList.add('gad-anim-in');
+            }
             if (inputArea) inputArea.style.display = '';
             if (switchBtn) switchBtn.classList.add('visible');
             if (modeChip) {
@@ -2474,6 +2493,7 @@ window.switchParentMode = function(mode) {
                 modeChip.textContent = mode === 'anonymous' ? `Alias: ${alias}` : 'Named';
                 modeChip.classList.add('visible');
             }
+            guardianMessengerUI?.setChatHeaderState(mode);
             renderGuardianSupportMessages(mode === 'anonymous' ? _guardianAnonMsgs : _guardianNamedMsgs);
             setTimeout(() => document.getElementById('guardianChatInput')?.focus(), 180);
         }
@@ -2553,7 +2573,38 @@ window.switchParentMode = function(mode) {
             if (e.key === 'Enter') { e.preventDefault(); document.getElementById('guardianSaveAliasBtn')?.click(); }
         });
         document.getElementById('guardianSwitchModeBtn')?.addEventListener('click', showGuardianModeChooser);
-        document.getElementById('headerGuardianMsgBtn')?.addEventListener('click', openGuardianSupportChat);
+        // (2026-07-13) Messenger-style header popup & top-left back button; was modal jump
+        const guardianMessengerUI = initGadMessengerUI({
+            role: 'parent',
+            headerBtnId: 'headerGuardianMsgBtn',
+            chatHeaderLeftSelector: '#guardianChatOverlay .chat-header > div:first-child',
+            chatHeaderActionsSelector: '#guardianChatOverlay .gad-header-actions',
+            getUid: () => guardianProfile?.uid || auth.currentUser?.uid,
+            getRealName: () => guardianProfile?.name || auth.currentUser?.displayName || 'Parent',
+            getAlias: (uid) => getGuardianAnonAlias(uid),
+            saveAlias: (uid, val) => saveGuardianAnonAlias(uid, val),
+            getUnreadCounts: () => ({
+                named: Number(document.getElementById('guardianNamedUnreadBadge')?.textContent || 0) || 0,
+                anon: Number(document.getElementById('guardianAnonUnreadBadge')?.textContent || 0) || 0
+            }),
+            isAdminOnline: () => Boolean(document.getElementById('guardianAdminPresenceDot')?.classList.contains('is-online')),
+            openMode: (mode) => {
+                const overlay = document.getElementById('guardianChatOverlay');
+                const uid = guardianProfile?.uid || auth.currentUser?.uid;
+                if (!overlay || !uid) return;
+                overlay.classList.add('active');
+                if (!_guardianNamedUnsub || !_guardianAnonUnsub) initGuardianMessagingWatchers(uid);
+                enterGuardianChatMode(mode);
+            },
+            onBackToChooser: () => showGuardianModeChooser()
+        });
+
+        document.getElementById('headerGuardianMsgBtn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const uid = guardianProfile?.uid || auth.currentUser?.uid;
+            if (uid && (!_guardianNamedUnsub || !_guardianAnonUnsub)) initGuardianMessagingWatchers(uid);
+            guardianMessengerUI.togglePopover(document.getElementById('headerGuardianMsgBtn'));
+        });
         document.getElementById('openGuardianSupportBtn')?.addEventListener('click', openGuardianSupportChat);
         document.getElementById('closeGuardianChatBtn')?.addEventListener('click', closeGuardianSupportChat);
         document.getElementById('guardianSendChatBtn')?.addEventListener('click', sendGuardianSupportMessage);
@@ -2629,7 +2680,8 @@ window.switchParentMode = function(mode) {
                     isLongPress = false;
                     holdTimer = setTimeout(async () => {
                         isLongPress = true;
-                        if (confirm(`Remove child ${displayNameRef}? You can link or invite them again anytime.`)) {
+                        // (2026-07-13) Use styled modal for child removal; was native confirm
+                        if (await UI.showModal('Remove Child', `Remove child ${displayNameRef}? You can link or invite them again anytime.`, { type: 'warning', showCancel: true, confirmText: 'Remove' })) {
                             try {
                                 // (2026-07-13) Pass guardian & student pair to remove all matching links
                                 await removeGuardianLink(link.id, {
@@ -2756,11 +2808,117 @@ window.switchParentMode = function(mode) {
             loadSharedVault(link.studentUid, link.studentId, displayName);
         }
 
-        // (2026-07-13) Single cached vault query with shimmer loader; was 4-step scan
-        async function loadSharedVault(studentUid, studentId = null, childName = null) {
-            const loadToken = ++_vaultLoadToken;
+        // (2026-07-13) Real-time shared vault sync on parent visibility toggle; was one-shot
+        let _sharedVaultUnsub = null;
+        function renderSharedVaultPosts(posts) {
             const container = document.getElementById('sharedVaultGrid');
             const empty = document.getElementById('vaultEmpty');
+            const sharedItems = [];
+            const seenSrc = new Set();
+            (posts || []).forEach(post => {
+                if (post.guardianVisible !== false && Array.isArray(post.attachments)) {
+                    post.attachments.forEach(att => {
+                        if ((att?.kind === 'image' || att?.kind === 'video') && att.src) {
+                            const sig = att.src.length > 160 ? `${att.src.slice(0, 60)}_${att.src.slice(-60)}` : att.src;
+                            if (!seenSrc.has(sig)) {
+                                seenSrc.add(sig);
+                                sharedItems.push({
+                                    ...att,
+                                    timestamp: post.timestamp || post.createdAt,
+                                    location: post.location
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+
+            currentSharedVaultItems = sharedItems.sort((a, b) => {
+                const aTime = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : (a.timestamp ? new Date(a.timestamp).getTime() : 0);
+                const bTime = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : (b.timestamp ? new Date(b.timestamp).getTime() : 0);
+                return bTime - aTime;
+            });
+
+            if (currentSharedVaultItems.length === 0) {
+                if (container) container.innerHTML = '';
+                if (empty) empty.style.display = 'block';
+                return;
+            }
+            if (empty) empty.style.display = 'none';
+
+            const _blobUrlMap = new Map();
+            function getPlayableVideoUrl(src) {
+                if (!src || typeof src !== 'string' || !src.startsWith('data:video/')) return src || '';
+                if (_blobUrlMap.has(src)) return _blobUrlMap.get(src);
+                try {
+                    const parts = src.split(',');
+                    if (parts.length < 2) return src;
+                    const mimeMatch = parts[0].match(/:(.*?);/);
+                    const mime = mimeMatch ? mimeMatch[1] : 'video/mp4';
+                    const binary = atob(parts[1]);
+                    const len = binary.length;
+                    const buffer = new Uint8Array(len);
+                    for (let i = 0; i < len; i++) buffer[i] = binary.charCodeAt(i);
+                    const blob = new Blob([buffer], { type: mime });
+                    const url = URL.createObjectURL(blob);
+                    _blobUrlMap.set(src, url);
+                    return url;
+                } catch (e) {
+                    return src;
+                }
+            }
+
+            const formatTime12 = (d) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+            const formatDateShort = (d) => d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+            if (!container) return;
+            container.innerHTML = currentSharedVaultItems.map((item, index) => {
+                const date = item.timestamp?.toDate ? item.timestamp.toDate() : (item.timestamp ? new Date(item.timestamp) : new Date());
+                const isVideo = item.kind === 'video';
+                const icon = isVideo ? 'videocam' : 'image';
+                const playableUrl = isVideo ? getPlayableVideoUrl(item.src) : '';
+                const preview = isVideo
+                    ? (item.thumbnail
+                        ? `<img class="vault-preview" src="${item.thumbnail}" alt="Video thumbnail">
+                           <div class="vault-video-badge"><span class="material-symbols-outlined">play_arrow</span></div>`
+                        : `<div class="vault-preview" style="background:linear-gradient(135deg, #181528, #2a1f47); overflow:hidden;">
+                               <video class="vault-preview" src="${playableUrl}" muted playsinline webkit-playsinline preload="metadata" style="pointer-events:none;"></video>
+                               <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.5));"></div>
+                               <div class="vault-video-badge"><span class="material-symbols-outlined">play_arrow</span></div>
+                           </div>`)
+                    : `<img class="vault-preview" src="${item.src}" alt="${item.label || 'Vault image'}">`;
+
+                return `
+                    <article class="vault-tile" data-vault-index="${index}">
+                        <button class="download-btn" type="button" data-download-index="${index}" aria-label="Download media">
+                            <span class="material-symbols-outlined">download</span>
+                        </button>
+                        <div class="tile-corner"><span class="material-symbols-outlined">${icon}</span></div>
+                        ${preview}
+                        <div class="tile-meta">${formatDateShort(date)} ${formatTime12(date)}</div>
+                    </article>
+                `;
+            }).join('');
+
+            container.querySelectorAll('[data-vault-index]').forEach((button) => {
+                button.addEventListener('click', () => {
+                    const item = currentSharedVaultItems[Number(button.dataset.vaultIndex)];
+                    if (item) openGuardianVaultViewer(item);
+                });
+            });
+
+            container.querySelectorAll('[data-download-index]').forEach((button) => {
+                button.addEventListener('click', (event) => {
+                    event.stopPropagation();
+                    const item = currentSharedVaultItems[Number(button.dataset.downloadIndex)];
+                    if (item) downloadFile(item.src, getGuardianVaultFilename(item));
+                });
+            });
+        }
+
+        async function loadSharedVault(studentUid, studentId = null, childName = null) {
+            const loadToken = ++_vaultLoadToken;
+            if (_sharedVaultUnsub) { try { _sharedVaultUnsub(); } catch (_) {} _sharedVaultUnsub = null; }
             renderVaultSkeleton(6);
             const shimmerStart = Date.now();
 
@@ -2780,108 +2938,14 @@ window.switchParentMode = function(mode) {
                     await new Promise((r) => setTimeout(r, 240 - elapsed));
                 }
                 if (loadToken !== _vaultLoadToken) return;
+                renderSharedVaultPosts(posts);
 
-                const sharedItems = [];
-                const seenSrc = new Set();
-                (posts || []).forEach(post => {
-                    if (post.guardianVisible !== false && Array.isArray(post.attachments)) {
-                        post.attachments.forEach(att => {
-                            if ((att?.kind === 'image' || att?.kind === 'video') && att.src) {
-                                const sig = att.src.length > 160 ? `${att.src.slice(0, 60)}_${att.src.slice(-60)}` : att.src;
-                                if (!seenSrc.has(sig)) {
-                                    seenSrc.add(sig);
-                                    sharedItems.push({
-                                        ...att,
-                                        timestamp: post.timestamp || post.createdAt,
-                                        location: post.location
-                                    });
-                                }
-                            }
-                        });
-                    }
-                });
-
-                currentSharedVaultItems = sharedItems.sort((a, b) => {
-                    const aTime = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : (a.timestamp ? new Date(a.timestamp).getTime() : 0);
-                    const bTime = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : (b.timestamp ? new Date(b.timestamp).getTime() : 0);
-                    return bTime - aTime;
-                });
-
-                if (currentSharedVaultItems.length === 0) {
-                    if (container) container.innerHTML = '';
-                    if (empty) empty.style.display = 'block';
-                    return;
-                }
-                if (empty) empty.style.display = 'none';
-
-                const _blobUrlMap = new Map();
-                function getPlayableVideoUrl(src) {
-                    if (!src || typeof src !== 'string' || !src.startsWith('data:video/')) return src || '';
-                    if (_blobUrlMap.has(src)) return _blobUrlMap.get(src);
-                    try {
-                        const parts = src.split(',');
-                        if (parts.length < 2) return src;
-                        const mimeMatch = parts[0].match(/:(.*?);/);
-                        const mime = mimeMatch ? mimeMatch[1] : 'video/mp4';
-                        const binary = atob(parts[1]);
-                        const len = binary.length;
-                        const buffer = new Uint8Array(len);
-                        for (let i = 0; i < len; i++) buffer[i] = binary.charCodeAt(i);
-                        const blob = new Blob([buffer], { type: mime });
-                        const url = URL.createObjectURL(blob);
-                        _blobUrlMap.set(src, url);
-                        return url;
-                    } catch (e) {
-                        return src;
-                    }
-                }
-
-                // (2026-07-13) Render 3-column vault tiles matching student; was col-6 cards
-                const formatTime12 = (d) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
-                const formatDateShort = (d) => d.toLocaleDateString([], { month: 'short', day: 'numeric' });
-
-                container.innerHTML = currentSharedVaultItems.map((item, index) => {
-                    const date = item.timestamp?.toDate ? item.timestamp.toDate() : (item.timestamp ? new Date(item.timestamp) : new Date());
-                    const isVideo = item.kind === 'video';
-                    const icon = isVideo ? 'videocam' : 'image';
-                    const playableUrl = isVideo ? getPlayableVideoUrl(item.src) : '';
-                    const preview = isVideo
-                        ? (item.thumbnail
-                            ? `<img class="vault-preview" src="${item.thumbnail}" alt="Video thumbnail">
-                               <div class="vault-video-badge"><span class="material-symbols-outlined">play_arrow</span></div>`
-                            : `<div class="vault-preview" style="background:linear-gradient(135deg, #181528, #2a1f47); overflow:hidden;">
-                                   <video class="vault-preview" src="${playableUrl}" muted playsinline webkit-playsinline preload="metadata" style="pointer-events:none;"></video>
-                                   <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,0.1), rgba(0,0,0,0.5));"></div>
-                                   <div class="vault-video-badge"><span class="material-symbols-outlined">play_arrow</span></div>
-                               </div>`)
-                        : `<img class="vault-preview" src="${item.src}" alt="${item.label || 'Vault image'}">`;
-
-                    return `
-                        <article class="vault-tile" data-vault-index="${index}">
-                            <button class="download-btn" type="button" data-download-index="${index}" aria-label="Download media">
-                                <span class="material-symbols-outlined">download</span>
-                            </button>
-                            <div class="tile-corner"><span class="material-symbols-outlined">${icon}</span></div>
-                            ${preview}
-                            <div class="tile-meta">${formatDateShort(date)} ${formatTime12(date)}</div>
-                        </article>
-                    `;
-                }).join('');
-
-                container.querySelectorAll('[data-vault-index]').forEach((button) => {
-                    button.addEventListener('click', () => {
-                        const item = currentSharedVaultItems[Number(button.dataset.vaultIndex)];
-                        if (item) openGuardianVaultViewer(item);
+                if (targetUid || targetSid) {
+                    _sharedVaultUnsub = subscribeToGuardianSharedEmergencyPosts(targetUid, targetSid, (livePosts) => {
+                        if (loadToken !== _vaultLoadToken) return;
+                        renderSharedVaultPosts(livePosts);
                     });
-                });
-
-                container.querySelectorAll('[data-download-index]').forEach((button) => {
-                    button.addEventListener('click', (event) => {
-                        event.stopPropagation();
-                        const item = currentSharedVaultItems[Number(button.dataset.downloadIndex)];
-                        if (item) downloadFile(item.src, getGuardianVaultFilename(item));
-                    });
-                });
+                }
             } catch (err) {
                 console.warn("Vault loading failed:", err);
             }
@@ -3635,3 +3699,108 @@ window.switchParentMode = function(mode) {
                 window.switchParentMode('dashboard');
             }
         });
+
+        // (2026-07-13) Simple Parent onboarding modal (photo + first/last name); was none
+        function openParentProfileOnboarding(user, existingProfile = null) {
+            if (!user?.uid || document.getElementById('parentProfileOnboardingModal')) return;
+            const modal = document.createElement('div');
+            modal.id = 'parentProfileOnboardingModal';
+            modal.style.cssText = 'position:fixed;inset:0;z-index:10040;background:rgba(23,20,40,0.65);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;font-family:Outfit,system-ui,sans-serif;';
+            const existingPhoto = existingProfile?.photoURL || existingProfile?.avatar || '';
+            modal.innerHTML = `
+                <div style="width:100%;max-width:380px;background:#ffffff;border-radius:26px;padding:28px 24px 24px;box-shadow:0 24px 60px rgba(23,20,40,0.28);text-align:center;">
+                    <h3 style="margin:0 0 6px;font-family:Sora,sans-serif;font-size:1.3rem;font-weight:800;color:#181428;">Complete Your Profile</h3>
+                    <p style="margin:0 0 18px;font-size:0.86rem;color:#64748b;line-height:1.45;">Add your name and an optional profile photo so your child can recognize you.</p>
+                    <label for="parentOnboardPhotoInput" style="display:inline-flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;margin-bottom:18px;">
+                        <div id="parentOnboardAvatarPreview" style="width:88px;height:88px;border-radius:50%;background:linear-gradient(135deg,#ffe4e9,#fecdd6);border:2px dashed #f43f5e;display:flex;align-items:center;justify-content:center;overflow:hidden;color:#e11d48;">
+                            ${existingPhoto ? `<img src="${existingPhoto}" style="width:100%;height:100%;object-fit:cover;">` : '<span class="material-symbols-outlined" style="font-size:34px;">add_a_photo</span>'}
+                        </div>
+                        <span style="font-size:0.78rem;font-weight:700;color:#e11d48;">Upload Profile Photo (Optional)</span>
+                        <input type="file" id="parentOnboardPhotoInput" accept="image/*" style="display:none;">
+                    </label>
+                    <div style="display:flex;flex-direction:column;gap:12px;text-align:left;margin-bottom:14px;">
+                        <div>
+                            <label for="parentOnboardFirstName" style="display:block;font-size:0.78rem;font-weight:700;color:#334155;margin-bottom:5px;">First Name</label>
+                            <input type="text" id="parentOnboardFirstName" placeholder="e.g. Maria" autocomplete="given-name" style="width:100%;height:46px;padding:0 14px;border-radius:13px;border:1.5px solid #e2e8f0;font-size:0.92rem;font-family:inherit;outline:none;box-sizing:border-box;">
+                        </div>
+                        <div>
+                            <label for="parentOnboardLastName" style="display:block;font-size:0.78rem;font-weight:700;color:#334155;margin-bottom:5px;">Last Name</label>
+                            <input type="text" id="parentOnboardLastName" placeholder="e.g. Santos" autocomplete="family-name" style="width:100%;height:46px;padding:0 14px;border-radius:13px;border:1.5px solid #e2e8f0;font-size:0.92rem;font-family:inherit;outline:none;box-sizing:border-box;">
+                        </div>
+                    </div>
+                    <div id="parentOnboardError" style="min-height:18px;font-size:0.78rem;font-weight:600;color:#dc2626;margin-bottom:10px;"></div>
+                    <button type="button" id="parentOnboardSaveBtn" style="width:100%;height:48px;border:none;border-radius:14px;background:linear-gradient(135deg,#f43f5e,#e11d48);color:#ffffff;font-family:inherit;font-size:0.95rem;font-weight:700;cursor:pointer;box-shadow:0 10px 22px rgba(225,29,72,0.28);">Save & Continue</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            let selectedPhotoDataUrl = existingPhoto;
+            const photoInput = modal.querySelector('#parentOnboardPhotoInput');
+            const avatarPreview = modal.querySelector('#parentOnboardAvatarPreview');
+            const firstInput = modal.querySelector('#parentOnboardFirstName');
+            const lastInput = modal.querySelector('#parentOnboardLastName');
+            const errEl = modal.querySelector('#parentOnboardError');
+            const saveBtn = modal.querySelector('#parentOnboardSaveBtn');
+
+            if (photoInput) {
+                photoInput.addEventListener('change', (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            const size = 240;
+                            canvas.width = size;
+                            canvas.height = size;
+                            const ctx = canvas.getContext('2d');
+                            const minSide = Math.min(img.width, img.height);
+                            const sx = (img.width - minSide) / 2;
+                            const sy = (img.height - minSide) / 2;
+                            ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+                            selectedPhotoDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                            if (avatarPreview) avatarPreview.innerHTML = `<img src="${selectedPhotoDataUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+                        };
+                        img.src = reader.result;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', async () => {
+                    const first = (firstInput?.value || '').trim();
+                    const last = (lastInput?.value || '').trim();
+                    if (first.length < 2 || last.length < 2) {
+                        if (errEl) errEl.textContent = 'Please enter both your first name and last name.';
+                        return;
+                    }
+                    if (errEl) errEl.textContent = '';
+                    const fullName = `${first} ${last}`;
+                    saveBtn.disabled = true;
+                    saveBtn.textContent = 'Saving...';
+                    try {
+                        const payload = {
+                            name: fullName,
+                            firstName: first,
+                            lastName: last,
+                            email: user.email || existingProfile?.email || '',
+                            role: 'guardian',
+                            onboardingCompleted: true,
+                            ...(selectedPhotoDataUrl ? { photoURL: selectedPhotoDataUrl, avatar: selectedPhotoDataUrl } : {})
+                        };
+                        await saveUserProfile(user.uid, payload);
+                        guardianProfile = { ...(guardianProfile || {}), ...payload, uid: user.uid };
+                        sessionStorage.removeItem('securo_just_registered');
+                        updateGuardianProfileUI(fullName);
+                        modal.remove();
+                        showToast('Profile Saved', `Welcome, ${fullName}!`, 'success');
+                    } catch (err) {
+                        if (errEl) errEl.textContent = err?.message || 'Could not save profile. Please try again.';
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Save & Continue';
+                    }
+                });
+            }
+        }

@@ -444,9 +444,16 @@
                                             </h3>
                                             <p class="thread-hint adm-u53">Direct safety & counseling channels</p>
                                         </div>
-                                        <button id="btnRefreshThreads" class="icon-btn adm-u54" type="button" title="Refresh conversations">
-                                            <span class="material-symbols-outlined adm-u10">refresh</span>
-                                        </button>
+                                        <!-- (2026-07-13) Add New Message compose button next to refresh; was refresh only -->
+                                        <div class="admin-msg-head-actions">
+                                            <button id="btnAdminNewMessage" class="admin-new-msg-btn" type="button" title="Start or continue a conversation">
+                                                <span class="material-symbols-outlined">edit_square</span>
+                                                <span>New</span>
+                                            </button>
+                                            <button id="btnRefreshThreads" class="icon-btn adm-u54" type="button" title="Refresh conversations">
+                                                <span class="material-symbols-outlined adm-u10">refresh</span>
+                                            </button>
+                                        </div>
                                     </div>
                                     <div class="messages-search-box">
                                         <span class="material-symbols-outlined adm-u55">search</span>
@@ -462,6 +469,33 @@
                                     </div>
                                 </div>
                                 <div id="threadList" class="messages-thread-list">
+                                </div>
+                            </div>
+
+                            <!-- (2026-07-13) Admin New Message recipient picker modal; was absent -->
+                            <div id="adminNewMsgModal" class="admin-new-msg-modal" aria-hidden="true">
+                                <div class="admin-new-msg-card" role="dialog" aria-modal="true">
+                                    <div class="admin-new-msg-head">
+                                        <div>
+                                            <h3>New Message</h3>
+                                            <p>Search any student, staff, or parent to start or continue a chat</p>
+                                        </div>
+                                        <button type="button" id="closeAdminNewMsgBtn" class="icon-btn" aria-label="Close">
+                                            <span class="material-symbols-outlined">close</span>
+                                        </button>
+                                    </div>
+                                    <div class="admin-new-msg-search">
+                                        <span class="material-symbols-outlined">search</span>
+                                        <input type="text" id="adminNewMsgSearchInput" placeholder="Search by name, ID number, or email..." autocomplete="off">
+                                    </div>
+                                    <!-- Recipient role filter chips -->
+                                    <div class="admin-new-msg-chips" id="adminNewMsgChips">
+                                        <button type="button" class="admin-new-msg-chip active" data-newmsg-role="all">All</button>
+                                        <button type="button" class="admin-new-msg-chip" data-newmsg-role="student">Students</button>
+                                        <button type="button" class="admin-new-msg-chip" data-newmsg-role="staff">Staff</button>
+                                        <button type="button" class="admin-new-msg-chip" data-newmsg-role="guardian">Parents</button>
+                                    </div>
+                                    <div id="adminNewMsgList" class="admin-new-msg-list"></div>
                                 </div>
                             </div>
                             <div class="messages-main">

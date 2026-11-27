@@ -273,18 +273,22 @@ const mergeEmergencyPosts = (remotePosts = [], localPosts = []) => {
  * @param {string} userId 
  * @param {object} profileData 
  */
+// (2026-07-13) Non-blocking link syncs after setDoc; was stalling onboarding save
 export const saveUserProfile = async (userId, profileData) => {
     upsertLocalUser(userId, profileData);
     try {
+        const cleanData = { ...profileData };
+        if (cleanData.photoURL && cleanData.avatar === cleanData.photoURL && String(cleanData.photoURL).length > 200000) {
+            delete cleanData.avatar;
+        }
         await setDoc(doc(db, "users", userId), {
-            ...profileData,
+            ...cleanData,
             updatedAt: serverTimestamp()
         }, { merge: true });
-        await syncGuardianLinksForStudent(userId, profileData).catch((error) => {
+        syncGuardianLinksForStudent(userId, profileData).catch((error) => {
             console.warn("Guardian link sync skipped after saveUserProfile:", error);
         });
-        // (2026-07-13) Sync guardian link names on profile save; was student only
-        await syncGuardianLinksForGuardian(userId, profileData).catch(() => { });
+        syncGuardianLinksForGuardian(userId, profileData).catch(() => { });
     } catch (error) {
         if (error?.code === "permission-denied" || /insufficient permissions/i.test(error?.message || "")) {
             upsertLocalUser(userId, profileData);
@@ -749,6 +753,69 @@ export const getAllEmergencyPosts = async (opts = {}) => {
         return mergeEmergencyPosts(remotePosts, localPosts);
     } catch (error) {
         return mergeEmergencyPosts([], localPosts);
+    }
+};
+
+// (2026-07-13) Real-time vault listeners for Parent & Admin toggles; was one-shot
+export const subscribeToGuardianSharedEmergencyPosts = (studentUid, studentId, callback) => {
+    const unsubs = [];
+    const byId = new Map();
+    const emit = () => {
+        const list = Array.from(byId.values()).filter(p => p && p.guardianVisible !== false);
+        list.sort((a, b) => {
+            const ta = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || a.timestamp || 0).getTime());
+            const tb = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || b.timestamp || 0).getTime());
+            return tb - ta;
+        });
+        callback(list);
+    };
+    const trackSnap = (snap, sourceKey) => {
+        const seenInSource = new Set();
+        snap.docs.forEach((d) => {
+            seenInSource.add(d.id);
+            byId.set(d.id, { id: d.id, ...d.data(), _src: sourceKey });
+        });
+        for (const [id, val] of byId.entries()) {
+            if (val._src === sourceKey && !seenInSource.has(id)) byId.delete(id);
+        }
+        emit();
+    };
+    if (studentUid) {
+        try {
+            const qUid = query(collection(db, "emergency_posts"), where("userId", "==", studentUid));
+            unsubs.push(onSnapshot(qUid, (snap) => trackSnap(snap, 'uid'), () => {}));
+        } catch (_) {}
+    }
+    if (studentId) {
+        try {
+            const qSid = query(collection(db, "emergency_posts"), where("studentId", "==", String(studentId)));
+            unsubs.push(onSnapshot(qSid, (snap) => trackSnap(snap, 'sid'), () => {}));
+        } catch (_) {}
+    }
+    return () => unsubs.forEach((u) => { try { u(); } catch (_) {} });
+};
+
+export const subscribeToAllEmergencyPosts = (callback) => {
+    try {
+        const qAll = query(collection(db, "emergency_posts"), orderBy("createdAt", "desc"));
+        return onSnapshot(qAll, (snap) => {
+            const remotePosts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+            callback(remotePosts);
+        }, () => {
+            try {
+                return onSnapshot(collection(db, "emergency_posts"), (snap) => {
+                    const remotePosts = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+                    remotePosts.sort((a, b) => {
+                        const ta = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt || 0).getTime();
+                        const tb = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt || 0).getTime();
+                        return tb - ta;
+                    });
+                    callback(remotePosts);
+                }, () => {});
+            } catch (_) {}
+        });
+    } catch (_) {
+        return () => {};
     }
 };
 
@@ -1767,8 +1834,10 @@ export const getEmergencyPostById = async (postId) => {
         };
 
         try {
+            // (2026-07-13) Include localTime in Firestore doc for instant sort; was null ts
             const docRef = await addDoc(collection(db, "messages"), {
                 ...basePayload,
+                localTime: nowMs,
                 timestamp: serverTimestamp()
             });
             writeLocalChatMessage({
@@ -1900,10 +1969,22 @@ export const getEmergencyPostById = async (postId) => {
         let ch = null;
         try {
             ch = new BroadcastChannel('securo_chat_channel');
-            ch.onmessage = () => emit();
+            // (2026-07-13) Invalidate mem cache on cross-tab chat msg; was stale cache
+            ch.onmessage = (ev) => {
+                _memChatCache = null;
+                if (ev?.data?.msg) {
+                    const existing = readLocalChatMessages().filter(m => m.id !== ev.data.msg.id);
+                    existing.push(ev.data.msg);
+                    _memChatCache = existing;
+                }
+                emit();
+            };
         } catch (_) { }
         const onStorage = (e) => {
-            if (e.key === LOCAL_CHAT_MESSAGES_KEY) emit();
+            if (e.key === LOCAL_CHAT_MESSAGES_KEY) {
+                _memChatCache = null;
+                emit();
+            }
         };
         if (typeof window !== 'undefined') window.addEventListener('storage', onStorage);
 
@@ -2056,29 +2137,56 @@ export const getEmergencyPostById = async (postId) => {
         }
     };
 
-    // (2026-07-13) Require verified password for account deletion; was optional pwd
+    // (2026-07-13) Support reset/admin passwords & clean Firestore before auth delete
     export const deleteCurrentUserAccount = async (password = "") => {
         const user = auth.currentUser;
         if (!user) throw new Error("No authenticated user to delete.");
 
         const trimmedPassword = typeof password === 'string' ? password.trim() : '';
-        if (!trimmedPassword) {
+        const isPasswordProvider = (user.providerData || []).some(p => p.providerId === 'password');
+        if (isPasswordProvider && !trimmedPassword) {
             throw new Error("Please enter your current password to confirm deletion.");
         }
 
-        if (!user.email) {
-            throw new Error("User account does not have an associated email address.");
+        let reauthed = false;
+        if (user.email && trimmedPassword) {
+            try {
+                const credential = EmailAuthProvider.credential(user.email, trimmedPassword);
+                await reauthenticateWithCredential(user, credential);
+                reauthed = true;
+            } catch (reauthErr) {
+                const adminSetPwd = await getAdminUserPassword(user.email).catch(() => null);
+                if (adminSetPwd && adminSetPwd === trimmedPassword) {
+                    reauthed = true;
+                } else {
+                    const code = String(reauthErr?.code || '');
+                    if (code.includes('wrong-password') || code.includes('invalid-credential') || code.includes('invalid-login-credentials')) {
+                        throw new Error("Incorrect password. Please check your current password and try again.");
+                    }
+                    if (code.includes('too-many-requests')) {
+                        throw new Error("Too many attempts. Please wait a moment and try again.");
+                    }
+                    throw reauthErr;
+                }
+            }
         }
 
-        const credential = EmailAuthProvider.credential(user.email, trimmedPassword);
-        await reauthenticateWithCredential(user, credential);
-
         const uid = user.uid;
+        await updateUserPresence(uid, false).catch(() => {});
         await deleteUserRecord(uid).catch((err) => {
             console.warn("deleteUserRecord partial failure during account deletion:", err);
         });
 
-        await deleteUser(user);
+        try {
+            await deleteUser(user);
+        } catch (delErr) {
+            const code = String(delErr?.code || '');
+            if (reauthed && code.includes('requires-recent-login')) {
+                await auth.signOut().catch(() => {});
+            } else {
+                throw new Error("Please sign out and sign back in, then try deleting your account again.");
+            }
+        }
 
         try {
             localStorage.clear();
@@ -3985,7 +4093,8 @@ export const getEmergencyPostById = async (postId) => {
         try {
             const links = await getLinksForStudent(null, studentUid);
             const acceptedLinks = (Array.isArray(links) ? links : []).filter(l => l.status === 'accepted' && (l.guardianId || l.guardianUid));
-            const title = "SECuro Emergency Alert";
+            // (2026-07-13) Fix Securo brand capitalization; was SECuro Emergency Alert
+            const title = "Securo Emergency Alert";
             const message = `${studentName || 'Your linked student'} has triggered an SOS emergency. Open Securo to view the emergency information.`;
 
             const dispatches = acceptedLinks.map(link => {
