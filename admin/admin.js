@@ -4986,7 +4986,9 @@ function getThreadClientInfo(thread) {
     if (!thread) return { userId: '', name: 'Student', role: 'student', isGuardian: false, isAnonymous: false, userObj: null };
     const rawOtherId = getOtherUserIdFromThread(thread);
     const otherUserId = String(rawOtherId || '').replace(/__anon$/, '');
-    const isAnonymous = Boolean(thread.isAnonymous || String(thread.threadId || '').includes('__anon') || thread.anonymousAlias);
+    // (2026-07-13) Determine anon strictly by __anon/anon_ threadId; was old msg flag
+    const tidStr = String(thread.threadId || '');
+    const isAnonymous = tidStr.includes('__anon') || tidStr.includes('anon_');
     const userObj = cachedUsers.find(u => {
         if (!u) return false;
         if (otherUserId && (u.id === otherUserId || u.uid === otherUserId || String(u.studentId || '') === String(otherUserId))) return true;

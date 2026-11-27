@@ -55,6 +55,45 @@ function ensureStyles() {
             letter-spacing: -0.02em;
             margin: 0;
         }
+        /* (2026-07-13) Persistent anonymous mode indicator bar in GAD chat; was missing */
+        .gad-anon-mode-banner {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 8px 16px;
+            background: linear-gradient(90deg, #0f172a, #1e293b);
+            color: #f8fafc;
+            font-size: 0.78rem;
+            font-weight: 600;
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .gad-anon-mode-banner.visible {
+            display: flex;
+        }
+        .gad-anon-mode-left {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
+        }
+        .gad-anon-mode-left .material-symbols-outlined {
+            font-size: 16px;
+            color: #a5b4fc;
+            flex-shrink: 0;
+        }
+        .gad-anon-mode-pill {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(165, 180, 252, 0.16);
+            color: #c7d2fe;
+            flex-shrink: 0;
+        }
         .gad-mp-status {
             display: inline-flex;
             align-items: center;
@@ -428,9 +467,35 @@ export function initGadMessengerUI(config) {
         headerActions.prepend(editAliasBtnEl);
     }
 
+    // (2026-07-13) Persistent anonymous indicator banner below chat header; was absent
+    let anonBannerEl = null;
+    const chatHeaderEl = headerLeft?.closest('.gad-chat-header, .chat-header');
+    if (chatHeaderEl && chatHeaderEl.parentElement && !chatHeaderEl.parentElement.querySelector('.gad-anon-mode-banner')) {
+        anonBannerEl = document.createElement('div');
+        anonBannerEl.className = 'gad-anon-mode-banner';
+        anonBannerEl.innerHTML = `
+            <span class="gad-anon-mode-left">
+                <span class="material-symbols-outlined">visibility_off</span>
+                <span class="gad-anon-mode-text">Messaging anonymously</span>
+            </span>
+            <span class="gad-anon-mode-pill">Identity Hidden</span>
+        `;
+        chatHeaderEl.insertAdjacentElement('afterend', anonBannerEl);
+    }
+
     function setChatHeaderState(mode) {
         if (backBtnEl) backBtnEl.classList.toggle('visible', mode === 'named' || mode === 'anonymous');
         if (editAliasBtnEl) editAliasBtnEl.classList.toggle('visible', mode === 'anonymous');
+        if (anonBannerEl) {
+            const isAnon = mode === 'anonymous';
+            anonBannerEl.classList.toggle('visible', isAnon);
+            if (isAnon) {
+                const uid = getUid?.();
+                const alias = uid ? (getAlias?.(uid) || '').trim() : '';
+                const txt = anonBannerEl.querySelector('.gad-anon-mode-text');
+                if (txt) txt.textContent = alias ? `Messaging anonymously as "${alias}"` : 'Messaging anonymously';
+            }
+        }
     }
 
     // (2026-07-13) Prevent Chats, Notifications & Profile popups overlapping; was stacked

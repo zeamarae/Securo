@@ -1735,18 +1735,19 @@ export const getEmergencyPostById = async (postId) => {
         return Array.from(map.values()).sort((a, b) => getMsgSec(a) - getMsgSec(b));
     };
 
+    // (2026-07-13) Keep named threads from being poisoned by old anon msgs; was OR
     const buildThreadsFromMessages = (allMessages) => {
         const threadsMap = new Map();
         const metaMap = new Map();
         (allMessages || []).forEach((msg) => {
             if (!msg || !msg.threadId || msg.deleted === true) return;
-            const tid = msg.threadId;
-            const isAnon = Boolean(msg.isAnonymous || tid.includes('__anon') || msg.anonymousAlias);
+            const tid = String(msg.threadId);
+            const isAnonThread = tid.includes('__anon') || tid.includes('anon_');
             const isFromAdmin = msg.senderRole === 'admin' || msg.senderId === 'system_admin_securo';
             const prevMeta = metaMap.get(tid) || {};
             const nextMeta = {
-                isAnonymous: prevMeta.isAnonymous || isAnon,
-                anonymousAlias: prevMeta.anonymousAlias || msg.anonymousAlias || (isAnon && !isFromAdmin ? (msg.senderLabel || msg.senderName || '') : ''),
+                isAnonymous: isAnonThread,
+                anonymousAlias: isAnonThread ? (prevMeta.anonymousAlias || msg.anonymousAlias || (!isFromAdmin ? (msg.senderLabel || msg.senderName || '') : '')) : '',
                 clientRole: prevMeta.clientRole || (!isFromAdmin && msg.senderRole ? msg.senderRole : (msg.recipientRole && msg.recipientRole !== 'admin' ? msg.recipientRole : '')),
                 clientOwnerId: prevMeta.clientOwnerId || msg.ownerId || (!isFromAdmin ? msg.senderId : (msg.receiverId !== 'system_admin_securo' ? msg.receiverId : '')),
                 clientDisplayName: prevMeta.clientDisplayName || (!isFromAdmin ? (msg.senderLabel || msg.senderName || '') : (msg.clientName || msg.targetUserName || ''))
@@ -1760,10 +1761,11 @@ export const getEmergencyPostById = async (postId) => {
         });
         return Array.from(threadsMap.entries()).map(([tid, latest]) => {
             const meta = metaMap.get(tid) || {};
+            const isAnonThread = String(tid).includes('__anon') || String(tid).includes('anon_');
             return {
                 ...latest,
-                isAnonymous: Boolean(latest.isAnonymous || meta.isAnonymous),
-                anonymousAlias: latest.anonymousAlias || meta.anonymousAlias || '',
+                isAnonymous: isAnonThread,
+                anonymousAlias: isAnonThread ? (latest.anonymousAlias || meta.anonymousAlias || '') : '',
                 ownerId: latest.ownerId || meta.clientOwnerId || '',
                 clientRole: meta.clientRole || (latest.senderRole !== 'admin' ? latest.senderRole : latest.recipientRole) || '',
                 clientName: latest.clientName || meta.clientDisplayName || ''
